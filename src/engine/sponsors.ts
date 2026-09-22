@@ -396,3 +396,43 @@ export function acceptSponsorOffer(state: GameState, offerId: string): ActionRes
   addNews(state, 'goed', `${o.name} is nieuwe sponsor: €${o.weekly}/week gedurende ${o.weeksLeft} weken.`);
   return ok('Sponsorcontract getekend.');
 }
+
+/**
+ * Na promotie of degradatie herbekijken sponsors hun bijdrage. Bij promotie zijn ze blij
+ * en bieden de besten spontaan een opwaardering aan; bij degradatie zakt hun tevredenheid.
+ */
+export function sponsorsAfterSeason(state: GameState, rng: Rng, result: 'kampioen' | 'promotie' | 'degradatie' | 'behoud', newLevel: number): void {
+  const deals = state.sponsors.filter((d) => d.kind !== 'stadion');
+  if (result === 'degradatie') {
+    for (const d of deals) d.satisfaction = clamp(d.satisfaction - 12, 0, 100);
+    addNews(state, 'slecht', 'Je sponsors zijn ontgoocheld door de degradatie. Reken op lastige gesprekken bij de verlenging.');
+    return;
+  }
+  if (result === 'behoud') return;
+
+  // het aanbod van de nieuwe reeks: zelfde club, hoger niveau
+  const previous = state.league.divisionLevel;
+  state.league.divisionLevel = newLevel;
+  const upgrades: string[] = [];
+  for (const d of deals) {
+    d.satisfaction = clamp(d.satisfaction + (result === 'kampioen' ? 14 : 10), 0, 100);
+    if (state.sponsorOffers.some((o) => o.renewalOf === d.id)) continue; // er ligt al een voorstel
+    const [min, max] = kindRange(state, d.kind);
+    const offerValue = round(Math.max(d.weekly * 1.15, rng.range(min, max) * 0.9), 5);
+    if (offerValue <= d.weekly) continue;
+    // hoe tevredener, hoe groter de kans dat hij zelf met een beter voorstel komt
+    if (!rng.chance(0.35 + d.satisfaction / 200)) continue;
+    state.sponsorOffers.push({ ...makeDeal(state, rng, d.kind, offerValue, d.name, d.sector), expiresInWeeks: 6, renewalOf: d.id });
+    upgrades.push(`${d.name} (${euroText(d.weekly)} → ${euroText(offerValue)})`);
+  }
+  state.league.divisionLevel = previous;
+  if (upgrades.length) {
+    addNews(state, 'goed', `Door de promotie willen sponsors hun bijdrage opdrijven: ${upgrades.join(', ')}. Zie Sponsors.`);
+  } else {
+    addNews(state, 'neutraal', 'Je sponsors feliciteren je met de promotie. Vraag gerust een nieuw contract: ze staan er nu open voor.');
+  }
+}
+
+function euroText(n: number): string {
+  return `€${Math.round(n).toLocaleString('nl-BE')}`;
+}

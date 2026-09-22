@@ -381,6 +381,7 @@ export type LedgerCategory =
   | 'investeerder'
   | 'leningen'
   | 'meevallers'
+  | 'premies'
   | 'verhuur'
   | 'lonen spelers'
   | 'lonen staff'
@@ -439,6 +440,7 @@ export interface SeasonRecord {
   points: number;
   result: 'promotie' | 'degradatie' | 'behoud' | 'kampioen';
   profit: number; // resultaat van het seizoen
+  prize?: number; // kampioenen- of promotiepremie, apart geboekt op het einde van het seizoen
 }
 
 export interface PlayerOffer {

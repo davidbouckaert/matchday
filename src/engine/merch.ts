@@ -8,6 +8,7 @@ import type { Rng } from './rng';
 import { clamp } from './rng';
 import { MERCH_ITEM_WEEK_COST, MERCH_WEEK_COST, merchDef } from './data/catalog';
 import { MATCH_WEEKS, isWinter } from './calendar';
+import { DIVISIONS } from './data/divisions';
 import { OWN_TEAM_ID, ownPosition } from './league';
 import { staffSkill } from './staff';
 import { popularity, willingnessToPay } from './popularity';
@@ -22,7 +23,9 @@ export function merchPriceFactor(price: number, ref: number): number {
 
 /** De richtprijs stijgt mee met je populariteit: bij een populaire club betaalt men meer voor een shirt. */
 export function refPrice(state: GameState, id: MerchItem['id']): number {
-  return Math.round(merchDef(id).ref * willingnessToPay(state));
+  // in een hogere reeks betalen supporters meer voor hetzelfde shirt
+  const level = DIVISIONS[state.league.divisionLevel].refTicketPrice / DIVISIONS[1].refTicketPrice;
+  return Math.round(merchDef(id).ref * willingnessToPay(state) * level);
 }
 
 /** Speelt er deze week een thuiswedstrijd? Dan is de shop open en verkoopt hij het meest. */

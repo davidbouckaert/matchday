@@ -18,8 +18,8 @@ import {
 import { OWN_TEAM_ID, applyResult, createLeague, opponentStrength, ownPosition, simulateMatch, sortedTable } from './league';
 import { developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, selectLineup, teamStrength } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
-import { bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
-import { resolveRequests, weeklySponsors } from './sponsors';
+import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
+import { resolveRequests, sponsorsAfterSeason, weeklySponsors } from './sponsors';
 import { weeklyMerch } from './merch';
 import { bankruptcyCheck, rollInjuries, weeklyEvents } from './events';
 import { refreshLoanMarket, refreshStaffMarket, refreshTransferList, weeklyMarket } from './market';
@@ -193,6 +193,12 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
   if (home) attendance = bookHomeMatch(state, { weather, derby: opponent.isRival, positionFactor: positionFactor(state) }, opponent.name);
   else bookAwayMatch(state, opponent.name);
 
+  // winstpremie voor de basiself: succes kost ook geld
+  if (goalsFor > goalsAgainst) {
+    const bonus = lineup.reduce((sum, p) => sum + p.wage, 0) * WIN_BONUS_SHARE;
+    book(state, 'lonen spelers', -bonus, `Winstpremie basiself (${Math.round(WIN_BONUS_SHARE * 100)}% van hun vergoeding)`);
+  }
+
   // kaarten en schorsingen
   const cards = cardsForOwnTeam(state, rng, lineup, opponent.isRival);
   cardsForOpponent(state, rng, opponentId, opponent.isRival);
@@ -263,7 +269,7 @@ function payPending(state: GameState): void {
 function scheduledPayments(state: GameState): void {
   const c = state.community;
   if (state.week === BOND_FEE_WEEK) {
-    const fee = 5000 + state.players.length * 150 + c.youthMembers * 22 + state.league.divisionLevel * 3000;
+    const fee = (5000 + state.players.length * 150 + c.youthMembers * 22) * (1 + state.league.divisionLevel * 0.35) * state.inflation;
     book(state, 'bond & verzekering', -fee, 'Aansluiting Voetbal Vlaanderland en verzekeringen');
   }
   if (state.week === YOUTH_FEE_WEEK) {
@@ -276,7 +282,7 @@ function scheduledPayments(state: GameState): void {
     if (state.youthFee < YOUTH_FEE_REF * 0.7) c.reputation = clamp(c.reputation + 1, 0, 100);
   }
   if (state.week === SUBSIDY_WEEK) {
-    book(state, 'subsidies', 8000 + c.youthMembers * 25, 'Subsidie gemeente (jeugdwerking)');
+    book(state, 'subsidies', (8000 + c.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12), 'Subsidie gemeente (jeugdwerking en sportieve uitstraling)');
   }
 }
 
@@ -443,6 +449,24 @@ function licenceAudit(state: GameState): void {
 
 // ---------- Seizoenseinde en nieuw seizoen ----------
 
+/**
+ * Wat een titel of een promotie opbrengt. In het Belgische amateurvoetbal betaalt de bond
+ * geen prijzengeld: wat je krijgt zijn premies van je sponsors, een kampioenenreceptie en
+ * een tombola. Vanaf 1ste Nationale komt er echt geld bij (tv, beker, bondspremies).
+ */
+export const PRIZE_TABLE: Array<{ kampioen: number; promotie: number }> = [
+  { kampioen: 2_000, promotie: 1_000 }, // 1ste Provinciale
+  { kampioen: 4_500, promotie: 2_500 }, // 3de Nationale
+  { kampioen: 7_000, promotie: 4_000 }, // 2de Nationale
+  { kampioen: 40_000, promotie: 25_000 }, // 1ste Nationale
+  { kampioen: 160_000, promotie: 95_000 }, // Challenger Pro League
+];
+
+export function seasonPrize(level: number, result: 'kampioen' | 'promotie'): number {
+  const row = PRIZE_TABLE[Math.min(Math.max(level, 0), PRIZE_TABLE.length - 1)];
+  return row[result];
+}
+
 function seasonEnd(state: GameState): void {
   const table = sortedTable(state.league);
   const pos = table.findIndex((r) => r.teamId === OWN_TEAM_ID) + 1;
@@ -450,6 +474,7 @@ function seasonEnd(state: GameState): void {
   const level = state.league.divisionLevel;
   const c = state.community;
   let result: 'promotie' | 'degradatie' | 'behoud' | 'kampioen' = 'behoud';
+  let prize = 0;
 
   if (pos === 1 && level < DIVISIONS.length - 1) {
     result = 'kampioen';
@@ -458,8 +483,9 @@ function seasonEnd(state: GameState): void {
     c.reputation = clamp(c.reputation + 12, 0, 100);
     c.fanMood = clamp(c.fanMood + 20, 0, 100);
     c.fanBase = Math.round(c.fanBase * 1.25);
-    book(state, 'meevallers', 5000 + level * 10000, 'Kampioenenpremie en feest');
-    addNews(state, 'goed', `KAMPIOEN! ${state.clubName} promoveert naar ${DIVISIONS[level + 1].name}!`);
+    prize = seasonPrize(level, 'kampioen');
+    book(state, 'premies', prize, level < 3 ? `Kampioenenpremies van sponsors en supporters (${DIVISIONS[level].name})` : `Prijzengeld en tv-premie voor de titel (${DIVISIONS[level].name})`);
+    addNews(state, 'goed', `KAMPIOEN! ${state.clubName} promoveert naar ${DIVISIONS[level + 1].name}. Kampioenenpremie: €${prize.toLocaleString('nl-BE')}.`);
   } else if (pos === 2 && level < DIVISIONS.length - 1) {
     result = 'promotie';
     state.nextDivisionLevel = level + 1;
@@ -467,7 +493,9 @@ function seasonEnd(state: GameState): void {
     c.reputation = clamp(c.reputation + 8, 0, 100);
     c.fanMood = clamp(c.fanMood + 12, 0, 100);
     c.fanBase = Math.round(c.fanBase * 1.15);
-    addNews(state, 'goed', `Tweede plaats en promotie naar ${DIVISIONS[level + 1].name}!`);
+    prize = seasonPrize(level, 'promotie');
+    book(state, 'premies', prize, level < 3 ? `Promotiepremies van sponsors (${DIVISIONS[level].name})` : `Promotiepremie en tv-geld (${DIVISIONS[level].name})`);
+    addNews(state, 'goed', `Tweede plaats en promotie naar ${DIVISIONS[level + 1].name}. Promotiepremie: €${prize.toLocaleString('nl-BE')}.`);
   } else if (pos >= table.length - 2 && level > 0) {
     result = 'degradatie';
     state.nextDivisionLevel = level - 1;
@@ -480,10 +508,13 @@ function seasonEnd(state: GameState): void {
     addNews(state, 'neutraal', `Seizoen afgesloten op plaats ${pos}. ${state.clubName} blijft in ${DIVISIONS[level].name}.`);
   }
 
+  if (state.nextDivisionLevel !== level) adjustWagesForDivision(state, level, state.nextDivisionLevel);
+  sponsorsAfterSeason(state, createRng(state), result, state.nextDivisionLevel);
+
   const profit = Object.entries(state.seasonTotals)
     .filter(([k]) => k !== 'leningen' && k !== 'investeerder')
     .reduce((s, [, v]) => s + (v ?? 0), 0);
-  state.history.push({ season: state.season, division: DIVISIONS[level].name, position: pos, points: row.points, result, profit });
+  state.history.push({ season: state.season, division: DIVISIONS[level].name, position: pos, points: row.points, result, profit, prize });
 
   // het fonds wil promotie binnen 3 seizoenen
   if (state.investor === 'fonds' && state.investorActive && state.season >= 3 && state.promotionsWithInvestor === 0) {
@@ -493,6 +524,25 @@ function seasonEnd(state: GameState): void {
   }
 }
 
+/**
+ * Een andere reeks betekent andere lonen. Bij promotie vragen spelers en staff meer
+ * (ze spelen hoger, en andere clubs bellen), bij degradatie wordt er neerwaarts onderhandeld.
+ */
+function adjustWagesForDivision(state: GameState, from: number, to: number): void {
+  const up = to > from;
+  const players = up ? 1.14 : 0.9;
+  const staff = up ? 1.1 : 0.93;
+  for (const p of state.players) p.wage = Math.round((p.wage * players) / 5) * 5;
+  for (const m of state.staff) m.wage = Math.round((m.wage * staff) / 5) * 5;
+  addNews(
+    state,
+    up ? 'neutraal' : 'neutraal',
+    up
+      ? `Hogere reeks, hogere lonen: spelers vragen ongeveer ${Math.round((players - 1) * 100)}% meer, staff ${Math.round((staff - 1) * 100)}%.`
+      : `Na de degradatie wordt er neerwaarts onderhandeld: spelerslonen ${Math.round((1 - players) * 100)}% lager, staff ${Math.round((1 - staff) * 100)}%.`,
+  );
+}
+
 function newSeason(state: GameState, rng: Rng): void {
   state.week = 1;
   state.season++;
@@ -500,7 +550,7 @@ function newSeason(state: GameState, rng: Rng): void {
   state.seasonTotals = {};
   state.merch.seasonUnits = 0;
   // alles wordt elk seizoen wat duurder; wie niets aanpast, ziet zijn marge verdampen
-  state.inflation = Math.round(state.inflation * 1.06 * 1000) / 1000;
+  state.inflation = Math.round(state.inflation * 1.07 * 1000) / 1000;
   rolloverStats(state);
 
   // huurlingen keren terug naar hun club, uitgeleende spelers komen terug

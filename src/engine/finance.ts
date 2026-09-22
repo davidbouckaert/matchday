@@ -6,6 +6,7 @@ import { attendanceFactors, priceFactor, product, spendFactors, volunteerFactor 
 import { payLoanWeek, sponsorWeekly } from './loans';
 import { book, addNews } from './util';
 import { bookMatchdayCatering } from './canteen';
+import { OWN_TEAM_ID } from './league';
 
 export type Weather = 'zon' | 'bewolkt' | 'regen' | 'storm' | 'vriesweer';
 
@@ -34,6 +35,9 @@ export function spendPerHead(state: GameState): number {
 }
 
 /** Inkomsten van een thuiswedstrijd. Geeft het aantal toeschouwers terug. */
+export const MATCH_FEE_SHARE = 0.3; // deel van de spelersvergoeding dat aan een wedstrijd hangt
+export const WIN_BONUS_SHARE = 0.12; // extra premie voor de basiself na een zege
+
 export const AWAY_SHARE = 0.08; // aandeel van de bezoekende club en de bond in de ticketopbrengst
 
 export function bookHomeMatch(state: GameState, input: AttendanceInput, opponentName: string): number {
@@ -75,9 +79,12 @@ export function breakdownChance(state: GameState): number {
 /** Vaste wekelijkse inkomsten en kosten. */
 export function bookWeeklyFlows(state: GameState): void {
   // uitgeleende spelers: de andere club betaalt een deel van het loon
-  const playerWages = state.players.reduce((s, p) => s + p.wage * (p.loan?.type === 'uit' ? 1 - p.loan.wageShare : 1), 0);
+  // In het amateurvoetbal is een deel van de vergoeding een wedstrijdpremie: geen wedstrijd, geen premie.
+  const playing = state.league.fixtures.some((f) => f.week === state.week && (f.homeId === OWN_TEAM_ID || f.awayId === OWN_TEAM_ID));
+  const share = playing ? 1 : 1 - MATCH_FEE_SHARE;
+  const playerWages = state.players.reduce((s, p) => s + p.wage * share * (p.loan?.type === 'uit' ? 1 - p.loan.wageShare : 1), 0);
   const staffWages = state.staff.reduce((s, x) => s + x.wage, 0);
-  book(state, 'lonen spelers', -playerWages, 'Spelersvergoedingen');
+  book(state, 'lonen spelers', -playerWages, playing ? 'Spelersvergoedingen (vast deel en wedstrijdpremie)' : 'Spelersvergoedingen (vast deel, geen wedstrijdpremie)');
   book(state, 'lonen staff', -staffWages, 'Lonen staff');
   book(state, 'onderhoud & energie', -facilityCost(state), 'Onderhoud terreinen, energie, materiaal');
   book(state, 'onderhoud & energie', -state.community.youthMembers * 3, 'Werking jeugd (materiaal, vergoedingen)');
