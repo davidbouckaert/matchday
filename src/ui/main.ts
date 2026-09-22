@@ -5,7 +5,9 @@ import { advanceWeek } from '../engine/turn';
 import * as actions from '../engine/actions';
 import type { ActionResult } from '../engine/actions';
 import { DIVISIONS } from '../engine/data/divisions';
-import { MATCH_WEEKS, formatDateLong, formatWeek, isTransferWindow, seasonLabel, seasonPhase } from '../engine/calendar';
+import {
+  MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, formatDateLong, formatWeek, inWinterBreak, isTransferWindow, seasonLabel, seasonPhase,
+} from '../engine/calendar';
 import { indexedDbStore, exportToFile, importFromFile } from '../storage/save';
 import { defaultDraft, setupScreen, type SetupDraft } from './screens/setup';
 import { overviewScreen, weekSummary } from './screens/overview';
@@ -16,6 +18,7 @@ import { strategyScreen } from './screens/strategy';
 import { trainingScreen } from './screens/training';
 import { influencesScreen } from './screens/influences';
 import { calendarScreen } from './screens/calendar';
+import { guideScreen } from './screens/guide';
 import { merchScreen } from './screens/merch';
 import { horecaScreen } from './screens/horeca';
 import { numbersScreen } from './screens/numbers';
@@ -26,10 +29,10 @@ import { animationOverlay, reportOverlay, type WeekRef } from './screens/report'
 import { teamStrength } from '../engine/players';
 import { OWN_TEAM_ID, ownPosition } from '../engine/league';
 import { mainSponsor } from '../engine/sponsors';
+import { clubRatings } from '../engine/ratings';
 import { strategyTask } from '../engine/delegation';
 import { financeScreen } from './screens/finance';
 import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from './screens/club';
-import { avatarSvg } from './avatar';
 import { type CrestShape, clubInitials, crestSvg } from './crest';
 import { START_CLUBS } from '../engine/data/setup';
 import { esc, euro } from './format';
@@ -39,7 +42,7 @@ const SLOT = 'slot1';
 type Screen =
   | 'overzicht' | 'ploeg' | 'strategie' | 'transfers' | 'contracten' | 'staff' | 'opleiding'
   | 'kalender' | 'financien' | 'sponsors' | 'fanshop' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club'
-  | 'competitie' | 'invloeden' | 'opslaan';
+  | 'competitie' | 'invloeden' | 'opslaan' | 'handleiding';
 
 /** Navigatie in groepen: hoofdtabs met subtabs. */
 const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
@@ -56,7 +59,7 @@ const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
   },
   { id: 'competitie', label: 'Competitie', screens: [['competitie', 'Stand, kalender en tucht']] },
   { id: 'invloeden', label: 'Invloeden', screens: [['invloeden', 'Invloeden']] },
-  { id: 'opslaan', label: 'Opslaan', screens: [['opslaan', 'Opslaan en instellingen']] },
+  { id: 'menu', label: 'Menu', screens: [['handleiding', 'Handleiding'], ['opslaan', 'Opslaan en instellingen']] },
 ];
 
 const groupOf = (screen: Screen) => GROUPS.find((g) => g.screens.some(([id]) => id === screen))!;
@@ -70,6 +73,8 @@ interface UiState {
   confirmNewGame: boolean;
   busy: boolean;
   highlight: string;
+  statsView: 'seizoen' | 'week';
+  menuOpen: boolean;
   selectedStaff: string | null;
   sorts: Record<string, { col: number; dir: 1 | -1 }>;
   report: { phase: 'anim' | 'report'; prev: WeekRef } | null;
@@ -86,6 +91,8 @@ const ui: UiState = {
   confirmNewGame: false,
   busy: false,
   highlight: '',
+  statsView: 'seizoen',
+  menuOpen: false,
   selectedStaff: null,
   sorts: {},
   report: null,
@@ -153,9 +160,10 @@ function renderScreen(g: GameState): string {
     case 'club': return clubScreen(g);
     case 'opslaan': return saveScreen(g, ui.lastSaved, ui.animate);
     case 'kalender': return calendarScreen(g);
+    case 'handleiding': return guideScreen(g);
     case 'fanshop': return merchScreen(g);
     case 'horeca': return horecaScreen(g);
-    case 'cijfers': return numbersScreen(g);
+    case 'cijfers': return numbersScreen(g, ui.statsView);
     case 'contracten': return contractsScreen(g);
   }
 }
@@ -177,33 +185,68 @@ function render(): void {
   const { income, costs } = weekSummary(g.lastWeek);
   const net = income + costs;
   const group = groupOf(ui.screen);
+  const weekLabel = nextWeekLabel(g);
   const gap = lineupGap(g);
   const blocked = gap.available < 11 ? `Je kunt geen elf opstellen: nog maar ${gap.available} speelklare spelers. Ga naar Ploeg › Selectie en haal spelers bij Transfers.` : '';
   const table = g.league.table.find((r) => r.teamId === OWN_TEAM_ID);
   root.innerHTML = `
     <header class="topbar">
-      <div class="club">${crestSvg(g.crest as CrestShape, (START_CLUBS.find((c) => c.id === g.clubId)?.colors ?? ['#1f7a3c', '#ffffff']) as [string, string], clubInitials(g.clubName), 40)}${avatarSvg(g.avatar, 34)}<div><strong>${esc(g.clubName)}</strong><span class="muted small">${division.name} · ${seasonLabel(g.startYear, g.season)}</span></div></div>
-      <div class="today"><span class="muted small">Vandaag · seizoen ${g.season}, week ${g.week}</span><strong>${formatDateLong(g.startYear, g.season, g.week)}</strong><span class="small">${seasonPhase(g.week)}${isTransferWindow(g.week) ? ' · <span class="tag">transferperiode open</span>' : ''}</span></div>
-      <button class="primary next" data-action="next-week" ${blocked || g.gameOver || ui.busy ? 'disabled' : ''} title="${blocked ? esc(blocked) : 'Speel de volgende week (spatie)'}">Volgende week ▶</button>
+      <div class="club">${crestSvg(g.crest as CrestShape, (START_CLUBS.find((c) => c.id === g.clubId)?.colors ?? ['#1f7a3c', '#ffffff']) as [string, string], clubInitials(g.clubName), 44)}
+        <div class="club-name">
+          <strong>${esc(g.clubName)}</strong>
+          <span class="muted small">${division.name} · ${seasonLabel(g.startYear, g.season)}</span>
+        </div>
+        <button class="rating-chips" data-action="nav" data-id="club" title="Naar je clubinfo">${clubRatings(g)
+          .map(
+            (r) => `<span class="chip" title="${esc(r.label)}: ${r.score}/100 — ${r.parts.map((p) => `${p.label} ${p.score}/100`).join(', ')}">
+              <span class="ic">${r.key === 'sportief' ? '⚽' : r.key === 'financieel' ? '💶' : '🤝'}</span>
+              <span class="stars">${'★'.repeat(r.stars)}<span class="off">${'★'.repeat(5 - r.stars)}</span></span>
+              <span class="score">${r.score}</span></span>`,
+          )
+          .join('')}</button>
+      </div>
+      <button class="today link-stat" data-action="nav" data-id="kalender" title="Naar de kalender"><span class="muted small">Vandaag · seizoen ${g.season}, week ${g.week}</span><strong>${formatDateLong(g.startYear, g.season, g.week)}</strong><span class="small">${inWinterBreak(g.week) ? '<span class="tag big-tag">❄️ winterstop</span>' : seasonPhase(g.week)}${
+        isTransferWindow(g.week) ? ' <span class="tag">transferperiode open</span>' : ''
+      }</span></button>
+      <button class="primary next ${weekLabel.highlight ? 'season-end' : ''}" data-action="next-week" ${blocked || g.gameOver || ui.busy ? 'disabled' : ''} title="${
+        blocked ? esc(blocked) : esc(weekLabel.tip)
+      }">${weekLabel.text}</button>
       <div class="stats">
-        <div class="stat"><span class="muted small">Teamsterkte</span><strong>${strength.total}</strong><span class="muted small">A ${strength.attack} · V ${strength.defense}</span></div>
-        <div class="stat"><span class="muted small">Klassement</span><strong>${played ? `${ownPosition(g.league)}e` : '–'}</strong><span class="muted small">${played ? `${table!.points} ptn uit ${played}` : `start ${formatWeek(g.startYear, g.season, MATCH_WEEKS[0])}`}</span></div>
-        <div class="stat hide-sm"><span class="muted small">Hoofdsponsor</span><strong class="ellipsis">${main ? esc(main.name) : 'geen'}</strong><span class="muted small">${main ? `${euro(main.weekly)}/week` : 'zoek er een (Club › Sponsors)'}</span></div>
-        <div class="stat"><span class="muted small">Vorige week</span><strong class="${net < 0 ? 'neg' : 'pos'}">${net > 0 ? '+' : ''}${euro(net)}</strong><span class="muted small">in ${euro(income)} · uit ${euro(-costs)}</span></div>
-        <div class="stat cash ${g.cash < 0 ? 'neg' : ''}"><span class="muted small">Saldo</span><strong>${euro(g.cash)}</strong><span class="muted small">${g.weeksNegative ? `${g.weeksNegative}/8 weken rood` : '&nbsp;'}</span></div>
+        <button class="stat link-stat" data-action="nav" data-id="ploeg" title="Naar je selectie"><span class="muted small">Teamsterkte</span><strong>${strength.total}</strong><span class="muted small">A ${strength.attack} · V ${strength.defense}</span></button>
+        <button class="stat link-stat" data-action="nav" data-id="competitie" title="Naar de competitiestand"><span class="muted small">Klassement</span><strong>${played ? `${ownPosition(g.league)}e` : '–'}</strong><span class="muted small">${played ? `${table!.points} ptn uit ${played}` : `start ${formatWeek(g.startYear, g.season, MATCH_WEEKS[0])}`}</span></button>
+        <button class="stat link-stat hide-sm" data-action="nav" data-id="sponsors" title="Naar je sponsors"><span class="muted small">Hoofdsponsor</span><strong class="ellipsis">${main ? esc(main.name) : 'geen'}</strong><span class="muted small">${main ? `${euro(main.weekly)}/week` : 'zoek er een'}</span></button>
+        <button class="stat link-stat" data-action="nav" data-id="financien" title="Naar je financiën"><span class="muted small">Vorige week</span><strong class="${net < 0 ? 'neg' : 'pos'}">${net > 0 ? '+' : ''}${euro(net)}</strong><span class="muted small">in ${euro(income)} · uit ${euro(-costs)}</span></button>
+        <button class="stat cash link-stat ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" title="Naar je financiën"><span class="muted small">Saldo</span><strong>${euro(g.cash)}</strong><span class="muted small">${g.weeksNegative ? `${g.weeksNegative}/8 weken rood` : '&nbsp;'}</span></button>
       </div>
     </header>
-    <nav class="tabs">${GROUPS.map((gr) => {
-      const warn = gr.id === 'ploeg' && blocked ? '<span class="badge" title="Er is een probleem met je selectie">!</span>' : '';
-      return `<button class="${gr.id === group.id ? 'on' : ''}" data-action="nav-group" data-id="${gr.id}">${gr.label}${warn}</button>`;
-    }).join('')}</nav>
+    <nav class="tabs">${GROUPS.filter((gr) => gr.id !== 'menu')
+      .map((gr) => {
+        const warn = gr.id === 'ploeg' && blocked ? '<span class="badge" title="Er is een probleem met je selectie">!</span>' : '';
+        return `<button class="${gr.id === group.id ? 'on' : ''}" data-action="nav-group" data-id="${gr.id}">${gr.label}${warn}</button>`;
+      })
+      .join('')}
+      <button class="hamburger ${group.id === 'menu' ? 'on' : ''}" data-action="toggle-menu" title="Menu: handleiding en opslaan" aria-label="Menu">☰</button>
+    </nav>
+    ${
+      ui.menuOpen
+        ? `<div class="menu-pop">
+            <button data-action="nav" data-id="handleiding">📖 Handleiding en FAQ</button>
+            <button data-action="nav" data-id="opslaan">💾 Opslaan en instellingen</button>
+          </div>`
+        : ''
+    }
     ${group.screens.length > 1 ? `<nav class="subtabs">${group.screens.map(([id, label]) => `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}</button>`).join('')}</nav>` : ''}
-    <main class="content">${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${renderScreen(g)}</main>
+    <main class="content">${
+      inWinterBreak(g.week)
+        ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de fanshop te laten draaien.</p></section>`
+        : ''
+    }${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${renderScreen(g)}</main>
     <footer class="app-footer"><span class="muted small">Clubeigenaar ${VERSION} · ${esc(g.clubName)} · seizoen ${g.season}, week ${g.week}</span></footer>
     ${ui.report ? (ui.report.phase === 'anim' ? animationOverlay(g, ui.report.prev) : reportOverlay(g, ui.report.prev)) : ''}
     ${toast}`;
   applySorts();
   measureBars();
+  rollNumbers();
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
     if (btn) {
@@ -211,6 +254,54 @@ function render(): void {
       btn.dataset.action = 'new-game-confirmed';
     }
   }
+}
+
+/**
+ * Laat de bedragen in het weekrapport oplopen, zoals een teller in een casino.
+ * Zet je de animatie uit bij Opslaan, dan staan de cijfers er meteen.
+ */
+function rollNumbers(): void {
+  const targets = [...root.querySelectorAll<HTMLElement>('.roll[data-to]')];
+  if (!targets.length) return;
+  // let op: signedEuro levert HTML met kleur; hier zetten we platte tekst, de kleur staat al op de cel
+  const format = (el: HTMLElement, value: number) => {
+    const rounded = Math.round(value);
+    return el.dataset.signed === '1' && rounded > 0 ? `+${euro(rounded)}` : euro(rounded);
+  };
+  if (!ui.animate) {
+    for (const el of targets) el.textContent = format(el, Number(el.dataset.to));
+    return;
+  }
+  // post per post: elke regel start iets later en telt in ~650 ms naar zijn eindbedrag
+  const stagger = Math.min(170, 1400 / Math.max(1, targets.length));
+  const duration = 650;
+  const start = performance.now();
+  const step = (now: number) => {
+    let busy = false;
+    targets.forEach((el, i) => {
+      const t = Math.min(1, Math.max(0, now - start - i * stagger) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = format(el, Number(el.dataset.to) * eased);
+      if (t >= 1) el.classList.add('landed');
+      else busy = true;
+    });
+    if (busy) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/** Wat er volgende week gebeurt, in de knop zelf. */
+function nextWeekLabel(g: GameState): { text: string; tip: string; highlight: boolean } {
+  const last = MATCH_WEEKS[MATCH_WEEKS.length - 1];
+  if (g.week === last) {
+    return { text: 'Laatste speeldag ▶', tip: 'De laatste wedstrijd van het seizoen. Daarna vallen de beslissingen over promotie en degradatie.', highlight: true };
+  }
+  if (g.week === SEASON_END_WEEK) {
+    return { text: 'Seizoen afsluiten ▶', tip: 'Deze week wordt de eindstand vastgelegd: kampioen, promotie en degradatie. Je krijgt meteen het seizoensrapport.', highlight: true };
+  }
+  if (g.week > last && g.week < SEASON_END_WEEK) return { text: 'Volgende week ▶', tip: 'De competitie is gespeeld; de eindafrekening volgt in week ' + SEASON_END_WEEK + '.', highlight: false };
+  if (g.week === WEEKS_PER_YEAR) return { text: 'Nieuw seizoen starten ▶', tip: 'Contracten lopen af, de jeugd stroomt door en er komt een nieuwe kalender.', highlight: true };
+  return { text: 'Volgende week ▶', tip: 'Speel de volgende week (spatie)', highlight: false };
 }
 
 /** Houdt de kopbalk en de menubalk op hun plaats, ook als ze van hoogte veranderen. */
@@ -310,6 +401,7 @@ const handlers: Record<string, Handler> = {
       clubId: d.clubId,
       investor: d.investor,
       crest: d.crest,
+      clubName: d.clubName,
     });
     ui.screen = 'overzicht';
     await persist();
@@ -318,10 +410,12 @@ const handlers: Record<string, Handler> = {
   // navigatie
   nav: (id) => {
     ui.screen = id as Screen;
+    ui.menuOpen = false;
     ui.lastScreen[groupOf(ui.screen).id] = ui.screen;
     ui.confirmNewGame = false;
   },
   'nav-group': (id) => {
+    ui.menuOpen = false;
     const gr = GROUPS.find((x) => x.id === id)!;
     ui.screen = ui.lastScreen[gr.id] ?? gr.screens[0][0];
     ui.confirmNewGame = false;
@@ -356,6 +450,8 @@ const handlers: Record<string, Handler> = {
     ui.sorts[table] = current && current.col === c ? { col: c, dir: current.dir === 1 ? -1 : 1 } : { col: c, dir: 1 };
   },
   'staff-open': (id) => void (ui.selectedStaff = ui.selectedStaff === id ? null : id),
+  'stats-view': (id) => void (ui.statsView = id as 'seizoen' | 'week'),
+  'toggle-menu': () => void (ui.menuOpen = !ui.menuOpen),
 
   // spel
   buy: gameAction(actions.buyPlayer),
@@ -449,6 +545,7 @@ root.addEventListener('click', async (e) => {
 root.addEventListener('input', (e) => {
   const el = e.target as HTMLInputElement;
   if (el.id === 'draft-name') ui.draft.name = el.value; // geen render: anders verlies je de cursor
+  if (el.id === 'draft-clubname') ui.draft.clubName = el.value;
 });
 
 // Keuzelijsten (select) met data-change
@@ -463,6 +560,11 @@ const changeHandlers: Record<string, (g: GameState, value: string, id: string) =
   'canteen-price': (g, v, id) => actions.setCanteenPrice(g, id as Parameters<typeof actions.setCanteenPrice>[1], Number(v)),
   'concession-margin': (g, v, id) => actions.renegotiateConcession(g, id as Parameters<typeof actions.renegotiateConcession>[1], Number(v)),
   'player-role': (g, v, id) => actions.setPlayerRole(g, id as 'kapitein' | 'strafschop' | 'hoekschop', v || null),
+  'delegate-task': (g, v, id) => {
+    const result = actions.delegateTask(g, id as TaskId, v || null);
+    if (result.ok) strategyTask(g); // de trainer bereidt meteen voor
+    return result;
+  },
   'asking-price': (g, v, id) => actions.listPlayer(g, id, Number(v)),
 };
 

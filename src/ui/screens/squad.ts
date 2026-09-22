@@ -1,5 +1,5 @@
 import type { GameState, Player, Position } from '../../engine/types';
-import { isTransferWindow } from '../../engine/calendar';
+import { formatWeek, isTransferWindow } from '../../engine/calendar';
 import { DIVISIONS } from '../../engine/data/divisions';
 import { POSITIONS, currentBid, isCorePlayer, lineupGap, marketValue, overall, selectLineup, teamStrength } from '../../engine/players';
 import { PLAN_INFO } from '../../engine/strategy';
@@ -7,6 +7,7 @@ import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
 import * as actions from '../../engine/actions';
 import { available } from '../../engine/discipline';
+import { OPPONENT_STAFF_BONUS } from '../../engine/league';
 import { esc, euro, bar } from '../format';
 import { hint, tip } from '../tooltip';
 
@@ -30,7 +31,7 @@ function tile(label: string, value: number, ref: number, sub = ''): string {
 
 export function squadStats(s: GameState): string {
   const st = teamStrength(s);
-  const ref = DIVISIONS[s.league.divisionLevel].opponentStrength;
+  const ref = DIVISIONS[s.league.divisionLevel].opponentStrength + OPPONENT_STAFF_BONUS;
   const depth = POSITIONS.map((pos) => {
     const all = s.players.filter((p) => p.position === pos);
     const fit = all.filter((p) => p.injuryWeeks === 0 && p.suspended === 0).length;
@@ -184,6 +185,19 @@ function offersList(s: GameState): string {
     .join('');
 }
 
+/** Laatste week van de lopende transferperiode. */
+function nextWindowEnd(s: GameState): number {
+  let w = s.week;
+  while (w < 52 && isTransferWindow(w + 1)) w++;
+  return w;
+}
+
+/** Eerste week van de volgende transferperiode. */
+function nextWindowStart(s: GameState): number {
+  for (let w = s.week + 1; w <= 52; w++) if (isTransferWindow(w)) return w;
+  return 1;
+}
+
 export function transfersScreen(s: GameState): string {
   const window = isTransferWindow(s.week);
   const scout = delegate(s, 'transfers');
@@ -256,7 +270,15 @@ export function transfersScreen(s: GameState): string {
     .join('');
 
   return `
-  ${offers ? `<section class="card attention"><h2>Biedingen op je spelers</h2><ul class="offers">${offers}</ul></section>` : ''}
+  <section class="card window-banner ${window ? 'open' : 'shut'}">
+    <h2>${window ? '🟢 Transferperiode open' : '🔴 Transferperiode gesloten'}</h2>
+    <p class="muted small">${
+      window
+        ? `Kopen, verkopen, uitlenen en huren kan tot en met week ${nextWindowEnd(s)}. Daarna kun je alleen nog spelers te koop zetten en rondkijken.`
+        : `De volgende transferperiode start in week ${nextWindowStart(s)} (${formatWeek(s.startYear, s.season, nextWindowStart(s))}). Tot dan kun je wel al te koop zetten en de markt volgen.`
+    }</p>
+  </section>
+  ${offers ? `<section class="card attention"><h2>Biedingen op je spelers (${s.playerOffers.length})</h2><ul class="offers">${offers}</ul></section>` : ''}
   <section class="card">
     <h2>Transfermarkt: kopen</h2>
     <p class="muted small">${window ? 'De transferperiode is open. Elke week verdwijnen er spelers en komen er nieuwe bij.' : 'De transferperiode is gesloten. Je kunt al rondkijken; kopen, verkopen en huren kan van mei tot eind augustus en in januari.'}

@@ -1,11 +1,12 @@
 import type { GameState, LedgerEntry } from '../../engine/types';
 import { DIVISIONS } from '../../engine/data/divisions';
-import { MATCH_WEEKS, isTransferWindow } from '../../engine/calendar';
-import { OWN_TEAM_ID, ownPosition, teamName } from '../../engine/league';
+import { MATCH_WEEKS, WINTER_BREAK, inWinterBreak, isTransferWindow } from '../../engine/calendar';
+import { OPPONENT_STAFF_BONUS, OWN_TEAM_ID, ownPosition, teamName } from '../../engine/league';
 import { clubRatings } from '../../engine/ratings';
 import { teamStrength } from '../../engine/players';
 import { esc, resultIcon, signedEuro, sparkline, stars } from '../format';
 import { hint } from '../tooltip';
+import { onboardingCard } from './onboarding';
 import { weeks } from '../../engine/util';
 import { available } from '../../engine/discipline';
 
@@ -28,7 +29,7 @@ export function overviewScreen(s: GameState): string {
   const nextLabel = next
     ? `<span class="venue ${next.homeId === OWN_TEAM_ID ? 'home' : 'away'}">${next.homeId === OWN_TEAM_ID ? '🏠 Thuis' : '🚌 Uit'}</span> tegen <strong>${esc(teamName(s, next.homeId === OWN_TEAM_ID ? next.awayId : next.homeId))}</strong> in week ${next.week}${next.week === s.week ? ' (deze week)' : ''}`
     : MATCH_WEEKS[0] > s.week
-      ? 'Competitie start in week 7'
+      ? `Competitie start in week ${MATCH_WEEKS[0]}`
       : 'Geen wedstrijden meer dit seizoen';
   const strength = teamStrength(s);
   const division = DIVISIONS[s.league.divisionLevel];
@@ -36,18 +37,24 @@ export function overviewScreen(s: GameState): string {
   const { income, costs } = weekSummary(s.lastWeek);
   const m = s.lastMatch;
 
-  const warnings: string[] = [];
-  if (s.weeksNegative > 0) warnings.push(`Saldo al ${weeks(s.weeksNegative)} onder nul. Na 8 weken is de club failliet.`);
-  if (s.emergencyLoanOffered) warnings.push('De bank biedt een noodlening aan (Financiën).');
-  if (s.playerOffers.length) warnings.push(s.playerOffers.length === 1 ? 'Er ligt een bod op een van je spelers (Ploeg).' : `Er liggen ${s.playerOffers.length} biedingen op je spelers (Ploeg).`);
-  if (s.sponsorOffers.length) warnings.push(s.sponsorOffers.length === 1 ? 'Er is een nieuw sponsoraanbod (Financiën).' : `Er zijn ${s.sponsorOffers.length} sponsoraanbiedingen (Financiën).`);
-  if (isTransferWindow(s.week)) warnings.push('De transferperiode is open.');
+  const warnings: { text: string; screen: string; where: string }[] = [];
+  const warn = (text: string, screen: string, where: string) => warnings.push({ text, screen, where });
+  if (s.weeksNegative > 0) warn(`Saldo al ${weeks(s.weeksNegative)} onder nul. Na 8 weken is de club failliet.`, 'financien', 'Financiën');
+  if (s.emergencyLoanOffered) warn('De bank biedt een noodlening aan.', 'financien', 'Financiën');
+  if (s.playerOffers.length) warn(s.playerOffers.length === 1 ? 'Er ligt een bod op een van je spelers.' : `Er liggen ${s.playerOffers.length} biedingen op je spelers.`, 'transfers', 'Transfers');
+  if (s.sponsorOffers.length) warn(s.sponsorOffers.length === 1 ? 'Er is een nieuw sponsoraanbod.' : `Er zijn ${s.sponsorOffers.length} sponsoraanbiedingen.`, 'sponsors', 'Sponsors');
+  if (s.requests.length) warn(`Je wacht op antwoord: ${s.requests.map((r) => r.label).join(', ')}.`, 'overzicht', 'Logboek hieronder');
+  const expiring = s.players.filter((p) => p.contractUntil <= s.season).length;
+  if (expiring && s.week > 30) warn(`${expiring} contract(en) lopen af op het einde van dit seizoen.`, 'contracten', 'Contracten');
+  if (isTransferWindow(s.week)) warn('De transferperiode is open.', 'transfers', 'Transfers');
+  if (inWinterBreak(s.week)) warn(`❄️ Winterstop tot week ${WINTER_BREAK.to + 1}: geen wedstrijden, dus geen tickets, wedstrijdkantine of kraampjes. De vaste kosten lopen door.`, 'kalender', 'Kalender');
   const avail = available(s.players).length;
-  if (avail < 11) warnings.push(`Slechts ${avail} spelers beschikbaar (geblesseerd of geschorst): de volgende wedstrijd wordt forfait (0-5)!`);
-  else if (avail < 13) warnings.push(`Slechts ${avail} spelers beschikbaar. Onder de 11 volgt forfait.`);
+  if (avail < 11) warn(`Slechts ${avail} spelers beschikbaar (geblesseerd of geschorst): de volgende wedstrijd wordt forfait (0-5)!`, 'ploeg', 'Selectie');
+  else if (avail < 13) warn(`Slechts ${avail} spelers beschikbaar. Onder de 11 volgt forfait.`, 'ploeg', 'Selectie');
 
   return `
   <div class="grid">
+    ${onboardingCard(s)}
     <section class="card span2">
       <h2>Clubrating</h2>
       <div class="ratings">
@@ -62,7 +69,7 @@ export function overviewScreen(s: GameState): string {
     <section class="card">
       <h2>Volgende wedstrijd</h2>
       <p>${nextLabel}</p>
-      <p class="muted small">Teamsterkte ${strength.total} · gemiddelde tegenstander ${division.opponentStrength}</p>
+      <p class="muted small">Teamsterkte ${strength.total} · gemiddelde tegenstander ${division.opponentStrength + OPPONENT_STAFF_BONUS}</p>
       ${played ? `<p>Stand: <strong>${ownPosition(s.league)}e</strong> in ${division.name}</p>` : ''}
     </section>
 
@@ -72,7 +79,13 @@ export function overviewScreen(s: GameState): string {
       ${m && m.week === s.week - 1 ? `<p class="small">${resultIcon(m.goalsFor, m.goalsAgainst)} <span class="venue ${m.home ? 'home' : 'away'}">${m.home ? '🏠 Thuis' : '🚌 Uit'}</span> vs ${esc(m.opponent)}: <strong>${m.goalsFor}-${m.goalsAgainst}</strong>${m.forfeit ? ' · <span class="neg">forfait</span>' : m.home ? ` · ${m.attendance} toeschouwers · ${m.weather}` : ''}${m.cards ? `<br/>${esc(m.cards)}` : ''}</p>` : ''}
     </section>
 
-    ${warnings.length ? `<section class="card full attention"><h2>Aandacht</h2><ul>${warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></section>` : ''}
+    ${
+      warnings.length
+        ? `<section class="card full attention"><h2>Aandacht</h2><ul class="attention-list">${warnings
+            .map((w) => `<li>${esc(w.text)} <button class="link-btn small" data-action="nav" data-id="${w.screen}">${esc(w.where)} →</button></li>`)
+            .join('')}</ul></section>`
+        : ''
+    }
 
     <section class="card full">
       <h2>Saldo (laatste ${s.cashHistory.length} weken)</h2>

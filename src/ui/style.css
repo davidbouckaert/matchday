@@ -381,3 +381,84 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .crest-pick.sel { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .topbar .club .crest-svg { flex: none; }
 .topbar .club { gap: 8px; }
+.rating-chips { display: flex; gap: 8px; margin-top: 2px; }
+.rating-chips .chip { font-size: 0.72rem; letter-spacing: -1px; color: #d9a300; cursor: help; white-space: nowrap; }
+.rating-chips .chip .off { color: var(--line); }
+.rating-chips .chip .score { color: var(--muted); letter-spacing: 0; margin-left: 3px; font-weight: 600; }
+.stat-toggle button { border: 1px solid var(--line); }
+.window-banner.open { border-left: 4px solid var(--good); }
+.window-banner.shut { border-left: 4px solid var(--bad); }
+.window-banner h2 { margin: 0 0 4px; font-size: 1.05rem; }
+.stat-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
+.link-stat { border: none; background: transparent; text-align: left; padding: 2px 18px; cursor: pointer; border-radius: 6px; }
+.link-stat:hover { background: var(--accent-soft); }
+.topbar .today.link-stat { text-align: right; }
+.rating-chips { cursor: pointer; }
+.tile.locked { opacity: 0.65; }
+.tile.full { border-color: var(--good); }
+.tiles .tile, .tile { min-width: 0; overflow-wrap: anywhere; }
+.tile.locked .small { display: block; }
+/* kopbalk: naam links, clubrating ernaast */
+.topbar .club { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.topbar .club-name { display: flex; flex-direction: column; }
+.rating-chips { display: flex; flex-direction: column; gap: 1px; border: none; background: transparent; padding: 2px 8px; border-left: 1px solid var(--line); cursor: pointer; }
+.rating-chips:hover { background: var(--accent-soft); border-radius: 6px; }
+.rating-chips .chip { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; white-space: nowrap; }
+.rating-chips .stars { color: #d9a300; letter-spacing: -1px; }
+.rating-chips .off { color: var(--line); }
+.rating-chips .score { color: var(--muted); font-weight: 600; min-width: 20px; text-align: right; }
+.tag.big-tag { font-size: 0.8rem; font-weight: 700; background: #d8e9ff; color: #14406e; }
+.card.winter { border-left: 4px solid #4a86c8; background: #f2f8ff; }
+@media (max-width: 760px) {
+  .rating-chips { flex-direction: row; flex-wrap: wrap; gap: 10px; border-left: none; padding-left: 0; width: 100%; }
+  .topbar .club { gap: 8px; }
+  .topbar .today strong { font-size: 1rem; }
+  .topbar .club-name strong { font-size: 1rem; }
+}
+/* hamburgermenu */
+.tabs { position: sticky; }
+.hamburger { margin-left: auto; font-size: 1.1rem; padding: 6px 12px; }
+.menu-pop { position: fixed; right: 16px; top: calc(var(--topbar-h, 0px) + var(--tabs-h, 0px) + 6px); z-index: 20; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 6px; display: flex; flex-direction: column; min-width: 230px; }
+.menu-pop button { text-align: left; background: transparent; border: none; padding: 9px 12px; border-radius: 7px; }
+.menu-pop button:hover { background: var(--accent-soft); }
+.tabs { position: sticky; }
+
+/* eerste stappen */
+.card.todo { border-left: 4px solid var(--accent); }
+.todo-list { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+.todo-list li { display: flex; gap: 10px; align-items: flex-start; }
+.todo-list li.done { opacity: 0.55; }
+.todo-list .box { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none; border: 1px solid var(--line); border-radius: 5px; color: var(--good); font-weight: 700; }
+.todo-list li.done .box { background: var(--accent-soft); border-color: var(--accent); }
+.link-btn { background: transparent; border: none; color: var(--accent); padding: 0; text-decoration: underline; cursor: pointer; }
+.attention-list li { margin-bottom: 4px; }
+.attention-list .link-btn { white-space: nowrap; }
+.roll { font-variant-numeric: tabular-nums; }
+.report-grid .milestone { background: linear-gradient(90deg, #fff7e0, #fffdf7); border: 1px solid #f0d98a; border-radius: 10px; padding: 10px 14px; }
+.report-grid .milestone h3 { margin: 0 0 4px; }
+.fit-stars { color: #d9a300; letter-spacing: -1px; }
+.fit-stars .muted { color: var(--muted); letter-spacing: 0; }
+.report-grid .season-review { background: #eef6ff; border: 1px solid #c8ddf5; border-radius: 10px; padding: 10px 14px; }
+.report-grid .season-review h3 { margin: 0 0 4px; }
+.primary.next.season-end { background: linear-gradient(135deg, #b8860b, #d9a300); border-color: #a87f06; }
+.season-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.season-grid > div { display: flex; flex-direction: column; background: #fff; border: 1px solid #dbe7f5; border-radius: 8px; padding: 8px 10px; }
+.season-grid .label { font-size: 0.75rem; color: var(--muted); }
+.season-grid strong { font-size: 1.05rem; }
+.season-grid .small { color: var(--muted); font-size: 0.78rem; }
+/* spanning: de week bouwt op, de uitslag springt eruit */
+.anim-beats { position: relative; height: 22px; margin-top: 10px; }
+.anim-beats span { position: absolute; left: 0; right: 0; opacity: 0; animation: beat 1.8s linear forwards; }
+.anim-beats span:nth-child(2) { animation-delay: 0.6s; }
+.anim-beats span:nth-child(3) { animation-delay: 1.2s; font-weight: 700; }
+@keyframes beat { 0% { opacity: 0; transform: translateY(6px); } 12% { opacity: 1; transform: none; } 33% { opacity: 1; } 45% { opacity: 0; } 100% { opacity: 0; } }
+.anim-bar { height: 4px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.anim-bar span { display: block; height: 100%; width: 0; background: var(--accent); animation: fill 1.8s linear forwards; }
+@keyframes fill { to { width: 100%; } }
+.scoreboard.reveal { animation: pop 0.45s cubic-bezier(.2,1.6,.4,1); }
+@keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: none; } }
+.streak { color: #c2410c; font-weight: 600; }
+.report-grid .milestone.record { background: linear-gradient(90deg, #eef7ff, #fbfdff); border-color: #bcd8f2; }
+.roll.landed { animation: land 0.35s ease-out; }
+@keyframes land { 0% { transform: scale(1.12); } 100% { transform: none; } }
+.season-grid .wide-cell { grid-column: span 2; }

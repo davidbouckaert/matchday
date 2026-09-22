@@ -31,6 +31,10 @@ export function merchScreen(s: GameState): string {
 
   const lastTotal = m.lastUnits.reduce((sum, u) => sum + u.revenue, 0);
   const lastUnits = m.lastUnits.reduce((sum, u) => sum + u.units, 0);
+  const lastCost = m.lastUnits.reduce((sum, u) => sum + u.units * buyPrice(s, u.id), 0);
+  const seasonRevenue = s.seasonTotals.merchandising ?? 0;
+  const seasonCost = s.seasonTotals['inkoop shop'] ?? 0;
+  const seasonFixed = s.seasonTotals['werking shop'] ?? 0;
   const expectedRevenue = m.items.reduce((sum, i) => sum + expectedUnits(s, i) * margin(s, i), 0);
   const fixed = MERCH_WEEK_COST * (1 - staffSkill(s, 'merchandising') / 400) + m.items.length * MERCH_ITEM_WEEK_COST;
 
@@ -65,10 +69,12 @@ export function merchScreen(s: GameState): string {
       </p>
       ${locked ? `<p class="attention-inline small">${esc(manager!.name)} beheert de fanshop: hij zet de prijzen en breidt het assortiment uit. Haal de taak bij Staff terug om zelf te beslissen.</p>` : ''}
       <dl class="facts">
-        <dt>Vorige week</dt><dd>${lastUnits} artikelen · ${euro(lastTotal)} omzet</dd>
-        <dt>Dit seizoen</dt><dd>${m.seasonUnits} artikelen verkocht</dd>
-        <dt>Verwachte brutowinst deze week</dt><dd>${euro(Math.round(expectedRevenue - fixed))} <span class="muted small">(na ${euro(Math.round(fixed))} werkingskosten)</span></dd>
+        <dt>Vorige week</dt><dd>${lastUnits} artikelen · ${euro(lastTotal)} omzet · inkoop ${euro(Math.round(lastCost))} · winst ${euro(Math.round(lastTotal - lastCost - fixed))}</dd>
+        <dt>Dit seizoen</dt><dd>${m.seasonUnits} artikelen verkocht · omzet ${euro(seasonRevenue)} · inkoop ${euro(-seasonCost)} · werking ${euro(-seasonFixed)}</dd>
+        <dt>Verwachte winst deze week</dt><dd>${euro(Math.round(expectedRevenue - fixed))} <span class="muted small">(marge op de verkoop min ${euro(Math.round(fixed))} vaste werkingskosten)</span></dd>
       </dl>
+      <p class="muted small" ${tip('Inkoop is alleen wat je voor de verkochte artikelen betaalde. De vaste werkingskosten en het drukwerk van een nieuw artikel staan apart als "werking shop", zodat je je echte marge ziet.')}>
+        Je boekhouding splitst dit in drie: <strong>merchandising</strong> (omzet), <strong>inkoop shop</strong> (wat de verkochte artikelen kostten) en <strong>werking shop</strong> (vaste kosten en eerste voorraad van nieuwe artikelen).</p>
       <div class="table-wrap">
         <table class="compact sortable">
           <thead><tr><th>Artikel</th><th class="num">Prijs</th><th class="num">Marge</th><th class="num">Prijseffect</th><th class="num">Verwacht/week</th><th class="num">Vorige week</th><th class="num">Totaal</th><th></th></tr></thead>

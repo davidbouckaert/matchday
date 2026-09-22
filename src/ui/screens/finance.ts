@@ -3,7 +3,7 @@ import { DIVISIONS } from '../../engine/data/divisions';
 import { creditLimit, emergencyOffer, interestRate, loanOffers, totalDebt } from '../../engine/loans';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
-import { expectedAttendance } from '../../engine/finance';
+import { AWAY_SHARE, expectedAttendance } from '../../engine/finance';
 import { spendPerHeadCanteen } from '../../engine/canteen';
 import { esc, euro, signedEuro } from '../format';
 
@@ -109,6 +109,7 @@ export function financeScreen(s: GameState): string {
       </div>`
       }
       <p class="muted small">Normaal in ${division.name}: €${division.refTicketPrice}. Verwachte opkomst bij bewolkt weer: ~${attendance} (tribune: ${s.infrastructure.capacity}).
+      Van elke ticketeuro gaat ${Math.round(AWAY_SHARE * 100)}% naar de bezoekende club en de bond; dat staat apart bij wedstrijdkosten.
       Kantinewinst per toeschouwer: ~€${spendPerHeadCanteen(s, 400).toFixed(2)} (prijzen zet je bij Club › Horeca). Een hoge prijs levert per ticket meer op, maar schrikt supporters af en drukt de sfeer.</p>
     </section>
 

@@ -7,6 +7,7 @@ import { esc, euro, stars } from '../format';
 export interface SetupDraft {
   step: 1 | 2 | 3;
   crest: CrestShape;
+  clubName: string;
   name: string;
   skin: number;
   hair: number;
@@ -19,6 +20,7 @@ export interface SetupDraft {
 export const defaultDraft = (): SetupDraft => ({
   step: 1,
   crest: 'schild',
+  clubName: '',
   name: '',
   skin: 0,
   hair: 0,
@@ -75,7 +77,7 @@ export function setupScreen(d: SetupDraft): string {
         ${START_CLUBS.map((c) => {
           const [s, f, g] = CLUB_STARS[c.id] ?? [3, 3, 3];
           return `<button class="choice club ${d.clubId === c.id ? 'sel' : ''}" data-action="draft-club" data-id="${c.id}">
-            ${crestSvg(d.crest, c.colors as [string, string], clubInitials(c.name), 54)}
+            ${crestSvg(d.crest, c.colors as [string, string], clubInitials(d.clubId === c.id && d.clubName.trim() ? d.clubName : c.name), 54)}
             <strong>${esc(c.name)}</strong>
             <span>${esc(c.story)}</span>
             <dl class="mini">
@@ -90,12 +92,15 @@ export function setupScreen(d: SetupDraft): string {
           </button>`;
         }).join('')}
       </div>
+      <h3>Naam van je club</h3>
+      <p class="muted small">Laat leeg om de bestaande naam te houden. Je kunt de club ook meteen hernoemen — je bent tenslotte de nieuwe eigenaar.</p>
+      <label>Clubnaam<input id="draft-clubname" type="text" maxlength="34" value="${esc(d.clubName)}" placeholder="${esc(club.name)}" autocomplete="off"/></label>
       <h3>Kies een logo</h3>
-      <p class="muted small">Het logo van ${esc(club.name)} staat in de kopbalk en op je rapporten.</p>
+      <p class="muted small">Het logo van ${esc(d.clubName.trim() || club.name)} staat in de kopbalk en op je rapporten.</p>
       <div class="crest-row">
         ${CREST_SHAPES.map(
           (shape) => `<button class="crest-pick ${d.crest === shape ? 'sel' : ''}" data-action="draft-crest" data-id="${shape}" title="${CREST_LABEL[shape]}">
-            ${crestSvg(shape, club.colors as [string, string], clubInitials(club.name), 56)}
+            ${crestSvg(shape, club.colors as [string, string], clubInitials(d.clubName.trim() || club.name), 56)}
             <span class="muted small">${CREST_LABEL[shape]}</span>
           </button>`,
         ).join('')}

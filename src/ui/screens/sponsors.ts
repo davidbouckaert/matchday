@@ -1,19 +1,22 @@
 import type { GameState, SponsorDeal } from '../../engine/types';
-import { CAMPAIGN, KIND_LABEL, KIND_MAX, NETWORK_EVENING, kindRange, satisfactionParts } from '../../engine/sponsors';
+import { CAMPAIGN, KIND_INFO, KIND_LABEL, KIND_MAX, NETWORK_EVENING, kindLock, kindRange, satisfactionParts } from '../../engine/sponsors';
 import { sponsorWeekly } from '../../engine/loans';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
 import { bar, esc, euro } from '../format';
 import { tip } from '../tooltip';
 
-const KINDS: SponsorDeal['kind'][] = ['hoofdsponsor', 'shirt', 'jeugd', 'bord'];
+const KINDS: SponsorDeal['kind'][] = ['hoofdsponsor', 'shirt', 'mouw', 'bus', 'evenement', 'scherm', 'jeugd', 'bal', 'bord'];
 
 export function sponsorsScreen(s: GameState): string {
   const who = delegate(s, 'sponsoring');
   const slots = KINDS.map((k) => {
     const used = s.sponsors.filter((d) => d.kind === k).length;
     const [min, max] = kindRange(s, k);
-    return `<div class="tile"><span class="label">${KIND_LABEL[k]}</span><strong>${used}/${KIND_MAX[k]}</strong><span class="muted small">markt: ${euro(min)}–${euro(max)}/week</span></div>`;
+    const lock = kindLock(s, k);
+    return `<div class="tile ${lock ? 'locked' : used >= KIND_MAX[k] ? 'full' : ''}" ${tip(`${KIND_INFO[k]}${lock ? ` ${lock}` : ''}`)}>
+      <span class="label">${KIND_LABEL[k]}</span><strong>${used}/${KIND_MAX[k]}</strong>
+      <span class="muted small">${lock ? `🔒 ${esc(lock)}` : `markt: ${euro(min)}–${euro(max)}/week`}</span></div>`;
   }).join('');
 
   const offers = s.sponsorOffers

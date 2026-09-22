@@ -2,7 +2,7 @@ import type { GameState } from '../../engine/types';
 import { CLUB_EVENTS, UPGRADES, VOLUNTEER_ACTIONS } from '../../engine/data/catalog';
 import { DIVISIONS } from '../../engine/data/divisions';
 import { BACKGROUNDS, INVESTORS } from '../../engine/data/setup';
-import { GREEN_ENERGY_COST, YOUTH_FEE_REF, YOUTH_FEE_WEEK, eventsThisSeason, canOrganise, canUpgrade, eventForecast, upgradeCost, youthForecast, youthTarget } from '../../engine/actions';
+import { GREEN_ENERGY_SAVING, greenEnergyCost, YOUTH_FEE_REF, YOUTH_FEE_WEEK, eventsThisSeason, canOrganise, canUpgrade, eventForecast, upgradeCost, youthForecast, youthTarget } from '../../engine/actions';
 import { MAINTENANCE_FACTOR, facilityCost } from '../../engine/finance';
 import { volunteerSatisfaction } from '../../engine/turn';
 import { delegate } from '../../engine/delegation';
@@ -49,8 +49,13 @@ export function infraScreen(s: GameState): string {
           .join('')}
       </div>
       <h3>Zonnepanelen en led</h3>
-      <p class="muted small">Eenmalige investering van ${euro(GREEN_ENERGY_COST)}. Daarna is je energiefactuur blijvend 18% lager.</p>
-      ${i.greenEnergy ? '<p class="attention-inline small">☀️ De panelen liggen er: 18% minder energiekosten.</p>' : `<button class="primary" data-action="green-energy" ${s.cash < GREEN_ENERGY_COST ? 'disabled' : ''}>Zonnepanelen plaatsen (${euro(GREEN_ENERGY_COST)})</button>`}
+      <p class="muted small">Eenmalige investering van ${euro(greenEnergyCost(s))}: daarna betaal je elke week ${Math.round(GREEN_ENERGY_SAVING * 100)}% minder
+      (${euro(Math.round(facilityCost(s) * GREEN_ENERGY_SAVING))} per week). Terugverdiend na ongeveer drie seizoenen; de prijs hangt af van hoe groot je complex is.</p>
+      ${
+        i.greenEnergy
+          ? `<p class="attention-inline small">☀️ De panelen liggen er: ${Math.round(GREEN_ENERGY_SAVING * 100)}% minder vaste kosten.</p>`
+          : `<button class="primary" data-action="green-energy" ${s.cash < greenEnergyCost(s) ? 'disabled' : ''}>Zonnepanelen plaatsen (${euro(greenEnergyCost(s))})</button>`
+      }
     </section>
     <section class="card span2">
       <h2>Bouwprojecten</h2>

@@ -24,14 +24,14 @@ export function horecaScreen(s: GameState): string {
       const pf = canteenPriceFactor(item.price, def.ref);
       const marginEach = item.price - def.cost;
       return `<tr>
-        <td><strong>${esc(def.label)}</strong><br/><span class="muted small">inkoop ${money(def.cost)} · gangbaar ${money(def.ref)}</span></td>
+        <td><strong>${esc(def.label)}</strong><br/><span class="muted small">inkoop ${money(def.cost)}</span></td>
         <td class="num">${
           locked
             ? `<strong>${money(item.price)}</strong>`
             : `<input class="price" type="number" min="${def.cost}" max="${def.ref * 4}" step="0.1" value="${item.price.toFixed(2)}" data-change="canteen-price" data-id="${item.id}" aria-label="Prijs ${esc(def.label)}"/>`
         }</td>
         <td class="num">${money(marginEach)}</td>
-        <td class="num" ${tip('100% = de gangbare prijs. Duurder verkoop je minder, goedkoper verkoop je meer maar met minder marge per stuk.')}>${Math.round(pf * 100)}%</td>
+        <td class="num" ${tip('100% = de verkoop die je aan een normale prijs haalt. Duurder verkoop je minder, goedkoper verkoop je meer maar met minder marge per stuk.')}>${Math.round(pf * 100)}%</td>
         <td class="num">${Math.round(units)}</td>
         <td class="num">${euro(Math.round(units * marginEach))}</td>
         <td class="num">${sold ? `${sold.units} · ${euro(sold.revenue)}` : '–'}</td>
@@ -47,7 +47,7 @@ export function horecaScreen(s: GameState): string {
       const sold = s.canteen.lastConcessions.find((x) => x.id === c.id);
       const max = acceptedMargin(s, c.id);
       return `<tr>
-        <td><strong>${esc(def.label)}</strong><br/><span class="muted small">${esc(c.partner)} · sinds seizoen ${c.sinceSeason} · verkoopprijs ${money(def.price)}</span></td>
+        <td><strong>${esc(def.label)}</strong><br/><span class="muted small">${esc(c.partner)} · sinds seizoen ${c.sinceSeason} · prijs voor de supporter ${money(def.price)}</span></td>
         <td class="num">${
           locked
             ? `<strong>${c.marginPct}%</strong>`
@@ -93,7 +93,7 @@ export function horecaScreen(s: GameState): string {
               const max = acceptedMargin(s, d.id);
               const fits = d.space <= space;
               return `<div class="choice static"><strong>${esc(d.label)}</strong>
-              <span class="muted small">verkoopprijs ${money(d.price)} · ${d.space} plaats-eenhe(i)d(en) · aanvaardt tot ±${max}%</span>
+              <span class="muted small">prijs voor de supporter ${money(d.price)} · ${d.space} plaats-eenhe(i)d(en) · aanvaardt tot ±${max}%</span>
               <span class="big">${euro(concessionForecast(s, d.id, max, attendance))} <span class="muted small">per thuiswedstrijd bij ${max}%</span></span>
               ${
                 locked
