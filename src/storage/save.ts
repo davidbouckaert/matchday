@@ -71,6 +71,10 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 5) migrateV5toV6(state);
   if (state.version === 6) migrateV6toV7(state);
   if (state.version === 7) migrateV7toV8(state);
+  if (state.version === 8) migrateV8toV9(state);
+  if (state.version === 9) migrateV9toV10(state);
+  if (state.version === 10) migrateV10toV11(state);
+  if (state.version === 11) migrateV11toV12(state);
   return state;
 }
 
@@ -186,6 +190,57 @@ function migrateV7toV8(state: GameState): void {
     state.delegation.spelersrollen = old;
   }
   state.version = 8;
+}
+
+/**
+ * Versie 9: scorebord, weekcijfers, loononderhandelingen, herschaalde vrijwilligers
+ * (12 in plaats van 28 is voortaan normaal) en sectoren die bij de sponsornaam passen.
+ */
+function migrateV8toV9(state: GameState): void {
+  state.infrastructure.scoreboardLevel = 0;
+  state.statsWeeks = [];
+  state.inflation = 1 + (state.season - 1) * 0.06;
+  for (const p of [...state.players, ...state.transferList, ...state.loanMarket]) p.negotiations = 0;
+  // vrijwilligers stonden op een schaal die te grof was; alles gaat door 2,4
+  state.community.volunteers = Math.max(3, Math.round(state.community.volunteers / 2.4));
+  for (const d of state.sponsors) d.sector = companySector(d.name);
+  for (const o of state.sponsorOffers) o.sector = companySector(o.name);
+  for (const pr of state.prospects) pr.sector = companySector(pr.name);
+  state.version = 9;
+}
+
+/** Versie 10: de boekhoudpost "concessies" heet nu "horeca concessies". */
+function migrateV9toV10(state: GameState): void {
+  const rename = (totals: Partial<Record<string, number>>) => {
+    const old = totals['concessies'];
+    if (old !== undefined) {
+      totals['horeca concessies'] = (totals['horeca concessies'] ?? 0) + old;
+      delete totals['concessies'];
+    }
+  };
+  rename(state.seasonTotals);
+  rename(state.lastSeasonTotals);
+  for (const w of state.weekHistory) rename(w.totals);
+  for (const w of state.statsWeeks) rename(w.revenue);
+  for (const e of [...state.thisWeek, ...state.lastWeek]) if ((e.category as string) === 'concessies') e.category = 'horeca concessies';
+  state.version = 10;
+}
+
+/** Versie 11: eigen ploegbus als investering. */
+function migrateV10toV11(state: GameState): void {
+  state.infrastructure.teamBus = false;
+  state.sponsors = state.sponsors.filter((d) => d.kind !== 'bus');
+  state.sponsorOffers = state.sponsorOffers.filter((o) => o.kind !== 'bus');
+  state.version = 11;
+}
+
+/** Versie 12: mijlpalen. */
+function migrateV11toV12(state: GameState): void {
+  state.milestones = [];
+  state.lastMilestones = [];
+  state.records = { attendance: 0, weekIncome: 0, seasonIncome: 0, unbeaten: 0, winStreak: 0, fanBase: state.community.fanBase };
+  state.lastRecords = [];
+  state.version = 12;
 }
 
 export function exportToFile(state: GameState): void {

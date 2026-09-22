@@ -12,11 +12,12 @@ import { addNews, book } from './util';
 import { CANTEEN_ITEMS } from './data/catalog';
 import { emptyStats } from './stats';
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 12;
 
 export interface NewGameOptions {
   avatar: Avatar;
   crest?: string;
+  clubName?: string; // eigen naam voor je club (leeg = de naam van de club zelf)
   clubId: string;
   investor: InvestorId;
   seed?: number;
@@ -47,7 +48,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
     avatar: opts.avatar,
     investor: opts.investor,
     clubId: club.id,
-    clubName: club.name,
+    clubName: (opts.clubName ?? '').trim() || club.name,
     cash: club.cash,
     weeksNegative: 0,
     gameOver: false,
@@ -69,6 +70,8 @@ export function createNewGame(opts: NewGameOptions): GameState {
       wifiLevel: 0,
       sanitairLevel: 0,
       parkingLevel: 0,
+      scoreboardLevel: 0,
+      teamBus: false,
       maintenance: 'normaal',
       greenEnergy: false,
       construction: null,
@@ -78,8 +81,13 @@ export function createNewGame(opts: NewGameOptions): GameState {
     canteen: { items: CANTEEN_ITEMS.map((c) => ({ id: c.id, price: c.ref })), concessions: [], lastCanteen: [], lastConcessions: [] },
     stats: emptyStats(1),
     statsHistory: [],
+    statsWeeks: [],
     requests: [],
     log: [],
+    records: { attendance: 0, weekIncome: 0, seasonIncome: 0, unbeaten: 0, winStreak: 0, fanBase: 0 },
+    lastRecords: [],
+    milestones: [],
+    lastMilestones: [],
     community: {
       fanBase: club.fanBase,
       fanMood: club.fanMood,
@@ -88,6 +96,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
       reputation: club.reputation,
       youthMembers: club.youthMembers,
     },
+    inflation: 1,
     marketIndex: 1,
     transferList: [],
     loanMarket: [],
@@ -162,7 +171,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
   // effecten van je achtergrond
   if (opts.avatar.background === 'exspeler') state.players.forEach((p) => (p.morale = clamp(p.morale + 10, 0, 100)));
   if (opts.avatar.background === 'lokaal') {
-    state.community.volunteers = Math.round(state.community.volunteers * 1.3);
+    state.community.volunteers = Math.round(state.community.volunteers * 1.25);
     state.community.fanMood = clamp(state.community.fanMood + 5, 0, 100);
   }
 
@@ -171,11 +180,12 @@ export function createNewGame(opts: NewGameOptions): GameState {
   if (opts.investor === 'aannemer') {
     const deal = makeDeal(state, rng, 'stadion', 600);
     deal.name = 'Stevens Arena';
+    deal.sector = 'Bouw'; // de aannemer zelf: naamsponsor van het stadion
     deal.weeksLeft = 9999;
     state.sponsors.push(deal);
   }
   if (opts.investor === 'cooperatie') {
-    state.community.volunteers = Math.round(state.community.volunteers * 1.4);
+    state.community.volunteers = Math.round(state.community.volunteers * 1.3);
     state.community.fanBase = Math.round(state.community.fanBase * 1.15);
     state.community.fanMood = clamp(state.community.fanMood + 8, 0, 100);
   }
