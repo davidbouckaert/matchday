@@ -1,16 +1,22 @@
 import { expect } from 'chai';
 import * as actions from '../src/engine/actions';
-import { CLUB_EVENTS, MERCH_START_COST, UPGRADES, merchDef } from '../src/engine/data/catalog';
+import { CLUB_EVENTS, MERCH_START_COST, TASKS, UPGRADES, merchDef } from '../src/engine/data/catalog';
 import { newTestGame, playWeeks } from './helpers';
 import { declineFactor, growthFactor, overall, playEffect, selectLineup, teamStrength, trainingEffect } from '../src/engine/players';
 import { bestPrice, expectedUnits } from '../src/engine/merch';
 import { acceptedMargin, expectedCanteenUnits } from '../src/engine/canteen';
-import { breakdownChance, expectedAttendance, facilityCost } from '../src/engine/finance';
+import { AWAY_SHARE, breakdownChance, expectedAttendance, facilityCost } from '../src/engine/finance';
+import { SECTORS } from '../src/engine/data/names';
+import { runDelegatedTasks, taskCapacity, taskSkill, tasksOf } from '../src/engine/delegation';
 import { PLANS, matchup, nextOpponent, scoutingReport } from '../src/engine/strategy';
 import { product, sponsorFactors } from '../src/engine/factors';
-import { kindRange } from '../src/engine/sponsors';
+import { KIND_MAX, companySector, kindLock, kindRange } from '../src/engine/sponsors';
 import { cardsForOwnTeam } from '../src/engine/discipline';
 import { createRng } from '../src/engine/rng';
+import { checkMilestones } from '../src/engine/milestones';
+import { checkRecords, currentStreak } from '../src/engine/records';
+import { simulateMatch, side } from '../src/engine/league';
+import { advanceWeek } from '../src/engine/turn';
 
 describe('Acties', () => {
   it('koopt een speler tijdens de transferperiode', () => {
@@ -50,10 +56,18 @@ describe('Acties', () => {
     expect(fee!.amount).to.equal(Math.round(-sale.amount * 0.3));
   });
 
-  it('leent geld en betaalt wekelijks af', () => {
+  it('een kredietaanvraag krijgt pas na een week antwoord en wordt daarna afbetaald', () => {
     let s = newTestGame('heidebeke');
+    s.community.reputation = 90; // een goed dossier
     const result = actions.takeLoan(s, 'middel');
     expect(result.ok).to.equal(true);
+    expect(s.loans).to.have.lengthOf(0); // nog niets ontvangen
+    expect(s.requests.some((r) => r.kind === 'lening')).to.equal(true);
+    expect(actions.takeLoan(s, 'kort').ok).to.equal(false); // één aanvraag tegelijk
+    s = playWeeks(s, 1);
+    expect(s.requests.some((r) => r.kind === 'lening')).to.equal(false);
+    expect(s.log.some((l) => l.kind === 'antwoord' && /[Kk]rediet/.test(l.text))).to.equal(true);
+    if (!s.loans.length) return; // de bank mag ook weigeren
     const loan = s.loans[0];
     s = playWeeks(s, 1);
     expect(s.loans[0].remaining).to.be.below(loan.remaining);
@@ -258,7 +272,8 @@ describe('Strategie', () => {
   it('als de T1 de strategie regelt, zijn alle keuzes vergrendeld', () => {
     const s = newTestGame();
     const trainer = s.staff.find((x) => x.role === 'hoofdtrainer')!;
-    for (const task of ['opstelling', 'training', 'tactiek'] as const) actions.delegateTask(s, task, trainer.id);
+    trainer.skill = 88; // genoeg ervaring om drie taken te dragen
+    for (const task of ['opstelling', 'training', 'tactiek'] as const) expect(actions.delegateTask(s, task, trainer.id).ok, task).to.equal(true);
     for (const r of [actions.setPlan(s, 'pressing'), actions.setTrainings(s, 4), actions.setFocus(s, 'herstel'), actions.setMentality(s, 'verdedigend'), actions.toggleStarter(s, s.players[0].id)]) {
       expect(r.ok).to.equal(false);
       expect(r.message).to.include(trainer.name);
@@ -269,7 +284,8 @@ describe('Strategie', () => {
     let s = newTestGame();
     const analyst = s.staffMarket.find((x) => x.role === 'analist')!;
     analyst.skill = 90;
-    actions.hireStaff(s, analyst.id);
+    s.infrastructure.wifiLevel = 1; // een analist heeft wifi nodig
+    expect(actions.hireStaff(s, analyst.id).ok).to.equal(true);
     const trainer = s.staff.find((x) => x.role === 'hoofdtrainer')!;
     trainer.skill = 95;
     for (const task of ['opstelling', 'training', 'tactiek'] as const) actions.delegateTask(s, task, trainer.id);
@@ -537,7 +553,7 @@ describe('Fanshop', () => {
 
 describe('Leeftijd en evolutie', () => {
   it('jonger is meer groei; vanaf 31 jaar groeit niemand nog', () => {
-    expect(growthFactor(17)).to.equal(1);
+    expect(growthFactor(17)).to.be.above(1); // tieners krijgen een extra duw
     expect(growthFactor(20)).to.be.above(growthFactor(24));
     expect(growthFactor(24)).to.be.above(growthFactor(28));
     expect(growthFactor(31)).to.equal(0);
@@ -627,7 +643,7 @@ describe('Kantine en concessies', () => {
     actions.openConcession(s, 'hotdog', acceptedMargin(s, 'hotdog'));
     s = playWeeks(s, 10);
     const canteen = s.weekHistory.reduce((sum, w) => sum + (w.totals['kantine'] ?? 0), 0);
-    const stands = s.weekHistory.reduce((sum, w) => sum + (w.totals['concessies'] ?? 0), 0);
+    const stands = s.weekHistory.reduce((sum, w) => sum + (w.totals['horeca concessies'] ?? 0), 0);
     expect(canteen).to.be.above(0);
     expect(stands).to.be.above(0);
     expect(s.stats.canteen.pils).to.be.above(0);
@@ -700,5 +716,245 @@ describe('Vrijwilligers en logboek', () => {
     s = playWeeks(s, 1);
     expect(s.requests).to.have.lengthOf(0);
     expect(s.log.some((l) => l.kind === 'antwoord')).to.equal(true);
+  });
+});
+
+describe('Onderhandelen en inflatie', () => {
+  it('blijven laagbieden werkt niet: hij vraagt meer en haakt af', () => {
+    const s = newTestGame();
+    const p = s.players.find((x) => x.contractUntil <= s.season + 1)!;
+    p.morale = 70;
+    const firstAsk = actions.askingWage(s, p);
+    for (let i = 0; i < actions.MAX_NEGOTIATIONS; i++) expect(actions.extendContract(s, p.id, 40).ok).to.equal(false);
+    expect(p.negotiations).to.be.at.least(2);
+    expect(actions.askingWage(s, p)).to.be.above(firstAsk);
+    expect(p.morale).to.be.below(70);
+    // hij praat niet meer, ook niet als je plots heel royaal wordt
+    expect(actions.extendContract(s, p.id, 10_000).ok).to.equal(false);
+  });
+
+  it('kosten stijgen elk seizoen', () => {
+    let s = newTestGame();
+    const before = facilityCost(s);
+    s = playWeeks(s, 52);
+    expect(s.inflation).to.be.above(1);
+    expect(facilityCost(s)).to.be.above(before);
+  });
+});
+
+describe('Cijfers per week', () => {
+  it('houdt aantallen en opbrengst per week bij', () => {
+    let s = newTestGame();
+    s.cash = 200_000;
+    actions.startMerch(s);
+    s = playWeeks(s, 9);
+    expect(s.statsWeeks.length).to.equal(9);
+    const matchWeek = s.statsWeeks.find((w) => w.tickets > 0);
+    expect(matchWeek, 'een week met een thuiswedstrijd').to.not.equal(undefined);
+    expect(matchWeek!.canteen).to.be.above(0);
+    expect(matchWeek!.revenue.kantine).to.be.above(0);
+  });
+});
+
+describe('Ontgrendelingen', () => {
+  it('een kinesist kan pas met een recuperatieruimte, een analist pas met wifi', () => {
+    const s = newTestGame();
+    expect(actions.staffLock(s, 'kinesist')).to.be.a('string');
+    expect(actions.staffLock(s, 'analist')).to.be.a('string');
+    s.infrastructure.recoveryLevel = 1;
+    s.infrastructure.wifiLevel = 1;
+    expect(actions.staffLock(s, 'kinesist')).to.equal(null);
+    expect(actions.staffLock(s, 'analist')).to.equal(null);
+  });
+
+  it('het scorebord is een bouwproject dat sponsors meer waard vindt', () => {
+    const s = newTestGame();
+    s.cash = 200_000;
+    const before = product(sponsorFactors(s));
+    expect(actions.startUpgrade(s, 'scorebord').ok).to.equal(true);
+    s.infrastructure.scoreboardLevel = 1;
+    expect(product(sponsorFactors(s))).to.be.above(before);
+  });
+});
+
+describe('Sponsors: naam en sector', () => {
+  it('elke sponsor en elk bedrijf heeft de sector die bij zijn naam hoort', () => {
+    const s = newTestGame();
+    for (const d of s.sponsors.filter((x) => x.kind !== 'stadion')) expect(d.sector).to.equal(companySector(d.name));
+    for (const p of s.prospects) expect(p.sector).to.equal(companySector(p.name));
+  });
+});
+
+describe('Delegeren, sponsors en tickets', () => {
+  it('elke taak kan naar iemand die in dienst is', () => {
+    const s = newTestGame();
+    for (const t of TASKS) expect(t.roles.length, t.id).to.be.at.least(1);
+    const kantine = s.staffMarket.find((x) => x.role === 'kantine')!;
+    s.infrastructure.kantineLevel = 3;
+    expect(actions.hireStaff(s, kantine.id).ok).to.equal(true);
+    const theirs = TASKS.filter((t) => t.roles.includes('kantine'));
+    expect(theirs.length).to.be.at.least(3);
+    const capacity = taskCapacity(kantine);
+    theirs.forEach((t, i) => {
+      const result = actions.delegateTask(s, t.id, kantine.id);
+      expect(result.ok, `${t.id} (plaats ${i + 1} van ${capacity})`).to.equal(i < capacity);
+    });
+    expect(tasksOf(s, kantine.id).length).to.equal(capacity);
+  });
+
+  it('de jeugdcoördinator kiest een lidgeld dat meer opbrengt dan het uiterste', () => {
+    const s = newTestGame();
+    const coach = s.staffMarket.find((x) => x.role === 'jeugdcoordinator')!;
+    coach.skill = 80;
+    s.community.youthMembers = 120;
+    actions.hireStaff(s, coach.id);
+    actions.delegateTask(s, 'jeugd', coach.id);
+    runDelegatedTasks(s, createRng(s));
+    expect(s.youthFee).to.be.within(100, 500);
+    expect(actions.youthForecast(s) * s.youthFee).to.be.above(actions.youthForecast(s, 500) * 500 * 0.9);
+  });
+
+  it('de kinesist schroeft de belasting terug bij een vermoeide groep', () => {
+    const s = newTestGame();
+    s.infrastructure.recoveryLevel = 1;
+    const kine = s.staffMarket.find((x) => x.role === 'kinesist')!;
+    actions.hireStaff(s, kine.id);
+    actions.delegateTask(s, 'medisch', kine.id);
+    actions.setTrainings(s, 5);
+    for (const p of s.players) p.fatigue = 60;
+    runDelegatedTasks(s, createRng(s));
+    expect(s.tactics.trainings).to.be.below(5);
+    expect(s.tactics.focus).to.equal('herstel');
+  });
+
+  it('er zijn meer soorten sponsorplaatsen dan alleen hoofdsponsor', () => {
+    const s = newTestGame();
+    const kinds = new Set(SECTORS.map(([, k]) => k));
+    expect(kinds.size).to.be.at.least(6);
+    const big = SECTORS.filter(([, k]) => k === 'hoofdsponsor').length;
+    const shirt = SECTORS.filter(([, k]) => k === 'shirt').length;
+    expect(big).to.be.at.most(shirt + 1); // geen overschot aan hoofdsponsors
+    expect(KIND_MAX.bord).to.be.above(KIND_MAX.hoofdsponsor);
+    s.infrastructure.kantineLevel = 1;
+    expect(kindLock(s, 'scherm')).to.be.a('string'); // vraagt eerst een betere kantine
+    s.infrastructure.kantineLevel = 3;
+    expect(kindLock(s, 'scherm')).to.equal(null);
+  });
+
+  it('ticketinkomsten en het aandeel van de bezoekers staan apart', () => {
+    let s = newTestGame();
+    actions.setTicketPrice(s, 8);
+    s = playWeeks(s, 9);
+    const match = s.lastMatch;
+    if (!match || !match.home) return; // week 9 is niet altijd thuis
+    const tickets = s.lastWeek.find((e) => e.category === 'tickets')!;
+    expect(tickets.amount).to.equal(match.attendance * 8);
+    const share = s.lastWeek.find((e) => e.label.includes('Aandeel bezoekers'))!;
+    expect(share.amount).to.equal(-Math.round(match.attendance * 8 * AWAY_SHARE));
+  });
+
+  it('een uitgeleende speler kun je nog altijd een nieuw contract geven', () => {
+    const s = newTestGame();
+    const p = s.players.find((x) => x.contractUntil <= s.season)!;
+    p.loan = { type: 'uit', club: 'KFC Test', untilSeason: s.season, wageShare: 0.5 };
+    const result = actions.extendContract(s, p.id, actions.askingWage(s, p) * 1.5);
+    expect(result.ok).to.equal(true);
+    expect(p.contractUntil).to.be.above(s.season);
+  });
+});
+
+describe('Taken en specialisatie', () => {
+  it('buiten zijn vakgebied werkt iemand op een lager niveau', () => {
+    const s = newTestGame();
+    s.infrastructure.kantineLevel = 3;
+    const kantine = s.staffMarket.find((x) => x.role === 'kantine')!;
+    kantine.skill = 70;
+    actions.hireStaff(s, kantine.id);
+    const own = taskSkill(s, 'horeca', kantine); // kantine staat eerst bij deze taak
+    const other = taskSkill(s, 'merchandising', kantine); // daar is hij derde keuze
+    expect(own).to.be.above(other);
+    expect(other).to.be.below(kantine.skill);
+  });
+
+  it('hoe beter het staflid, hoe meer taken hij aankan', () => {
+    const s = newTestGame();
+    const weak = { ...s.staff[0], skill: 30 };
+    const strong = { ...s.staff[0], skill: 90 };
+    expect(taskCapacity(weak)).to.equal(1);
+    expect(taskCapacity(strong)).to.equal(4);
+  });
+});
+
+describe('Mijlpalen, thuisvoordeel en groei', () => {
+  it('een mijlpaal komt één keer voor en levert iets op', () => {
+    const s = newTestGame();
+    s.community.fanBase = 600;
+    const cash = s.cash;
+    const hit = checkMilestones(s);
+    expect(hit.some((m) => m.id === 'fans-500')).to.equal(true);
+    expect(s.cash).to.be.above(cash);
+    expect(checkMilestones(s).some((m) => m.id === 'fans-500')).to.equal(false);
+  });
+
+  it('thuisploegen scoren gemiddeld meer dan uitploegen', () => {
+    const rng = createRng(newTestGame());
+    let home = 0;
+    let away = 0;
+    for (let i = 0; i < 400; i++) {
+      const [h, a] = simulateMatch(rng, side(55), side(55));
+      home += h;
+      away += a;
+    }
+    expect(home).to.be.above(away);
+  });
+
+  it('een ploeg die wint, groeit sneller in supporters', () => {
+    const win = newTestGame();
+    const lose = newTestGame();
+    for (const s of [win, lose]) {
+      s.community.fanBase = 300;
+      s.community.reputation = 60;
+    }
+    // doe alsof alle gespeelde wedstrijden gewonnen (of verloren) zijn
+    const fake = (s: typeof win, won: boolean) => {
+      for (const f of s.league.fixtures.filter((x) => x.week <= 12 && (x.homeId === 'club' || x.awayId === 'club'))) {
+        const home = f.homeId === 'club';
+        f.homeGoals = home === won ? 2 : 0;
+        f.awayGoals = home === won ? 0 : 2;
+      }
+    };
+    fake(win, true);
+    fake(lose, false);
+    const grown = (s: typeof win) => {
+      let g = s;
+      for (let i = 0; i < 10; i++) g = advanceWeek(g);
+      return g.community.fanBase;
+    };
+    expect(grown(win)).to.be.above(grown(lose));
+  });
+});
+
+describe('Records en reeksen', () => {
+  it('houdt de reeks zonder nederlaag bij', () => {
+    const s = newTestGame();
+    for (const f of s.league.fixtures.filter((x) => x.week <= 12 && (x.homeId === 'club' || x.awayId === 'club'))) {
+      const home = f.homeId === 'club';
+      f.homeGoals = home ? 2 : 0;
+      f.awayGoals = home ? 0 : 2;
+    }
+    const streak = currentStreak(s);
+    expect(streak.wins).to.be.at.least(3);
+    expect(streak.unbeaten).to.equal(streak.wins);
+  });
+
+  it('een recordopkomst wordt één keer gevierd', () => {
+    let s = newTestGame();
+    s = playWeeks(s, 9);
+    expect(s.records.attendance).to.be.above(0);
+    const before = s.records.attendance;
+    s.lastMatch = { ...s.lastMatch!, home: true, week: s.week, attendance: before + 50 };
+    const broken = checkRecords(s);
+    expect(broken.some((b) => b.includes('Recordopkomst'))).to.equal(true);
+    expect(checkRecords(s).some((b) => b.includes('Recordopkomst'))).to.equal(false);
   });
 });
