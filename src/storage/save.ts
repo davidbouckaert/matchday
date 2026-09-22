@@ -75,6 +75,8 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 9) migrateV9toV10(state);
   if (state.version === 10) migrateV10toV11(state);
   if (state.version === 11) migrateV11toV12(state);
+  if (state.version === 12) migrateV12toV13(state);
+  repair(state);
   return state;
 }
 
@@ -199,7 +201,7 @@ function migrateV7toV8(state: GameState): void {
 function migrateV8toV9(state: GameState): void {
   state.infrastructure.scoreboardLevel = 0;
   state.statsWeeks = [];
-  state.inflation = 1 + (state.season - 1) * 0.06;
+  state.inflation = 1 + (state.season - 1) * 0.07;
   for (const p of [...state.players, ...state.transferList, ...state.loanMarket]) p.negotiations = 0;
   // vrijwilligers stonden op een schaal die te grof was; alles gaat door 2,4
   state.community.volunteers = Math.max(3, Math.round(state.community.volunteers / 2.4));
@@ -232,6 +234,49 @@ function migrateV10toV11(state: GameState): void {
   state.sponsors = state.sponsors.filter((d) => d.kind !== 'bus');
   state.sponsorOffers = state.sponsorOffers.filter((o) => o.kind !== 'bus');
   state.version = 11;
+}
+
+/**
+ * Versie 13: bestanden die als versie 12 zijn opgeslagen door een tussenversie misten soms
+ * de clubrecords. Die werden pas later aan dezelfde migratie toegevoegd.
+ */
+function migrateV12toV13(state: GameState): void {
+  state.version = 13;
+}
+
+/**
+ * Vangnet: vult alles aan wat een opslagbestand nog niet kent. Zo blijft een oud bestand
+ * werken, ook als er onderweg een veld bijkwam zonder eigen migratie.
+ */
+function repair(state: GameState): void {
+  const s = state as GameState & Record<string, unknown>;
+  const fallback: Array<[keyof GameState, unknown]> = [
+    ['records', { attendance: 0, weekIncome: 0, seasonIncome: 0, unbeaten: 0, winStreak: 0, fanBase: state.community?.fanBase ?? 0 }],
+    ['lastRecords', []],
+    ['milestones', []],
+    ['lastMilestones', []],
+    ['statsWeeks', []],
+    ['statsHistory', []],
+    ['requests', []],
+    ['log', []],
+    ['inflation', 1 + Math.max(0, (state.season ?? 1) - 1) * 0.07],
+    ['crest', 'schild'],
+  ];
+  for (const [key, value] of fallback) if (s[key] === undefined || s[key] === null) (s as Record<string, unknown>)[key] = value;
+  const i = state.infrastructure;
+  if (i) {
+    i.wifiLevel ??= 0;
+    i.sanitairLevel ??= 0;
+    i.parkingLevel ??= 0;
+    i.scoreboardLevel ??= 0;
+    i.recoveryLevel ??= 0;
+    i.teamBus ??= false;
+    i.greenEnergy ??= false;
+    i.maintenance ??= 'normaal';
+  }
+  if (state.tactics && !state.tactics.roles) state.tactics.roles = { kapitein: null, strafschop: null, hoekschop: null };
+  if (state.stats && !state.stats.merch) state.stats = emptyStats(state.season ?? 1);
+  for (const p of state.players ?? []) p.negotiations ??= 0;
 }
 
 /** Versie 12: mijlpalen. */
