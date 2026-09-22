@@ -30,6 +30,7 @@ export function sponsorFactors(state: GameState): Factor[] {
     x('Reputatie', 0.7 + state.community.reputation / 100, `reputatie ${Math.round(state.community.reputation)}`),
   ];
   if (state.avatar.background === 'ondernemer') list.push(x('Netwerk eigenaar', 1.15, 'achtergrond: ondernemer'));
+  if (state.infrastructure.scoreboardLevel) list.push(x('Scorebord', 1 + state.infrastructure.scoreboardLevel * 0.06, `niveau ${state.infrastructure.scoreboardLevel}/2`));
   const sales = staffSkill(state, 'commercieel');
   if (sales) list.push(x('Commercieel medewerker', 1 + sales / 250, `vaardigheid ${Math.round(sales)}`));
   return list;
@@ -54,19 +55,20 @@ export function attendanceFactors(state: GameState): Factor[] {
   if (i.wifiLevel) list.push(x('Wifi op het complex', 1 + i.wifiLevel * 0.03, `niveau ${i.wifiLevel}/2`));
   if (i.sanitairLevel) list.push(x('Toiletten en kleedkamers', 1 + i.sanitairLevel * 0.05, `niveau ${i.sanitairLevel}/2`));
   if (i.parkingLevel) list.push(x('Parking', 1 + i.parkingLevel * 0.045, `niveau ${i.parkingLevel}/2`));
+  if (i.scoreboardLevel) list.push(x('Scorebord', 1 + i.scoreboardLevel * 0.03, `niveau ${i.scoreboardLevel}/2`));
   if (i.maintenance === 'premium') list.push(x('Onderhoud', 1.04, 'premium onderhoud: alles ligt er piekfijn bij'));
   if (i.maintenance === 'basis') list.push(x('Onderhoud', 0.94, 'basisonderhoud: het complex ziet er verwaarloosd uit'));
   return list;
 }
 
 export function volunteerFactor(state: GameState): number {
-  return clamp(state.community.volunteers / 35, 0.35, 1.15);
+  return clamp(state.community.volunteers / 14, 0.35, 1.15);
 }
 
 export function spendFactors(state: GameState): Factor[] {
   const list = [
     x('Kantine', 0.8 + state.infrastructure.kantineLevel * 0.1, `niveau ${state.infrastructure.kantineLevel}/5`),
-    x('Vrijwilligers', volunteerFactor(state), `${state.community.volunteers} vrijwilligers (35 = normaal)`),
+    x('Vrijwilligers', volunteerFactor(state), `${state.community.volunteers} vrijwilligers (14 = normaal)`),
   ];
   const k = staffSkill(state, 'kantine');
   if (k) list.push(x('Kantineverantwoordelijke', 1 + k / 300, `vaardigheid ${Math.round(k)}`));

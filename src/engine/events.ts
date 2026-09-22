@@ -90,8 +90,8 @@ const EVENTS: RandomEvent[] = [
     id: 'vrijwilliger-weg',
     chance: (s) => (s.community.volunteerLoyaltyWeeks > 0 ? 0.012 : 0.03),
     apply: (s, rng) => {
-      const n = rng.int(1, 3);
-      s.community.volunteers = Math.max(3, s.community.volunteers - n);
+      const n = rng.int(1, 2);
+      s.community.volunteers = Math.max(2, s.community.volunteers - n);
       addNews(s, 'slecht', n === 1 ? 'Een vrijwilliger stopt ermee. "Het is te veel geworden."' : `${n} vrijwilligers stoppen ermee. "Het is te veel geworden."`);
     },
   },

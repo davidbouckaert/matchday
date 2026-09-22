@@ -7,6 +7,7 @@ import { DIVISIONS } from './data/divisions';
 import { expectedUnits, merchFactors } from './merch';
 import { canteenFactors, spendPerHeadCanteen } from './canteen';
 import { popularity } from './popularity';
+import { OPPONENT_STAFF_BONUS } from './league';
 import { INVESTORS } from './data/setup';
 import {
   type Factor,
@@ -214,7 +215,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
     title: `Reeks: ${d.name}`,
     explain: 'Wat het niveau van je competitie met zich meebrengt.',
     factors: [
-      plus('Gemiddelde tegenstander', d.opponentStrength, 'sterkte'),
+      plus('Gemiddelde tegenstander', d.opponentStrength + OPPONENT_STAFF_BONUS, `basis ${d.opponentStrength} + ${OPPONENT_STAFF_BONUS} voor hun eigen staff en sfeer`),
       plus('Normale ticketprijs (€)', d.refTicketPrice, ''),
       x('Sponsoring', d.sponsorFactor, ''),
       plus('Tv- en radiorechten (€/week)', d.tvRightsPerWeek, ''),

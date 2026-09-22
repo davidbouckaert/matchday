@@ -57,7 +57,7 @@ export function clubRatings(state: GameState): CategoryRating[] {
   const comm: SubScore[] = [
     { label: 'Supporters', score: clamp((c.fanBase / division.fanBaseNorm) * 55, 0, 100) },
     { label: 'Sfeer', score: c.fanMood },
-    { label: 'Vrijwilligers', score: clamp(c.volunteers * 1.4, 0, 100) },
+    { label: 'Vrijwilligers', score: clamp(c.volunteers * 3.5, 0, 100) },
     { label: 'Reputatie', score: c.reputation },
   ];
 

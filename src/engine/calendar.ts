@@ -56,6 +56,11 @@ export function monthName(startYear: number, season: number, week: number): stri
 
 export const WINTER_BREAK = { from: MATCH_WEEKS[14] + 1, to: MATCH_WEEKS[15] - 1 }; // tussen heen- en terugronde
 
+/** Ligt de competitie stil tussen heen- en terugronde? */
+export function inWinterBreak(week: number): boolean {
+  return week >= WINTER_BREAK.from && week <= WINTER_BREAK.to;
+}
+
 /** Waar staan we in het seizoen? Voor de kopbalk. */
 export function seasonPhase(week: number): string {
   const first = MATCH_WEEKS[0];

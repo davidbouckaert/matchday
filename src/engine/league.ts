@@ -5,6 +5,9 @@ import { DIVISIONS } from './data/divisions';
 import { FIRST_NAMES, LAST_NAMES, OPPONENT_NAMES, PRO_CLUBS } from './data/names';
 import { MATCH_WEEKS } from './calendar';
 
+/** Ook de tegenstanders hebben een trainer, sfeer en vorm. */
+export const OPPONENT_STAFF_BONUS = 4.5;
+
 export const OWN_TEAM_ID = 'club';
 
 export function createLeague(rng: Rng, divisionLevel: number): League {
@@ -18,7 +21,7 @@ export function createLeague(rng: Rng, divisionLevel: number): League {
   const teams: OpponentTeam[] = names.map((name, i) => ({
     id: `t${i}`,
     name,
-    strength: Math.round(rng.normal(division.opponentStrength, 4.5) * 10) / 10,
+    strength: Math.round(rng.normal(division.opponentStrength + OPPONENT_STAFF_BONUS, 5.5) * 10) / 10,
     isRival: i < 2, // de twee dichtstbijzijnde clubs zijn derby's
     plan: rng.pick(PLAN_LIST),
     roster: makeRoster(rng),
@@ -111,9 +114,14 @@ export interface Side {
 }
 
 /** Simuleert één wedstrijd (Poisson): de aanval van de ene ploeg tegen de verdediging van de andere. */
+/** Thuisvoordeel: eigen veld, eigen publiek, geen busrit. Klein maar merkbaar. */
+export const HOME_ADVANTAGE = 1.6;
+
 export function simulateMatch(rng: Rng, home: Side, away: Side): [number, number] {
-  const homeLambda = clamp(1.4 * Math.exp(((home.attack - away.defense) / 12) * 0.9), 0.2, 4.5);
-  const awayLambda = clamp(1.1 * Math.exp(((away.attack - home.defense) / 12) * 0.9), 0.15, 4);
+  const h = { attack: home.attack + HOME_ADVANTAGE, defense: home.defense + HOME_ADVANTAGE * 0.6 };
+  const a = { attack: away.attack - HOME_ADVANTAGE * 0.4, defense: away.defense };
+  const homeLambda = clamp(1.4 * Math.exp(((h.attack - a.defense) / 12) * 0.9), 0.2, 4.5);
+  const awayLambda = clamp(1.1 * Math.exp(((a.attack - h.defense) / 12) * 0.9), 0.15, 4);
   return [rng.poisson(homeLambda), rng.poisson(awayLambda)];
 }
 

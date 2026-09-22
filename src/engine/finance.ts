@@ -1,7 +1,7 @@
 import type { GameState, Infrastructure } from './types';
 import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
-import { isWinter } from './calendar';
+import { inWinterBreak, isWinter } from './calendar';
 import { attendanceFactors, priceFactor, product, spendFactors, volunteerFactor } from './factors';
 import { payLoanWeek, sponsorWeekly } from './loans';
 import { book, addNews } from './util';
@@ -34,11 +34,15 @@ export function spendPerHead(state: GameState): number {
 }
 
 /** Inkomsten van een thuiswedstrijd. Geeft het aantal toeschouwers terug. */
+export const AWAY_SHARE = 0.08; // aandeel van de bezoekende club en de bond in de ticketopbrengst
+
 export function bookHomeMatch(state: GameState, input: AttendanceInput, opponentName: string): number {
   const attendance = expectedAttendance(state, input);
-  book(state, 'tickets', attendance * state.ticketPrice * 0.92, `Tickets vs ${opponentName} (${attendance} toeschouwers)`);
+  const gross = attendance * state.ticketPrice;
+  book(state, 'tickets', gross, `Tickets vs ${opponentName} (${attendance} × €${state.ticketPrice})`);
+  book(state, 'wedstrijdkosten', -gross * AWAY_SHARE, `Aandeel bezoekers en bond (${Math.round(AWAY_SHARE * 100)}% van de ticketverkoop)`);
   bookMatchdayCatering(state, attendance, opponentName);
-  book(state, 'wedstrijdkosten', -(250 + 120 + state.league.divisionLevel * 150), 'Scheidsrechter en organisatie');
+  book(state, 'wedstrijdkosten', -(250 + 120 + state.league.divisionLevel * 150), `Scheidsrechter en organisatie thuiswedstrijd vs ${opponentName}`);
   state.stats.tickets += attendance;
   state.stats.attendanceHome += attendance;
   state.stats.matchesHome += 1;
@@ -46,7 +50,8 @@ export function bookHomeMatch(state: GameState, input: AttendanceInput, opponent
 }
 
 export function bookAwayMatch(state: GameState, opponentName: string): void {
-  book(state, 'wedstrijdkosten', -(300 + state.league.divisionLevel * 200), `Busvervoer naar ${opponentName}`);
+  const bus = state.infrastructure.teamBus ? 0.45 : 1; // met een eigen bus betaal je alleen brandstof en chauffeur
+  book(state, 'wedstrijdkosten', -(300 + state.league.divisionLevel * 200) * bus, `Busvervoer naar de uitwedstrijd bij ${opponentName}`);
 }
 
 /** Wat je per week aan onderhoud en energie kiest te besteden. */
@@ -54,12 +59,12 @@ export const MAINTENANCE_FACTOR: Record<Infrastructure['maintenance'], number> =
 
 export function facilityCost(state: GameState): number {
   const i = state.infrastructure;
-  let cost = 700 + i.capacity * 0.35 + (i.pitch === 'natuurgras' ? 450 : 150) + i.kantineLevel * 70 + i.academyLevel * 400;
-  cost += i.wifiLevel * 60 + i.sanitairLevel * 80 + i.parkingLevel * 45 + i.recoveryLevel * 90;
+  let cost = 730 + i.capacity * 0.34 + (i.pitch === 'natuurgras' ? 430 : 160) + i.kantineLevel * 70 + i.academyLevel * 400;
+  cost += i.wifiLevel * 60 + i.sanitairLevel * 80 + i.parkingLevel * 45 + i.recoveryLevel * 90 + i.scoreboardLevel * 55 + (i.teamBus ? 95 : 0);
   if (isWinter(state.week)) cost += 180 * i.lightingLevel + 150;
   cost *= MAINTENANCE_FACTOR[i.maintenance];
-  if (i.greenEnergy) cost *= 0.82; // zonnepanelen en ledverlichting
-  return Math.round(cost);
+  if (i.greenEnergy) cost *= 0.8; // zonnepanelen en ledverlichting
+  return Math.round(cost * state.inflation);
 }
 
 /** Kans dat er deze week iets stukgaat omdat je te weinig onderhoudt. */
@@ -78,8 +83,10 @@ export function bookWeeklyFlows(state: GameState): void {
   book(state, 'onderhoud & energie', -state.community.youthMembers * 3, 'Werking jeugd (materiaal, vergoedingen)');
   book(state, 'sponsors', sponsorWeekly(state), 'Sponsorcontracten');
 
-  const trainingBar = 380 * (0.8 + state.infrastructure.kantineLevel * 0.1) * volunteerFactor(state) + state.community.youthMembers * 1.2;
-  book(state, 'kantine', trainingBar, 'Kantine tijdens trainingen en jeugdwedstrijden');
+  // tijdens de winterstop ligt alles stil: geen jeugdwedstrijden, veel minder volk in de kantine
+  const breakFactor = inWinterBreak(state.week) ? 0.45 : 1;
+  const trainingBar = (380 * (0.8 + state.infrastructure.kantineLevel * 0.1) * volunteerFactor(state) + state.community.youthMembers * 1.2) * breakFactor;
+  book(state, 'kantine', trainingBar, inWinterBreak(state.week) ? 'Kantine tijdens de winterstop' : 'Kantine tijdens trainingen en jeugdwedstrijden');
 
   if (state.infrastructure.pitch === 'kunstgras') book(state, 'verhuur', 650, 'Verhuur kunstgrasveld');
 

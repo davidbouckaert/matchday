@@ -22,7 +22,7 @@ export function canteenPriceFactor(price: number, ref: number): number {
 export function canteenFactors(state: GameState): Factor[] {
   const list = [
     x('Kantine', 0.8 + state.infrastructure.kantineLevel * 0.1, `niveau ${state.infrastructure.kantineLevel}/5`),
-    x('Vrijwilligers', volunteerFactor(state), `${state.community.volunteers} vrijwilligers (35 = normaal)`),
+    x('Vrijwilligers', volunteerFactor(state), `${state.community.volunteers} vrijwilligers (14 = normaal)`),
     x('Populariteit', popularity(state).factor, `clubrating en sfeer`),
   ];
   const k = staffSkill(state, 'kantine');
@@ -85,7 +85,7 @@ export function bookMatchdayCatering(state: GameState, attendance: number, oppon
     state.stats.concessions[c.id] = (state.stats.concessions[c.id] ?? 0) + units;
   }
   state.canteen.lastConcessions = stands;
-  if (ownShare > 0) book(state, 'concessies', ownShare, `Concessies vs ${opponent} (${stands.reduce((s, c) => s + c.units, 0)} porties)`);
+  if (ownShare > 0) book(state, 'horeca concessies', ownShare, `Concessies vs ${opponent} (${stands.reduce((s, c) => s + c.units, 0)} porties)`);
   return { canteen: revenue - cost, concessions: ownShare };
 }
 

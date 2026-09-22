@@ -120,7 +120,7 @@ export function weeklyMerch(state: GameState, rng: Rng): MerchWeek | null {
 
   const sold = result.units.reduce((s, u) => s + u.units, 0);
   if (result.revenue > 0) book(state, 'merchandising', result.revenue, `Fanshop: ${sold} artikelen verkocht`);
-  if (result.cost > 0) book(state, 'inkoop shop', -result.cost, 'Inkoop artikelen fanshop');
-  book(state, 'inkoop shop', -result.fixed, 'Werking fanshop en webshop');
+  if (result.cost > 0) book(state, 'inkoop shop', -result.cost, `Inkoop van de ${sold} verkochte artikelen`);
+  book(state, 'werking shop', -result.fixed, 'Werking fanshop en webshop (vaste kost)');
   return result;
 }

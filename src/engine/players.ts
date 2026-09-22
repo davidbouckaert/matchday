@@ -88,6 +88,7 @@ export function generatePlayer(state: GameState, rng: Rng, opts: PlayerOptions):
     starts: 0,
     periodStarts: 0,
     trend: 0,
+    negotiations: 0,
     listed: false,
     askingPrice: 0,
     loan: null,
@@ -131,6 +132,9 @@ export const FORMATION_MOD: Record<Formation, { att: number; def: number }> = {
 };
 
 export const OUT_OF_POSITION_PENALTY = 8;
+
+/** Hoe zwaar staff, sfeer en vorm doorwegen tegenover de pure kwaliteit van je spelers. */
+export const BONUS_WEIGHT = 0.45;
 
 export interface LineupSlot {
   player: Player;
@@ -323,9 +327,10 @@ export function teamStrength(state: GameState, opponent?: OpponentContext): Stre
   }
 
   // Uitkomst = (spelerskwaliteit + bonussen) × vermoeidheid + tactiek + voordeel/nadeel spelplan
+  // De bonussen tellen maar voor een deel mee: kwaliteit van de spelers blijft de basis.
   const tired = avgFatigue(lineup);
   const ff = fatigueFactor(tired);
-  const common = chem + trainer + morale + form + sharp + fit + roles - penalty;
+  const common = (chem + trainer + morale + form + sharp + fit + roles) * BONUS_WEIGHT - penalty;
   const attack = (zones.MIDD * 0.3 + zones.AANV * 0.7 + common) * ff + tactic.att + matchupBonus.att;
   const defense = (zones.DOEL * 0.2 + zones.VERD * 0.55 + zones.MIDD * 0.25 + common) * ff + tactic.def + matchupBonus.def;
   return {
@@ -405,7 +410,10 @@ export function canPlay(p: Player): boolean {
  */
 export const GROWTH_STOP_AGE = 31;
 export function growthFactor(age: number): number {
-  return clamp((GROWTH_STOP_AGE - age) / (GROWTH_STOP_AGE - 17), 0, 1) ** 1.25;
+  const base = clamp((GROWTH_STOP_AGE - age) / (GROWTH_STOP_AGE - 17), 0, 1) ** 1.15;
+  // tieners en spelers tot 21 springen er echt uit
+  const youth = age <= 19 ? 1.3 : age <= 21 ? 1.15 : 1;
+  return clamp(base * youth, 0, 1.3);
 }
 
 /** Achteruitgang per leeftijd: begint traag rond 27, vanaf 31 gaat het sneller. */
@@ -449,7 +457,7 @@ export function developPlayers(state: GameState, rng: Rng): DevelopmentSummary {
     // leeftijd: hoe jonger, hoe meer groei; vanaf 31 jaar groeit niemand nog en weegt alleen de achteruitgang
     const growth = growthFactor(p.age);
     const room = clamp((p.potential - overall(p)) / 10, 0, 1); // dicht bij het potentieel gaat het trager
-    let delta = rng.range(0, 0.6) * factor * growth * (0.35 + 0.65 * room);
+    let delta = rng.range(0, 0.72) * factor * growth * (0.35 + 0.65 * room);
     delta -= rng.range(0.05, 0.7) * declineFactor(p.age);
     // speeltijd: uitgeleende spelers spelen bij hun andere club; zonder wedstrijden (winterstop) telt het niet
     const playShare = p.loan?.type === 'uit' ? 0.75 : matches > 0 ? p.periodStarts / matches : 0.5;
@@ -515,4 +523,13 @@ export function lineupGap(state: GameState): { available: number; needed: number
   const missing = {} as Record<Position, number>;
   for (const pos of POSITIONS) missing[pos] = Math.max(0, counts[pos] - fit.filter((p) => p.position === pos).length);
   return { available: Math.min(11, fit.length), needed: 11, missing };
+}
+
+/** Jonge benen verteren de belasting beter, oudere spelers voelen elke wedstrijd. */
+export function fatigueAgeFactor(age: number): number {
+  if (age <= 19) return 0.78;
+  if (age <= 23) return 0.88;
+  if (age <= 29) return 1;
+  if (age <= 32) return 1.12;
+  return 1.22;
 }
