@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.9.8';
+export const VERSION = '0.10.3';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,59 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.10.3',
+    date: '2026-09-23',
+    title: 'Nieuws en afwachting rollen mee binnen',
+    items: [
+      'De nieuwsberichten en de lijst "In afwachting" verschijnen regel per regel, samen met de cijfertellers',
+      'Hele regels tegelijk, geen letter-per-letter getik',
+      'Staat de animatie uit bij Opslaan, of vraagt je systeem minder beweging, dan staat alles er meteen',
+    ],
+  },
+  {
+    version: '0.10.2',
+    date: '2026-09-23',
+    title: 'Rustiger weekanimatie en een zichtbare premie',
+    items: [
+      'De animatie voor het weekrapport duurt twee keer zo lang: de bal rolt trager en de drie tussentitels blijven staan',
+      'De cijferrollers tellen ongeveer 20% trager op, post per post',
+      'Kampioenen- en promotiepremie staan nu apart onder "premies" in plaats van tussen de meevallers',
+      'De premie staat in het weekrapport, in het seizoensrapport, bij Club › Cijfers en in je clubgeschiedenis; de kalender toont vooraf wat de titel waard is',
+    ],
+  },
+  {
+    version: '0.10.1',
+    date: '2026-09-23',
+    title: 'Herstel van opslagbestanden',
+    items: [
+      'Opslagbestanden van een tussenversie misten de clubrecords, waardoor "Volgende week" niets meer deed',
+      'Elk bestand wordt nu bij het laden aangevuld met alles wat het nog niet kent',
+      'Gaat er toch iets mis tijdens een week, dan krijg je een melding in plaats van een knop die niets doet',
+    ],
+  },
+  {
+    version: '0.10.0',
+    date: '2026-09-23',
+    title: 'Promotie verandert alles: inkomsten én kosten',
+    items: [
+      'Kampioenen- en promotiepremie: bescheiden in de amateurreeksen, echt prijzengeld vanaf de Challenger Pro Liga',
+      'Na promotie vragen spelers 14% en staff 10% meer; na degradatie wordt er neerwaarts onderhandeld',
+      'Aansluiting bij de bond en verzekeringen schalen met je reeks, de gemeentesubsidie ook',
+      'De richtprijzen in de fanshop volgen het niveau van je reeks',
+    ],
+  },
+  {
+    version: '0.9.9',
+    date: '2026-09-23',
+    title: 'Wedstrijdpremies en sponsors na promotie',
+    items: [
+      '30% van de spelersvergoeding is een wedstrijdpremie: in een week zonder wedstrijd betaal je die niet',
+      'Een zege kost een winstpremie van 12% aan de basiself',
+      'Na promotie bieden sponsors spontaan een hoger contract aan en stijgt hun tevredenheid',
+      'Na degradatie zakt de tevredenheid van je sponsors',
+    ],
+  },
   {
     version: '0.9.8',
     date: '2026-09-22',

@@ -154,6 +154,41 @@ scripts/balance.ts ← balanstest over meerdere seizoenen
 
 ## Laag 9 (deze versie)
 
+### 0.10.3
+
+- **Nieuws rolt binnen:** de berichten onder "Nieuws en berichten" en de lijst "In afwachting" verschijnen nu regel per regel, met ongeveer 150 milliseconden tussen elke regel (samen nooit langer dan de cijfertellers, dus het blijft rond de 1,5 seconde). Hele regels tegelijk, geen letter-per-letter getik
+- **Netjes bij hertekenen:** klik je in het rapport, dan begint de reeks niet opnieuw; ze loopt maar één keer per week
+- **Uitzetbaar:** met de animatie uit bij Opslaan, of met "minder beweging" in je systeeminstellingen, staat alles er meteen
+
+### 0.10.2
+
+- **Trager en spannender:** de animatie voor het weekrapport duurt nu 3,6 seconden in plaats van 1,8. De bal rolt trager naar het doel, de voortgangsbalk loopt mee en de drie tussentitels ("De scheidsrechter fluit af", "De kassa wordt geteld", "Affluiten!") blijven elk 1,2 seconde staan; de laatste blijft staan tot het rapport opengaat. Klikken slaat de animatie nog altijd over en bij Opslaan kun je ze helemaal uitzetten
+- **Rustiger tellers:** de cijferrollers in het weekrapport tellen ongeveer 20% trager op en starten post per post, zodat je ziet wat elke bron opbracht voor het saldo verschijnt
+- **Premie apart geboekt:** de kampioenen- en promotiepremie stond tussen de "meevallers" en viel daardoor niet op. Ze heeft nu een eigen categorie **premies**, met de reeks in de omschrijving, en het bedrag staat ook in het nieuwsbericht
+- **Overal terug te vinden:** de premie staat in de financiën van het weekrapport, als eigen vakje in het seizoensrapport, bij Club › Cijfers (opbrengst per bron) en als kolom in je clubgeschiedenis. De kalender toont in week 44 vooraf wat de titel en plaats twee in jouw reeks waard zijn
+- **Bedragen (premies van sponsors, receptie en tombola — de bond betaalt in de amateurreeksen geen prijzengeld):** 1ste Provinciale €2.000 / €1.000 · 3de Nationale €4.500 / €2.500 · 2de Nationale €7.000 / €4.000 · 1ste Nationale €40.000 / €25.000 · Challenger Pro Liga €160.000 / €95.000 (kampioen / plaats 2)
+
+### 0.10.1
+
+- **Bugfix:** opslagbestanden die door versie 0.9.5 of 0.9.6 als versie 12 waren weggeschreven, misten de clubrecords die pas in 0.9.7 aan diezelfde migratie werden toegevoegd. Daardoor liep het spelen van een week stuk en deed de knop "Volgende week" niets
+- **Vangnet:** bij het laden wordt elk bestand aangevuld met alles wat het nog niet kent, ongeacht zijn versienummer
+- **Zichtbare fouten:** loopt een week toch vast, dan krijg je nu een melding met de reden in plaats van een knop die niets doet
+
+### 0.10.0
+
+- **Premies:** kampioen worden levert in de amateurreeksen €2.000 tot €7.000 op van sponsors en supporters (een receptie, een tombola, een premie van de hoofdsponsor); promotie via plaats twee de helft daarvan. Vanaf de Challenger Pro Liga is het echt prijzengeld: €40.000 tot ruim €150.000
+- **Kosten schalen mee:** na promotie vragen spelers ongeveer 14% en staff 10% meer; na degradatie zakken die lonen met 10% en 7%. Aansluiting bij de bond en de verzekeringen stijgen met 35% per niveau, de gemeentesubsidie met 12%
+- **Fanshop volgt de reeks:** de richtprijzen schalen met de normale ticketprijs van je niveau (×1 in 3de nationale, ×2,2 in de Pro Liga)
+- **Geen dubbele voorstellen** meer van dezelfde sponsor na promotie
+
+### 0.9.9
+
+- **Wedstrijdpremies:** 30% van de spelersvergoeding hangt aan een wedstrijd. In de winterstop, de zomerstop en elke vrije week betaal je alleen het vaste deel. Staff wordt wel het hele jaar door betaald
+- **Winstpremie:** een zege kost 12% extra aan de basiself; succes heeft dus ook een prijs
+- **Sponsors na promotie:** hun tevredenheid stijgt met 10 (14 bij een titel) en de tevredensten bieden spontaan een hoger contract aan, berekend op het niveau van je nieuwe reeks. Een extra bijdrage vragen lukt daardoor ook makkelijker
+- **Sponsors na degradatie:** tevredenheid −12, dus verlengen wordt lastiger
+- Inflatie bijgesteld naar 7% per seizoen om de lagere loonlast te compenseren
+
 ### 0.9.8
 
 - **Teller post per post:** elke regel in het weekrapport start ongeveer 150 ms na de vorige en telt in 650 ms naar zijn bedrag, met een klein accent als hij landt. Het hele overzicht staat er na ongeveer twee seconden
