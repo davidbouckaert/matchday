@@ -1,0 +1,481 @@
+// Alle datatypes van het spel. De volledige speltoestand (GameState) is één
+// gewoon JSON-object: makkelijk op te slaan, te exporteren en te testen.
+
+export type Position = 'DOEL' | 'VERD' | 'MIDD' | 'AANV';
+
+export type PlayerTrait =
+  | 'professioneel'
+  | 'leider'
+  | 'lastpak'
+  | 'gevoelig'
+  | 'harde werker'
+  | 'feestbeest';
+
+export interface Player {
+  id: string;
+  name: string;
+  age: number;
+  position: Position;
+  technique: number; // 1-100
+  physical: number; // 1-100
+  potential: number; // 1-100, plafond van de ontwikkeling
+  trait: PlayerTrait;
+  wage: number; // euro per week
+  contractUntil: number; // laatste seizoen (nummer) van het contract
+  morale: number; // 0-100
+  form: number; // -10 .. +10
+  injuryWeeks: number;
+  fatigue: number; // 0-100: vermoeidheid door trainingen en wedstrijden
+  yellowCards: number; // dit seizoen
+  redCards: number; // dit seizoen
+  suspended: number; // aantal competitiewedstrijden geschorst
+  starts: number; // basisplaatsen dit seizoen
+  periodStarts: number; // basisplaatsen sinds de laatste evolutie (om de 4 weken)
+  trend: number; // verandering van de kwaliteit bij de laatste evolutie
+  listed: boolean; // op de transferlijst gezet
+  askingPrice: number; // vraagprijs als hij te koop staat
+  loan: PlayerLoan | null;
+  friends: string[]; // ids van spelers met wie hij goed samenwerkt
+  purchasePrice: number; // wat de club betaalde (0 = eigen kern of transfervrij)
+  bidFactor: number; // huidige marktstemming voor deze speler (0.7-1.3)
+  isYouth: boolean; // uit eigen jeugd
+}
+
+export interface PlayerLoan {
+  type: 'in' | 'uit'; // in = jij huurt hem, uit = jij leent hem uit
+  club: string;
+  untilSeason: number; // keert terug op het einde van dit seizoen
+  wageShare: number; // uit: deel van het loon dat de andere club betaalt
+}
+
+export type StaffRole =
+  | 'hoofdtrainer'
+  | 'kinesist'
+  | 'afgevaardigde'
+  | 'scout'
+  | 'kantine'
+  | 'commercieel'
+  | 'jeugdcoordinator'
+  | 'assistent' // T2
+  | 'conditietrainer' // T3
+  | 'keepertrainer'
+  | 'analist'
+  | 'voeding' // voedingsdeskundige
+  | 'merchandising' // verantwoordelijke fanshop
+  | 'verzorger' // verzorger / masseur
+  | 'mentaal'; // mentale coach
+
+export type StaffTrait = 'ambitieus' | 'loyaal' | 'gemakzuchtig' | 'perfectionist' | 'teamspeler';
+
+export type Diploma = 'geen' | 'EUFA C' | 'EUFA B' | 'EUFA A' | 'EUFA Pro';
+
+export interface Staff {
+  id: string;
+  name: string;
+  role: StaffRole;
+  skill: number; // 1-100
+  trait: StaffTrait;
+  wage: number; // euro per week
+  diploma: Diploma; // enkel relevant voor trainers
+  courseWeeksLeft: number; // > 0 = volgt een opleiding
+  courseType: 'diploma' | 'bijscholing' | null;
+}
+
+export type Formation = '4-4-2' | '4-3-3' | '3-5-2' | '5-3-2' | '4-5-1';
+export type Mentality = 'verdedigend' | 'gebalanceerd' | 'aanvallend';
+export type GamePlan = 'balbezit' | 'lange bal' | 'vleugelspel' | 'counter' | 'pressing';
+export type TrainingFocus = 'conditie' | 'techniek' | 'tactiek' | 'spelhervattingen' | 'herstel';
+
+/** Alles op de tab Strategie. */
+export interface Tactics {
+  formation: Formation;
+  mentality: Mentality;
+  plan: GamePlan; // spelplan tijdens de wedstrijd (sterk/zwak tegen andere spelplannen)
+  manualXI: string[]; // speler-ids die de eigenaar zelf in de basis zet (leeg = automatisch)
+  trainings: number; // trainingen per week (2-5)
+  focus: TrainingFocus;
+  roles: PlayerRoles; // kapitein, strafschop- en hoekschopnemer
+}
+
+export interface PlayerRoles {
+  kapitein: string | null;
+  strafschop: string | null;
+  hoekschop: string | null;
+}
+
+/** Taken die je zelf doet of aan een staflid overlaat. */
+export type TaskId =
+  | 'training' // trainingen per week en trainingsfocus
+  | 'opstelling' // basiself en formatie
+  | 'tactiek' // mentaliteit en spelplan
+  | 'spelersrollen' // kapitein, strafschop- en hoekschopnemer
+  | 'contracten'
+  | 'transfers'
+  | 'sponsoring'
+  | 'ticketing'
+  | 'evenementen'
+  | 'vrijwilligers'
+  | 'merchandising'
+  | 'horeca'; // kantineprijzen en concessies
+
+export interface OpponentTeam {
+  id: string;
+  name: string;
+  strength: number; // vergelijkbaar met de teamsterkte van je eigen ploeg
+  isRival: boolean;
+  plan: GamePlan; // hun gebruikelijke spelplan
+  roster: string[]; // namen van hun spelers (voor het tuchtoverzicht)
+}
+
+export interface TableRow {
+  teamId: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  points: number;
+}
+
+export interface Fixture {
+  round: number;
+  week: number;
+  homeId: string;
+  awayId: string;
+  homeGoals?: number;
+  awayGoals?: number;
+  homePlan?: GamePlan; // spelplan dat de tegenstander in deze wedstrijd echt speelt
+  awayPlan?: GamePlan;
+}
+
+/** Kaarten van spelers van andere ploegen (die van jouw spelers staan bij de speler zelf). */
+export interface DisciplineRecord {
+  teamId: string;
+  name: string;
+  yellows: number;
+  reds: number;
+  suspended: number;
+}
+
+export interface League {
+  divisionLevel: number; // index in DIVISIONS
+  teams: OpponentTeam[]; // alle tegenstanders (zonder jouw club)
+  fixtures: Fixture[];
+  table: TableRow[];
+  discipline: DisciplineRecord[];
+}
+
+export interface Loan {
+  id: string;
+  label: string;
+  principal: number;
+  remaining: number; // resterend kapitaal
+  annualRate: number; // bv. 0.05
+  weeklyPayment: number;
+  weeksLeft: number;
+}
+
+export interface SponsorDeal {
+  id: string;
+  name: string;
+  sector: string;
+  kind: 'bord' | 'shirt' | 'stadion' | 'hoofdsponsor' | 'jeugd';
+  weekly: number;
+  weeksLeft: number;
+  satisfaction: number; // 0-100: hoe tevreden de sponsor is
+  extraAskedSeason: number; // seizoen waarin je al om een extra bijdrage vroeg (0 = nooit)
+}
+
+export interface SponsorProspect {
+  id: string;
+  name: string;
+  sector: string;
+  maxKind: 'bord' | 'jeugd' | 'shirt' | 'hoofdsponsor';
+  interest: number; // 0-100: kans dat een gesprek slaagt
+  cooldown: number; // weken voor je opnieuw kunt aankloppen
+  approached: boolean; // gesprek loopt (antwoord volgende week)
+}
+
+export interface PendingIncome {
+  weeksLeft: number;
+  amount: number;
+  category: LedgerCategory;
+  label: string;
+  volunteers?: number; // nieuwe vrijwilligers die dan aansluiten
+}
+
+export interface SponsorOffer extends SponsorDeal {
+  expiresInWeeks: number;
+  renewalOf?: string; // id van het contract dat verlengd wordt
+}
+
+export interface ActionResult {
+  ok: boolean;
+  message: string;
+}
+
+export type UpgradeId = 'tribune' | 'kantine' | 'kunstgras' | 'verlichting' | 'opleidingscentrum' | 'recuperatie' | 'wifi' | 'sanitair' | 'parking';
+
+export interface Construction {
+  upgrade: UpgradeId;
+  weeksLeft: number;
+}
+
+export interface Infrastructure {
+  capacity: number;
+  kantineLevel: number; // 1-5
+  pitch: 'natuurgras' | 'kunstgras';
+  lightingLevel: number; // 1-3
+  academyLevel: number; // 0-3: jeugdopleidingscentrum
+  recoveryLevel: number; // 0-2: recuperatieruimte (ijsbad, sauna)
+  wifiLevel: number; // 0-2: wifi en mobiel bereik op het complex
+  sanitairLevel: number; // 0-2: toiletten en kleedkamers
+  parkingLevel: number; // 0-2: parkeerplaatsen
+  maintenance: 'basis' | 'normaal' | 'premium'; // hoeveel je aan onderhoud en energie besteedt
+  greenEnergy: boolean; // zonnepanelen en led: lagere energiefactuur
+  construction: Construction | null;
+}
+
+export type MerchItemId = 'sjaal' | 'shirt' | 'tshirt' | 'hoodie' | 'pet' | 'mok' | 'vlag';
+
+export interface MerchItem {
+  id: MerchItemId;
+  price: number; // jouw verkoopprijs
+  addedSeason: number;
+  soldTotal: number;
+}
+
+export interface Merch {
+  active: boolean; // fanshop opgestart?
+  items: MerchItem[]; // wat je aanbiedt
+  lastUnits: { id: MerchItemId; units: number; revenue: number }[]; // verkoop van de afgelopen week
+  seasonUnits: number;
+}
+
+export type CanteenItemId = 'pils' | 'frisdrank' | 'water' | 'koffie' | 'chips' | 'soep';
+export type ConcessionId = 'hotdog' | 'hamburger' | 'frituur' | 'pasta';
+
+export interface CanteenItem {
+  id: CanteenItemId;
+  price: number; // wat de supporter betaalt
+}
+
+export interface Concession {
+  id: ConcessionId;
+  partner: string;
+  marginPct: number; // jouw deel van de omzet (0-100)
+  sinceSeason: number;
+}
+
+export interface Canteen {
+  items: CanteenItem[];
+  concessions: Concession[];
+  lastCanteen: { id: CanteenItemId; units: number; revenue: number }[];
+  lastConcessions: { id: ConcessionId; units: number; revenue: number }[];
+}
+
+/** Aantallen per seizoen, voor de tab Cijfers. */
+export interface SeasonStats {
+  season: number;
+  tickets: number;
+  attendanceHome: number;
+  matchesHome: number;
+  merch: Partial<Record<MerchItemId, number>>;
+  canteen: Partial<Record<CanteenItemId, number>>;
+  concessions: Partial<Record<ConcessionId, number>>;
+  youthMembers: number;
+  volunteers: number;
+  ticketPrice: number;
+}
+
+/** Een vraag die je stelde en waarop je volgende week antwoord krijgt. */
+export interface PendingRequest {
+  id: string;
+  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract';
+  targetId: string;
+  label: string;
+  weeksLeft: number;
+}
+
+/** Wat jij deze week besliste, zodat je het achteraf kunt terugvinden. */
+export interface LogEntry {
+  season: number;
+  week: number;
+  text: string;
+  kind: 'beslissing' | 'antwoord';
+}
+
+export interface Community {
+  fanBase: number; // aantal mensen dat potentieel komt kijken
+  fanMood: number; // 0-100
+  volunteers: number;
+  volunteerLoyaltyWeeks: number; // > 0 = na een vrijwilligersfeest haken minder mensen af
+  reputation: number; // 0-100
+  youthMembers: number;
+}
+
+export type InvestorId = 'aannemer' | 'fonds' | 'cooperatie';
+export type BackgroundId = 'exspeler' | 'ondernemer' | 'lokaal';
+
+export interface Avatar {
+  name: string;
+  skin: number; // index in paletten
+  hair: number;
+  shirt: number;
+  background: BackgroundId;
+}
+
+export type LedgerCategory =
+  | 'tickets'
+  | 'kantine'
+  | 'merchandising'
+  | 'inkoop shop'
+  | 'sponsors'
+  | 'tv-rechten'
+  | 'lidgelden'
+  | 'subsidies'
+  | 'evenementen'
+  | 'transfers'
+  | 'investeerder'
+  | 'leningen'
+  | 'meevallers'
+  | 'verhuur'
+  | 'lonen spelers'
+  | 'lonen staff'
+  | 'infrastructuur'
+  | 'onderhoud & energie'
+  | 'bond & verzekering'
+  | 'wedstrijdkosten'
+  | 'aflossingen'
+  | 'opleidingen'
+  | 'trainingen'
+  | 'tegenslagen'
+  | 'boetes'
+  | 'tuchtboetes'
+  | 'concessies';
+
+export interface LedgerEntry {
+  category: LedgerCategory;
+  amount: number; // positief = inkomst, negatief = kost
+  label: string;
+}
+
+export interface NewsItem {
+  week: number;
+  season: number;
+  tone: 'goed' | 'slecht' | 'neutraal';
+  text: string;
+}
+
+export interface WeekRecord {
+  season: number;
+  week: number;
+  totals: Partial<Record<LedgerCategory, number>>;
+}
+
+export interface MatchReport {
+  week: number;
+  opponent: string;
+  home: boolean;
+  goalsFor: number;
+  goalsAgainst: number;
+  attendance: number;
+  weather: string;
+  ourStrength: number;
+  theirStrength: number;
+  forfeit?: boolean;
+  cards?: string; // samenvatting van de kaarten voor jouw ploeg
+  ourPlan?: GamePlan;
+  theirPlan?: GamePlan;
+  matchup?: number;
+}
+
+export interface SeasonRecord {
+  season: number;
+  division: string;
+  position: number;
+  points: number;
+  result: 'promotie' | 'degradatie' | 'behoud' | 'kampioen';
+  profit: number; // resultaat van het seizoen
+}
+
+export interface PlayerOffer {
+  id: string;
+  playerId: string;
+  club: string;
+  amount: number;
+  expiresInWeeks: number;
+}
+
+export interface GameState {
+  version: number;
+  seed: number;
+  rngState: number;
+  idCounter: number;
+
+  season: number; // 1 = eerste seizoen
+  week: number; // 1-52, week 1 = eerste week van juli
+  startYear: number;
+
+  avatar: Avatar;
+  investor: InvestorId;
+  clubId: string;
+  clubName: string;
+
+  cash: number;
+  weeksNegative: number;
+  gameOver: boolean;
+  gameOverReason: string;
+
+  ticketPrice: number;
+  players: Player[];
+  staff: Staff[];
+  league: League;
+  loans: Loan[];
+  sponsors: SponsorDeal[];
+  sponsorOffers: SponsorOffer[];
+  infrastructure: Infrastructure;
+  crest: string; // vorm van het clublogo
+  merch: Merch;
+  canteen: Canteen;
+  stats: SeasonStats;
+  statsHistory: SeasonStats[];
+  requests: PendingRequest[];
+  log: LogEntry[];
+  community: Community;
+
+  marketIndex: number; // algemene stemming op de transfermarkt (0.7-1.3)
+  transferList: Player[]; // spelers die je kunt kopen (purchasePrice = vraagprijs)
+  loanMarket: Player[]; // huurspelers van profclubs (purchasePrice = huurvergoeding)
+  periodMatches: number; // eigen wedstrijden sinds de laatste evolutie
+  eventLog: { season: number; week: number; id: string }[]; // georganiseerde evenementen
+  playerOffers: PlayerOffer[]; // biedingen van andere clubs op jouw spelers
+  staffMarket: Staff[]; // staff die je kunt aanwerven
+
+  eventCooldowns: Record<string, number>; // evenementen en acties: weken tot het opnieuw kan
+  eventCounts: Record<string, number>; // hoe vaak een evenement dit seizoen al plaatsvond
+  pending: PendingIncome[]; // opbrengsten die later binnenkomen
+  tactics: Tactics;
+  delegation: Partial<Record<TaskId, string>>; // taak -> staff-id (ontbreekt = eigenaar)
+  transferBudget: number; // wat de scout mag uitgeven als hij transfers regelt
+  youthFee: number; // lidgeld per jeugdspeler per seizoen
+  prospects: SponsorProspect[];
+  sponsorCampaignWeeks: number; // > 0 = een bureau zoekt nieuwe sponsors
+  emergencyLoanOffered: boolean;
+  promotionsWithInvestor: number;
+  investorActive: boolean;
+  licenceWarnings: number;
+
+  nextDivisionLevel: number; // wordt bepaald op het einde van het seizoen
+  lastMatch: MatchReport | null;
+  history: SeasonRecord[];
+
+  lastWeek: LedgerEntry[]; // boekingen van de laatst gespeelde week
+  thisWeek: LedgerEntry[]; // boekingen van acties in de huidige week (voor je op volgende week klikt)
+  seasonTotals: Partial<Record<LedgerCategory, number>>;
+  lastSeasonTotals: Partial<Record<LedgerCategory, number>>;
+  cashHistory: number[]; // saldo op het einde van elke week (laatste 104 weken)
+  weekHistory: WeekRecord[]; // boekingen per categorie per week (laatste 52 weken)
+  news: NewsItem[];
+}

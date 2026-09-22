@@ -1,0 +1,796 @@
+// Alles wat de speler (eigenaar) kan doen binnen een beurt.
+// Elke actie past de speltoestand aan en geeft terug of het gelukt is.
+
+import type {
+  ActionResult, CanteenItemId, ConcessionId, Formation, GamePlan, GameState, Infrastructure, Mentality, MerchItemId,
+  Player, PlayerLoan, PlayerRoles, StaffRole, TaskId, TrainingFocus, UpgradeId,
+} from './types';
+import { clamp, createRng, round } from './rng';
+import { DIVISIONS } from './data/divisions';
+import {
+  BIJSCHOLING, CLUB_EVENTS, CONCESSION_SPACE, COURSES, MERCH_START_COST, TASKS, UPGRADES, VOLUNTEER_ACTIONS,
+  canteenDef, concessionDef, merchDef, roleDef, type ClubEventDef,
+} from './data/catalog';
+import { isTransferWindow } from './calendar';
+import { FORMATIONS, currentBid, departureBlock, isCorePlayer, overall, wageDemand } from './players';
+import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
+import { emergencyOffer, loanOffers } from './loans';
+import { acceptSponsorOffer } from './sponsors';
+import { hasDiploma, staffSkill } from './staff';
+import { bestPrice, margin } from './merch';
+import { acceptedMargin, concessionPartner } from './canteen';
+import { popularity } from './popularity';
+import { addLog, addNews, book, euro, nextId, weeks } from './util';
+
+export type { ActionResult };
+
+const fail = (message: string): ActionResult => ({ ok: false, message });
+const ok = (message: string): ActionResult => ({ ok: true, message });
+
+function guard(state: GameState): ActionResult | null {
+  return state.gameOver ? fail('Het spel is afgelopen.') : null;
+}
+
+// ---------- Spelers ----------
+
+export function buyPlayer(state: GameState, playerId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (!isTransferWindow(state.week)) return fail('De transferperiode is gesloten.');
+  const p = state.transferList.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet meer beschikbaar.');
+  if (state.players.length >= 30) return fail('Je selectie is vol (max. 30 spelers).');
+  if (p.purchasePrice > state.cash) return fail('Niet genoeg geld op de rekening.');
+  if (state.avatar.background === 'exspeler') p.wage = round(p.wage * 0.95, 5);
+  state.transferList = state.transferList.filter((x) => x.id !== playerId);
+  if (p.purchasePrice > 0) book(state, 'transfers', -p.purchasePrice, `Aankoop ${p.name}`);
+  state.players.push(p);
+  addNews(state, 'neutraal', `${p.name} tekent bij ${state.clubName}${p.purchasePrice ? ` voor €${p.purchasePrice.toLocaleString('nl-BE')}` : ' (transfervrij)'}.`);
+  return ok(`${p.name} is aangeworven.`);
+}
+
+/** Huurlingen en uitgeleende spelers kun je niet verkopen of verlengen. */
+function loanBlock(p: { name: string; loan: PlayerLoan | null }): ActionResult | null {
+  if (p.loan?.type === 'in') return fail(`${p.name} is gehuurd van ${p.loan.club}.`);
+  if (p.loan?.type === 'uit') return fail(`${p.name} is uitgeleend aan ${p.loan.club} tot het einde van het seizoen.`);
+  return null;
+}
+
+function removePlayerWithFee(state: GameState, playerId: string, amount: number, buyer: string): ActionResult {
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  const lb = loanBlock(p);
+  if (lb) return lb;
+  state.players = state.players.filter((x) => x.id !== playerId);
+  for (const other of state.players) other.friends = other.friends.filter((f) => f !== playerId);
+  state.playerOffers = state.playerOffers.filter((o) => o.playerId !== playerId);
+  book(state, 'transfers', amount, `Verkoop ${p.name} aan ${buyer}`);
+  const profit = amount - p.purchasePrice;
+  if (state.investor === 'fonds' && state.investorActive && profit > 0) {
+    book(state, 'investeerder', -profit * 0.3, `30% transferwinst ${p.name} naar het fonds`);
+  }
+  // vrienden in de kleedkamer vinden het jammer
+  for (const other of state.players) {
+    if (p.friends.includes(other.id)) other.morale = clamp(other.morale - 6, 0, 100);
+  }
+  addNews(state, 'neutraal', `${p.name} vertrekt naar ${buyer} voor €${amount.toLocaleString('nl-BE')}.`);
+  return ok(`${p.name} is verkocht voor €${amount.toLocaleString('nl-BE')}.`);
+}
+
+/** Verkoop op de open markt tegen het bod van deze week. */
+export function sellPlayer(state: GameState, playerId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (!isTransferWindow(state.week)) return fail('Spelers verkopen kan alleen tijdens de transferperiode.');
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  const block = departureBlock(state, p, 'verkopen');
+  if (block) return fail(block);
+  return removePlayerWithFee(state, playerId, currentBid(p, state.marketIndex), 'een andere club');
+}
+
+export function acceptPlayerOffer(state: GameState, offerId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const o = state.playerOffers.find((x) => x.id === offerId);
+  if (!o) return fail('Bod niet meer geldig.');
+  const target = state.players.find((x) => x.id === o.playerId);
+  if (!target) return fail('Speler niet gevonden.');
+  const block = departureBlock(state, target, 'verkopen');
+  if (block) return fail(block);
+  return removePlayerWithFee(state, o.playerId, o.amount, o.club);
+}
+
+export function declinePlayerOffer(state: GameState, offerId: string): ActionResult {
+  const o = state.playerOffers.find((x) => x.id === offerId);
+  if (!o) return fail('Bod niet gevonden.');
+  state.playerOffers = state.playerOffers.filter((x) => x.id !== offerId);
+  const p = state.players.find((x) => x.id === o.playerId);
+  if (p && o.club && p.age <= 23) p.morale = clamp(p.morale - 5, 0, 100); // hij had graag vertrokken
+  return ok('Bod geweigerd.');
+}
+
+/** Contract met één seizoen verlengen. De speler vraagt het loon dat hij nu waard is. */
+/** Wat deze speler vraagt om te verlengen. Vorm, leeftijd en karakter spelen mee. */
+export function askingWage(state: GameState, p: Player): number {
+  const base = Math.max(p.wage, p.isYouth && p.age < 19 ? 60 : wageDemand(p));
+  const form = 1 + clamp(p.form, -5, 8) / 40;
+  const core = isCorePlayer(state, p) ? 1.08 : 1;
+  const mood = p.morale < 50 ? 1.12 : p.morale > 75 ? 0.96 : 1;
+  const background = state.avatar.background === 'exspeler' ? 0.95 : 1;
+  return round(base * form * core * mood * background, 5);
+}
+
+/** Hoe een loonbod aanvoelt: onder de vraag doet pijn, ruim erboven geeft een boost. */
+export function wageOfferEffect(state: GameState, p: Player, offer: number): { ratio: number; chance: number; morale: number } {
+  const ask = askingWage(state, p);
+  const ratio = offer / Math.max(1, ask);
+  const patience = p.trait === 'professioneel' ? 0.08 : p.trait === 'harde werker' ? 0.05 : p.trait === 'lastpak' ? -0.08 : 0;
+  const chance = clamp(0.15 + (ratio - 0.85) * 4 + patience + (p.morale - 55) / 150, 0.02, 0.97);
+  const morale = Math.round(clamp((ratio - 1) * 45, -20, 12));
+  return { ratio, chance, morale };
+}
+
+/**
+ * Verlengen met een loonvoorstel. Bied je te weinig, dan weigert hij en zakt zijn moraal;
+ * bied je royaal, dan tekent hij graag, maar je betaalt het elke week.
+ */
+export function extendContract(state: GameState, playerId: string, offer?: number): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  const lb = loanBlock(p);
+  if (lb) return lb;
+  if (p.contractUntil >= state.season + 3) return fail('Het contract loopt al lang genoeg.');
+  if (p.morale < 35) return fail(`${p.name} is ontevreden en wil niet verlengen.`);
+  const ask = askingWage(state, p);
+  const wage = round(Number.isFinite(offer) && (offer as number) > 0 ? (offer as number) : ask, 5);
+  if (wage < 40) return fail('Onder €40 per week tekent niemand.');
+  const { chance, morale } = wageOfferEffect(state, p, wage);
+  const rng = createRng(state);
+  addLog(state, 'beslissing', `Verlenging voorgesteld aan ${p.name}: €${wage}/week (hij vraagt €${ask}).`);
+  if (!rng.chance(chance)) {
+    p.morale = clamp(p.morale + Math.min(-3, morale), 0, 100);
+    return fail(`${p.name} wijst €${wage}/week af. Hij vraagt ongeveer €${ask}/week (moraal ${Math.round(p.morale)}).`);
+  }
+  p.wage = wage;
+  p.contractUntil += 1;
+  p.morale = clamp(p.morale + 5 + morale, 0, 100);
+  addNews(state, 'goed', `${p.name} verlengt tot einde seizoen ${p.contractUntil} aan €${p.wage}/week.`);
+  return ok(`${p.name} verlengt tot einde seizoen ${p.contractUntil} aan €${p.wage}/week.`);
+}
+
+export function releasePlayer(state: GameState, playerId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  if (p.loan?.type === 'in') {
+    state.players = state.players.filter((x) => x.id !== playerId);
+    return ok(`De huur van ${p.name} is beëindigd. Hij keert terug naar ${p.loan.club}.`);
+  }
+  if (p.loan?.type === 'uit') return fail(`${p.name} is uitgeleend aan ${p.loan.club}.`);
+  const rblock = departureBlock(state, p, 'laten gaan');
+  if (rblock) return fail(rblock);
+  const seasonsLeft = Math.max(0, p.contractUntil - state.season) + 1;
+  const weeksLeftInSeason = 52 - state.week;
+  const payoff = round(p.wage * Math.min(26, weeksLeftInSeason + (seasonsLeft - 1) * 52) * 0.5, 10);
+  state.players = state.players.filter((x) => x.id !== playerId);
+  for (const other of state.players) other.friends = other.friends.filter((f) => f !== playerId);
+  book(state, 'lonen spelers', -payoff, `Opzegvergoeding ${p.name}`);
+  return ok(`Contract van ${p.name} ontbonden. Opzegvergoeding: €${payoff.toLocaleString('nl-BE')}.`);
+}
+
+// ---------- Staff ----------
+
+/** Sommige stafleden hebben eerst de juiste infrastructuur nodig. */
+export function staffLock(state: GameState, role: StaffRole): string | null {
+  const i = state.infrastructure;
+  if ((role === 'kinesist' || role === 'verzorger') && i.recoveryLevel < 1) {
+    return 'Hiervoor heb je eerst een recuperatieruimte nodig (Infrastructuur): zonder behandeltafel, ijsbad en sauna kan hij niet werken.';
+  }
+  if (role === 'merchandising' && !state.merch.active) return 'Open eerst je fanshop (Club › Fanshop).';
+  if (role === 'jeugdcoordinator' && state.community.youthMembers < 20) return 'Je jeugdwerking is te klein: je hebt minstens 20 jeugdleden nodig.';
+  return null;
+}
+
+export function hireStaff(state: GameState, staffId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const s = state.staffMarket.find((x) => x.id === staffId);
+  if (!s) return fail('Kandidaat niet meer beschikbaar.');
+  const current = state.staff.filter((x) => x.role === s.role).length;
+  if (current >= roleDef(s.role).max) return fail(`Je hebt al een ${roleDef(s.role).label.toLowerCase()}. Ontsla eerst de huidige.`);
+  const lock = staffLock(state, s.role);
+  if (lock) return fail(lock);
+  const signingFee = s.wage * 2;
+  book(state, 'lonen staff', -signingFee, `Tekengeld ${s.name}`);
+  state.staffMarket = state.staffMarket.filter((x) => x.id !== staffId);
+  state.staff.push(s);
+  addLog(state, 'beslissing', `${s.name} aangeworven als ${roleDef(s.role).label.toLowerCase()} (€${s.wage}/week).`);
+  addNews(state, 'neutraal', `${s.name} is de nieuwe ${roleDef(s.role).label.toLowerCase()}.`);
+  return ok(`${s.name} aangeworven.`);
+}
+
+export function fireStaff(state: GameState, staffId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const s = state.staff.find((x) => x.id === staffId);
+  if (!s) return fail('Staflid niet gevonden.');
+  const payoff = s.wage * 8;
+  book(state, 'lonen staff', -payoff, `Opzegvergoeding ${s.name}`);
+  state.staff = state.staff.filter((x) => x.id !== staffId);
+  const dropped: string[] = [];
+  for (const t of TASKS) {
+    if (state.delegation[t.id] === staffId) {
+      delete state.delegation[t.id];
+      dropped.push(t.label.toLowerCase());
+    }
+  }
+  if (dropped.length) addNews(state, 'neutraal', `Na het vertrek van ${s.name} doe je zelf weer: ${dropped.join(', ')}.`);
+  if (s.role === 'hoofdtrainer') state.players.forEach((p) => (p.morale = clamp(p.morale - 3, 0, 100)));
+  return ok(`${s.name} is ontslagen (vergoeding €${payoff.toLocaleString('nl-BE')}).`);
+}
+
+/** Diploma-opleiding voor trainers (T1/T2), of bijscholing voor iedereen. */
+export function startCourse(state: GameState, staffId: string, type: 'diploma' | 'bijscholing' = 'diploma'): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const s = state.staff.find((x) => x.id === staffId);
+  if (!s) return fail('Staflid niet gevonden.');
+  if (s.courseWeeksLeft > 0) return fail('Volgt al een opleiding.');
+  if (type === 'diploma') {
+    if (!hasDiploma(s.role)) return fail('Alleen de T1 en T2 volgen een diplomaopleiding.');
+    const course = COURSES.find((c) => c.from === s.diploma);
+    if (!course) return fail('Hoogste diploma al behaald.');
+    if (state.cash < course.cost) return fail('Niet genoeg geld.');
+    book(state, 'opleidingen', -course.cost, `Opleiding ${course.to} voor ${s.name}`);
+    s.courseWeeksLeft = course.weeks;
+    s.courseType = 'diploma';
+    return ok(`${s.name} start de opleiding ${course.to} (${course.weeks} weken). Tijdens de opleiding werkt hij op 60%.`);
+  }
+  if (s.skill >= BIJSCHOLING.cap) return fail(`${s.name} is al top in zijn vak.`);
+  const cost = BIJSCHOLING.cost(s.skill);
+  if (state.cash < cost) return fail('Niet genoeg geld.');
+  book(state, 'opleidingen', -cost, `Bijscholing ${s.name}`);
+  s.courseWeeksLeft = BIJSCHOLING.weeks;
+  s.courseType = 'bijscholing';
+  return ok(`${s.name} volgt ${BIJSCHOLING.weeks} weken bijscholing (+${BIJSCHOLING.gain[0]} tot +${BIJSCHOLING.gain[1]} vaardigheid).`);
+}
+
+// ---------- Financiën ----------
+
+export function takeLoan(state: GameState, key: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const offer = key === 'nood' && state.emergencyLoanOffered ? emergencyOffer() : loanOffers(state).find((o) => o.key === key);
+  if (!offer) return fail('Deze lening is niet (meer) beschikbaar.');
+  state.loans.push({
+    id: nextId(state, 'l'),
+    label: offer.label,
+    principal: offer.principal,
+    remaining: offer.principal,
+    annualRate: offer.annualRate,
+    weeklyPayment: offer.weeklyPayment,
+    weeksLeft: offer.weeks,
+  });
+  if (key === 'nood') state.emergencyLoanOffered = false;
+  book(state, 'leningen', offer.principal, offer.label);
+  return ok(`Lening van €${offer.principal.toLocaleString('nl-BE')} ontvangen.`);
+}
+
+export function repayLoan(state: GameState, loanId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const loan = state.loans.find((l) => l.id === loanId);
+  if (!loan) return fail('Lening niet gevonden.');
+  const penalty = round(loan.remaining * 0.02, 10);
+  const total = loan.remaining + penalty;
+  if (state.cash < total) return fail(`Je hebt €${total.toLocaleString('nl-BE')} nodig (inclusief 2% boete).`);
+  book(state, 'aflossingen', -total, `Vervroegde aflossing ${loan.label}`);
+  state.loans = state.loans.filter((l) => l.id !== loanId);
+  return ok('Lening volledig afgelost.');
+}
+
+export function setTicketPrice(state: GameState, price: number): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (!Number.isFinite(price) || price < 0 || price > 100) return fail('Kies een prijs tussen €0 en €100.');
+  state.ticketPrice = Math.round(price);
+  addLog(state, 'beslissing', `Ticketprijs op €${state.ticketPrice} gezet.`);
+  const ref = DIVISIONS[state.league.divisionLevel].refTicketPrice;
+  if (state.investor === 'cooperatie' && price > ref * 1.2) {
+    addNews(state, 'slecht', 'De leden van de coöperatie protesteren tegen de hoge ticketprijs.');
+  }
+  return ok(`Ticketprijs is nu €${state.ticketPrice}.`);
+}
+
+export function acceptSponsor(state: GameState, offerId: string): ActionResult {
+  const g = guard(state);
+  return g ?? acceptSponsorOffer(state, offerId);
+}
+
+export function declineSponsor(state: GameState, offerId: string): ActionResult {
+  state.sponsorOffers = state.sponsorOffers.filter((x) => x.id !== offerId);
+  return ok('Aanbod geweigerd.');
+}
+
+export { approachProspect, networkEvening, startCampaign, cancelSponsor, askExtra, renewSponsor } from './sponsors';
+
+// ---------- Infrastructuur ----------
+
+export function upgradeCost(state: GameState, id: UpgradeId): number {
+  const def = UPGRADES.find((u) => u.id === id)!;
+  return state.investor === 'aannemer' && state.investorActive ? round(def.cost * 0.85, 1000) : def.cost;
+}
+
+export function canUpgrade(state: GameState, id: UpgradeId): string | null {
+  const i = state.infrastructure;
+  if (i.construction) return 'Er loopt al een bouwproject.';
+  if (id === 'kantine' && i.kantineLevel >= 5) return 'De kantine is al op het hoogste niveau.';
+  if (id === 'verlichting' && i.lightingLevel >= 3) return 'De verlichting is al op het hoogste niveau.';
+  if (id === 'kunstgras' && i.pitch === 'kunstgras') return 'Er ligt al kunstgras.';
+  if (id === 'opleidingscentrum' && i.academyLevel >= 3) return 'Het opleidingscentrum is al op het hoogste niveau.';
+  if (id === 'recuperatie' && i.recoveryLevel >= 2) return 'De recuperatieruimte is al op het hoogste niveau.';
+  if (id === 'wifi' && i.wifiLevel >= 2) return 'De wifi is al op het hoogste niveau.';
+  if (id === 'sanitair' && i.sanitairLevel >= 2) return 'Het sanitair is al op het hoogste niveau.';
+  if (id === 'parking' && i.parkingLevel >= 2) return 'De parking is al op het hoogste niveau.';
+  return null;
+}
+
+export function startUpgrade(state: GameState, id: UpgradeId): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const reason = canUpgrade(state, id);
+  if (reason) return fail(reason);
+  const def = UPGRADES.find((u) => u.id === id)!;
+  const cost = upgradeCost(state, id);
+  if (state.cash < cost) return fail(`Niet genoeg geld (€${cost.toLocaleString('nl-BE')} nodig). Een lening kan helpen.`);
+  book(state, 'infrastructuur', -cost, def.label);
+  state.infrastructure.construction = { upgrade: id, weeksLeft: def.weeks };
+  addLog(state, 'beslissing', `Bouwproject gestart: ${def.label} (${def.weeks} weken, ${euro(cost)}).`);
+  return ok(`Werken gestart: ${def.label} (${def.weeks} weken).`);
+}
+
+// ---------- Evenementen en vrijwilligers ----------
+
+const WEEK_EVENT_KEY = 'evenement-deze-week';
+
+/** Prognose van een evenement: [minimum, maximum] opbrengst. */
+export function eventForecast(state: GameState, def: ClubEventDef): [number, number] {
+  const c = state.community;
+  const mid = def.revenue({ fanBase: c.fanBase, youthMembers: c.youthMembers, mood: c.fanMood }) * (1 + staffSkill(state, 'kantine') / 400);
+  return [round(mid * (1 - def.spread), 50), round(mid * (1 + def.spread), 50)];
+}
+
+export function eventsThisSeason(state: GameState, id: string): number {
+  return state.eventCounts[id] ?? 0;
+}
+
+export function canOrganise(state: GameState, def: ClubEventDef): string | null {
+  if (eventsThisSeason(state, def.id) >= def.maxPerSeason) return `Maximaal ${def.maxPerSeason}× per seizoen: dit seizoen al georganiseerd.`;
+  if ((state.eventCooldowns[WEEK_EVENT_KEY] ?? 0) > 0) return 'Er is deze week al een evenement. Maximaal één per week.';
+  const wait = state.eventCooldowns[def.id] ?? 0;
+  if (wait > 0) return `Nog ${weeks(wait)} wachten.`;
+  if (state.community.volunteers < def.volunteers) return `Je hebt ${def.volunteers} vrijwilligers nodig (nu ${state.community.volunteers}).`;
+  if (state.cash < def.cost) return 'Niet genoeg geld.';
+  return null;
+}
+
+export function organiseEvent(state: GameState, eventId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const def = CLUB_EVENTS.find((e) => e.id === eventId);
+  if (!def) return fail('Onbekend evenement.');
+  const reason = canOrganise(state, def);
+  if (reason) return fail(reason);
+  const [min, max] = eventForecast(state, def);
+  const revenue = round(createRng(state).range(min, max), 10);
+  const c = state.community;
+  book(state, 'evenementen', -def.cost, `${def.label}: kosten`);
+  state.pending.push({ weeksLeft: def.payoutWeeks, amount: revenue, category: 'evenementen', label: `${def.label}: opbrengst` });
+  c.fanMood = clamp(c.fanMood + def.moodBoost, 0, 100);
+  c.reputation = clamp(c.reputation + def.reputationBoost, 0, 100);
+  if (def.fanBaseBoost) c.fanBase += round((c.fanBase * def.fanBaseBoost) / 100, 1);
+  state.eventCooldowns[eventId] = def.cooldown;
+  state.eventCooldowns[WEEK_EVENT_KEY] = 1;
+  state.eventCounts[eventId] = eventsThisSeason(state, eventId) + 1;
+  state.eventLog.push({ season: state.season, week: state.week, id: eventId });
+  return ok(`${def.label} georganiseerd (${state.eventCounts[eventId]}/${def.maxPerSeason} dit seizoen). De opbrengst komt binnen over ${weeks(def.payoutWeeks)}.`);
+}
+
+export function volunteerAction(state: GameState, actionId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const def = VOLUNTEER_ACTIONS.find((a) => a.id === actionId);
+  if (!def) return fail('Onbekende actie.');
+  const key = `vrijwilligers-${def.id}`;
+  if ((state.eventCooldowns[key] ?? 0) > 0) return fail(`Nog ${weeks(state.eventCooldowns[key])} wachten.`);
+  if (state.cash < def.cost) return fail('Niet genoeg geld.');
+  const [min, max] = def.gain(state.community.youthMembers);
+  const gained = createRng(state).int(min, max);
+  book(state, 'evenementen', -def.cost, def.label);
+  state.pending.push({ weeksLeft: def.weeks, amount: 0, category: 'evenementen', label: def.label, volunteers: gained });
+  if (def.loyaltyWeeks) state.community.volunteerLoyaltyWeeks = def.loyaltyWeeks;
+  state.eventCooldowns[key] = def.cooldown;
+  return ok(`${def.label}: resultaat over ${weeks(def.weeks)}.`);
+}
+
+// ---------- Opstelling en tactiek ----------
+
+/** Geeft een foutmelding als een staflid deze taak overnam. */
+export function taskLocked(state: GameState, task: TaskId): ActionResult | null {
+  const id = state.delegation[task];
+  if (!id) return null;
+  const who = state.staff.find((x) => x.id === id);
+  const label = TASKS.find((t) => t.id === task)?.label ?? task;
+  return fail(`${who?.name ?? 'Je staflid'} regelt dit (taak "${label}"). Neem de taak terug bij Staff om zelf te beslissen.`);
+}
+
+export function setFormation(state: GameState, formation: Formation): ActionResult {
+  if (!FORMATIONS[formation]) return fail('Onbekende formatie.');
+  const locked = taskLocked(state, 'opstelling');
+  if (locked) return locked;
+  state.tactics.formation = formation;
+  state.tactics.manualXI = state.tactics.manualXI.filter((id) => {
+    const p = state.players.find((x) => x.id === id);
+    return p && state.tactics.manualXI.filter((o) => state.players.find((x) => x.id === o)?.position === p.position).length <= FORMATIONS[formation][p.position];
+  });
+  return ok(`Formatie: ${formation}.`);
+}
+
+export function setMentality(state: GameState, mentality: Mentality): ActionResult {
+  if (!MENTALITY_INFO[mentality]) return fail('Onbekende mentaliteit.');
+  const locked = taskLocked(state, 'tactiek');
+  if (locked) return locked;
+  state.tactics.mentality = mentality;
+  return ok(`Mentaliteit: ${mentality}.`);
+}
+
+export function setPlan(state: GameState, plan: GamePlan): ActionResult {
+  if (!PLAN_INFO[plan]) return fail('Onbekend spelplan.');
+  const locked = taskLocked(state, 'tactiek');
+  if (locked) return locked;
+  state.tactics.plan = plan;
+  return ok(`Spelplan: ${PLAN_INFO[plan].label}.`);
+}
+
+export function setTrainings(state: GameState, trainings: number): ActionResult {
+  if (!Number.isInteger(trainings) || trainings < TRAININGS_MIN || trainings > TRAININGS_MAX) return fail(`Kies ${TRAININGS_MIN} tot ${TRAININGS_MAX} trainingen.`);
+  const locked = taskLocked(state, 'training');
+  if (locked) return locked;
+  state.tactics.trainings = trainings;
+  return ok(`${trainings} trainingen per week.`);
+}
+
+export function setFocus(state: GameState, focus: TrainingFocus): ActionResult {
+  if (!FOCUS_INFO[focus]) return fail('Onbekende trainingsfocus.');
+  const locked = taskLocked(state, 'training');
+  if (locked) return locked;
+  state.tactics.focus = focus;
+  return ok(`Trainingsfocus: ${FOCUS_INFO[focus].label}.`);
+}
+
+/** Zet een speler in of uit de zelfgekozen basiself. */
+export function toggleStarter(state: GameState, playerId: string): ActionResult {
+  const locked = taskLocked(state, 'opstelling');
+  if (locked) return locked;
+  const t = state.tactics;
+  if (t.manualXI.includes(playerId)) {
+    t.manualXI = t.manualXI.filter((id) => id !== playerId);
+    return ok('Speler uit je basiself gehaald.');
+  }
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  const samePos = t.manualXI.filter((id) => state.players.find((x) => x.id === id)?.position === p.position).length;
+  if (samePos >= FORMATIONS[t.formation][p.position]) return fail(`Je formatie heeft maar ${FORMATIONS[t.formation][p.position]} plaats(en) voor ${p.position}. Haal eerst iemand weg.`);
+  t.manualXI.push(playerId);
+  return ok(`${p.name} staat in je basiself.`);
+}
+
+export function autoLineup(state: GameState): ActionResult {
+  const locked = taskLocked(state, 'opstelling');
+  if (locked) return locked;
+  state.tactics.manualXI = [];
+  return ok('De beste elf wordt automatisch gekozen.');
+}
+
+// ---------- Delegeren ----------
+
+export function delegateTask(state: GameState, taskId: TaskId, staffId: string | null): ActionResult {
+  const task = TASKS.find((t) => t.id === taskId);
+  if (!task) return fail('Onbekende taak.');
+  if (staffId === null) {
+    delete state.delegation[taskId];
+    return ok(`Je doet "${task.label}" weer zelf.`);
+  }
+  const s = state.staff.find((x) => x.id === staffId);
+  if (!s) return fail('Staflid niet gevonden.');
+  if (!task.roles.includes(s.role)) return fail(`${s.name} kan "${task.label}" niet overnemen.`);
+  state.delegation[taskId] = staffId;
+  return ok(`${s.name} neemt "${task.label}" over.`);
+}
+
+export function setTransferBudget(state: GameState, amount: number): ActionResult {
+  if (!Number.isFinite(amount) || amount < 0) return fail('Geef een bedrag van €0 of meer.');
+  state.transferBudget = Math.round(amount);
+  return ok(`Transferbudget voor de scout: €${state.transferBudget.toLocaleString('nl-BE')}.`);
+}
+
+// ---------- Clubbeleid ----------
+
+export const YOUTH_FEE_REF = 230; // gangbaar lidgeld per seizoen in de regio
+export const YOUTH_FEE_WEEK = 10; // inschrijvingen
+
+/** Prijsgevoeligheid: ouders vergelijken met andere clubs. */
+export function youthPriceFactor(fee: number): number {
+  return clamp(Math.pow(YOUTH_FEE_REF / Math.max(20, fee), 1.5), 0.3, 1.8);
+}
+
+/** Hoeveel jeugdleden je bij dit lidgeld mag verwachten. */
+export function youthTarget(state: GameState, fee = state.youthFee): number {
+  const c = state.community;
+  const base = 150 + c.reputation * 2 + staffSkill(state, 'jeugdcoordinator') * 1.5 + state.infrastructure.academyLevel * 40;
+  // ouders schrijven hun kinderen liever in bij een club die goed draait
+  const success = popularity(state).factor;
+  return Math.round(base * youthPriceFactor(fee) * success);
+}
+
+/** Verwacht aantal inschrijvingen bij het volgende inschrijvingsmoment. */
+export function youthForecast(state: GameState, fee = state.youthFee): number {
+  const c = state.community;
+  return Math.round(c.youthMembers + (youthTarget(state, fee) - c.youthMembers) * 0.5);
+}
+
+export function setYouthFee(state: GameState, fee: number): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (!Number.isFinite(fee) || fee < 0 || fee > 800) return fail('Kies een lidgeld tussen €0 en €800.');
+  state.youthFee = Math.round(fee);
+  addLog(state, 'beslissing', `Lidgeld jeugd op €${state.youthFee} per seizoen gezet.`);
+  return ok(`Lidgeld jeugd: €${state.youthFee} per seizoen. Het geldt vanaf de inschrijvingen in week ${YOUTH_FEE_WEEK}.`);
+}
+
+// ---------- Transferlijst en huur ----------
+
+export function listPlayer(state: GameState, playerId: string, askingPrice: number): ActionResult {
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  const lb = loanBlock(p);
+  if (lb) return lb;
+  if (!Number.isFinite(askingPrice) || askingPrice < 0) return fail('Geef een geldige vraagprijs.');
+  p.listed = true;
+  p.askingPrice = Math.round(askingPrice);
+  p.morale = clamp(p.morale - 4, 0, 100); // hij voelt zich niet gewaardeerd
+  return ok(`${p.name} staat te koop voor €${p.askingPrice.toLocaleString('nl-BE')}. Clubs kunnen tijdens de transferperiode een bod doen.`);
+}
+
+export function unlistPlayer(state: GameState, playerId: string): ActionResult {
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  p.listed = false;
+  p.askingPrice = 0;
+  return ok(`${p.name} staat niet langer te koop.`);
+}
+
+/** Welk deel van het loon betaalt een andere club als je deze speler uitleent? */
+export function loanWageShare(state: GameState, p: Player): number {
+  const level = DIVISIONS[state.league.divisionLevel].opponentStrength;
+  return Math.round(clamp(0.35 + (overall(p) - level + 10) / 40, 0.25, 1) * 100) / 100;
+}
+
+export function loanOut(state: GameState, playerId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (!isTransferWindow(state.week)) return fail('Uitlenen kan alleen tijdens de transferperiode.');
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  const lb = loanBlock(p);
+  if (lb) return lb;
+  const lblock = departureBlock(state, p, 'uitlenen');
+  if (lblock) return fail(lblock);
+  const rng = createRng(state);
+  const club = rng.pick(state.league.teams).name;
+  const share = loanWageShare(state, p);
+  p.loan = { type: 'uit', club, untilSeason: state.season, wageShare: share };
+  p.listed = false;
+  state.tactics.manualXI = state.tactics.manualXI.filter((id) => id !== playerId);
+  addNews(state, 'neutraal', `${p.name} wordt tot het einde van het seizoen uitgeleend aan ${club}. Zij betalen ${Math.round(share * 100)}% van zijn loon.`);
+  return ok(`${p.name} uitgeleend aan ${club} (${Math.round(share * 100)}% van zijn loon betaald). Hij speelt daar en blijft zich ontwikkelen.`);
+}
+
+export function loanIn(state: GameState, playerId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (!isTransferWindow(state.week)) return fail('Huren kan alleen tijdens de transferperiode.');
+  const p = state.loanMarket.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet meer beschikbaar.');
+  if (state.players.length >= 30) return fail('Je selectie is vol (max. 30 spelers).');
+  if (state.cash < p.purchasePrice) return fail('Niet genoeg geld voor de huurvergoeding.');
+  state.loanMarket = state.loanMarket.filter((x) => x.id !== playerId);
+  if (p.purchasePrice) book(state, 'transfers', -p.purchasePrice, `Huurvergoeding ${p.name}`);
+  p.loan = { type: 'in', club: p.loan?.club ?? 'profclub', untilSeason: state.season, wageShare: 1 };
+  p.contractUntil = state.season;
+  state.players.push(p);
+  addNews(state, 'goed', `${p.name} wordt tot het einde van het seizoen gehuurd van ${p.loan.club}.`);
+  return ok(`${p.name} gehuurd. Jij betaalt €${p.wage}/week, ${p.loan.club} de rest.`);
+}
+
+// ---------- Fanshop (merchandising) ----------
+
+/** Fanshop opstarten: rekken, kassa, webshop en een basisvoorraad sjaals. */
+export function startMerch(state: GameState): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (state.merch.active) return fail('Je fanshop draait al.');
+  if (state.cash < MERCH_START_COST) return fail(`Je hebt €${MERCH_START_COST.toLocaleString('nl-BE')} nodig om de shop in te richten.`);
+  book(state, 'infrastructuur', -MERCH_START_COST, 'Fanshop inrichten (rekken, kassa, webshop)');
+  state.merch.active = true;
+  addNews(state, 'goed', 'De fanshop is open. Supporters kunnen nu clubartikelen kopen.');
+  const first = addMerchItem(state, 'sjaal');
+  return ok(`Fanshop geopend.${first.ok ? ' De sjaals liggen al in de rekken.' : ''}`);
+}
+
+/** Een artikel in het assortiment nemen. Je betaalt eenmalig drukwerk en de eerste voorraad. */
+export function addMerchItem(state: GameState, id: MerchItemId): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (!state.merch.active) return fail('Start eerst de fanshop op.');
+  if (state.merch.items.some((i) => i.id === id)) return fail('Dit artikel ligt al in de shop.');
+  const def = merchDef(id);
+  if (state.cash < def.setup) return fail(`Eerste voorraad en drukwerk kosten €${def.setup.toLocaleString('nl-BE')}.`);
+  book(state, 'inkoop shop', -def.setup, `Eerste voorraad ${def.label.toLowerCase()}`);
+  state.merch.items.push({ id, price: bestPrice(state, id), addedSeason: state.season, soldTotal: 0 });
+  return ok(`${def.label} ligt vanaf nu in de shop, aan €${state.merch.items.find((i) => i.id === id)!.price}.`);
+}
+
+/** Een artikel uit het assortiment halen. De restvoorraad verkoop je met verlies. */
+export function removeMerchItem(state: GameState, id: MerchItemId): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const item = state.merch.items.find((i) => i.id === id);
+  if (!item) return fail('Dit artikel ligt niet in de shop.');
+  const def = merchDef(id);
+  state.merch.items = state.merch.items.filter((i) => i.id !== id);
+  book(state, 'merchandising', round(def.setup * 0.25, 10), `Restvoorraad ${def.label.toLowerCase()} uitverkocht`);
+  return ok(`${def.label} verdwijnt uit de shop. De restvoorraad bracht nog €${round(def.setup * 0.25, 10).toLocaleString('nl-BE')} op.`);
+}
+
+export function setMerchPrice(state: GameState, id: MerchItemId, price: number): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (state.delegation.merchandising) return fail('De fanshop is gedelegeerd: je staflid bepaalt de prijzen.');
+  const item = state.merch.items.find((i) => i.id === id);
+  if (!item) return fail('Dit artikel ligt niet in de shop.');
+  const def = merchDef(id);
+  if (!Number.isFinite(price) || price < 1 || price > def.ref * 4) return fail(`Kies een prijs tussen €1 en €${Math.round(def.ref * 4)}.`);
+  item.price = Math.round(price);
+  return ok(`${def.label}: €${item.price} (marge €${margin(state, item).toFixed(2)} per stuk).`);
+}
+
+// ---------- Spelersrollen ----------
+
+export function setPlayerRole(state: GameState, role: keyof PlayerRoles, playerId: string | null): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const locked = taskLocked(state, 'spelersrollen');
+  if (locked) return locked;
+  const label = role === 'kapitein' ? 'Kapitein' : role === 'strafschop' ? 'Strafschopnemer' : 'Hoekschopnemer';
+  if (!playerId) {
+    state.tactics.roles[role] = null;
+    return ok(`${label}: niemand aangeduid.`);
+  }
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  if (p.loan?.type === 'uit') return fail(`${p.name} is uitgeleend.`);
+  state.tactics.roles[role] = playerId;
+  if (role === 'kapitein') p.morale = clamp(p.morale + 4, 0, 100);
+  addLog(state, 'beslissing', `${label}: ${p.name}.`);
+  return ok(`${label}: ${p.name}.`);
+}
+
+// ---------- Kantine en concessies ----------
+
+export function setCanteenPrice(state: GameState, id: CanteenItemId, price: number): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const locked = taskLocked(state, 'horeca');
+  if (locked) return locked;
+  const item = state.canteen.items.find((i) => i.id === id);
+  if (!item) return fail('Dit artikel staat niet op de kaart.');
+  const def = canteenDef(id);
+  if (!Number.isFinite(price) || price < def.cost || price > def.ref * 4) return fail(`Kies een prijs tussen €${def.cost.toFixed(2)} en €${(def.ref * 4).toFixed(2)}.`);
+  item.price = Math.round(price * 10) / 10;
+  if (state.investor === 'cooperatie' && item.price > def.ref * 1.4) addNews(state, 'slecht', `De leden vinden €${item.price.toFixed(2)} voor ${def.label.toLowerCase()} te veel.`);
+  return ok(`${def.label}: €${item.price.toFixed(2)} (inkoop €${def.cost.toFixed(2)}).`);
+}
+
+/** Hoeveel plaats je concessies innemen (max CONCESSION_SPACE). */
+export function usedConcessionSpace(state: GameState): number {
+  return state.canteen.concessions.reduce((sum, c) => sum + concessionDef(c.id).space, 0);
+}
+
+export function openConcession(state: GameState, id: ConcessionId, marginPct: number): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const locked = taskLocked(state, 'horeca');
+  if (locked) return locked;
+  const def = concessionDef(id);
+  if (state.canteen.concessions.some((c) => c.id === id)) return fail(`${def.label} staat er al.`);
+  if (usedConcessionSpace(state) + def.space > CONCESSION_SPACE) return fail(`Je hebt plaats voor ${CONCESSION_SPACE} kraam-eenheden. ${def.label} neemt er ${def.space} in.`);
+  if (!Number.isFinite(marginPct) || marginPct < 0 || marginPct > 60) return fail('Kies een marge tussen 0% en 60%.');
+  const max = acceptedMargin(state, id);
+  const rng = createRng(state);
+  if (marginPct > max) {
+    addLog(state, 'beslissing', `${def.label} afgehaakt: je vroeg ${Math.round(marginPct)}% (hij wilde tot ${max}%).`);
+    return fail(`De standhouder haakt af bij ${Math.round(marginPct)}%. Bij ongeveer ${max}% wil hij wel tekenen.`);
+  }
+  const partner = concessionPartner(rng, id);
+  state.canteen.concessions.push({ id, partner, marginPct: Math.round(marginPct), sinceSeason: state.season });
+  addLog(state, 'beslissing', `${def.label} (${partner}) komt erbij aan ${Math.round(marginPct)}% marge.`);
+  addNews(state, 'goed', `${partner} zet vanaf nu een ${def.label.toLowerCase()} op het complex. Jij krijgt ${Math.round(marginPct)}% van zijn omzet.`);
+  return ok(`${partner} tekent aan ${Math.round(marginPct)}% marge.`);
+}
+
+export function closeConcession(state: GameState, id: ConcessionId): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const locked = taskLocked(state, 'horeca');
+  if (locked) return locked;
+  const c = state.canteen.concessions.find((x) => x.id === id);
+  if (!c) return fail('Deze concessie bestaat niet.');
+  state.canteen.concessions = state.canteen.concessions.filter((x) => x.id !== id);
+  addLog(state, 'beslissing', `Concessie ${concessionDef(id).label} stopgezet.`);
+  return ok(`${c.partner} stopt ermee.`);
+}
+
+/** Opnieuw onderhandelen: lukt het niet, dan blijft de oude marge staan en is hij wat kribbig. */
+export function renegotiateConcession(state: GameState, id: ConcessionId, marginPct: number): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const locked = taskLocked(state, 'horeca');
+  if (locked) return locked;
+  const c = state.canteen.concessions.find((x) => x.id === id);
+  if (!c) return fail('Deze concessie bestaat niet.');
+  if (!Number.isFinite(marginPct) || marginPct < 0 || marginPct > 60) return fail('Kies een marge tussen 0% en 60%.');
+  const max = acceptedMargin(state, id);
+  if (marginPct > max) return fail(`${c.partner} weigert ${Math.round(marginPct)}%. Hij gaat tot ongeveer ${max}%.`);
+  c.marginPct = Math.round(marginPct);
+  return ok(`${c.partner} akkoord met ${c.marginPct}% marge.`);
+}
+
+// ---------- Onderhoud en energie ----------
+
+export function setMaintenance(state: GameState, level: Infrastructure['maintenance']): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (!['basis', 'normaal', 'premium'].includes(level)) return fail('Onbekend onderhoudsniveau.');
+  state.infrastructure.maintenance = level;
+  addLog(state, 'beslissing', `Onderhoudsniveau: ${level}.`);
+  return ok(
+    level === 'basis'
+      ? 'Basisonderhoud: 25% goedkoper, maar het complex verslonst en er gaat sneller iets stuk.'
+      : level === 'premium'
+        ? 'Premium onderhoud: 30% duurder, alles ligt er piekfijn bij en er gaat zelden iets stuk.'
+        : 'Normaal onderhoud.',
+  );
+}
+
+export const GREEN_ENERGY_COST = 48_000;
+
+export function investGreenEnergy(state: GameState): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (state.infrastructure.greenEnergy) return fail('De zonnepanelen liggen er al.');
+  if (state.cash < GREEN_ENERGY_COST) return fail(`Je hebt €${GREEN_ENERGY_COST.toLocaleString('nl-BE')} nodig.`);
+  book(state, 'infrastructuur', -GREEN_ENERGY_COST, 'Zonnepanelen en ledverlichting');
+  state.infrastructure.greenEnergy = true;
+  addNews(state, 'goed', 'De zonnepanelen liggen op het dak: je energiefactuur daalt met 18%.');
+  return ok('Zonnepanelen en led geplaatst: 18% minder energiekosten.');
+}
+
+/** Waarom deze speler deze week niet weg mag (of null). Voor de knoppen in de UI. */
+export function departureBlockReason(state: GameState, p: Player): string | null {
+  return departureBlock(state, p, 'verkopen');
+}

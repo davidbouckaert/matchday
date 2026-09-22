@@ -1,0 +1,128 @@
+// Weekrapport: verschijnt na elke gesimuleerde week, eerst met een korte animatie.
+
+import type { GameState, LedgerCategory } from '../../engine/types';
+import { formatDateLong } from '../../engine/calendar';
+import { OWN_TEAM_ID, ownPosition, teamName } from '../../engine/league';
+import { PLAN_INFO } from '../../engine/strategy';
+import { UPGRADES } from '../../engine/data/catalog';
+import { KIND_LABEL } from '../../engine/sponsors';
+import { weeks } from '../../engine/util';
+import { esc, euro, resultIcon, signedEuro, venue } from '../format';
+
+export interface WeekRef {
+  week: number;
+  season: number;
+}
+
+/** Animatie terwijl de week gespeeld wordt: een bal die naar doel rolt. */
+export function animationOverlay(s: GameState, prev: WeekRef): string {
+  const hadMatch = s.lastMatch && s.lastMatch.week === prev.week && s.season === prev.season;
+  const title = hadMatch ? `${s.lastMatch!.home ? s.clubName : esc(s.lastMatch!.opponent)} – ${s.lastMatch!.home ? esc(s.lastMatch!.opponent) : s.clubName}` : `Week ${prev.week}`;
+  const where = hadMatch ? venue(s.lastMatch!.home) : '';
+  return `<div class="overlay" data-action="skip-anim">
+    <div class="anim-card">
+      <p class="muted small">${formatDateLong(s.startYear, prev.season, prev.week)}</p>
+      <h2>${title}</h2>
+      ${where}
+      <svg class="pitch" viewBox="0 0 300 120" aria-hidden="true">
+        <rect x="2" y="2" width="296" height="116" rx="6" class="field"/>
+        <line x1="150" y1="2" x2="150" y2="118" class="lines"/>
+        <circle cx="150" cy="60" r="16" class="lines" fill="none"/>
+        <rect x="262" y="38" width="36" height="44" class="lines" fill="none"/>
+        <rect x="292" y="48" width="6" height="24" class="goal"/>
+        <g class="ball-move"><circle cx="0" cy="0" r="6" class="ball"/><path d="M-3 -2 L0 -4 L3 -2 L2 2 L-2 2Z" class="ball-dot"/></g>
+      </svg>
+      <p class="anim-text">${hadMatch ? 'De wedstrijd wordt gespeeld…' : 'De week loopt…'}</p>
+      <p class="muted small">Klik om over te slaan</p>
+    </div>
+  </div>`;
+}
+
+const MU: Record<number, string> = { 1: 'voordeel', 0: 'neutraal', [-1]: 'nadeel' };
+
+export function reportOverlay(s: GameState, prev: WeekRef): string {
+  const m = s.lastMatch && s.lastMatch.week === prev.week ? s.lastMatch : null;
+  const sameSeason = s.season === prev.season;
+
+  // wedstrijd
+  let matchHtml = '<p class="muted">Geen wedstrijd deze week.</p>';
+  if (m && sameSeason) {
+    const homeName = m.home ? s.clubName : m.opponent;
+    const awayName = m.home ? m.opponent : s.clubName;
+    const hg = m.home ? m.goalsFor : m.goalsAgainst;
+    const ag = m.home ? m.goalsAgainst : m.goalsFor;
+    const res = m.goalsFor > m.goalsAgainst ? 'win' : m.goalsFor < m.goalsAgainst ? 'loss' : 'draw';
+    const played = s.league.table.find((r) => r.teamId === OWN_TEAM_ID)?.played ?? 0;
+    matchHtml = `<p class="center small">${venue(m.home)} tegen ${esc(m.opponent)}</p>
+      <div class="scoreboard ${res}">
+        <span class="team">${esc(homeName)}</span><span class="score">${hg} - ${ag}</span><span class="team">${esc(awayName)}</span>
+      </div>
+      <p class="center result-line ${res}">${resultIcon(m.goalsFor, m.goalsAgainst)} <strong>${res === 'win' ? 'Gewonnen' : res === 'loss' ? 'Verloren' : 'Gelijkspel'}</strong></p>
+      <p class="small center">${m.forfeit ? '<strong class="neg">Forfait: te weinig spelers beschikbaar</strong>' : `${m.home ? `${m.attendance} toeschouwers · ` : ''}${m.weather}${m.ourPlan && m.theirPlan ? ` · ${PLAN_INFO[m.ourPlan].label} tegen ${PLAN_INFO[m.theirPlan].label.toLowerCase()} (${MU[m.matchup ?? 0]})` : ''}`}</p>
+      ${m.cards ? `<p class="small center">${esc(m.cards)}</p>` : ''}
+      ${played ? `<p class="small center">Stand: <strong>${ownPosition(s.league)}e</strong></p>` : ''}`;
+  }
+  const others = sameSeason
+    ? s.league.fixtures.filter((f) => f.week === prev.week && f.homeGoals !== undefined && f.homeId !== OWN_TEAM_ID && f.awayId !== OWN_TEAM_ID)
+    : [];
+  const othersHtml = others.length
+    ? `<details><summary class="small">Andere uitslagen (${others.length})</summary><ul class="small plain">${others
+        .map((f) => `<li>${esc(teamName(s, f.homeId))} ${f.homeGoals}-${f.awayGoals} ${esc(teamName(s, f.awayId))}</li>`)
+        .join('')}</ul></details>`
+    : '';
+
+  // financiën
+  const byCat = new Map<LedgerCategory, number>();
+  for (const e of s.lastWeek) byCat.set(e.category, (byCat.get(e.category) ?? 0) + e.amount);
+  const sorted = [...byCat.entries()].sort((a, b) => b[1] - a[1]);
+  const net = sorted.reduce((sum, [, v]) => sum + v, 0);
+  const financeHtml = sorted.length
+    ? `<table class="compact"><tbody>${sorted.map(([k, v]) => `<tr><td>${k}</td><td class="num">${signedEuro(v)}</td></tr>`).join('')}
+        <tr class="total"><td>Saldo van de week</td><td class="num">${signedEuro(net)}</td></tr>
+        <tr><td>Nieuw saldo</td><td class="num"><strong>${euro(s.cash)}</strong></td></tr></tbody></table>`
+    : '<p class="muted">Geen boekingen.</p>';
+
+  // nieuws van deze week
+  const news = s.news.filter((n) => n.week === prev.week && n.season === prev.season);
+  const newsHtml = news.length
+    ? `<ul class="news">${news.map((n) => `<li class="${n.tone}">${esc(n.text)}</li>`).join('')}</ul>`
+    : '<p class="muted">Rustige week.</p>';
+
+  // in afwachting
+  const waiting: string[] = [];
+  for (const p of s.pending) waiting.push(`${esc(p.label)}${p.amount ? `: ${euro(p.amount)}` : ''}, over ${weeks(p.weeksLeft)}`);
+  for (const o of s.sponsorOffers) waiting.push(`Sponsorvoorstel ${esc(o.name)} (${o.renewalOf ? 'verlenging' : KIND_LABEL[o.kind].toLowerCase()}, ${euro(o.weekly)}/week): beslis binnen ${weeks(o.expiresInWeeks)}`);
+  for (const p of s.prospects.filter((x) => x.approached)) waiting.push(`Gesprek met ${esc(p.name)}: antwoord volgende week`);
+  for (const o of s.playerOffers) {
+    const p = s.players.find((x) => x.id === o.playerId);
+    if (p) waiting.push(`Bod van ${esc(o.club)} op ${esc(p.name)}: ${euro(o.amount)}, nog ${weeks(o.expiresInWeeks)}`);
+  }
+  if (s.sponsorCampaignWeeks) waiting.push(`Sponsorbureau zoekt nog ${weeks(s.sponsorCampaignWeeks)}`);
+  if (s.infrastructure.construction) {
+    const u = UPGRADES.find((x) => x.id === s.infrastructure.construction!.upgrade)!;
+    waiting.push(`Bouwwerken ${esc(u.label)}: klaar over ${weeks(s.infrastructure.construction.weeksLeft)}`);
+  }
+  for (const st of s.staff.filter((x) => x.courseWeeksLeft > 0)) waiting.push(`${esc(st.name)} in opleiding: nog ${weeks(st.courseWeeksLeft)}`);
+  const injured = s.players.filter((p) => p.injuryWeeks > 0);
+  if (injured.length) waiting.push(`Geblesseerd: ${injured.map((p) => `${esc(p.name)} (${p.injuryWeeks}w)`).join(', ')}`);
+  const suspended = s.players.filter((p) => p.suspended > 0);
+  if (suspended.length) waiting.push(`Geschorst: ${suspended.map((p) => `${esc(p.name)} (${p.suspended})`).join(', ')}`);
+
+  return `<div class="overlay">
+    <div class="report-card" role="dialog" aria-label="Weekrapport">
+      <div class="report-head">
+        <div><h2>Weekrapport</h2><span class="muted small">Week ${prev.week} · ${formatDateLong(s.startYear, prev.season, prev.week)}</span></div>
+        <button class="sm ghost" data-action="close-report">Sluiten ✕</button>
+      </div>
+      <div class="report-grid">
+        <section><h3>Wedstrijd</h3>${matchHtml}${othersHtml}</section>
+        <section><h3>Financiën</h3>${financeHtml}</section>
+        <section class="wide"><h3>Nieuws en berichten</h3>${newsHtml}</section>
+        <section class="wide"><h3>In afwachting</h3>${waiting.length ? `<ul class="small">${waiting.map((w) => `<li>${w}</li>`).join('')}</ul>` : '<p class="muted">Niets in afwachting.</p>'}</section>
+      </div>
+      <div class="actions">
+        <button class="primary" data-action="report-overview">Naar het dashboard</button>
+      </div>
+    </div>
+  </div>`;
+}
