@@ -9,13 +9,14 @@ import { COURSES, UPGRADES } from './data/catalog';
 import {
   BOND_FEE_WEEK,
   LICENCE_AUDIT_WEEK,
+  WINTER_BREAK,
   SEASON_END_WEEK,
   SUBSIDY_WEEK,
   WEEKS_PER_YEAR,
   isWinter,
 } from './calendar';
 import { OWN_TEAM_ID, applyResult, createLeague, opponentStrength, ownPosition, simulateMatch, sortedTable } from './league';
-import { developPlayers, generatePlayer, linkFriends, selectLineup, teamStrength } from './players';
+import { developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, selectLineup, teamStrength } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
 import { resolveRequests, weeklySponsors } from './sponsors';
@@ -23,7 +24,10 @@ import { weeklyMerch } from './merch';
 import { bankruptcyCheck, rollInjuries, weeklyEvents } from './events';
 import { refreshLoanMarket, refreshStaffMarket, refreshTransferList, weeklyMarket } from './market';
 import { addNews, book } from './util';
-import { rolloverStats } from './stats';
+import { recordWeek, rolloverStats, snapshot } from './stats';
+import { recentForm } from './popularity';
+import { checkMilestones } from './milestones';
+import { checkRecords } from './records';
 import { runDelegatedTasks, strategyTask } from './delegation';
 import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
 import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from './factors';
@@ -35,6 +39,7 @@ export function advanceWeek(previous: GameState): GameState {
   if (previous.gameOver) return previous;
   const state: GameState = structuredClone(previous);
   const rng = createRng(state);
+  const statsBefore = snapshot(state);
 
   runDelegatedTasks(state, rng);
   bookWeeklyFlows(state);
@@ -50,10 +55,16 @@ export function advanceWeek(previous: GameState): GameState {
   weeklyEvents(state, rng);
   weeklyProgress(state);
   weeklyPlayers(state, rng);
+  if (state.week === WINTER_BREAK.from) addNews(state, 'neutraal', `De winterstop begint: geen competitie tot week ${WINTER_BREAK.to + 1}. Geen tickets, geen wedstrijdkantine en geen kraampjes, maar de lonen en de vaste kosten lopen door.`);
+  if (state.week === WINTER_BREAK.to + 1) addNews(state, 'goed', 'De competitie herbegint: de terugronde start dit weekend.');
   if (state.week === LICENCE_AUDIT_WEEK) licenceAudit(state);
   if (state.week === SEASON_END_WEEK) seasonEnd(state);
   weeklyMarket(state, rng);
   bankruptcyCheck(state);
+
+  state.lastMilestones = checkMilestones(state).map((m) => m.label);
+  state.lastRecords = checkRecords(state);
+  recordWeek(state, statsBefore);
 
   const totals: WeekRecord['totals'] = {};
   for (const e of state.thisWeek) totals[e.category] = (totals[e.category] ?? 0) + e.amount;
@@ -226,7 +237,7 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     `${label}: ${home ? state.clubName : opponent.name} ${hg}-${ag} ${home ? opponent.name : state.clubName}${home ? ` (${attendance} toeschouwers, ${weather})` : ''}.${cards ? ` Kaarten: ${cards}.` : ''}`,
   );
   const load = matchLoad(state);
-  for (const p of state.players) if (lineupIds.has(p.id)) p.fatigue = clamp(p.fatigue + load, 0, 100);
+  for (const p of state.players) if (lineupIds.has(p.id)) p.fatigue = clamp(p.fatigue + load * fatigueAgeFactor(p.age), 0, 100);
   rollInjuries(state, rng, [...lineupIds]);
 }
 
@@ -276,7 +287,7 @@ function scheduledPayments(state: GameState): void {
 export function volunteerSatisfaction(state: GameState): number {
   const c = state.community;
   const events = state.eventLog.filter((e) => e.season === state.season && e.week > state.week - 8).length;
-  const load = clamp(c.volunteers / 30, 0.5, 1.5);
+  const load = clamp(c.volunteers / 12, 0.5, 1.5);
   return clamp(
     35 + c.fanMood * 0.3 + c.reputation * 0.15 + staffSkill(state, 'kantine') * 0.15 + (c.volunteerLoyaltyWeeks > 0 ? 12 : 0) - (events * 6) / load,
     0,
@@ -290,8 +301,8 @@ function weeklyVolunteers(state: GameState, rng: Rng): void {
   // onder 50 haken er mensen af, boven 65 sluiten er spontaan mensen aan
   const leaveChance = clamp((55 - sat) / 120, 0, 0.5);
   if (rng.chance(leaveChance)) {
-    const gone = rng.int(1, sat < 30 ? 3 : 2);
-    c.volunteers = Math.max(4, c.volunteers - gone);
+    const gone = rng.int(1, sat < 30 ? 2 : 1);
+    c.volunteers = Math.max(2, c.volunteers - gone);
     addNews(state, 'slecht', `${gone} vrijwilliger(s) haken af (tevredenheid ${Math.round(sat)}/100).`);
   } else if (sat > 65 && rng.chance((sat - 65) / 200)) {
     c.volunteers += 1;
@@ -305,7 +316,9 @@ function weeklyCommunity(state: GameState): void {
   if (c.volunteerLoyaltyWeeks > 0) c.volunteerLoyaltyWeeks--;
   // supportersaantal groeit richting wat normaal is voor de reeks en je reputatie
   const target = division.fanBaseNorm * (0.6 + c.reputation / 100) * (state.investor === 'cooperatie' ? 1.15 : 1) + staffSkill(state, 'commercieel') * 2;
-  c.fanBase = Math.round(c.fanBase + (target - c.fanBase) * 0.01);
+  // succes trekt volk: wie goed draait, groeit sneller naar zijn plafond dan wie aanmoddert
+  const pull = 0.008 + recentForm(state) * 0.022 + (c.fanMood > 70 ? 0.004 : 0);
+  c.fanBase = Math.round(c.fanBase + (target - c.fanBase) * pull);
   // de sfeer zakt of stijgt langzaam terug naar normaal
   c.fanMood = clamp(c.fanMood + (60 - c.fanMood) * 0.02, 0, 100);
   const ref = division.refTicketPrice;
@@ -329,6 +342,8 @@ function weeklyProgress(state: GameState): void {
       if (id === 'wifi') i.wifiLevel = Math.min(2, i.wifiLevel + 1);
       if (id === 'sanitair') i.sanitairLevel = Math.min(2, i.sanitairLevel + 1);
       if (id === 'parking') i.parkingLevel = Math.min(2, i.parkingLevel + 1);
+      if (id === 'scorebord') i.scoreboardLevel = Math.min(2, i.scoreboardLevel + 1);
+      if (id === 'ploegbus') i.teamBus = true;
       i.construction = null;
       addNews(state, 'goed', `Bouwproject afgerond: ${UPGRADES.find((u) => u.id === id)!.label}.`);
       state.community.fanMood = clamp(state.community.fanMood + 3, 0, 100);
@@ -370,7 +385,7 @@ function weeklyPlayers(state: GameState, rng: Rng): void {
   const mental = staffSkill(state, 'mentaal');
   for (const p of state.players) {
     // vermoeidheid: natuurlijk herstel + opbouw door trainingen − extra herstel (staff, recuperatieruimte, focus)
-    const training = p.injuryWeeks > 0 ? 0 : build;
+    const training = (p.injuryWeeks > 0 ? 0 : build) * fatigueAgeFactor(p.age);
     p.fatigue = Math.round(clamp(p.fatigue * (1 - NATURAL_RECOVERY) + training - extra, 0, 100) * 10) / 10;
     // oververmoeide spelers kunnen op training geblesseerd raken
     if (p.injuryWeeks === 0 && p.fatigue > 50 && rng.chance(((p.fatigue - 50) / 1000) * (1 - kine / 200))) {
@@ -484,6 +499,8 @@ function newSeason(state: GameState, rng: Rng): void {
   state.lastSeasonTotals = state.seasonTotals;
   state.seasonTotals = {};
   state.merch.seasonUnits = 0;
+  // alles wordt elk seizoen wat duurder; wie niets aanpast, ziet zijn marge verdampen
+  state.inflation = Math.round(state.inflation * 1.06 * 1000) / 1000;
   rolloverStats(state);
 
   // huurlingen keren terug naar hun club, uitgeleende spelers komen terug
@@ -500,6 +517,7 @@ function newSeason(state: GameState, rng: Rng): void {
   const leftIds = new Set(leaving.map((p) => p.id));
   state.eventCounts = {};
   for (const p of state.players) {
+    p.negotiations = 0;
     p.yellowCards = 0;
     p.redCards = 0;
     p.starts = 0;
