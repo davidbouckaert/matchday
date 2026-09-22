@@ -1,3 +1,5 @@
+import type { SponsorKind } from '../types';
+
 // Namen met een knipoog. Alles is verzonnen, maar mag herkenbaar zijn.
 
 export const FIRST_NAMES = [
@@ -17,16 +19,18 @@ export const LAST_NAMES = [
 
 export const STAFF_FIRST = ['Marc', 'Patrick', 'Luc', 'Dirk', 'Geert', 'Sofie', 'Els', 'Hilde', 'Frank', 'Johan', 'Tom', 'Katrien', 'Bart', 'Nathalie', 'Rudi'];
 
-export const SECTORS: [string, 'bord' | 'jeugd' | 'shirt' | 'hoofdsponsor'][] = [
-  ['Horeca', 'bord'], ['Bakkerij', 'bord'], ['Kapsalon', 'bord'], ['Garage', 'jeugd'], ['Bouw', 'shirt'],
-  ['Transport', 'shirt'], ['Verzekeringen', 'jeugd'], ['Supermarkt', 'shirt'], ['Bank', 'hoofdsponsor'],
-  ['Industrie', 'hoofdsponsor'], ['Energie', 'hoofdsponsor'], ['Vastgoed', 'shirt'], ['Apotheek', 'bord'], ['Elektro', 'jeugd'],
-  ['Slagerij', 'bord'], ['Tuin', 'bord'], ['Kledij', 'jeugd'], ['Sport', 'jeugd'], ['Druk', 'bord'],
-  ['Boekhouding', 'jeugd'], ['Telecom', 'hoofdsponsor'], ['Brouwerij', 'hoofdsponsor'], ['Brandstoffen', 'shirt'], ['Sanitair', 'bord'],
+export const SECTORS: [string, SponsorKind][] = [
+  // grote bedrijven kunnen de grote plaatsen aan, kleine handelaars de kleine
+  ['Bank', 'hoofdsponsor'], ['Industrie', 'hoofdsponsor'], ['Energie', 'hoofdsponsor'], ['Telecom', 'hoofdsponsor'], ['Brouwerij', 'hoofdsponsor'],
+  ['Bouw', 'shirt'], ['Supermarkt', 'shirt'], ['Vastgoed', 'shirt'], ['Transport', 'shirt'], ['Brandstoffen', 'shirt'],
+  ['Garage', 'mouw'], ['Verzekeringen', 'mouw'], ['Elektro', 'mouw'], ['Boekhouding', 'mouw'],
+  ['Kledij', 'bus'], ['Sport', 'bus'],
+  ['Horeca', 'evenement'], ['Slagerij', 'evenement'], ['Bakkerij', 'scherm'], ['Druk', 'scherm'],
+  ['Kapsalon', 'bal'], ['Tuin', 'bal'], ['Apotheek', 'bord'], ['Sanitair', 'bord'],
 ];
 
 /** De grootste soort contract die een bedrijf uit deze sector aankan. */
-export function sectorKind(sector: string): 'bord' | 'jeugd' | 'shirt' | 'hoofdsponsor' {
+export function sectorKind(sector: string): SponsorKind {
   return SECTORS.find(([s]) => s === sector)?.[1] ?? 'bord';
 }
 

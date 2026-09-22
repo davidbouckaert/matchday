@@ -66,6 +66,8 @@ export const UPGRADES: UpgradeDef[] = [
   },
   { id: 'wifi', label: 'Wifi en mobiel bereik (+1 niveau)', description: 'Supporters delen alles live, bestellen sneller aan de toog en blijven langer hangen. Meer toeschouwers en meer consumpties. Maximaal niveau 2.', cost: 28_000, weeks: 3 },
   { id: 'sanitair', label: 'Toiletten en kleedkamers (+1 niveau)', description: 'Nette toiletten houden gezinnen langer op het complex: meer toeschouwers en meer kantineomzet. Maximaal niveau 2.', cost: 55_000, weeks: 6 },
+  { id: 'scorebord', label: 'Scorebord (+1 niveau)', description: 'Een echt scorebord maakt er een wedstrijd van: meer sfeer, en sponsors betalen meer voor een bord dat iedereen ziet. Niveau 2 is een ledscherm met reclameblokken. Maximaal niveau 2.', cost: 42_000, weeks: 4 },
+  { id: 'ploegbus', label: 'Eigen ploegbus', description: 'Een tweedehands bus met de clubkleuren. Je betaalt nog enkel brandstof en een chauffeur (55% goedkoper per verplaatsing) en een bedrijf kan zijn naam op de bus zetten (nieuwe sponsorplaats).', cost: 32_000, weeks: 2 },
   { id: 'parking', label: 'Parking uitbreiden (+1 niveau)', description: 'Bezoekers van verder af geraken vlot tot aan het veld. Meer toeschouwers, vooral bij een derby. Maximaal niveau 2.', cost: 70_000, weeks: 7 },
   {
     id: 'recuperatie',
@@ -165,6 +167,27 @@ export const TASKS: TaskDef[] = [
     delegated: 'Houdt de prijzen aan de toog op het beste punt en haalt er een standhouder bij als dat opbrengt.',
   },
   {
+    id: 'jeugd',
+    label: 'Jeugdwerking (lidgeld)',
+    roles: ['jeugdcoordinator', 'afgevaardigde'],
+    owner: 'Jij bepaalt het lidgeld voor de jeugd (Clubinfo).',
+    delegated: 'Zet het lidgeld op het punt waar de inkomsten het hoogst zijn zonder leden weg te jagen, en houdt rekening met hoe de club draait.',
+  },
+  {
+    id: 'medisch',
+    label: 'Belasting en blessurepreventie',
+    roles: ['kinesist', 'verzorger', 'voeding'],
+    owner: 'Jij beslist zelf of je de groep laat doortrainen of rust geeft.',
+    delegated: 'Houdt de vermoeidheid in de gaten: hij schroeft het trainingsritme terug en zet de focus op herstel zodra de groep te zwaar belast raakt.',
+  },
+  {
+    id: 'infrastructuur',
+    label: 'Onderhoud en bouwprojecten',
+    roles: ['afgevaardigde', 'commercieel'],
+    owner: 'Jij kiest het onderhoudsniveau en start bouwprojecten (Infrastructuur).',
+    delegated: 'Kiest een onderhoudsniveau dat bij je kaspositie past en start bouwprojecten die je licentie of je groei nodig heeft, met een ruime buffer op de rekening.',
+  },
+  {
     id: 'merchandising',
     label: 'Fanshop en merchandising',
     roles: ['merchandising', 'commercieel', 'kantine'],
@@ -207,7 +230,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     cost: 300,
     cooldown: 6,
     maxPerSeason: 4,
-    volunteers: 8,
+    volunteers: 3,
     payoutWeeks: 1,
     revenue: (c) => c.fanBase * 1.6,
     spread: 0.3,
@@ -222,7 +245,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     cost: 700,
     cooldown: 16,
     maxPerSeason: 2,
-    volunteers: 12,
+    volunteers: 5,
     payoutWeeks: 4,
     revenue: (c) => c.youthMembers * 12,
     spread: 0.35,
@@ -237,7 +260,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     cost: 900,
     cooldown: 10,
     maxPerSeason: 3,
-    volunteers: 22,
+    volunteers: 9,
     payoutWeeks: 2,
     revenue: (c) => (c.fanBase * 3.5 + c.youthMembers * 3) * (0.7 + c.mood / 200),
     spread: 0.5,
@@ -252,7 +275,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     cost: 4_500,
     cooldown: 26,
     maxPerSeason: 1,
-    volunteers: 38,
+    volunteers: 14,
     payoutWeeks: 3,
     revenue: (c) => (c.fanBase * 10 + c.youthMembers * 4) * (0.7 + c.mood / 200),
     spread: 0.55,
@@ -267,7 +290,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     cost: 3_000,
     cooldown: 20,
     maxPerSeason: 2,
-    volunteers: 18,
+    volunteers: 7,
     payoutWeeks: 1,
     revenue: (c) => c.fanBase * 2.5,
     spread: 0.3,
@@ -282,7 +305,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     cost: 2_500,
     cooldown: 26,
     maxPerSeason: 1,
-    volunteers: 30,
+    volunteers: 11,
     payoutWeeks: 2,
     revenue: (c) => 1_000 + c.youthMembers * 13,
     spread: 0.35,
@@ -311,7 +334,7 @@ export const VOLUNTEER_ACTIONS: VolunteerActionDef[] = [
     cost: 100,
     cooldown: 4,
     weeks: 1,
-    gain: () => [0, 3],
+    gain: () => [0, 2],
     loyaltyWeeks: 0,
   },
   {
@@ -321,7 +344,7 @@ export const VOLUNTEER_ACTIONS: VolunteerActionDef[] = [
     cost: 500,
     cooldown: 10,
     weeks: 2,
-    gain: (y) => [2, 4 + Math.round(y / 60)],
+    gain: (y) => [1, 2 + Math.round(y / 120)],
     loyaltyWeeks: 0,
   },
   {
@@ -348,8 +371,8 @@ export interface MerchItemDef {
 }
 
 export const MERCH_START_COST = 3_500; // fanshop inrichten: rekken, kassasysteem, webshop
-export const MERCH_WEEK_COST = 70; // vaste weekkost zolang de shop draait
-export const MERCH_ITEM_WEEK_COST = 10; // per artikel in het assortiment
+export const MERCH_WEEK_COST = 55; // vaste weekkost zolang de shop draait
+export const MERCH_ITEM_WEEK_COST = 8; // per artikel in het assortiment
 
 export const MERCH_ITEMS: MerchItemDef[] = [
   { id: 'sjaal', label: 'Sjaal', buy: 5, ref: 14, appeal: 1, setup: 400 },
@@ -376,12 +399,12 @@ export interface CanteenItemDef {
 }
 
 export const CANTEEN_ITEMS: CanteenItemDef[] = [
-  { id: 'pils', label: 'Pils', cost: 0.75, ref: 2.5, perVisitor: 1.1 },
-  { id: 'frisdrank', label: 'Frisdrank', cost: 0.6, ref: 2.2, perVisitor: 0.7 },
-  { id: 'water', label: 'Water', cost: 0.35, ref: 1.8, perVisitor: 0.3 },
-  { id: 'koffie', label: 'Koffie', cost: 0.3, ref: 2, perVisitor: 0.45 },
-  { id: 'chips', label: 'Chips en snacks', cost: 0.5, ref: 1.8, perVisitor: 0.5 },
-  { id: 'soep', label: 'Soep', cost: 0.4, ref: 2, perVisitor: 0.25 },
+  { id: 'pils', label: 'Pils', cost: 0.75, ref: 2.5, perVisitor: 0.72 },
+  { id: 'frisdrank', label: 'Frisdrank', cost: 0.6, ref: 2.2, perVisitor: 0.42 },
+  { id: 'water', label: 'Water', cost: 0.35, ref: 1.8, perVisitor: 0.15 },
+  { id: 'koffie', label: 'Koffie', cost: 0.3, ref: 2, perVisitor: 0.3 },
+  { id: 'chips', label: 'Chips en snacks', cost: 0.5, ref: 1.8, perVisitor: 0.28 },
+  { id: 'soep', label: 'Soep', cost: 0.4, ref: 2, perVisitor: 0.12 },
 ];
 
 export function canteenDef(id: CanteenItemId): CanteenItemDef {
@@ -398,10 +421,10 @@ export interface ConcessionDef {
 }
 
 export const CONCESSIONS: ConcessionDef[] = [
-  { id: 'hotdog', label: 'Hotdogkraam', price: 4, perVisitor: 0.3, baseMargin: 14, space: 1 },
-  { id: 'hamburger', label: 'Hamburgerkraam', price: 6.5, perVisitor: 0.25, baseMargin: 16, space: 1 },
-  { id: 'frituur', label: 'Frituur', price: 5, perVisitor: 0.45, baseMargin: 18, space: 2 },
-  { id: 'pasta', label: 'Pastastand', price: 7, perVisitor: 0.18, baseMargin: 15, space: 1 },
+  { id: 'hotdog', label: 'Hotdogkraam', price: 4, perVisitor: 0.16, baseMargin: 14, space: 1 },
+  { id: 'hamburger', label: 'Hamburgerkraam', price: 6.5, perVisitor: 0.13, baseMargin: 16, space: 1 },
+  { id: 'frituur', label: 'Frituur', price: 5, perVisitor: 0.24, baseMargin: 18, space: 2 },
+  { id: 'pasta', label: 'Pastastand', price: 7, perVisitor: 0.1, baseMargin: 15, space: 1 },
 ];
 
 export function concessionDef(id: ConcessionId): ConcessionDef {

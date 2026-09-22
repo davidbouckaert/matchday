@@ -32,6 +32,7 @@ export interface Player {
   starts: number; // basisplaatsen dit seizoen
   periodStarts: number; // basisplaatsen sinds de laatste evolutie (om de 4 weken)
   trend: number; // verandering van de kwaliteit bij de laatste evolutie
+  negotiations: number; // mislukte loongesprekken dit seizoen
   listed: boolean; // op de transferlijst gezet
   askingPrice: number; // vraagprijs als hij te koop staat
   loan: PlayerLoan | null;
@@ -116,7 +117,10 @@ export type TaskId =
   | 'evenementen'
   | 'vrijwilligers'
   | 'merchandising'
-  | 'horeca'; // kantineprijzen en concessies
+  | 'horeca' // kantineprijzen en concessies
+  | 'jeugd' // lidgeld en jeugdwerking
+  | 'medisch' // belasting, rust en blessurepreventie
+  | 'infrastructuur'; // onderhoud en bouwprojecten
 
 export interface OpponentTeam {
   id: string;
@@ -176,11 +180,23 @@ export interface Loan {
   weeksLeft: number;
 }
 
+export type SponsorKind =
+  | 'bord' // reclamebord langs het veld
+  | 'jeugd' // jeugdwerking
+  | 'bal' // wedstrijdbal van de week
+  | 'scherm' // schermen in de kantine
+  | 'evenement' // naamsponsor van je evenementen
+  | 'bus' // ploegbus en verplaatsingen
+  | 'mouw' // mouwsponsor op het shirt
+  | 'shirt' // shirtsponsor rug
+  | 'hoofdsponsor' // borstsponsor
+  | 'stadion'; // stadionnaam
+
 export interface SponsorDeal {
   id: string;
   name: string;
   sector: string;
-  kind: 'bord' | 'shirt' | 'stadion' | 'hoofdsponsor' | 'jeugd';
+  kind: SponsorKind;
   weekly: number;
   weeksLeft: number;
   satisfaction: number; // 0-100: hoe tevreden de sponsor is
@@ -191,7 +207,7 @@ export interface SponsorProspect {
   id: string;
   name: string;
   sector: string;
-  maxKind: 'bord' | 'jeugd' | 'shirt' | 'hoofdsponsor';
+  maxKind: SponsorKind;
   interest: number; // 0-100: kans dat een gesprek slaagt
   cooldown: number; // weken voor je opnieuw kunt aankloppen
   approached: boolean; // gesprek loopt (antwoord volgende week)
@@ -215,7 +231,7 @@ export interface ActionResult {
   message: string;
 }
 
-export type UpgradeId = 'tribune' | 'kantine' | 'kunstgras' | 'verlichting' | 'opleidingscentrum' | 'recuperatie' | 'wifi' | 'sanitair' | 'parking';
+export type UpgradeId = 'tribune' | 'kantine' | 'kunstgras' | 'verlichting' | 'opleidingscentrum' | 'recuperatie' | 'wifi' | 'sanitair' | 'parking' | 'scorebord' | 'ploegbus';
 
 export interface Construction {
   upgrade: UpgradeId;
@@ -232,6 +248,8 @@ export interface Infrastructure {
   wifiLevel: number; // 0-2: wifi en mobiel bereik op het complex
   sanitairLevel: number; // 0-2: toiletten en kleedkamers
   parkingLevel: number; // 0-2: parkeerplaatsen
+  scoreboardLevel: number; // 0-2: scorebord met reclame
+  teamBus: boolean; // eigen ploegbus
   maintenance: 'basis' | 'normaal' | 'premium'; // hoeveel je aan onderhoud en energie besteedt
   greenEnergy: boolean; // zonnepanelen en led: lagere energiefactuur
   construction: Construction | null;
@@ -289,13 +307,35 @@ export interface SeasonStats {
   ticketPrice: number;
 }
 
+/** Cijfers van één week, voor de weekweergave op de tab Cijfers. */
+export interface WeekStats {
+  season: number;
+  week: number;
+  tickets: number;
+  canteen: number; // consumpties
+  concessions: number; // porties
+  merch: number; // artikelen
+  revenue: Partial<Record<LedgerCategory, number>>;
+}
+
 /** Een vraag die je stelde en waarop je volgende week antwoord krijgt. */
 export interface PendingRequest {
   id: string;
-  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract';
+  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract' | 'lening';
   targetId: string;
   label: string;
   weeksLeft: number;
+  payload?: { key: string; principal: number; annualRate: number; weeklyPayment: number; weeks: number };
+}
+
+/** Clubrecords: waar je het best ooit stond. */
+export interface ClubRecords {
+  attendance: number;
+  weekIncome: number;
+  seasonIncome: number;
+  unbeaten: number;
+  winStreak: number;
+  fanBase: number;
 }
 
 /** Wat jij deze week besliste, zodat je het achteraf kunt terugvinden. */
@@ -331,6 +371,7 @@ export type LedgerCategory =
   | 'kantine'
   | 'merchandising'
   | 'inkoop shop'
+  | 'werking shop'
   | 'sponsors'
   | 'tv-rechten'
   | 'lidgelden'
@@ -353,7 +394,7 @@ export type LedgerCategory =
   | 'tegenslagen'
   | 'boetes'
   | 'tuchtboetes'
-  | 'concessies';
+  | 'horeca concessies';
 
 export interface LedgerEntry {
   category: LedgerCategory;
@@ -441,10 +482,16 @@ export interface GameState {
   canteen: Canteen;
   stats: SeasonStats;
   statsHistory: SeasonStats[];
+  statsWeeks: WeekStats[]; // laatste 52 weken
   requests: PendingRequest[];
   log: LogEntry[];
+  records: ClubRecords;
+  lastRecords: string[]; // records die deze week gebroken zijn
+  milestones: string[]; // behaalde mijlpalen
+  lastMilestones: string[]; // mijlpalen van deze week (voor het weekrapport)
   community: Community;
 
+  inflation: number; // kosten stijgen elk seizoen; sponsors en tickets volgen alleen als jij ze aanpast
   marketIndex: number; // algemene stemming op de transfermarkt (0.7-1.3)
   transferList: Player[]; // spelers die je kunt kopen (purchasePrice = vraagprijs)
   loanMarket: Player[]; // huurspelers van profclubs (purchasePrice = huurvergoeding)
