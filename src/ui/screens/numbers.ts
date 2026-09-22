@@ -78,7 +78,7 @@ function seasonView(s: GameState, toggle: string): string {
           ${MERCH_ITEMS.map((d) => `<tr><td>${esc(d.label)}</td>${cell((st) => n(st.merch[d.id]))}</tr>`).join('')}
           <tr class="total"><td>Samen in de shop</td>${cell((st) => n(totalOf(st.merch)))}</tr>
           <tr class="section"><td colspan="${shown.length + 1}"><strong>Opbrengst per bron (dit en vorig seizoen)</strong></td></tr>
-          ${(['tickets', 'kantine', 'horeca concessies', 'merchandising', 'inkoop shop', 'werking shop', 'sponsors', 'lidgelden'] as const)
+          ${(['tickets', 'kantine', 'horeca concessies', 'merchandising', 'inkoop shop', 'werking shop', 'sponsors', 'lidgelden', 'evenementen', 'premies'] as const)
             .map(
               (cat) =>
                 `<tr><td>${cat}</td>${shown

@@ -49,6 +49,15 @@ function faq(): QA[] {
       a: 'Elke plaats bestaat maar een beperkt aantal keer, en sommige moet je eerst verdienen: schermen vragen een goede kantine, de ploegbussponsor een eigen bus, de evenementensponsor een georganiseerd evenement. Bij Sponsors staat per plaats hoeveel er vrij zijn en waarom ze eventueel op slot staan.',
     },
     {
+      q: 'Wat levert promotie op?',
+      a: `Alles schaalt mee: het supportersplafond, de normale ticketprijs, de sponsorbedragen voor nieuwe contracten, de tv-rechten en de richtprijzen in de fanshop.
+        Je bestaande sponsors blijven op hun oude bedrag, maar ze zijn na promotie een pak tevredener: de besten bieden spontaan een hoger contract aan en een extra bijdrage vragen lukt vaker.
+        Er is ook een premie, die je op het einde van het seizoen apart geboekt ziet staan onder <strong>premies</strong> (in het weekrapport, bij Club › Cijfers en in je clubgeschiedenis).
+        Voetbal Vlaanderland betaalt in de amateurreeksen géén prijzengeld: wat je krijgt zijn premies van je sponsors, een kampioenenreceptie en een tombola.
+        1ste Provinciale €2.000 (plaats 2: €1.000), 3de Nationale €4.500 (€2.500), 2de Nationale €7.000 (€4.000), 1ste Nationale €40.000 (€25.000), Challenger Pro Liga €160.000 (€95.000).
+        Daar staat tegenover dat spelers ongeveer 14% en staff 10% meer vragen, en dat de aansluiting bij de bond en de verzekeringen duurder worden.`,
+    },
+    {
       q: 'Wat gebeurt er als ik in het rood ga?',
       a: 'Je krijgt waarschuwingen en soms een noodlening. Blijf je 8 weken onder nul, dan is de club failliet en is het spel afgelopen.',
     },

@@ -17,6 +17,7 @@ import { OWN_TEAM_ID, teamName } from '../../engine/league';
 import { CLUB_EVENTS, UPGRADES } from '../../engine/data/catalog';
 import { KIND_LABEL } from '../../engine/sponsors';
 import { YOUTH_FEE_WEEK } from '../../engine/actions';
+import { seasonPrize } from '../../engine/turn';
 import { esc, euro } from '../format';
 
 type Kind = 'match' | 'transfer' | 'fixed' | 'plan' | 'money' | 'break';
@@ -42,7 +43,13 @@ export function calendarScreen(s: GameState): string {
   add(LICENCE_AUDIT_WEEK, 'fixed', 'Licentie-audit Voetbal Vlaanderland');
   add(40, 'fixed', 'Laatste kans om aflopende contracten te verlengen');
   add(43, 'fixed', 'Inhaaldag (afgelaste wedstrijden)');
-  add(SEASON_END_WEEK, 'fixed', 'Einde competitie: kampioen, promotie en degradatie');
+  add(
+    SEASON_END_WEEK,
+    'fixed',
+    `Einde competitie: kampioen, promotie en degradatie · premie ${euro(seasonPrize(s.league.divisionLevel, 'kampioen'))} bij de titel, ${euro(
+      seasonPrize(s.league.divisionLevel, 'promotie'),
+    )} bij plaats 2`,
+  );
   add(WINTER_BREAK.from, 'break', `Winterstop (tot week ${WINTER_BREAK.to})`);
   for (let w = 4; w <= 52; w += 4) add(w, 'fixed', 'Spelersevolutie (4 weken)');
 

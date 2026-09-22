@@ -253,8 +253,8 @@ export function clubScreen(s: GameState): string {
       <h2>Clubgeschiedenis</h2>
       ${
         s.history.length
-          ? `<table class="compact"><thead><tr><th>Seizoen</th><th>Reeks</th><th class="num">Plaats</th><th class="num">Ptn</th><th>Resultaat</th><th class="num">Financieel</th></tr></thead><tbody>
-          ${s.history.map((h) => `<tr><td>${seasonLabel(s.startYear, h.season)}</td><td>${h.division}</td><td class="num">${h.position}</td><td class="num">${h.points}</td><td>${h.result}</td><td class="num">${signedEuro(h.profit)}</td></tr>`).join('')}
+          ? `<table class="compact"><thead><tr><th>Seizoen</th><th>Reeks</th><th class="num">Plaats</th><th class="num">Ptn</th><th>Resultaat</th><th class="num">Premie</th><th class="num">Financieel</th></tr></thead><tbody>
+          ${s.history.map((h) => `<tr><td>${seasonLabel(s.startYear, h.season)}</td><td>${h.division}</td><td class="num">${h.position}</td><td class="num">${h.points}</td><td>${h.result}</td><td class="num">${h.prize ? euro(h.prize) : '–'}</td><td class="num">${signedEuro(h.profit)}</td></tr>`).join('')}
           </tbody></table>`
           : '<p class="muted">Nog geen afgewerkt seizoen.</p>'
       }
