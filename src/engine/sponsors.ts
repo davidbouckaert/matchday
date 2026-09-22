@@ -6,12 +6,19 @@ import { staffSkill } from './staff';
 import { product, sponsorFactors } from './factors';
 import { ownPosition } from './league';
 import { addLog, addNews, book, nextId } from './util';
+import { creditLimit } from './loans';
+import { grantLoan } from './actions';
 
 type Kind = SponsorDeal['kind'];
 
 const KIND_RANGE: Record<Kind, [number, number]> = {
   bord: [30, 70],
+  bal: [45, 90],
   jeugd: [80, 180],
+  scherm: [90, 190],
+  evenement: [110, 230],
+  bus: [140, 280],
+  mouw: [180, 380],
   shirt: [250, 550],
   hoofdsponsor: [700, 1300],
   stadion: [600, 600],
@@ -19,14 +26,42 @@ const KIND_RANGE: Record<Kind, [number, number]> = {
 
 export const KIND_LABEL: Record<Kind, string> = {
   bord: 'Reclamebord',
+  bal: 'Wedstrijdbal',
   jeugd: 'Jeugdsponsor',
-  shirt: 'Shirtsponsor mouw/rug',
+  scherm: 'Schermen in de kantine',
+  evenement: 'Evenementensponsor',
+  bus: 'Ploegbus',
+  mouw: 'Mouwsponsor',
+  shirt: 'Shirtsponsor rug',
   hoofdsponsor: 'Hoofdsponsor borst',
   stadion: 'Stadionnaam',
 };
 
-export const KIND_MAX: Record<Kind, number> = { bord: 16, jeugd: 3, shirt: 2, hoofdsponsor: 1, stadion: 1 };
-const KIND_ORDER: Kind[] = ['bord', 'jeugd', 'shirt', 'hoofdsponsor'];
+export const KIND_INFO: Record<Kind, string> = {
+  bord: 'Een bord langs het veld. Veel plaatsen, klein bedrag; hoe meer borden er al hangen, hoe minder een extra bord opbrengt.',
+  bal: 'Een bedrijf schenkt de wedstrijdbal en wordt omgeroepen. Klein maar makkelijk te verkopen.',
+  jeugd: 'Draagt de jeugdwerking: tornooien, uitrusting en busritten.',
+  scherm: 'Reclame op de schermen in je kantine. Vraagt een kantine van niveau 2 of hoger.',
+  evenement: 'Zet zijn naam op je evenementen (quiz, spaghetti-avond, fandag). Groeit mee met hoeveel je organiseert.',
+  bus: 'Zijn naam op de ploegbus en op de verplaatsingen.',
+  mouw: 'Klein logo op de mouw van het shirt.',
+  shirt: 'Grote plaats op de rug van het shirt.',
+  hoofdsponsor: 'De borst van het shirt: het grootste contract dat je kunt tekenen.',
+  stadion: 'De naam van je terrein. Hoort bij je investeerder.',
+};
+
+export const KIND_MAX: Record<Kind, number> = { bord: 16, bal: 4, jeugd: 3, scherm: 2, evenement: 2, bus: 1, mouw: 1, shirt: 1, hoofdsponsor: 1, stadion: 1 };
+const KIND_ORDER: Kind[] = ['bord', 'bal', 'jeugd', 'scherm', 'evenement', 'bus', 'mouw', 'shirt', 'hoofdsponsor'];
+
+/** Sommige plaatsen bestaan pas als je de infrastructuur of werking hebt. */
+export function kindLock(state: GameState, kind: Kind): string | null {
+  if (kind === 'scherm' && state.infrastructure.kantineLevel < 2) return 'Kantine niveau 2 nodig';
+  if (kind === 'evenement' && state.eventLog.filter((e) => e.season === state.season).length < 1) return 'Eerst een evenement organiseren';
+  if (kind === 'jeugd' && state.community.youthMembers < 40) return '40 jeugdleden nodig';
+  if (kind === 'bus' && !state.infrastructure.teamBus) return 'Eerst een eigen ploegbus kopen';
+  if (kind === 'bal' && state.community.fanBase < 250) return '250 supporters nodig';
+  return null;
+}
 
 export const NETWORK_EVENING = { cost: 1_500, cooldown: 12 };
 export const CAMPAIGN = { cost: 3_000, weeks: 4 };
@@ -46,7 +81,8 @@ export function boardSaturation(state: GameState): number {
 export function kindRange(state: GameState, kind: Kind): [number, number] {
   const [min, max] = KIND_RANGE[kind];
   const saturation = kind === 'bord' ? boardSaturation(state) : 1;
-  const m = sponsorMultiplier(state) * saturation;
+  const events = kind === 'evenement' ? clamp(0.7 + state.eventLog.filter((e) => e.season === state.season).length * 0.15, 0.7, 1.6) : 1;
+  const m = sponsorMultiplier(state) * saturation * events;
   return [round(min * m, 5), round(max * m, 5)];
 }
 
@@ -82,7 +118,8 @@ export function makeDeal(state: GameState, rng: Rng, kind: Kind, weekly?: number
 }
 
 export function companySector(name: string): string {
-  return SPONSOR_COMPANIES.find((c) => c.name === name)?.sector ?? 'Lokale handel';
+  const base = name.replace(/\s\d+$/, ''); // "Elektro Baert 3" hoort bij "Elektro Baert"
+  return SPONSOR_COMPANIES.find((c) => c.name === base)?.sector ?? 'Lokale handel';
 }
 
 export function makeProspect(state: GameState, rng: Rng, bigger = false): SponsorProspect {
@@ -124,6 +161,7 @@ function freeKind(state: GameState, max: Kind): Kind | null {
   const top = KIND_ORDER.indexOf(max);
   for (let i = top; i >= 0; i--) {
     const k = KIND_ORDER[i];
+    if (kindLock(state, k)) continue;
     if (state.sponsors.filter((s) => s.kind === k).length + state.sponsorOffers.filter((o) => o.kind === k && !o.renewalOf).length < KIND_MAX[k]) return k;
   }
   return null;
@@ -277,6 +315,20 @@ export function resolveRequests(state: GameState, rng: Rng): void {
   const due = state.requests.filter((r) => r.weeksLeft <= 0);
   state.requests = state.requests.filter((r) => r.weeksLeft > 0);
   for (const r of due) {
+    if (r.kind === 'lening' && r.payload) {
+      // de bank kijkt naar je schuldgraad, je kaspositie en je reputatie
+      const room = creditLimit(state);
+      const chance = clamp(0.35 + room / Math.max(1, r.payload.principal) / 6 + state.community.reputation / 300 - (state.cash < 0 ? 0.25 : 0), 0.05, 0.95);
+      if (r.payload.principal <= room && rng.chance(chance)) {
+        grantLoan(state, { ...r.payload, label: r.label.replace(/^Kredietaanvraag /, '').replace(/ \(.*\)$/, '') });
+        addNews(state, 'goed', `De bank keurt je kredietaanvraag goed: €${r.payload.principal.toLocaleString('nl-BE')} staat op de rekening.`);
+        addLog(state, 'antwoord', `Krediet goedgekeurd: €${r.payload.principal.toLocaleString('nl-BE')}.`);
+      } else {
+        addNews(state, 'slecht', 'De bank wijst je kredietaanvraag af. Probeer het later opnieuw, met een beter dossier.');
+        addLog(state, 'antwoord', 'Krediet geweigerd door de bank.');
+      }
+      continue;
+    }
     if (r.kind !== 'sponsor-extra') continue;
     const d = state.sponsors.find((x) => x.id === r.targetId);
     if (!d) continue;

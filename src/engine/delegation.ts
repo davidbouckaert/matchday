@@ -1,19 +1,22 @@
 // Taken die je aan staff overlaat. Elke week, vóór de wedstrijden, doet elk staflid
 // het werk waarvoor hij is aangeduid. Hoe beter hij is, hoe beter zijn keuzes.
 
-import type { GameState, Mentality, Position, Staff, TaskId, TrainingFocus } from './types';
+import type { GameState, Mentality, Position, Staff, TaskId, TrainingFocus, UpgradeId } from './types';
 import { PLANS, nextOpponent } from './strategy';
 import { avgFatigue } from './factors';
 import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
 import { DIVISIONS } from './data/divisions';
-import { CANTEEN_ITEMS, CLUB_EVENTS, CONCESSIONS, CONCESSION_SPACE, MERCH_ITEMS, TASKS } from './data/catalog';
+import { CANTEEN_ITEMS, CLUB_EVENTS, CONCESSIONS, CONCESSION_SPACE, MERCH_ITEMS, TASKS, UPGRADES } from './data/catalog';
 import { isTransferWindow } from './calendar';
 import { FORMATIONS, POSITIONS, bestForRole, bestFormation, departureBlock, isCorePlayer, overall, teamStrength } from './players';
 import { expectedAttendance, spendPerHead } from './finance';
 import { staffSkill } from './staff';
 import { acceptSponsorOffer, approachProspect, renewSponsor } from './sponsors';
-import { addMerchItem, buyPlayer, canOrganise, eventForecast, extendContract, openConcession, organiseEvent, sellPlayer, volunteerAction } from './actions';
+import {
+  YOUTH_FEE_WEEK, addMerchItem, buyPlayer, canOrganise, canUpgrade, eventForecast, extendContract, openConcession, organiseEvent,
+  sellPlayer, setMaintenance, setYouthFee, startUpgrade, upgradeCost, volunteerAction, youthForecast,
+} from './actions';
 import { bestPrice } from './merch';
 import { acceptedMargin } from './canteen';
 import { usedConcessionSpace } from './actions';
@@ -34,6 +37,29 @@ function errorChance(skill: number): number {
   return clamp((100 - skill) / 200, 0, 0.4);
 }
 
+/**
+ * Hoeveel taken iemand aankan. Een zwak staflid doet er één, een topper vier.
+ * Wie te veel op zijn bord krijgt, zou toch beginnen te knoeien.
+ */
+export function taskCapacity(staff: Staff): number {
+  return staff.skill >= 85 ? 4 : staff.skill >= 65 ? 3 : staff.skill >= 40 ? 2 : 1;
+}
+
+/**
+ * Hoe goed iemand deze taak doet. Zijn eigen vakgebied (de eerste rol bij de taak) ligt hem het best;
+ * een taak die er maar naast ligt, doet hij met minder kennis van zaken. Elke extra taak kost ook iets.
+ */
+export function taskSkill(state: GameState, taskId: TaskId, staff: Staff): number {
+  const task = TASKS.find((t) => t.id === taskId)!;
+  const rank = task.roles.indexOf(staff.role);
+  const fit = rank === 0 ? 1 : rank === 1 ? 0.82 : 0.68;
+  const load = 1 - Math.max(0, tasksOf(state, staff.id).length - 1) * 0.06;
+  const course = staff.courseWeeksLeft > 0 ? 0.6 : 1;
+  return clamp(staff.skill * fit * load * course, 5, 100);
+}
+
+
+
 export function runDelegatedTasks(state: GameState, rng: Rng): void {
   contractTask(state, rng);
   transferTask(state);
@@ -43,6 +69,9 @@ export function runDelegatedTasks(state: GameState, rng: Rng): void {
   volunteerTask(state);
   merchTask(state);
   horecaTask(state);
+  youthTask(state);
+  medicalTask(state);
+  facilityTask(state);
 }
 
 // ---------- Strategie: training, opstelling en tactiek ----------
@@ -58,8 +87,8 @@ export function strategyTask(state: GameState, rng: Rng = createRng(state)): voi
   const roleStaff = delegate(state, 'spelersrollen');
   if (!trainingStaff && !lineupStaff && !tacticStaff && !roleStaff) return;
   const analyst = staffSkill(state, 'analist');
-  const s = trainingStaff ?? lineupStaff ?? tacticStaff ?? roleStaff!;
-  const skill = s.skill * (s.courseWeeksLeft > 0 ? 0.6 : 1) + analyst / 4;
+  const lead = lineupStaff ?? tacticStaff ?? trainingStaff ?? roleStaff!;
+  const skill = taskSkill(state, lineupStaff ? 'opstelling' : tacticStaff ? 'tactiek' : 'training', lead) + analyst / 4;
   const err = errorChance(skill);
   const t = state.tactics;
   if (lineupStaff) t.manualXI = [];
@@ -134,7 +163,7 @@ function contractTask(state: GameState, rng: Rng): void {
   for (const p of state.players.filter((x) => x.contractUntil <= state.season)) {
     const talent = p.age <= 23 && p.potential >= level;
     if (!(keep.has(p.id) || talent) || p.age > 32) continue;
-    if (rng.chance(errorChance(s.skill) / 2)) continue; // vergeten of slecht onderhandeld
+    if (rng.chance(errorChance(taskSkill(state, 'contracten', s)) / 2)) continue; // vergeten of slecht onderhandeld
     if (extendContract(state, p.id).ok) extended.push(p.name);
   }
   if (extended.length) addNews(state, 'neutraal', `${s.name} verlengde de contracten van ${extended.join(', ')}.`);
@@ -215,7 +244,7 @@ function ticketTask(state: GameState, rng: Rng): void {
       best = price;
     }
   }
-  state.ticketPrice = Math.max(0, Math.round(best * (1 + rng.normal(0, errorChance(s.skill) / 3))));
+  state.ticketPrice = Math.max(0, Math.round(best * (1 + rng.normal(0, errorChance(taskSkill(state, 'ticketing', s)) / 3))));
 }
 
 // ---------- Evenementen ----------
@@ -237,12 +266,82 @@ function eventTask(state: GameState): void {
   }
 }
 
+// ---------- Jeugd, medisch en infrastructuur ----------
+
+/** De jeugdcoördinator zoekt het lidgeld waar de opbrengst het hoogst ligt. */
+function youthTask(state: GameState): void {
+  const s = delegate(state, 'jeugd');
+  if (!s || state.week > YOUTH_FEE_WEEK) return;
+  let best = state.youthFee;
+  let bestRevenue = -Infinity;
+  for (let fee = 120; fee <= 420; fee += 10) {
+    const revenue = youthForecast(state, fee) * fee;
+    if (revenue > bestRevenue) {
+      bestRevenue = revenue;
+      best = fee;
+    }
+  }
+  // een zwakker staflid mikt ernaast
+  const off = Math.round(errorChance(taskSkill(state, 'jeugd', s)) * 120);
+  setYouthFee(state, clamp(best - off, 100, 500));
+}
+
+/** Kinesist of verzorger grijpt in als de groep te zwaar belast raakt. */
+function medicalTask(state: GameState): void {
+  const s = delegate(state, 'medisch');
+  if (!s) return;
+  const fit = state.players.filter((p) => p.injuryWeeks === 0);
+  const tired = avgFatigue(fit);
+  const injured = state.players.filter((p) => p.injuryWeeks > 0).length;
+  const t = state.tactics;
+  if (tired > 45 || injured >= 3) {
+    if (t.trainings > 2) t.trainings = Math.max(2, t.trainings - 1);
+    t.focus = 'herstel';
+    if ((state.eventCooldowns['medisch-melding'] ?? 0) === 0) {
+      state.eventCooldowns['medisch-melding'] = 4;
+      addNews(state, 'neutraal', `${s.name} schroeft de belasting terug: ${Math.round(tired)}/100 vermoeidheid en ${injured} geblesseerde(n).`);
+    }
+  } else if (tired < 20 && injured === 0 && t.focus === 'herstel') {
+    t.focus = 'conditie';
+  }
+}
+
+/** Onderhoud en bouwprojecten, met een ruime buffer op de rekening. */
+function facilityTask(state: GameState): void {
+  const s = delegate(state, 'infrastructuur');
+  if (!s) return;
+  const weekly = state.players.reduce((sum, p) => sum + p.wage, 0) + state.staff.reduce((sum, x) => sum + x.wage, 0);
+  const buffer = weekly * 12;
+  const level = state.cash > buffer * 2 ? 'premium' : state.cash > buffer ? 'normaal' : 'basis';
+  if (state.infrastructure.maintenance !== level) setMaintenance(state, level as 'basis' | 'normaal' | 'premium');
+  if (state.infrastructure.construction || (state.eventCooldowns['auto-bouw'] ?? 0) > 0) return;
+  const division = DIVISIONS[state.league.divisionLevel];
+  const next = DIVISIONS[Math.min(DIVISIONS.length - 1, state.league.divisionLevel + 1)];
+  const i = state.infrastructure;
+  // eerst wat de licentie of promotie vraagt, daarna wat het meest opbrengt
+  const wish: UpgradeId[] = [];
+  if (i.capacity < next.requiredCapacity) wish.push('tribune');
+  if (i.lightingLevel < next.requiredLighting) wish.push('verlichting');
+  if (i.capacity < division.requiredCapacity) wish.unshift('tribune');
+  wish.push('kantine', 'wifi', 'scorebord', 'sanitair', 'recuperatie', 'parking');
+  for (const id of wish) {
+    if (canUpgrade(state, id)) continue;
+    const cost = upgradeCost(state, id);
+    if (state.cash - cost < buffer) continue;
+    if (startUpgrade(state, id).ok) {
+      state.eventCooldowns['auto-bouw'] = 8;
+      addNews(state, 'neutraal', `${s.name} start een bouwproject: ${UPGRADES.find((u) => u.id === id)!.label}.`);
+      return;
+    }
+  }
+}
+
 // ---------- Kantine en concessies ----------
 
 function horecaTask(state: GameState): void {
   const s = delegate(state, 'horeca');
   if (!s) return;
-  const err = errorChance(s.skill);
+  const err = errorChance(taskSkill(state, 'horeca', s));
   for (const item of state.canteen.items) {
     const def = CANTEEN_ITEMS.find((c) => c.id === item.id)!;
     // de beste prijs ligt iets boven de richtprijs; een zwakker staflid mikt ernaast
@@ -263,7 +362,7 @@ function horecaTask(state: GameState): void {
 function merchTask(state: GameState): void {
   const s = delegate(state, 'merchandising');
   if (!s || !state.merch.active) return;
-  const sloppy = errorChance(s.skill);
+  const sloppy = errorChance(taskSkill(state, 'merchandising', s));
   for (const item of state.merch.items) {
     const target = bestPrice(state, item.id);
     // een zwakker staflid mikt er wat naast
@@ -286,8 +385,8 @@ function volunteerTask(state: GameState): void {
   if (!s) return;
   const v = state.community.volunteers;
   const ready = (id: string) => (state.eventCooldowns[`vrijwilligers-${id}`] ?? 0) === 0;
-  if (v < 22 && ready('infoavond') && state.cash > 10_000) volunteerAction(state, 'infoavond');
-  else if (v < 32 && ready('oproep')) volunteerAction(state, 'oproep');
+  if (v < 9 && ready('infoavond') && state.cash > 10_000) volunteerAction(state, 'infoavond');
+  else if (v < 13 && ready('oproep')) volunteerAction(state, 'oproep');
   if (state.week === 20 && ready('feest') && state.cash > 25_000) {
     volunteerAction(state, 'feest');
     addNews(state, 'goed', `${s.name} organiseerde een vrijwilligersfeest.`);

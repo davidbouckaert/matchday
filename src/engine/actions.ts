@@ -17,9 +17,11 @@ import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } f
 import { emergencyOffer, loanOffers } from './loans';
 import { acceptSponsorOffer } from './sponsors';
 import { hasDiploma, staffSkill } from './staff';
+import { taskCapacity, taskSkill, tasksOf } from './delegation';
 import { bestPrice, margin } from './merch';
 import { acceptedMargin, concessionPartner } from './canteen';
 import { popularity } from './popularity';
+import { facilityCost } from './finance';
 import { addLog, addNews, book, euro, nextId, weeks } from './util';
 
 export type { ActionResult };
@@ -112,13 +114,17 @@ export function declinePlayerOffer(state: GameState, offerId: string): ActionRes
 
 /** Contract met één seizoen verlengen. De speler vraagt het loon dat hij nu waard is. */
 /** Wat deze speler vraagt om te verlengen. Vorm, leeftijd en karakter spelen mee. */
+export const MAX_NEGOTIATIONS = 3; // na zoveel mislukte gesprekken ligt het stil tot volgend seizoen
+
 export function askingWage(state: GameState, p: Player): number {
   const base = Math.max(p.wage, p.isYouth && p.age < 19 ? 60 : wageDemand(p));
   const form = 1 + clamp(p.form, -5, 8) / 40;
   const core = isCorePlayer(state, p) ? 1.08 : 1;
   const mood = p.morale < 50 ? 1.12 : p.morale > 75 ? 0.96 : 1;
   const background = state.avatar.background === 'exspeler' ? 0.95 : 1;
-  return round(base * form * core * mood * background, 5);
+  // elk mislukt gesprek maakt hem koppiger: hij vraagt meer en wil minder graag tekenen
+  const stubborn = 1 + p.negotiations * 0.07;
+  return round(base * form * core * mood * background * stubborn, 5);
 }
 
 /** Hoe een loonbod aanvoelt: onder de vraag doet pijn, ruim erboven geeft een boost. */
@@ -126,8 +132,11 @@ export function wageOfferEffect(state: GameState, p: Player, offer: number): { r
   const ask = askingWage(state, p);
   const ratio = offer / Math.max(1, ask);
   const patience = p.trait === 'professioneel' ? 0.08 : p.trait === 'harde werker' ? 0.05 : p.trait === 'lastpak' ? -0.08 : 0;
-  const chance = clamp(0.15 + (ratio - 0.85) * 4 + patience + (p.morale - 55) / 150, 0.02, 0.97);
-  const morale = Math.round(clamp((ratio - 1) * 45, -20, 12));
+  const annoyed = p.negotiations * 0.12; // hij heeft er al genoeg van
+  const chance = clamp(0.15 + (ratio - 0.85) * 4 + patience + (p.morale - 55) / 150 - annoyed, 0.02, 0.97);
+  // een laag bod doet pijn, en elke volgende poging doet meer pijn: loven en bieden werkt niet
+  const lowball = ratio < 0.95 ? (0.95 - ratio) * 40 * (1 + p.negotiations * 0.8) : 0;
+  const morale = Math.round(clamp((ratio - 1) * 25 - lowball - p.negotiations * 2, -35, 12));
   return { ratio, chance, morale };
 }
 
@@ -140,10 +149,13 @@ export function extendContract(state: GameState, playerId: string, offer?: numbe
   if (g) return g;
   const p = state.players.find((x) => x.id === playerId);
   if (!p) return fail('Speler niet gevonden.');
-  const lb = loanBlock(p);
-  if (lb) return lb;
+  // een uitgeleende speler blijft van jou: met hem onderhandelen kan gewoon, ook al speelt hij elders
+  if (p.loan?.type === 'in') return fail(`${p.name} is gehuurd van ${p.loan.club}. Zijn contract ligt daar.`);
   if (p.contractUntil >= state.season + 3) return fail('Het contract loopt al lang genoeg.');
   if (p.morale < 35) return fail(`${p.name} is ontevreden en wil niet verlengen.`);
+  if (p.negotiations >= MAX_NEGOTIATIONS) {
+    return fail(`${p.name} wil dit seizoen niet meer onderhandelen: je bood al ${p.negotiations} keer te weinig. Zijn makelaar neemt pas volgend seizoen weer op.`);
+  }
   const ask = askingWage(state, p);
   const wage = round(Number.isFinite(offer) && (offer as number) > 0 ? (offer as number) : ask, 5);
   if (wage < 40) return fail('Onder €40 per week tekent niemand.');
@@ -151,11 +163,19 @@ export function extendContract(state: GameState, playerId: string, offer?: numbe
   const rng = createRng(state);
   addLog(state, 'beslissing', `Verlenging voorgesteld aan ${p.name}: €${wage}/week (hij vraagt €${ask}).`);
   if (!rng.chance(chance)) {
+    p.negotiations++;
     p.morale = clamp(p.morale + Math.min(-3, morale), 0, 100);
-    return fail(`${p.name} wijst €${wage}/week af. Hij vraagt ongeveer €${ask}/week (moraal ${Math.round(p.morale)}).`);
+    const left = MAX_NEGOTIATIONS - p.negotiations;
+    addLog(state, 'antwoord', `${p.name} wijst €${wage}/week af (poging ${p.negotiations}).`);
+    if (left <= 0) addNews(state, 'slecht', `De gesprekken met ${p.name} zijn afgesprongen. Hij praat dit seizoen niet meer over een nieuw contract.`);
+    return fail(
+      `${p.name} wijst €${wage}/week af. Hij vraagt nu ongeveer €${askingWage(state, p)}/week en zijn moraal zakt naar ${Math.round(p.morale)}.` +
+        (left > 0 ? ` Nog ${left} poging(en) voor hij afhaakt.` : ' Hij wil dit seizoen niet meer onderhandelen.'),
+    );
   }
   p.wage = wage;
   p.contractUntil += 1;
+  p.negotiations = 0;
   p.morale = clamp(p.morale + 5 + morale, 0, 100);
   addNews(state, 'goed', `${p.name} verlengt tot einde seizoen ${p.contractUntil} aan €${p.wage}/week.`);
   return ok(`${p.name} verlengt tot einde seizoen ${p.contractUntil} aan €${p.wage}/week.`);
@@ -192,6 +212,11 @@ export function staffLock(state: GameState, role: StaffRole): string | null {
   }
   if (role === 'merchandising' && !state.merch.active) return 'Open eerst je fanshop (Club › Fanshop).';
   if (role === 'jeugdcoordinator' && state.community.youthMembers < 20) return 'Je jeugdwerking is te klein: je hebt minstens 20 jeugdleden nodig.';
+  if (role === 'analist' && i.wifiLevel < 1) return 'Een data-analist heeft wifi en degelijk bereik nodig om beelden en data binnen te halen (Infrastructuur).';
+  if (role === 'kantine' && i.kantineLevel < 2) return 'Je kantine is te basic voor een vaste verantwoordelijke: renoveer eerst naar niveau 2.';
+  if (role === 'voeding' && i.kantineLevel < 3) return 'Een voedingsdeskundige heeft een degelijke keuken nodig: kantine niveau 3.';
+  if (role === 'keepertrainer' && state.players.filter((p) => p.position === 'DOEL').length < 2) return 'Je hebt minstens twee doelmannen nodig voor een keeperstraining.';
+  if (role === 'conditietrainer' && i.lightingLevel < 2 && i.pitch !== 'kunstgras') return 'Zonder degelijke verlichting of kunstgras kan hij in de winter niet werken (Infrastructuur).';
   return null;
 }
 
@@ -261,11 +286,36 @@ export function startCourse(state: GameState, staffId: string, type: 'diploma' |
 
 // ---------- Financiën ----------
 
+/**
+ * Een lening aanvragen. De bank bekijkt je dossier en laat volgende week iets weten.
+ * Een noodlening die de bank zelf aanbiedt, staat er wel meteen op.
+ */
 export function takeLoan(state: GameState, key: string): ActionResult {
   const g = guard(state);
   if (g) return g;
-  const offer = key === 'nood' && state.emergencyLoanOffered ? emergencyOffer() : loanOffers(state).find((o) => o.key === key);
+  const emergency = key === 'nood' && state.emergencyLoanOffered;
+  const offer = emergency ? emergencyOffer() : loanOffers(state).find((o) => o.key === key);
   if (!offer) return fail('Deze lening is niet (meer) beschikbaar.');
+  if (emergency) {
+    grantLoan(state, offer);
+    state.emergencyLoanOffered = false;
+    return ok(`Noodlening van €${offer.principal.toLocaleString('nl-BE')} ontvangen.`);
+  }
+  if (state.requests.some((r) => r.kind === 'lening')) return fail('Je hebt al een kredietaanvraag lopen. Wacht het antwoord van de bank af.');
+  state.requests.push({
+    id: nextId(state, 'rq'),
+    kind: 'lening',
+    targetId: key,
+    label: `Kredietaanvraag ${offer.label} (${euro(offer.principal)})`,
+    weeksLeft: 1,
+    payload: { key, principal: offer.principal, annualRate: offer.annualRate, weeklyPayment: offer.weeklyPayment, weeks: offer.weeks },
+  });
+  addLog(state, 'beslissing', `Kredietaanvraag ingediend: ${offer.label}, ${euro(offer.principal)} aan ${(offer.annualRate * 100).toFixed(1)}%.`);
+  return ok(`Je aanvraag is ingediend. De bank laat volgende week weten of ze €${offer.principal.toLocaleString('nl-BE')} toestaat.`);
+}
+
+/** Zet een toegekende lening effectief op de rekening. */
+export function grantLoan(state: GameState, offer: { label: string; principal: number; annualRate: number; weeklyPayment: number; weeks: number }): void {
   state.loans.push({
     id: nextId(state, 'l'),
     label: offer.label,
@@ -275,9 +325,7 @@ export function takeLoan(state: GameState, key: string): ActionResult {
     weeklyPayment: offer.weeklyPayment,
     weeksLeft: offer.weeks,
   });
-  if (key === 'nood') state.emergencyLoanOffered = false;
   book(state, 'leningen', offer.principal, offer.label);
-  return ok(`Lening van €${offer.principal.toLocaleString('nl-BE')} ontvangen.`);
 }
 
 export function repayLoan(state: GameState, loanId: string): ActionResult {
@@ -336,6 +384,8 @@ export function canUpgrade(state: GameState, id: UpgradeId): string | null {
   if (id === 'wifi' && i.wifiLevel >= 2) return 'De wifi is al op het hoogste niveau.';
   if (id === 'sanitair' && i.sanitairLevel >= 2) return 'Het sanitair is al op het hoogste niveau.';
   if (id === 'parking' && i.parkingLevel >= 2) return 'De parking is al op het hoogste niveau.';
+  if (id === 'scorebord' && i.scoreboardLevel >= 2) return 'Het scorebord is al op het hoogste niveau.';
+  if (id === 'ploegbus' && i.teamBus) return 'Je hebt al een eigen ploegbus.';
   return null;
 }
 
@@ -508,8 +558,19 @@ export function delegateTask(state: GameState, taskId: TaskId, staffId: string |
   const s = state.staff.find((x) => x.id === staffId);
   if (!s) return fail('Staflid niet gevonden.');
   if (!task.roles.includes(s.role)) return fail(`${s.name} kan "${task.label}" niet overnemen.`);
+  const already = tasksOf(state, staffId).filter((t) => t !== taskId).length;
+  const capacity = taskCapacity(s);
+  if (already >= capacity) {
+    return fail(`${s.name} heeft er al ${already} taken bij en kan er ${capacity} aan (dat hangt af van zijn vaardigheid). Neem er eerst een weg.`);
+  }
+  const rank = task.roles.indexOf(s.role);
   state.delegation[taskId] = staffId;
-  return ok(`${s.name} neemt "${task.label}" over.`);
+  addLog(state, 'beslissing', `${task.label} → ${s.name}.`);
+  return ok(
+    rank === 0
+      ? `${s.name} neemt "${task.label}" over. Dat is zijn vak, dus hij doet het op zijn volle niveau.`
+      : `${s.name} neemt "${task.label}" over. Het is niet zijn vakgebied: hij werkt hier op ${Math.round(taskSkill(state, taskId, s))} van zijn ${s.skill}.`,
+  );
 }
 
 export function setTransferBudget(state: GameState, amount: number): ActionResult {
@@ -640,7 +701,7 @@ export function addMerchItem(state: GameState, id: MerchItemId): ActionResult {
   if (state.merch.items.some((i) => i.id === id)) return fail('Dit artikel ligt al in de shop.');
   const def = merchDef(id);
   if (state.cash < def.setup) return fail(`Eerste voorraad en drukwerk kosten €${def.setup.toLocaleString('nl-BE')}.`);
-  book(state, 'inkoop shop', -def.setup, `Eerste voorraad ${def.label.toLowerCase()}`);
+  book(state, 'werking shop', -def.setup, `Eerste voorraad en drukwerk ${def.label.toLowerCase()}`);
   state.merch.items.push({ id, price: bestPrice(state, id), addedSeason: state.season, soldTotal: 0 });
   return ok(`${def.label} ligt vanaf nu in de shop, aan €${state.merch.items.find((i) => i.id === id)!.price}.`);
 }
@@ -777,17 +838,25 @@ export function setMaintenance(state: GameState, level: Infrastructure['maintena
   );
 }
 
-export const GREEN_ENERGY_COST = 48_000;
+export const GREEN_ENERGY_SAVING = 0.2; // hoeveel minder je per week betaalt
+const GREEN_ENERGY_PAYBACK_WEEKS = 156; // drie seizoenen
+
+/** De installatie wordt geprijsd naar de grootte van je complex: altijd ongeveer drie seizoenen terugverdientijd. */
+export function greenEnergyCost(state: GameState): number {
+  const weeklySaving = facilityCost(state) * GREEN_ENERGY_SAVING;
+  return round(weeklySaving * GREEN_ENERGY_PAYBACK_WEEKS, 500);
+}
 
 export function investGreenEnergy(state: GameState): ActionResult {
   const g = guard(state);
   if (g) return g;
   if (state.infrastructure.greenEnergy) return fail('De zonnepanelen liggen er al.');
-  if (state.cash < GREEN_ENERGY_COST) return fail(`Je hebt €${GREEN_ENERGY_COST.toLocaleString('nl-BE')} nodig.`);
-  book(state, 'infrastructuur', -GREEN_ENERGY_COST, 'Zonnepanelen en ledverlichting');
+  const cost = greenEnergyCost(state);
+  if (state.cash < cost) return fail(`Je hebt €${cost.toLocaleString('nl-BE')} nodig.`);
+  book(state, 'infrastructuur', -cost, 'Zonnepanelen en ledverlichting');
   state.infrastructure.greenEnergy = true;
-  addNews(state, 'goed', 'De zonnepanelen liggen op het dak: je energiefactuur daalt met 18%.');
-  return ok('Zonnepanelen en led geplaatst: 18% minder energiekosten.');
+  addNews(state, 'goed', `De zonnepanelen liggen op het dak: je energiefactuur daalt met ${Math.round(GREEN_ENERGY_SAVING * 100)}%.`);
+  return ok(`Zonnepanelen en led geplaatst: ${Math.round(GREEN_ENERGY_SAVING * 100)}% minder vaste kosten, ongeveer drie seizoenen terugverdientijd.`);
 }
 
 /** Waarom deze speler deze week niet weg mag (of null). Voor de knoppen in de UI. */
