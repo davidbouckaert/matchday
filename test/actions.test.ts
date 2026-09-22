@@ -3,20 +3,21 @@ import * as actions from '../src/engine/actions';
 import { CLUB_EVENTS, MERCH_START_COST, TASKS, UPGRADES, merchDef } from '../src/engine/data/catalog';
 import { newTestGame, playWeeks } from './helpers';
 import { declineFactor, growthFactor, overall, playEffect, selectLineup, teamStrength, trainingEffect } from '../src/engine/players';
-import { bestPrice, expectedUnits } from '../src/engine/merch';
+import { bestPrice, expectedUnits, refPrice } from '../src/engine/merch';
 import { acceptedMargin, expectedCanteenUnits } from '../src/engine/canteen';
 import { AWAY_SHARE, breakdownChance, expectedAttendance, facilityCost } from '../src/engine/finance';
 import { SECTORS } from '../src/engine/data/names';
 import { runDelegatedTasks, taskCapacity, taskSkill, tasksOf } from '../src/engine/delegation';
 import { PLANS, matchup, nextOpponent, scoutingReport } from '../src/engine/strategy';
 import { product, sponsorFactors } from '../src/engine/factors';
-import { KIND_MAX, companySector, kindLock, kindRange } from '../src/engine/sponsors';
+import { KIND_MAX, companySector, kindLock, kindRange, sponsorsAfterSeason } from '../src/engine/sponsors';
 import { cardsForOwnTeam } from '../src/engine/discipline';
 import { createRng } from '../src/engine/rng';
 import { checkMilestones } from '../src/engine/milestones';
 import { checkRecords, currentStreak } from '../src/engine/records';
 import { simulateMatch, side } from '../src/engine/league';
-import { advanceWeek } from '../src/engine/turn';
+import { advanceWeek, seasonPrize } from '../src/engine/turn';
+import { migrate } from '../src/storage/save';
 
 describe('Acties', () => {
   it('koopt een speler tijdens de transferperiode', () => {
@@ -956,5 +957,106 @@ describe('Records en reeksen', () => {
     const broken = checkRecords(s);
     expect(broken.some((b) => b.includes('Recordopkomst'))).to.equal(true);
     expect(checkRecords(s).some((b) => b.includes('Recordopkomst'))).to.equal(false);
+  });
+});
+
+describe('Vergoedingen en sponsors bij promotie', () => {
+  it('zonder wedstrijd betaal je alleen het vaste deel van de spelersvergoeding', () => {
+    let s = newTestGame();
+    s = playWeeks(s, 3); // week 3: geen competitie
+    const quiet = s.lastWeek.find((e) => e.category === 'lonen spelers')!;
+    s = playWeeks(s, 4); // week 7: eerste speeldag
+    const matchWeek = s.lastWeek.filter((e) => e.category === 'lonen spelers').reduce((sum, e) => sum + e.amount, 0);
+    expect(Math.abs(matchWeek)).to.be.above(Math.abs(quiet.amount));
+    expect(quiet.label).to.include('geen wedstrijdpremie');
+  });
+
+  it('een zege kost een winstpremie', () => {
+    let s = newTestGame();
+    for (let i = 0; i < 40 && !s.gameOver; i++) {
+      s = advanceWeek(s);
+      const won = s.lastMatch && s.lastMatch.week === s.week - 1 && s.lastMatch.goalsFor > s.lastMatch.goalsAgainst;
+      if (won) {
+        expect(s.lastWeek.some((e) => e.label.includes('Winstpremie'))).to.equal(true);
+        return;
+      }
+    }
+  });
+
+  it('bij promotie bieden sponsors meer of worden ze tevredener', () => {
+    const s = newTestGame();
+    const before = s.sponsors.filter((d) => d.kind !== 'stadion').map((d) => d.satisfaction);
+    sponsorsAfterSeason(s, createRng(s), 'kampioen', s.league.divisionLevel + 1);
+    const after = s.sponsors.filter((d) => d.kind !== 'stadion').map((d) => d.satisfaction);
+    expect(after.every((v, i) => v >= before[i])).to.equal(true);
+    expect(s.sponsorOffers.length + s.news.filter((n) => n.text.includes('promotie')).length).to.be.above(0);
+  });
+
+  it('bij degradatie zakt de tevredenheid van sponsors', () => {
+    const s = newTestGame();
+    const deal = s.sponsors.find((d) => d.kind !== 'stadion')!;
+    const before = deal.satisfaction;
+    sponsorsAfterSeason(s, createRng(s), 'degradatie', Math.max(0, s.league.divisionLevel - 1));
+    expect(deal.satisfaction).to.be.below(before);
+  });
+});
+
+describe('Promotie: inkomsten en kosten', () => {
+  it('bij promotie stijgen de lonen van spelers en staff', () => {
+    let s = newTestGame('zuidrand', 'fonds', 5);
+    s = playWeeks(s, 43);
+    for (const r of s.league.table) if (r.teamId === 'club') r.points = 999;
+    const wages = s.players.reduce((t, p) => t + p.wage, 0);
+    const staff = s.staff.reduce((t, x) => t + x.wage, 0);
+    s = playWeeks(s, 1);
+    expect(s.history[s.history.length - 1].result).to.equal('kampioen');
+    expect(s.players.reduce((t, p) => t + p.wage, 0)).to.be.above(wages);
+    expect(s.staff.reduce((t, x) => t + x.wage, 0)).to.be.above(staff);
+    expect(s.lastWeek.some((e) => e.category === 'premies' && /premie/i.test(e.label))).to.equal(true);
+  });
+
+  it('de kampioenenpremie staat apart in de boekhouding en in de clubgeschiedenis', () => {
+    let s = newTestGame('zuidrand', 'fonds', 5);
+    s = playWeeks(s, 43);
+    for (const r of s.league.table) if (r.teamId === 'club') r.points = 999;
+    const level = s.league.divisionLevel;
+    s = playWeeks(s, 1);
+    const prize = seasonPrize(level, 'kampioen');
+    const booked = s.lastWeek.filter((e) => e.category === 'premies').reduce((t, e) => t + e.amount, 0);
+    expect(booked).to.equal(prize);
+    expect(s.seasonTotals.premies).to.equal(prize);
+    expect(s.history[s.history.length - 1].prize).to.equal(prize);
+  });
+
+  it('plaats 2 levert een kleinere premie op dan de titel', () => {
+    expect(seasonPrize(1, 'kampioen')).to.equal(4_500);
+    expect(seasonPrize(1, 'promotie')).to.equal(2_500);
+    expect(seasonPrize(4, 'promotie')).to.be.below(seasonPrize(4, 'kampioen'));
+  });
+
+  it('de fanshop vraagt meer in een hogere reeks', () => {
+    const low = newTestGame();
+    const high = newTestGame();
+    high.league.divisionLevel = 4;
+    expect(refPrice(high, 'sjaal')).to.be.above(refPrice(low, 'sjaal'));
+  });
+});
+
+describe('Oude opslagbestanden', () => {
+  it('een bestand zonder clubrecords blijft speelbaar', () => {
+    const s = newTestGame();
+    const raw = JSON.parse(JSON.stringify(s)) as Record<string, unknown>;
+    // zoals een bestand dat door een tussenversie als versie 12 werd weggeschreven
+    raw.version = 12;
+    delete raw.records;
+    delete raw.lastRecords;
+    delete raw.statsWeeks;
+    delete raw.inflation;
+    const repaired = migrate(raw);
+    expect(repaired.records).to.not.equal(undefined);
+    expect(repaired.inflation).to.be.at.least(1);
+    let g = repaired;
+    for (let i = 0; i < 3; i++) g = advanceWeek(g);
+    expect(g.week).to.equal(s.week + 3);
   });
 });
