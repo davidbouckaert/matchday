@@ -136,7 +136,7 @@ scripts/balance.ts ← balanstest over meerdere seizoenen
   - **Staff:** een merchandisingverantwoordelijke (€140/week) verkoopt meer, koopt goedkoper in en drukt de werkingskosten. Je kunt de taak "Fanshop en merchandising" aan hem, de commercieel medewerker of de kantineverantwoordelijke delegeren; dan zet hij zelf de prijzen en breidt hij het assortiment uit
   - Een thuiswedstrijd is goed voor ongeveer 3,4 keer de normale verkoop. Een goed draaiende shop levert ruwweg €10.000 tot €20.000 per seizoen op
 
-## Laag 8 (deze versie)
+## Laag 8
 
 - **Kern beschermen:** je kunt je laatste doelman niet verkopen of uitlenen, elke linie houdt minstens één reserve en je zakt nooit onder 16 spelers. Ook de scout houdt zich daaraan. In Transfers zie je met een ★ wie tot je kern hoort en met een slotje wie deze week niet weg mag
 - **Contracten (Ploeg › Contracten):** aflopende contracten op één plek, met wat de speler vraagt, jouw loonvoorstel, de kans op een akkoord en het effect op zijn moraal
@@ -151,6 +151,83 @@ scripts/balance.ts ← balanstest over meerdere seizoenen
 - **Interface:** de menubalk blijft staan, elk invoerveld wordt meteen toegepast (geen opslaan-knop), een teller toont 11/11 speelklare spelers en blokkeert de knop "Volgende week" als je er te weinig hebt, thuis en uit staan overal met een icoon, winst en verlies krijgen een symbool, en er staan tooltips bij tevredenheid, prijzen, kaarten en klassement
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
+
+## Laag 9 (deze versie)
+
+### 0.9.8
+
+- **Teller post per post:** elke regel in het weekrapport start ongeveer 150 ms na de vorige en telt in 650 ms naar zijn bedrag, met een klein accent als hij landt. Het hele overzicht staat er na ongeveer twee seconden
+- **Jong talent groeit sneller:** tot 19 jaar +30% groei, tot 21 jaar +15%, en de basisgroei ging omhoog. Een jonge basisspeler wint nu ongeveer 5,9 punten per seizoen (was 4,2), een jonge invaller 2,5
+- **Vermoeidheid naar leeftijd:** tot 19 jaar 78% van de belasting, tot 23 jaar 88%, 30 tot 32 jaar 112%, daarboven 122%
+- **Seizoensrapport** toont het echte resultaat uit je clubgeschiedenis: kampioen, promotie, degradatie of behoud, met de naam van de reeks waarin je volgend seizoen speelt
+
+### 0.9.7
+
+- **De week bouwt op:** de animatie toont drie momenten (de bal rolt, tweede helft, affluiten) met een voortgangsbalk, daarna springt de uitslag eruit en lopen de bedragen op als een teller
+- **Clubrecords:** recordopkomst, beste week qua inkomsten, langste reeks zonder nederlaag, meeste overwinningen op rij en het hoogste aantal supporters. Sneuvelt er een, dan krijg je een melding en een blok in het weekrapport
+- **Reeksen:** vanaf drie zeges of vier wedstrijden ongeslagen staat dat onder de uitslag
+- **Gemeten groei (actieve club, gedelegeerd):** seizoen 1 ongeveer €680.000 werkingsinkomsten in 3de nationale, seizoen 6 €3,8 tot €6,4 miljoen in de Pro Liga; supporters van 700 naar 14.500
+
+### 0.9.6
+
+- **Fanshopmarge klopt nu op het scherm:** "inkoop shop" bevatte ook de vaste werkingskosten en het drukwerk van nieuwe artikelen. Dat staat nu apart als "werking shop", en het fanshopscherm toont omzet, inkoop, werking en winst per week en per seizoen
+- **Seizoenseinde:** de knop heet "Laatste speeldag" op de slotspeeldag en "Seizoen afsluiten" in week 44, met een gouden accent en uitleg in de tooltip
+- **Seizoensrapport:** eindstand en promotie of degradatie, W/G/V en doelpunten, inkomsten en kosten met groei tegenover vorig seizoen, supporters, jeugdleden, consumpties, behaalde mijlpalen en wie het meest speelde
+
+### 0.9.5
+
+- **Geschiktheid in sterren:** bij elke taak zie je per staflid 1 tot 5 sterren (vaardigheid × hoe goed de taak bij zijn functie past × zijn werklast)
+- **Mijlpalen:** elf momenten om naar toe te werken (500, 1.000 en 2.500 supporters, €250.000 en een miljoen op de rekening, promotie, uitverkocht huis, 1.000 artikelen, 300 jeugdleden, tien wedstrijden ongeslagen, €5.000 sponsorgeld per week). Elke mijlpaal geeft reputatie of sfeer, een geldbedrag dat meeschaalt met je reeks, en een gouden blok bovenaan het weekrapport
+- **Jaaroverzicht** in het weekrapport van week 44: inkomsten tegenover vorig seizoen, supporters, jeugdleden, tickets en consumpties
+- **Tellers:** de bedragen in het weekrapport lopen op als een casinoteller (uit te zetten bij Opslaan, samen met de animatie)
+- **Thuisvoordeel:** de thuisploeg speelt met +1,6 aanval en +1 verdediging, de uitploeg met −0,6 aanval
+- **Groei bouwt op zichzelf:** supporters groeien 1 tot 3% per week richting hun plafond, afhankelijk van je recente resultaten en de sfeer
+
+### 0.9.4
+
+- **Krediet:** een lening aanvragen doet de bank er een week over. Ze kijkt naar je kredietruimte, je kaspositie en je reputatie en kan weigeren. Een noodlening die de bank zelf aanbiedt, staat er wel meteen op
+- **Terugverdientijd:** zonnepanelen kosten nu wat bij jouw complex past (ongeveer 156 weken × de wekelijkse besparing van 20%), dus altijd ongeveer drie seizoenen. De ploegbus kost €32.000 en maakt verplaatsingen 55% goedkoper, plus de bussponsor
+- **Moeilijker voetbal:** staff, sfeer, vorm, training en spelersrollen wegen samen nog voor 45% door in plaats van 100%, en tegenstanders krijgen +4,5 sterkte omdat zij ook een trainer hebben. Met een topstaf win je nu ongeveer 60% van je wedstrijden in plaats van 93%
+- **Aandacht met links:** elke melding op het overzicht brengt je naar het juiste scherm
+
+### 0.9.3
+
+- **Specialisatie bij delegeren:** elke taak heeft een vakgebied (de eerste functie in de lijst). Wie ze buiten zijn vakgebied doet, werkt op 82% of 68% van zijn niveau en beslist dus vaker verkeerd. Je ziet dat bij elke keuze staan
+- **Werklast:** een staflid kan 1 tot 4 taken aan, afhankelijk van zijn vaardigheid (<40 = 1, <65 = 2, <85 = 3, daarboven 4). Elke extra taak kost hem ook een beetje scherpte
+- **Hamburgermenu** rechtsboven met de handleiding en het opslaan; die twee staan niet meer als gewone tabs in de balk
+- **Handleiding met FAQ:** hoe je geld verdient, waarom een week zonder wedstrijd pijn doet, hoe verlengen werkt, waarom iets op slot staat
+- **Eerste stappen:** een checklist op het overzicht voor een nieuwe eigenaar, die zichzelf afvinkt en na week 20 verdwijnt
+- **Kantine realistischer:** ongeveer 2 consumpties per bezoeker in plaats van 6; de kraampjes idem. De vaste kosten zijn navenant bijgesteld
+- **Ploegbus** is nu een investering (€58.000, 2 weken). Ze maakt verplaatsingen 45% goedkoper en ontgrendelt pas dan de bussponsor
+
+### 0.9.2
+
+- **Clubrating naast de clubnaam** in de kopbalk (drie regels met sterren en score), in plaats van eronder
+- **Winterstop duidelijk zichtbaar:** een blauwe melding op het overzicht, een label in de kopbalk en een regel in het weekrapport. Tijdens de stop draait de kantine op 45%: geen jeugdwedstrijden, weinig volk
+- **"Concessies" heet nu "horeca concessies"** in alle overzichten, ook in bestaande opslagbestanden
+- **Wedstrijdkosten** benoemen of het om een thuis- of uitwedstrijd gaat (scheidsrechter en organisatie tegenover busvervoer)
+
+### 0.9.1
+
+- **Delegeren:** bij Staff staat per taak een keuzelijst met iedereen die ze kan overnemen; je hoeft niet meer via het detailscherm van een staflid. Drie nieuwe taken: jeugdwerking (lidgeld), belasting en blessurepreventie (kinesist, verzorger of voedingsdeskundige) en onderhoud en bouwprojecten (afgevaardigde of commercieel medewerker)
+- **Tickets:** de opbrengst staat nu bruto in de boeken (toeschouwers × prijs), met het aandeel van de bezoekende club en de bond (8%) als aparte regel bij wedstrijdkosten
+- **Kopbalk:** klassement, hoofdsponsor, saldo, teamsterkte, clubrating en datum zijn links naar het bijbehorende scherm
+- **Sponsoring:** nieuwe plaatsen (mouwsponsor, ploegbus, evenementensponsor, schermen in de kantine, wedstrijdbal) en een evenwichtigere verdeling over de sectoren. Sommige plaatsen ontgrendelen pas met de juiste kantine, jeugdwerking of een georganiseerd evenement
+- **Uitgeleende spelers** kun je een nieuw contract geven zolang ze van jou zijn
+
+### 0.9.0
+
+- **Transferperiode** staat als banner bovenaan Transfers: open tot welke week, of wanneer ze weer opengaat
+- **Loononderhandelen:** blijven laagbieden werkt niet meer. Elk afgewezen bod kost moraal (steeds meer), verhoogt zijn vraag met 7% en na drie pogingen wil hij dit seizoen niet meer praten
+- **Cijfers per week** naast per seizoen, met de opbrengst per bron; kantine en concessies staan nu ook bij de opbrengsten per seizoen
+- **Clubrating in de kopbalk** naast de clubnaam (sterren per categorie, met de opbouw in de tooltip)
+- **Eigen clubnaam** kiezen bij de start, naast het logo
+- **Scorebord** als bouwproject: meer sfeer en bordsponsors betalen meer
+- **Meer ontgrendelingen:** een data-analist vraagt wifi, een kantineverantwoordelijke een kantine van niveau 2, een voedingsdeskundige niveau 3, een keeperstrainer twee doelmannen en een conditietrainer degelijke verlichting of kunstgras
+- **Vrijwilligers op een menselijke schaal:** ongeveer 12 in plaats van 28, evenementen vragen er 3 tot 14 (14 = mosselfeest, daar moet je dus echt voor werven)
+- **Sponsornaam en sector** kloppen nu ook in bestaande opslagbestanden (de bedrijvenlijst heeft één sector per naam)
+- **Inflatie:** alle vaste kosten stijgen 6% per seizoen. Sponsors en ticketprijzen volgen alleen als jij ze aanpast, dus niets doen kost geld
+- **Balans:** passief spelen loopt nu veel vaker slecht af (Zuidrand met de coöperatie 13/20, Heidebeke met de coöperatie 14/20 faillissementen in drie seizoenen)
 
 ## Volgende lagen (voorstel)
 

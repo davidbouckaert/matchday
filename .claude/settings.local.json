@@ -3,7 +3,10 @@
     "allow": [
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(xargs grep -noE '\\\\b\\(const|let\\)\\\\s+[a-zA-Z_][a-zA-Z0-9_]{0,2}\\\\b')",
+      "Bash(npx tsc *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
