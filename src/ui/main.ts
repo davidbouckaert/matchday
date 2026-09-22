@@ -247,6 +247,7 @@ function render(): void {
   applySorts();
   measureBars();
   rollNumbers();
+  if (ui.report?.phase === 'report') revealLines(`${ui.report.prev.season}-${ui.report.prev.week}`);
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
     if (btn) {
@@ -273,8 +274,8 @@ function rollNumbers(): void {
     return;
   }
   // post per post: elke regel start iets later en telt in ~650 ms naar zijn eindbedrag
-  const stagger = Math.min(170, 1400 / Math.max(1, targets.length));
-  const duration = 650;
+  const stagger = Math.min(205, 1680 / Math.max(1, targets.length));
+  const duration = 780;
   const start = performance.now();
   const step = (now: number) => {
     let busy = false;
@@ -288,6 +289,32 @@ function rollNumbers(): void {
     if (busy) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
+}
+
+// voor welk weekrapport de regels al binnengerold zijn; zo begint het niet opnieuw bij elke hertekening
+let revealedFor = '';
+
+/**
+ * Nieuws en "in afwachting" rollen regel per regel binnen (niet letter per letter),
+ * samen met de cijfertellers. Staat de animatie uit, dan staat alles er meteen.
+ */
+function revealLines(key: string): void {
+  const lists = [...root.querySelectorAll<HTMLElement>('.report-grid .reveal-lines')];
+  if (!lists.length) return;
+  const items = lists.flatMap((ul) => [...ul.querySelectorAll<HTMLElement>(':scope > li')]);
+  if (!ui.animate || revealedFor === key) {
+    for (const li of items) li.classList.add('shown');
+    return;
+  }
+  revealedFor = key;
+  for (const ul of lists) ul.classList.add('staged');
+  // ongeveer 150 ms per regel, maar samen nooit langer dan de cijfertellers
+  const stagger = Math.min(150, 1900 / Math.max(1, items.length));
+  requestAnimationFrame(() => {
+    items.forEach((li, i) => {
+      window.setTimeout(() => li.classList.add('shown'), 260 + i * stagger);
+    });
+  });
 }
 
 /** Wat er volgende week gebeurt, in de knop zelf. */
@@ -353,11 +380,22 @@ function applySorts(): void {
 
 let animTimer = 0;
 
+/** Hoe lang de animatie na een week duurt. */
+const ANIM_MS = 3600;
+
 async function playWeek(): Promise<void> {
   if (!ui.game || ui.busy || ui.game.gameOver) return;
   ui.busy = true;
   const prev = { week: ui.game.week, season: ui.game.season };
-  ui.game = advanceWeek(ui.game);
+  try {
+    ui.game = advanceWeek(ui.game);
+  } catch (err) {
+    // liever een duidelijke melding dan een knop die niets doet
+    ui.busy = false;
+    showToast({ ok: false, message: `Er ging iets mis bij het spelen van week ${prev.week}: ${(err as Error).message}. Maak een back-up bij Opslaan en stuur die door.` });
+    render();
+    return;
+  }
   ui.busy = false;
   await persist();
   ui.report = { phase: ui.animate ? 'anim' : 'report', prev };
@@ -368,7 +406,7 @@ async function playWeek(): Promise<void> {
         ui.report.phase = 'report';
         render();
       }
-    }, 1800);
+    }, ANIM_MS);
   }
 }
 

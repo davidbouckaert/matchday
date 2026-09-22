@@ -90,6 +90,13 @@ function seasonReport(
         growth !== null ? `${growth >= 0 ? '+' : ''}${growth}% tegenover vorig seizoen` : 'eerste seizoen'
       }</span></div>
       <div><span class="label">Kosten</span><strong>${euro(-costs)}</strong><span class="small">resultaat ${euro(income + costs)}</span></div>
+      <div><span class="label">Premie</span><strong>${record?.prize ? euro(record.prize) : '–'}</strong><span class="small">${
+        record?.prize
+          ? record.result === 'kampioen'
+            ? 'kampioenenpremie, geboekt onder "premies"'
+            : 'promotiepremie, geboekt onder "premies"'
+          : 'alleen bij een titel of promotie'
+      }</span></div>
       <div><span class="label">Supporters</span><strong>${s.community.fanBase}</strong><span class="small">${stats.tickets} tickets verkocht</span></div>
       <div><span class="label">Jeugd</span><strong>${s.community.youthMembers}</strong><span class="small">${fanGrowth ? `${fanGrowth} tegenover vorig seizoen` : 'eerste seizoen'}</span></div>
       <div><span class="label">Kantine</span><strong>${consumpties}</strong><span class="small">consumpties</span></div>
@@ -171,7 +178,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   // nieuws van deze week
   const news = s.news.filter((n) => n.week === prev.week && n.season === prev.season);
   const newsHtml = news.length
-    ? `<ul class="news">${news.map((n) => `<li class="${n.tone}">${esc(n.text)}</li>`).join('')}</ul>`
+    ? `<ul class="news reveal-lines">${news.map((n) => `<li class="${n.tone}">${esc(n.text)}</li>`).join('')}</ul>`
     : '<p class="muted">Rustige week.</p>';
 
   // in afwachting
@@ -207,7 +214,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
         <section><h3>Wedstrijd</h3>${matchHtml}${othersHtml}</section>
         <section><h3>Financiën</h3>${financeHtml}</section>
         <section class="wide"><h3>Nieuws en berichten</h3>${newsHtml}</section>
-        <section class="wide"><h3>In afwachting</h3>${waiting.length ? `<ul class="small">${waiting.map((w) => `<li>${w}</li>`).join('')}</ul>` : '<p class="muted">Niets in afwachting.</p>'}</section>
+        <section class="wide"><h3>In afwachting</h3>${waiting.length ? `<ul class="small reveal-lines">${waiting.map((w) => `<li>${w}</li>`).join('')}</ul>` : '<p class="muted">Niets in afwachting.</p>'}</section>
       </div>
       <div class="actions">
         <button class="primary" data-action="report-overview">Naar het dashboard</button>

@@ -283,10 +283,10 @@ td.mu-1 { color: var(--bad); font-weight: 600; }
 .pitch { width: 100%; height: auto; }
 .pitch .field { fill: #2f8a4c; }
 .pitch .lines { stroke: rgba(255,255,255,.75); stroke-width: 1.5; }
-.pitch .goal { fill: rgba(255,255,255,.9); animation: net 1.8s ease-in-out forwards; }
+.pitch .goal { fill: rgba(255,255,255,.9); animation: net 3.6s ease-in-out forwards; }
 .pitch .ball { fill: #fff; stroke: #222; stroke-width: 1; }
 .pitch .ball-dot { fill: #222; }
-.ball-move { animation: ball 1.6s cubic-bezier(.45,.05,.55,.95) forwards; }
+.ball-move { animation: ball 3.2s cubic-bezier(.45,.05,.55,.95) forwards; }
 @keyframes ball {
   0% { transform: translate(40px, 60px) rotate(0deg); }
   35% { transform: translate(120px, 30px) rotate(200deg); }
@@ -448,15 +448,22 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .season-grid .small { color: var(--muted); font-size: 0.78rem; }
 /* spanning: de week bouwt op, de uitslag springt eruit */
 .anim-beats { position: relative; height: 22px; margin-top: 10px; }
-.anim-beats span { position: absolute; left: 0; right: 0; opacity: 0; animation: beat 1.8s linear forwards; }
-.anim-beats span:nth-child(2) { animation-delay: 0.6s; }
-.anim-beats span:nth-child(3) { animation-delay: 1.2s; font-weight: 700; }
-@keyframes beat { 0% { opacity: 0; transform: translateY(6px); } 12% { opacity: 1; transform: none; } 33% { opacity: 1; } 45% { opacity: 0; } 100% { opacity: 0; } }
+.anim-beats span { position: absolute; left: 0; right: 0; opacity: 0; animation: beat 1.2s ease-in-out forwards; }
+.anim-beats span:nth-child(2) { animation-delay: 1.2s; }
+.anim-beats span:nth-child(3) { animation-delay: 2.4s; font-weight: 700; animation-name: beat-last; }
+@keyframes beat { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes beat-last { 0% { opacity: 0; transform: translateY(6px) scale(0.95); } 20% { opacity: 1; transform: none; } 100% { opacity: 1; transform: none; } }
 .anim-bar { height: 4px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 6px; }
-.anim-bar span { display: block; height: 100%; width: 0; background: var(--accent); animation: fill 1.8s linear forwards; }
+.anim-bar span { display: block; height: 100%; width: 0; background: var(--accent); animation: fill 3.6s linear forwards; }
 @keyframes fill { to { width: 100%; } }
 .scoreboard.reveal { animation: pop 0.45s cubic-bezier(.2,1.6,.4,1); }
 @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: none; } }
+/* nieuws en "in afwachting" rollen regel per regel binnen; zonder JS (of met de animatie uit) staat alles er gewoon */
+.report-grid .reveal-lines.staged > li { opacity: 0; transform: translateY(8px); }
+.report-grid .reveal-lines.staged > li.shown { opacity: 1; transform: none; transition: opacity 0.32s ease, transform 0.32s cubic-bezier(.2,.9,.3,1); }
+@media (prefers-reduced-motion: reduce) {
+  .report-grid .reveal-lines.staged > li { opacity: 1; transform: none; }
+}
 .streak { color: #c2410c; font-weight: 600; }
 .report-grid .milestone.record { background: linear-gradient(90deg, #eef7ff, #fbfdff); border-color: #bcd8f2; }
 .roll.landed { animation: land 0.35s ease-out; }
