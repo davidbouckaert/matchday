@@ -58,7 +58,7 @@ type Screen =
  * mensen, je geld, je accommodatie, je competitie.
  */
 const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
-  { id: 'overzicht', label: 'Dashboard', screens: [['overzicht', 'Dashboard']] },
+  { id: 'overzicht', label: 'Bureau', screens: [['overzicht', 'Bureau']] },
   { id: 'ploeg', label: 'Ploeg', screens: [['ploeg', 'Selectie'], ['strategie', 'Strategie'], ['transfers', 'Transfers'], ['contracten', 'Contracten']] },
   { id: 'staff', label: 'Personeel', screens: [['staff', 'Personeel en taken'], ['opleiding', 'Opleiding']] },
   { id: 'geld', label: 'Geld', screens: [['financien', 'Financiën'], ['sponsors', 'Sponsors'], ['cijfers', 'Cijfers']] },
@@ -224,6 +224,7 @@ function render(): void {
   // een prijs aan het intikken is mag daar niet uit geduwd worden
   const focused = grabFocus();
   root.innerHTML = `
+    <div class="bars">
     ${header(g)}
     <nav class="tabs">${GROUPS.filter((gr) => gr.id !== 'menu')
       .map((gr) => {
@@ -243,6 +244,7 @@ function render(): void {
         : ''
     }
     ${group.screens.length > 1 ? `<nav class="subtabs">${group.screens.map(([id, label]) => `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}</button>`).join('')}</nav>` : ''}
+    </div>
     <main class="content">${
       inWinterBreak(g.week)
         ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de clubwinkel te laten draaien.</p></section>`
@@ -370,14 +372,41 @@ function nextWeekLabel(g: GameState): { text: string; tip: string; highlight: bo
   return { text: 'Volgende week ▶', tip: 'Speel de volgende week (spatie)', highlight: false };
 }
 
-/** Houdt de kopbalk en de menubalk op hun plaats, ook als ze van hoogte veranderen. */
+/**
+ * Houdt de balken op hun plaats, ook als ze van hoogte veranderen.
+ *
+ * De kopbalk, de menubalk en de subbalk zitten samen in één `.bars`, en dát ding plakt.
+ * Vroeger plakten ze elk apart, elk op de hoogte van de vorige: zodra er één van hoogte
+ * veranderde of wegviel, bleef er een band over waar de tabel doorheen schoof. Eén sticky
+ * blok kan dat niet, want er is geen afstand meer om verkeerd te rekenen.
+ */
 function measureBars(): void {
   const set = (name: string, el: Element | null) => document.documentElement.style.setProperty(name, `${el ? Math.round((el as HTMLElement).offsetHeight) : 0}px`);
   set('--topbar-h', root.querySelector('.topbar'));
   set('--tabs-h', root.querySelector('.tabs'));
+  set('--bars-h', root.querySelector('.bars'));
+  set('--playbar-h', root.querySelector('.playbar'));
 }
 
 window.addEventListener('resize', measureBars);
+
+/**
+ * De kopbalk blijft staan, maar niet op volle hoogte.
+ *
+ * Bevroren is wat je wil — je logo, je saldo en je menu horen altijd bereikbaar te zijn —
+ * maar een balk van honderdzeventig pixels die nooit meer weggaat vreet op een laptop een
+ * kwart van je scherm. Zodra je scrolt, krimpt hij: het logo wordt kleiner, de datumregel
+ * en de weekcijfers gaan weg, de marges halveren. Wie je bent en wat je hebt blijft staan,
+ * de rest komt terug zodra je weer bovenaan bent.
+ */
+function watchScroll(): void {
+  const apply = () => {
+    document.documentElement.classList.toggle('scrolled', window.scrollY > 48);
+    measureBars();
+  };
+  window.addEventListener('scroll', apply, { passive: true });
+  apply();
+}
 
 // ---------- Sorteren ----------
 
@@ -843,6 +872,7 @@ document.addEventListener('keydown', (e) => {
   // eenmalig: tooltips en getalvelden werken met delegatie, dus ze overleven elke hertekening
   initTooltips();
   initNumFields();
+  watchScroll();
   try {
     ui.game = await indexedDbStore.load(SLOT);
   } catch {

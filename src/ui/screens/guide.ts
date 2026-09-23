@@ -161,7 +161,7 @@ function faq(): QA[] {
         Geen enkel niveau zet iets achter slot — wat je op dag één kon, kan je altijd. Wat het volgende niveau oplevert, staat op je overzicht.`,
     },
     {
-      q: 'Wat is het weekmoment op mijn dashboard?',
+      q: 'Wat is het weekmoment op mijn bureau?',
       a: `Elke week ligt er iets op je bureau dat nu beslist moet worden: het regent al drie dagen, de bus is defect, je hoofdsponsor komt kijken.
         Het verschijnt als een venster zodra je het weekrapport sluit: twee of drie knoppen, en meteen daarna lees je in hetzelfde venster wat je keuze opleverde.
         Wil je eerst rondkijken, klik dan op "Later beslissen"; op je overzicht blijft een kader staan met een knop om alsnog te beslissen.
@@ -232,7 +232,7 @@ export function guideScreen(s: GameState): string {
       Versie ${VERSION}.</p>
       <h3>Waar vind ik wat?</h3>
       <ul class="where small">
-        <li><strong>Dashboard</strong><span>Wat deze week op je wacht, je saldo en prognose, waar het geld heen ging, je volgende wedstrijd, en hoe je ervoor staat bij publiek en sponsors.</span></li>
+        <li><strong>Bureau</strong><span>Wat deze week op je wacht, je saldo en prognose, waar het geld heen ging, je volgende wedstrijd, en hoe je ervoor staat bij publiek en sponsors.</span></li>
         <li><strong>Ploeg</strong><span>Selectie (het veld en je kern), Strategie (training, tactiek, spelplannen), Transfers en Contracten.</span></li>
         <li><strong>Personeel</strong><span>Aanwerven en opleiden, en in één tabel per taak kiezen wie ze doet. Datzelfde keuzevak staat ook bovenaan elk taakscherm.</span></li>
         <li><strong>Geld</strong><span>Financiën (prognose, posten, herkomst, ticketprijs, abonnementen, leningen), Sponsors en Cijfers.</span></li>

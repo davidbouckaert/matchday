@@ -312,7 +312,7 @@ export function clubScreen(s: GameState): string {
     ${ratings
       .map(
         (r) => `<section class="card"><h2>${r.label} ${stars(r.stars)}</h2>
-        <table class="compact"><tbody>${r.parts.map((p) => `<tr><td>${p.label}</td><td>${bar(p.score)}</td><td class="num">${p.score}</td></tr>`).join('')}</tbody></table></section>`,
+        <div class="table-wrap"><table class="compact"><tbody>${r.parts.map((p) => `<tr><td>${p.label}</td><td>${bar(p.score)}</td><td class="num">${p.score}</td></tr>`).join('')}</tbody></table></div></section>`,
       )
       .join('')}
     ${youthCard(s)}
@@ -325,9 +325,9 @@ export function clubScreen(s: GameState): string {
         <span class="muted small">wordt meteen toegepast</span>
       </div>
       <p class="small">Inschrijvingen in week ${YOUTH_FEE_WEEK}. Verwacht bij €${s.youthFee}: <strong>~${youthForecast(s)} leden</strong> → ${euro(youthForecast(s) * s.youthFee)}.</p>
-      <table class="compact"><thead><tr><th>Lidgeld</th><th class="num">Leden dit seizoen</th><th class="num">Opbrengst</th><th class="num">Leden op termijn</th><th class="num">Opbrengst op termijn</th></tr></thead><tbody>
+      <div class="table-wrap"><table class="compact"><thead><tr><th>Lidgeld</th><th class="num">Leden dit seizoen</th><th class="num">Opbrengst</th><th class="num">Leden op termijn</th><th class="num">Opbrengst op termijn</th></tr></thead><tbody>
         ${[...new Set([150, 190, 230, 280, 340, s.youthFee])].sort((a, b) => a - b).map((fee) => `<tr${fee === s.youthFee ? ' class="own"' : ''}><td>€${fee}</td><td class="num">${youthForecast(s, fee)}</td><td class="num">${euro(youthForecast(s, fee) * fee)}</td><td class="num">${youthTarget(s, fee)}</td><td class="num">${euro(youthTarget(s, fee) * fee)}</td></tr>`).join('')}
-      </tbody></table>
+      </tbody></table></div>
       <p class="muted small">Het aantal leden schuift elk seizoen maar half op naar het niveau "op termijn": een prijsverhoging lijkt eerst voordelig, maar ouders haken geleidelijk af.</p>
       <p class="muted small">Gangbaar in de regio: €${YOUTH_FEE_REF}. Duurder = minder leden (en boven €${Math.round(YOUTH_FEE_REF * 1.5)} morren de supporters); goedkoper = meer leden en wat reputatie. Meer leden betekent ook meer subsidie, kantine-omzet en talent, maar ook meer werkingskosten (€3 per lid per week).</p>
     </section>
@@ -345,9 +345,9 @@ export function clubScreen(s: GameState): string {
       <h2>Clubgeschiedenis</h2>
       ${
         s.history.length
-          ? `<table class="compact"><thead><tr><th>Seizoen</th><th>Reeks</th><th class="num">Plaats</th><th class="num">Ptn</th><th>Resultaat</th><th class="num">Premie</th><th class="num">Financieel</th></tr></thead><tbody>
+          ? `<div class="table-wrap"><table class="compact"><thead><tr><th>Seizoen</th><th>Reeks</th><th class="num">Plaats</th><th class="num">Ptn</th><th>Resultaat</th><th class="num">Premie</th><th class="num">Financieel</th></tr></thead><tbody>
           ${s.history.map((h) => `<tr><td>${seasonLabel(s.startYear, h.season)}</td><td>${h.division}</td><td class="num">${h.position}</td><td class="num">${h.points}</td><td>${h.result}</td><td class="num">${h.prize ? euro(h.prize) : '–'}</td><td class="num">${signedEuro(h.profit)}</td></tr>`).join('')}
-          </tbody></table>`
+          </tbody></table></div>`
           : '<p class="muted">Nog geen afgewerkt seizoen.</p>'
       }
     </section>

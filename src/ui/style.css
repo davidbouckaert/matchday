@@ -284,9 +284,10 @@ dl.facts dt:last-of-type, dl.facts dd:last-of-type { border-bottom: none; }
 .inline-form label { max-width: 140px; }
 .owner { display: flex; gap: 12px; align-items: center; }
 .toast {
-  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  /* boven de speelbalk, net als de tooltip: hij lag er half achter en was dus half leesbaar */
+  position: fixed; bottom: calc(var(--playbar-h, 0px) + 12px); left: 50%; transform: translateX(-50%);
   background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px;
-  max-width: calc(100% - 32px); z-index: 10; box-shadow: 0 4px 18px rgba(0,0,0,.2);
+  max-width: calc(100% - 32px); z-index: 19; box-shadow: 0 4px 18px rgba(0,0,0,.2);
 }
 .toast.bad { background: var(--bad); color: #fff; }
 
@@ -463,15 +464,40 @@ input.price { width: 72px; padding: 4px 6px; font-size: 0.85rem; text-align: rig
 /* ---------- laag 8: vaste menubalk, tooltips, rollen, cijfers ---------- */
 /* Wat blijft staan als je scrolt.
  *
- * Vroeger plakte de kopbalk mee en hing de menubalk op de hoogte van de kopbalk. Zodra de
- * kopbalk toch wegschoof — en hij is nu hoog, dus dat gebeurde — bleef de menubalk op die
- * afstand van de bovenrand hangen, met een band eronder waar de tabel doorheen schoof.
- * Daarom: alleen de menubalken plakken, en ze beginnen gewoon bovenaan. De knoppen en je
- * saldo blijven bereikbaar via de speelbalk onderaan, die altijd in beeld is.
+ * Kopbalk, menubalk en subbalk zitten samen in één `.bars`, en dát blok plakt. Vroeger
+ * plakten ze elk apart, elk op de gemeten hoogte van de vorige: zodra er één van hoogte
+ * veranderde of wegviel, bleef er een band over waar de tabel doorheen schoof. Eén blok
+ * kan dat niet fout doen, want er is geen afstand meer om verkeerd te rekenen.
+ *
+ * Bevroren mag geen kwart van je scherm kosten. Zodra je scrolt krijgt <html> de klasse
+ * `scrolled` en krimpt de kopbalk: kleiner logo, geen datumregel, geen weekcijfers, halve
+ * marges. Wie je bent en wat je in kas hebt blijft staan; de rest komt terug bovenaan.
  */
+.bars { position: sticky; top: 0; z-index: 16; background: var(--card); }
 .topbar { position: static; }
-.tabs { position: sticky; top: 0; z-index: 15; background: var(--card); box-shadow: 0 1px 0 var(--line); }
-.subtabs { position: sticky; top: var(--tabs-h, 0px); z-index: 14; background: var(--bg); }
+.tabs { position: static; z-index: auto; }
+.subtabs { position: static; z-index: auto; }
+.bars::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 10px;
+  background: linear-gradient(to bottom, rgba(16, 32, 24, .07), transparent); pointer-events: none;
+  opacity: 0; transition: opacity .15s ease;
+}
+:root.scrolled .bars::after { opacity: 1; }
+
+/* de krimpstand */
+:root.scrolled .topbar { padding-top: 7px; padding-bottom: 6px; gap: 8px 28px; }
+:root.scrolled .topbar .club svg { width: 38px; height: 38px; }
+:root.scrolled .topbar .when .date { display: none; }
+:root.scrolled .topbar .when .bits .bit:not(.now) { display: none; }
+/* op een smal scherm staat de datumregel op een eigen rij: die rij moet helemaal weg,
+   anders blijft er een lege band van zestig pixels onder je clubnaam hangen */
+@media (max-width: 760px) { :root.scrolled .topbar .when { display: none; } }
+:root.scrolled .topbar .club-name .muted { display: none; }
+:root.scrolled .tabs button { padding-top: 9px; padding-bottom: 7px; }
+:root.scrolled .subtabs { padding-top: 4px; padding-bottom: 4px; }
+@media (prefers-reduced-motion: no-preference) {
+  .topbar .club svg { transition: width .15s ease, height .15s ease; }
+}
 /* de kopregel van een lange tabel plakt binnen zijn eigen kader, onder de menubalken */
 .table-wrap.tall thead th { z-index: 1; }
 
@@ -568,12 +594,10 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
   .next-group button { flex: 1 1 0; }
 }
 /* hamburgermenu */
-.tabs { position: sticky; }
 .hamburger { margin-left: auto; font-size: 1.1rem; padding: 6px 12px; }
-.menu-pop { position: fixed; right: 16px; top: calc(var(--topbar-h, 0px) + var(--tabs-h, 0px) + 6px); z-index: 20; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 6px; display: flex; flex-direction: column; min-width: 230px; }
+.menu-pop { position: fixed; right: 16px; top: calc(var(--bars-h, 0px) + 6px); z-index: 20; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 6px; display: flex; flex-direction: column; min-width: 230px; }
 .menu-pop button { text-align: left; background: transparent; border: none; padding: 9px 12px; border-radius: 7px; }
 .menu-pop button:hover { background: var(--accent-soft); }
-.tabs { position: sticky; }
 
 /* eerste stappen */
 .card.todo { border-left: 4px solid var(--accent); }
@@ -873,8 +897,10 @@ tr.benched td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
    Niet bij de muis: daar dekt hij af waar je net naar wees, en je ogen moeten
    hem elke keer opnieuw zoeken.
    ========================================================================== */
+/* De tooltip staat rechtsonder, maar nooit vóór de speelbalk: hij begint net boven de
+   knop "Volgende week". --playbar-h wordt bij elke hertekening gemeten. */
 .tip-panel {
-  position: fixed; right: var(--s4); bottom: var(--s4); z-index: 40;
+  position: fixed; right: var(--s4); bottom: calc(var(--playbar-h, 0px) + var(--s3)); z-index: 40;
   width: min(420px, calc(100vw - var(--s5)));
   background: var(--tip-bg); color: var(--tip-ink);
   padding: var(--s4) var(--s5); border-radius: var(--radius);
@@ -887,7 +913,7 @@ tr.benched td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
 .tip-panel.on { opacity: 1; transform: none; }
 .tip-panel .tip-title { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; opacity: .65; }
 @media (prefers-reduced-motion: reduce) { .tip-panel { transition: none; } }
-@media (max-width: 700px) { .tip-panel { left: var(--s3); right: var(--s3); width: auto; bottom: var(--s3); } }
+@media (max-width: 700px) { .tip-panel { left: var(--s3); right: var(--s3); width: auto; bottom: calc(var(--playbar-h, 0px) + var(--s2)); } }
 
 /* ==========================================================================
    Getalinvoer: tekstveld met twee echte knoppen ernaast.
@@ -1435,6 +1461,10 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .view-switch .switch button { background: none; padding: 5px 14px; border-radius: 99px; font-size: .86rem; color: var(--muted); }
 .view-switch .switch button.on { background: var(--card); color: var(--accent); font-weight: 650; box-shadow: var(--shadow); }
 
+/* Een tabel krimpt niet mee: zonder dit duwt één brede tabel in een smalle rasterkolom
+   de hele pagina opzij. `min-width: 0` laat het vak wél krimpen, `.table-wrap` vangt de rest. */
+.grid > .card, .cols-2 > .col, .cols-3 > .col, .dash-main, .dash-side { min-width: 0; }
+
 .pc-line + .pc-line { margin-top: var(--s5); }
 .pc-line-head { margin: 0 0 var(--s3); font-size: .78rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
 .pc-line-head .muted { letter-spacing: 0; text-transform: none; font-weight: 400; }
@@ -1453,10 +1483,23 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .pc-pos { font-size: .66rem; font-weight: 700; letter-spacing: .05em; color: var(--faint); flex: none; }
 .pc-name { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.2; }
 .pc-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .98rem; }
+.pc-state-label { font-size: .72rem; color: var(--faint); }
+.pcard.in .pc-state-label { color: var(--good); font-weight: 600; }
 .pc-rating { flex: none; font-variant-numeric: tabular-nums; cursor: help; }
 .pc-rating strong { font-size: 1.35rem; font-weight: 750; letter-spacing: -.02em; }
 .pc-rating .of { color: var(--faint); font-size: .8rem; }
 
+/* Wie hij is: leeftijd, karakter, of hij kern of eigen jeugd is. Rustige kaartjes, want
+   dit verandert niet van week tot week — het is achtergrond, geen alarm. */
+.pc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.pc-tag {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px;
+  font-size: .74rem; background: var(--card); color: var(--muted); white-space: nowrap; cursor: help;
+}
+.pc-tag.core { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-soft); }
+.pc-tag.youth { color: var(--good); }
+
+/* Wat er nu met hem aan de hand is. Gekleurd en rond, zodat het wél opvalt. */
 .pc-badges { display: flex; flex-wrap: wrap; gap: 4px; }
 .pc-badge {
   display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px;
@@ -1465,8 +1508,27 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .pc-badge.good { background: var(--good-soft); color: var(--good); }
 .pc-badge.bad { background: var(--bad-soft); color: var(--bad); }
 
-.pc-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
-.pc-money { font-size: .84rem; font-variant-numeric: tabular-nums; cursor: help; }
-.pc-acts { display: flex; align-items: center; gap: 4px; }
-.pc-acts .sm { padding: 4px 9px; font-size: .78rem; background: var(--card); }
-.pc-acts .star { background: none; padding: 0 4px; font-size: 1.05rem; }
+/* Loon en contract als twee benoemde feiten. "S2" liet je raden; "nog 2 seizoenen" niet. */
+.pc-facts { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); padding-top: 2px; }
+.pc-fact { display: block; line-height: 1.25; cursor: help; min-width: 0; }
+.pc-fact .cap { display: block; font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.pc-fact strong { font-size: .86rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.pc-fact .unit { font-size: .68rem; color: var(--faint); }
+.pc-fact.warn strong { color: var(--bad); }
+
+/* De knoppen zien eruit als knoppen: eigen vlak, randje, en ze komen omhoog als je erover
+   gaat. "Contract" als kale tekst las je als een label. */
+.pc-acts { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.pc-row { display: flex; gap: 6px; }
+.pc-row > .pc-btn { flex: 1 1 0; }
+.pc-acts .pc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 7px 10px; font-size: .78rem; font-weight: 600; border-radius: var(--radius-sm);
+  background: var(--card); color: var(--text); box-shadow: inset 0 0 0 1px var(--line);
+  white-space: nowrap; min-width: 0;
+}
+.pc-acts .pc-btn:hover { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-soft); }
+.pc-acts .pc-btn.star.on { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.pc-acts > .pc-btn.sell { width: 100%; }
+.pc-acts .pc-btn.sell { color: var(--good); }
+.pc-acts .pc-btn.sell:hover { background: var(--good-soft); color: var(--good); box-shadow: inset 0 0 0 1px var(--good-soft); }

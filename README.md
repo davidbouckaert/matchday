@@ -169,7 +169,25 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 15 (deze versie)
+## Laag 16 (deze versie)
+
+### 0.24.0 — De kopbalk blijft staan, en een spelerskaart legt zichzelf uit
+
+**De kopbalk blijft nu boven in beeld.** Ze scrolde weg, en dan was je halverwege een spelerslijst je clublogo, je clubnaam en je saldo kwijt. De vorige poging om alles te laten plakken liep mis omdat elke balk apart plakte op de gemeten hoogte van de vorige: zodra er één van hoogte veranderde bleef er een band over waar de tabel doorheen schoof. Nu zitten kopbalk, menubalk en subbalk samen in één `.bars`, en dat blok plakt als geheel. Er is geen afstand meer om verkeerd te rekenen.
+
+Bevroren mag alleen geen kwart van je scherm kosten. Zodra je scrolt krijgt het document de klasse `scrolled` en krimpt de balk van 200 naar 148 pixels: kleiner logo, geen datumregel, geen weekcijfers, halve marges. Wie je bent en wat je in kas hebt blijft staan. Je saldo stond intussen twee keer op het scherm — in de kopbalk én in de speelbalk onderaan — en die tweede is weg.
+
+**De tooltip lag voor de knop "Volgende week".** Hij staat rechtsonder, en daar staat ook de speelbalk. Hij begint nu net boven die balk; `--playbar-h` wordt bij elke hertekening gemeten, dus dat klopt ook als de balk op een telefoon twee rijen hoog wordt. Hetzelfde geldt voor de meldingen onderaan, die half achter de balk lagen.
+
+**Een spelerskaart legt zichzelf uit.** Er stond "30 jaar · leider · kernspeler" als één grijze regel: drie losse feiten die je zelf uit elkaar moest halen, en waarvan er twee niets zeiden. Het zijn nu drie kaartjes met een icoontje, en bij elk staat in de tooltip wat het je oplevert — een lastpak pakt 2,5× zoveel kaarten en is een slechte kapitein, een harde werker groeit 1,3× zo snel, een leider tilt als kapitein de hele ploeg op. Daaronder staat wat er nú met hem aan de hand is, in gekleurde kaartjes: vorm, vermoeidheid, moraal, een aflopend contract. Wie hij is en wat er speelt zijn twee verschillende dingen, en dus twee verschillende rijen.
+
+De cryptische `S2` is weg. Dat was het seizoen waarin zijn contract afloopt, wat betekent dat je het seizoensnummer uit je hoofd moest kennen om het te kunnen lezen. Er staat nu "nog 2 seizoenen", of "laatste seizoen" in het rood. Loon en contract staan als twee benoemde feiten met een kopje erboven in plaats van achter elkaar op één regel. En de knoppen zien er eindelijk uit als knoppen: een eigen vlak, een randje, en ze kleuren mee als je erover gaat.
+
+**"Dashboard" heet nu "Bureau".** Het is de plek waar je gaat zitten, niet een instrumentenpaneel.
+
+**Eén brede tabel duwde de clubpagina opzij.** Het lidgeldoverzicht en de clubgeschiedenis stonden zonder schuifkader in een rasterkolom van 336 pixels, en een tabel krimpt niet mee — dus schoof de hele pagina 320 pixels naar rechts. Ze schuiven nu binnen hun eigen kader, en elk rastervak heeft `min-width: 0` gekregen zodat dit niet opnieuw kan gebeuren.
+
+## Laag 15
 
 ### 0.22.0 — Je eigen kleuren, en cijfers die zeggen wat ze doen
 

@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.23.2';
+export const VERSION = '0.24.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,26 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.24.0',
+    date: '2026-09-23',
+    title: 'De kopbalk blijft staan, en een spelerskaart legt zichzelf uit',
+    items: [
+      'De kopbalk blijft nu boven in beeld staan, ook als je scrolt: je clublogo, je clubnaam en je saldo zijn altijd bereikbaar',
+      'Zodra je scrolt krimpt hij: het logo wordt kleiner en de datumregel gaat weg, zodat hij geen kwart van je scherm opeet',
+      'Kopbalk, menubalk en subbalk plakken voortaan als één blok, dus er kan geen band meer overblijven waar een tabel doorheen schuift',
+      'Je saldo stond twee keer op het scherm; het staat nu alleen nog in de kopbalk',
+      'De tooltip rechtsonder schuift boven de speelbalk, zodat hij de knop "Volgende week" niet meer afdekt',
+      'Hetzelfde voor de meldingen onderaan: die lagen half achter de speelbalk',
+      'Op een spelerskaart staat "30 jaar · leider · kernspeler" niet meer als losse regel: het zijn drie kaartjes met een icoontje, en bij elk staat wat het betekent',
+      'Elk karakter vertelt nu wat het doet — een lastpak pakt 2,5× zoveel kaarten, een harde werker groeit 1,3× zo snel',
+      'De cryptische "S2" is weg: er staat "nog 2 seizoenen" of "laatste seizoen"',
+      'Loon en contract staan als twee benoemde feiten onder elkaar in plaats van op één regel achter elkaar',
+      'De knoppen op een kaart zien er nu uit als knoppen, met een randje en een eigen vlak',
+      'Het menu "Dashboard" heet voortaan "Bureau"',
+      'Op de clubpagina duwde een brede tabel in een smalle kolom de hele pagina opzij; die tabellen schuiven nu binnen hun eigen kader',
+    ],
+  },
   {
     version: '0.23.2',
     date: '2026-09-23',

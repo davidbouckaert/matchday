@@ -182,14 +182,13 @@ export function playBar(g: GameState, o: HeaderOpts & { open: number }): string 
         ? 'Volgende week wordt er al gespeeld. Gebruik gewoon "Volgende week".'
         : 'Je speelt deze week een wedstrijd. Die week speel je zelf.';
 
+  // je saldo stond hier ook, maar de kopbalk blijft nu staan en toont het daar al. Twee
+  // keer hetzelfde bedrag op één scherm is precies de drukte die we eruit wilden hebben.
   return `<div class="playbar">
     <div class="pb-left">
-      <button class="pb-cash ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" ${tipAttr('Naar je financiën.')}>
-        <span class="cap">Saldo</span><strong>${euro(g.cash)}</strong>
-      </button>
       ${
         o.open
-          ? `<button class="pb-open" data-action="nav" data-id="overzicht" ${tipAttr('Naar je werklijst op het dashboard.')}>
+          ? `<button class="pb-open" data-action="nav" data-id="overzicht" ${tipAttr('Naar je werklijst op je bureau.')}>
               <span class="dot"></span>${o.open} ${o.open === 1 ? 'ding wacht' : 'dingen wachten'} op jou
             </button>`
           : '<span class="pb-clear small">niets dat op jou wacht</span>'
