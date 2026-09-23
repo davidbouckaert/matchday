@@ -133,6 +133,36 @@ export interface OpponentTeam {
   isRival: boolean;
   plan: GamePlan; // hun gebruikelijke spelplan
   roster: string[]; // namen van hun spelers (voor het tuchtoverzicht)
+  clubId: string; // verwijzing naar de club in de wereld (zie WorldClub)
+}
+
+/** Wat een club vorig seizoen besliste. */
+export type ClubMove = 'versterken' | 'bouwen' | 'jeugd' | 'besparen' | 'stilzitten' | 'problemen' | 'opgedoekt';
+
+/**
+ * Een club in de wereld rond jou. Geen beurt-per-beurt simulatie: elke club houdt een
+ * handvol eigenschappen bij en neemt één keer per seizoen een beslissing op basis van
+ * haar eindpositie, haar budget en haar ambitie. Die beslissing verandert haar sterkte,
+ * haar accommodatie of haar jeugdwerking — en dat merk jij volgend seizoen op het veld.
+ */
+export interface WorldClub {
+  id: string;
+  name: string;
+  divisionLevel: number;
+  strength: number; // ploegsterkte, vergelijkbaar met OpponentTeam.strength
+  budget: number; // wat ze kunnen uitgeven, in euro
+  ambition: number; // 0-100: hoe graag ze hogerop willen
+  momentum: number; // -50..50: hoe het de laatste tijd loopt
+  stadium: number; // 0-3: accommodatie
+  youth: number; // 0-3: jeugdwerking
+  trouble: number; // 0-100: financiële zorgen
+  defunct: boolean; // opgedoekt; speelt niet meer mee
+  lastMove: ClubMove | null; // wat ze vorig seizoen deden
+  seasons: { season: number; divisionLevel: number; position: number }[]; // laatste acht seizoenen
+}
+
+export interface World {
+  clubs: WorldClub[];
 }
 
 export interface TableRow {
@@ -566,6 +596,8 @@ export interface GameState {
   lastChoice: { title: string; outcome: string } | null; // wat die beslissing opleverde, voor het weekrapport
   storylines: Storyline[]; // gebeurtenissen die nog kunnen terugkomen
   chronicle: ChronicleEntry[]; // de clubkroniek: wat de moeite is om te onthouden
+  world: World; // de andere clubs, met hun eigen budget, ambitie en geschiedenis
+  lastWorldMoves: { club: string; move: ClubMove; text: string }[]; // wat de reeks deze zomer deed
   opening: SeasonOpening | null; // de seizoensopening van week 1, tot je je ambitie uitspreekt
   ambition: AmbitionId | null; // wat je op de persconferentie beloofde
   seasonGoals: SeasonGoal[]; // de drie doelen van het bestuur voor dit seizoen

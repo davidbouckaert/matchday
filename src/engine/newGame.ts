@@ -13,9 +13,10 @@ import { CANTEEN_ITEMS } from './data/catalog';
 import { emptyStats } from './stats';
 import { createOpening } from './opening';
 import { teamsFor } from './youth';
+import { buildWorld } from './world';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 23;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -96,6 +97,8 @@ export function createNewGame(opts: NewGameOptions): GameState {
     lastChoice: null,
     storylines: [],
     chronicle: [],
+    world: { clubs: [] },
+    lastWorldMoves: [],
     opening: null,
     ambition: null,
     seasonGoals: [],
@@ -143,7 +146,9 @@ export function createNewGame(opts: NewGameOptions): GameState {
   };
 
   const rng = createRng(state);
-  state.league = createLeague(rng, START_DIVISION);
+  // eerst de wereld: alle andere clubs, in alle reeksen, met hun eigen budget en ambitie
+  state.world = buildWorld(rng);
+  state.league = createLeague(rng, START_DIVISION, [], state.world);
   // elke club heeft al een bescheiden jeugdwerking draaien
   state.community.youthTeams = teamsFor(state);
 

@@ -1275,17 +1275,41 @@ describe('Rivaliteit, weekmoment en stilstand', () => {
   });
 
   it('niets beslissen kost sfeer, beslissen niet', () => {
-    let lui = newTestGame();
-    lui = playWeeks(lui, 20);
+    // in een week zonder wedstrijd is de stilstand het enige wat aan de sfeer trekt,
+    // zodat deze test niet afhangt van hoe de bal die week rolde
+    const idle = newTestGame();
+    idle.week = 25; // winterstop: geen wedstrijd, dus geen ruis van uitslagen
+    const busy = structuredClone(idle);
+    busy.log.unshift({ season: 1, week: 24, kind: 'beslissing', text: 'Ticketprijs aangepast' });
+    expect(weeksIdle(idle)).to.be.at.least(10);
+    expect(weeksIdle(busy)).to.be.below(2);
+    const after = { idle: playWeeks(idle, 1), busy: playWeeks(busy, 1) };
+    expect(after.busy.community.fanMood).to.be.above(after.idle.community.fanMood);
+    expect(after.busy.community.reputation).to.be.above(after.idle.community.reputation);
+  });
+
+  it('meldt de stilstand in het nieuws zodra ze lang genoeg duurt', () => {
+    const lui = playWeeks(newTestGame(), 20);
     expect(weeksIdle(lui)).to.be.at.least(10);
-    let actief = newTestGame();
-    for (let i = 0; i < 20; i++) {
-      actions.setTicketPrice(actief, 8 + (i % 2));
-      actief = playWeeks(actief, 1);
+    expect(lui.news.some((n) => /geen beweging|stilstand|niets van het bestuur/.test(n.text))).to.equal(true);
+  });
+
+  it('houdt een actieve club over 20 weken gemiddeld in betere sfeer', () => {
+    // over één seizoen weegt de uitslagenreeks zwaarder dan de stilstand, dus meten we
+    // het gemiddelde over verschillende partijen in plaats van één toevallige
+    const seeds = [42, 7, 99, 123, 2024, 5];
+    let idleSum = 0;
+    let busySum = 0;
+    for (const seed of seeds) {
+      idleSum += playWeeks(newTestGame('zuidrand', 'aannemer', seed), 20).community.fanMood;
+      let busy = newTestGame('zuidrand', 'aannemer', seed);
+      for (let i = 0; i < 20; i++) {
+        actions.setTicketPrice(busy, 8 + (i % 2));
+        busy = playWeeks(busy, 1);
+      }
+      busySum += busy.community.fanMood;
     }
-    expect(weeksIdle(actief)).to.be.below(2);
-    expect(actief.community.fanMood).to.be.above(lui.community.fanMood);
-    expect(lui.news.some((n) => /geen beweging in de club/.test(n.text))).to.equal(true);
+    expect(busySum / seeds.length).to.be.above(idleSum / seeds.length);
   });
 });
 

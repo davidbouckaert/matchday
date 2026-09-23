@@ -10,6 +10,7 @@ import { MAINTENANCE_FACTOR, facilityCost } from '../../engine/finance';
 import { volunteerSatisfaction } from '../../engine/turn';
 import { MEMBERS_PER_TEAM, VOLUNTEERS_PER_TEAM, boundVolunteers, freeVolunteers, maxYouthTeams, teamNames, teamsFor, youthCapacityFactor, youthShortage } from '../../engine/youth';
 import { delegate } from '../../engine/delegation';
+import { LEVEL_WORDS, findClub } from '../../engine/world';
 import { weeks } from '../../engine/util';
 import { RED_FINE, YELLOW_FINE, YELLOW_LIMIT } from '../../engine/discipline';
 import { OWN_TEAM_ID, sortedTable, teamName } from '../../engine/league';
@@ -238,6 +239,7 @@ export function leagueScreen(s: GameState): string {
           .join('')}</tbody>
       </table></div>
     </section>
+    ${rivalsCard(s)}
     <section class="card span2">
       <h2>Kalender</h2>
       <div class="table-wrap"><table class="compact">
@@ -369,4 +371,53 @@ export function saveScreen(s: GameState, lastSaved: string, animate: boolean): s
     <p class="muted small">Start opnieuw. Je huidige spel (${esc(s.clubName)}, seizoen ${s.season}) wordt overschreven, tenzij je eerst een back-up maakt.</p>
     <button class="danger" data-action="new-game">Nieuw spel starten</button>
   </section>`;
+}
+
+/**
+ * De andere clubs in je reeks: wat ze vorige zomer deden en hoe ze ervoor staan.
+ * Dit is de plek waar je merkt dat de reeks leeft — wie investeerde, wie moest inbinden.
+ */
+function rivalsCard(s: GameState): string {
+  const rows = s.league.teams
+    .map((t) => ({ team: t, club: findClub(s.world, t.clubId) }))
+    .filter((x) => x.club)
+    .sort((a, b) => b.club!.strength - a.club!.strength);
+  if (!rows.length) return '';
+  const moveWords: Record<string, string> = {
+    versterken: 'versterkte de kern',
+    bouwen: 'bouwde aan de accommodatie',
+    jeugd: 'breidde de jeugd uit',
+    besparen: 'haalde de riem aan',
+    problemen: 'financiële zorgen',
+    stilzitten: 'hield het bij het oude',
+    opgedoekt: 'legde de boeken neer',
+  };
+  return `<section class="card span2">
+      <h2>De clubs in je reeks</h2>
+      <p class="muted small">Elke club heeft haar eigen bestuur, budget en ambitie. Wat ze deze zomer beslisten, merk je dit seizoen op het veld.</p>
+      <div class="table-wrap"><table class="compact">
+        <thead><tr>
+          <th>Club</th>
+          <th class="num" ${tip('Hoe sterk hun kern is, op dezelfde schaal als die van jou')}>Sterkte</th>
+          <th ${tip('Hoe graag dit bestuur hogerop wil')}>Ambitie</th>
+          <th ${tip('Accommodatie en jeugdwerking')}>Werking</th>
+          <th>Vorige zomer</th>
+        </tr></thead>
+        <tbody>${rows
+          .map(({ team, club }) => {
+            const c = club!;
+            const ambition = c.ambition >= 70 ? 'hoog' : c.ambition >= 45 ? 'gemiddeld' : 'laag';
+            const trouble = c.trouble >= 70 ? ' <span class="tag neg">in nood</span>' : '';
+            return `<tr>
+              <td>${esc(team.name)}${team.isRival ? ' <span class="tag">derby</span>' : ''}${trouble}</td>
+              <td class="num">${c.strength.toFixed(1)}</td>
+              <td>${ambition}</td>
+              <td class="small muted">accommodatie ${LEVEL_WORDS[c.stadium]}, jeugd ${LEVEL_WORDS[c.youth]}</td>
+              <td class="small">${c.lastMove ? moveWords[c.lastMove] ?? '—' : 'nog geen zomer meegemaakt'}</td>
+            </tr>`;
+          })
+          .join('')}</tbody>
+      </table></div>
+    </section>
+`;
 }

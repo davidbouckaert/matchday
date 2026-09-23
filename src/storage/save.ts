@@ -4,11 +4,13 @@
 
 import type { GameState, LedgerCategory, UpgradeId } from '../engine/types';
 import { SAVE_VERSION } from '../engine/newGame';
+import type { Rng } from '../engine/rng';
 import { createRng } from '../engine/rng';
 import { CANTEEN_ITEMS } from '../engine/data/catalog';
 import { emptyStats } from '../engine/stats';
 import { createOpening } from '../engine/opening';
 import { teamsFor } from '../engine/youth';
+import { buildWorld } from '../engine/world';
 import { MATCH_WEEKS } from '../engine/calendar';
 import { companySector } from '../engine/sponsors';
 import { makeProspect } from '../engine/sponsors';
@@ -88,6 +90,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 19) migrateV19toV20(state);
   if (state.version === 20) migrateV20toV21(state);
   if (state.version === 21) migrateV21toV22(state);
+  if (state.version === 22) migrateV22toV23(state);
   repair(state);
   return state;
 }
@@ -377,6 +380,41 @@ function migrateV21toV22(state: GameState): void {
   state.version = 22;
 }
 
+/** Versie 23: de wereld rond je club — andere clubs met budget, ambitie en momentum. */
+function migrateV22toV23(state: GameState): void {
+  const rng = createRng(state);
+  state.world = buildWorld(rng);
+  state.lastWorldMoves = [];
+  linkLeagueToWorld(state, rng);
+  state.version = 23;
+}
+
+/**
+ * Koppelt de tegenstanders van de lopende competitie aan een club in de wereld. Clubs die
+ * nog niet bestaan, worden aangemaakt op het niveau waarop ze spelen; hun huidige sterkte
+ * blijft behouden, zodat een lopend seizoen niet plots anders aanvoelt.
+ */
+function linkLeagueToWorld(state: GameState, rng: Rng): void {
+  const level = state.league?.divisionLevel ?? 1;
+  for (const team of state.league?.teams ?? []) {
+    let club = state.world.clubs.find((c) => c.name === team.name);
+    if (!club) {
+      club = { ...state.world.clubs[0] };
+      club.id = `w${state.world.clubs.length + 500}`;
+      club.name = team.name;
+      club.seasons = [];
+      club.lastMove = null;
+      club.momentum = 0;
+      club.trouble = rng.int(0, 25);
+      state.world.clubs.push(club);
+    }
+    club.divisionLevel = level;
+    club.strength = team.strength;
+    club.defunct = false;
+    team.clubId = club.id;
+  }
+}
+
 /**
  * Vangnet: vult alles aan wat een opslagbestand nog niet kent. Zo blijft een oud bestand
  * werken, ook als er onderweg een veld bijkwam zonder eigen migratie.
@@ -403,12 +441,21 @@ function repair(state: GameState): void {
     ['lastChoice', null],
     ['storylines', []],
     ['chronicle', []],
+    ['lastWorldMoves', []],
   ];
   for (const [key, value] of fallback) if (s[key] === undefined || s[key] === null) (s as Record<string, unknown>)[key] = value;
   if (state.community) state.community.youthTeams ??= teamsFor(state);
   for (const p of [...(state.players ?? []), ...(state.transferList ?? []), ...(state.loanMarket ?? [])]) {
     p.goals ??= 0;
     p.careerGoals ??= 0;
+  }
+  if (!state.world || !Array.isArray(state.world.clubs) || !state.world.clubs.length) {
+    const rng = createRng(state);
+    state.world = buildWorld(rng);
+    linkLeagueToWorld(state, rng);
+  }
+  for (const team of state.league?.teams ?? []) {
+    if (!team.clubId) team.clubId = state.world.clubs.find((c) => c.name === team.name)?.id ?? '';
   }
   if (state.tactics) {
     state.tactics.benched ??= [];

@@ -1,4 +1,4 @@
-import type { Fixture, GamePlan, GameState, League, OpponentTeam, TableRow } from './types';
+import type { Fixture, GamePlan, GameState, League, OpponentTeam, TableRow, World, WorldClub } from './types';
 import type { Rng } from './rng';
 import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
@@ -51,7 +51,8 @@ export function teamLevel(rng: Rng, divisionLevel: number, origin: 'eigen' | 'pr
  * zodat een promotie ook echt een andere wereld is. `carryOver` houdt je aartsrivaal bij je
  * als die samen met jou op- of afzakt.
  */
-export function createLeague(rng: Rng, divisionLevel: number, carryOver: string[] = []): League {
+export function createLeague(rng: Rng, divisionLevel: number, carryOver: string[] = [], world?: World): League {
+  if (world?.clubs.length) return leagueFromWorld(rng, divisionLevel, carryOver, world);
   const division = DIVISIONS[divisionLevel];
   const own = DIVISION_CLUBS[divisionLevel] ?? DIVISION_CLUBS[1];
   const below = DIVISION_CLUBS[divisionLevel - 1] ?? [];
@@ -80,7 +81,51 @@ export function createLeague(rng: Rng, divisionLevel: number, carryOver: string[
     isRival: i === rivalIndex,
     plan: rng.pick(PLAN_LIST),
     roster: makeRoster(rng),
+    clubId: '',
   }));
+  return assemble(rng, divisionLevel, teams);
+}
+
+/**
+ * De reeks samengesteld uit de clubs die in de wereld op dit niveau spelen. Hun sterkte
+ * komt uit hun eigen geschiedenis — wie vorig seizoen investeerde, staat er nu beter voor.
+ */
+function leagueFromWorld(rng: Rng, divisionLevel: number, carryOver: string[], world: World): League {
+  const division = DIVISIONS[divisionLevel];
+  const need = division.teams - 1;
+  const pool = world.clubs.filter((c) => c.divisionLevel === divisionLevel && !c.defunct);
+  const chosen: WorldClub[] = [];
+  for (const name of carryOver) {
+    const club = pool.find((c) => c.name === name);
+    if (club && !chosen.includes(club)) chosen.push(club);
+  }
+  for (const club of pool) {
+    if (chosen.length >= need) break;
+    if (!chosen.includes(club)) chosen.push(club);
+  }
+  // mocht de reeks te dun zijn: leen bij de buren
+  for (const level of [divisionLevel - 1, divisionLevel + 1]) {
+    if (chosen.length >= need) break;
+    for (const club of world.clubs.filter((c) => c.divisionLevel === level && !c.defunct)) {
+      if (chosen.length >= need) break;
+      if (!chosen.includes(club)) chosen.push(club);
+    }
+  }
+  const rivalIndex = carryOver.length ? 0 : chosen.length ? rng.int(0, chosen.length - 1) : 0;
+  const teams: OpponentTeam[] = chosen.map((club, i) => ({
+    id: `t${i}`,
+    name: club.name,
+    strength: club.strength,
+    isRival: i === rivalIndex,
+    plan: rng.pick(PLAN_LIST),
+    roster: makeRoster(rng),
+    clubId: club.id,
+  }));
+  return assemble(rng, divisionLevel, teams);
+}
+
+/** Kalender, rangschikking en spelplannen rond een gegeven reeks tegenstanders. */
+function assemble(rng: Rng, divisionLevel: number, teams: OpponentTeam[]): League {
   const ids = [OWN_TEAM_ID, ...teams.map((t) => t.id)];
   const fixtures = roundRobin(ids, rng);
   assignMatchPlans(fixtures, teams, rng);

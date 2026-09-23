@@ -1,7 +1,7 @@
 // Het hart van het spel: één beurt (week) verwerken.
 // advanceWeek krijgt de huidige toestand en geeft een NIEUWE toestand terug.
 
-import type { Fixture, GamePlan, GameState, WeekRecord } from './types';
+import type { ClubMove, Fixture, GamePlan, GameState, WeekRecord } from './types';
 import type { Rng } from './rng';
 import { clamp, createRng } from './rng';
 import { DIVISIONS, diplomaRank } from './data/divisions';
@@ -30,8 +30,10 @@ import { checkMilestones } from './milestones';
 import { checkRecords } from './records';
 import { createOpening, settleSeason } from './opening';
 import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
-import { ageStorylines, news } from './content';
+import { ageStorylines, news, remember } from './content';
 import { NIEUWS } from '../content/news';
+import type { NieuwsSjabloon } from '../content/types';
+import { clubByName, runWorldSeason } from './world';
 import { boundVolunteers, maxYouthTeams, teamNames, updateYouthTeams, youthShortage } from './youth';
 import { runDelegatedTasks, strategyTask } from './delegation';
 import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
@@ -90,6 +92,26 @@ export function advanceWeek(previous: GameState): GameState {
     state.weekChoice = makeWeekChoice(state, rng); // en er ligt iets op jouw bureau
   }
   return state;
+}
+
+/** Wat de andere clubs deze zomer deden, in het nieuws van jouw reeks. */
+function announceWorldMoves(state: GameState, rng: Rng): void {
+  const bySjabloon: Partial<Record<ClubMove, NieuwsSjabloon>> = {
+    versterken: NIEUWS.rivaalInvesteert,
+    bouwen: NIEUWS.rivaalBouwt,
+    jeugd: NIEUWS.rivaalJeugd,
+    besparen: NIEUWS.rivaalBespaart,
+    problemen: NIEUWS.rivaalProblemen,
+    opgedoekt: NIEUWS.rivaalOnderuit,
+  };
+  // niet alles halen we aan: alleen wat opvalt, en hoogstens drie berichten
+  const notable = state.lastWorldMoves.filter((m) => m.move !== 'stilzitten');
+  for (const move of notable.slice(0, 3)) {
+    const template = bySjabloon[move.move];
+    if (!template) continue;
+    news(state, rng, template, { tegenstander: move.club });
+    if (move.move === 'opgedoekt') remember(state, `${move.club} legde de boeken neer en verdween uit de reeks.`);
+  }
 }
 
 // ---------- Wedstrijden ----------
@@ -713,8 +735,13 @@ function newSeason(state: GameState, rng: Rng): void {
   // ga je op of af, dan is er een kans dat hij dezelfde weg aflegde.
   const oldRival = state.league.teams.find((t) => t.isRival)?.name;
   const sameDivision = state.nextDivisionLevel === state.league.divisionLevel;
-  const carry = oldRival && (sameDivision || rng.chance(0.35)) ? [oldRival] : [];
-  state.league = createLeague(rng, state.nextDivisionLevel, carry);
+  // eerst beslist de rest van de wereld: wie investeert, wie bespaart, wie promoveert
+  state.lastWorldMoves = runWorldSeason(state, rng);
+  announceWorldMoves(state, rng);
+  const rivalClub = oldRival ? clubByName(state.world, oldRival) : undefined;
+  const rivalFollows = rivalClub ? rivalClub.divisionLevel === state.nextDivisionLevel : rng.chance(0.35);
+  const carry = oldRival && (sameDivision || rivalFollows) ? [oldRival] : [];
+  state.league = createLeague(rng, state.nextDivisionLevel, carry, state.world);
   if (carry.length && !sameDivision) addNews(state, 'neutraal', `${oldRival} legde dezelfde weg af: de derby staat ook volgend seizoen op de kalender.`);
   state.ticketPrice = Math.max(state.ticketPrice, DIVISIONS[state.nextDivisionLevel].refTicketPrice - 2);
   state.lastMatch = null;
