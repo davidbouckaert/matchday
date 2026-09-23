@@ -55,7 +55,7 @@ export function staffScreen(s: GameState, selected: string | null): string {
   const current = STAFF_ROLES.map((def) => {
     const m = s.staff.find((x) => x.role === def.role);
     if (!m) {
-      return `<tr class="empty"><td><strong>${def.label}</strong><br/><span class="muted small">${esc(def.effect)}</span></td><td colspan="5" class="muted">Vacant</td></tr>`;
+      return `<tr class="empty"><td><strong>${def.label}</strong><br/><span class="muted small">${esc(def.effect)}</span></td><td colspan="5" class="muted">Niet ingevuld</td></tr>`;
     }
     const tasks = tasksOf(s, m.id).map((id) => TASKS.find((t) => t.id === id)!.label);
     return `<tr class="clickable ${member?.id === m.id ? 'selected' : ''}" data-action="staff-open" data-id="${m.id}">
@@ -117,8 +117,8 @@ export function staffScreen(s: GameState, selected: string | null): string {
   return `
   ${member ? detailCard(s, member) : ''}
   <section class="card">
-    <h2>Jouw staff</h2>
-    <p class="muted small">Klik op een staflid om taken aan te vinken die hij van je overneemt, of om hem een opleiding te geven.
+    <h2>Jouw personeel</h2>
+    <p class="muted small">Klik op een personeelslid om taken aan te vinken die hij van je overneemt, of om hem een opleiding te geven.
     Licentie voor ${division.name}: hoofdtrainer met minstens <strong>${division.requiredDiploma}</strong> en een ploegafgevaardigde (audit in week 38).</p>
     <div class="table-wrap"><table>
       <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th>Loon/w</th><th>Taken</th></tr></thead>
@@ -126,7 +126,7 @@ export function staffScreen(s: GameState, selected: string | null): string {
     </table></div>
   </section>
   <section class="card">
-    <h2>Wie doet wat? ${hint('Kies per taak wie ze uitvoert. Staat er "Jij", dan beslis jij alles zelf in het bijbehorende scherm. Een staflid neemt de beslissing elke week automatisch; hoe beter hij is, hoe minder hij ernaast zit. Je kunt een taak altijd terugnemen.')}</h2>
+    <h2>Wie doet wat? ${hint('Kies per taak wie ze uitvoert. Staat er "Jij", dan beslis jij alles zelf in het bijbehorende scherm. Een personeelslid neemt de beslissing elke week automatisch; hoe beter hij is, hoe minder hij ernaast zit. Je kunt een taak altijd terugnemen.')}</h2>
     <p class="muted small">Je hebt ${TASKS.filter((t) => delegate(s, t.id)).length} van de ${TASKS.length} taken uitbesteed.
     Iemand kan 1 tot 4 taken aan, afhankelijk van zijn vaardigheid, en werkt buiten zijn vakgebied op een lager niveau.
     Staat er "niemand in dienst die dit kan", werf dan eerst zo iemand aan bij de kandidaten hieronder.</p>

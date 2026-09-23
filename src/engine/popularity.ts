@@ -1,5 +1,5 @@
 // Populariteit: hoe groot en hoe warm je achterban is. Eén getal dat op alle inkomsten weegt:
-// tickets, kantine, concessies, fanshop en wat mensen voor een shirt willen betalen.
+// tickets, kantine, concessies, clubwinkel en wat mensen voor een shirt willen betalen.
 
 import type { GameState } from './types';
 import type { Factor } from './factors';
@@ -43,8 +43,8 @@ export function popularity(state: GameState): Popularity {
 
   const score = clamp(sport * 0.3 + community * 0.45 + (100 - (pos - 1) * 5) * 0.15 + form * 100 * 0.1, 0, 100);
   const parts: Factor[] = [
-    x('Clubrating sportief', 1 + (sport - 50) / 500, `${Math.round(sport)}/100`),
-    x('Clubrating gemeenschap', 1 + (community - 50) / 330, `${Math.round(community)}/100`),
+    x('Clubscore sportief', 1 + (sport - 50) / 500, `${Math.round(sport)}/100`),
+    x('Clubscore gemeenschap', 1 + (community - 50) / 330, `${Math.round(community)}/100`),
     x('Klassement', 1 + (9 - pos) / 90, played >= 3 ? `${pos}e plaats` : 'nog niet begonnen'),
     x('Recente resultaten', 0.94 + form * 0.12, `${Math.round(form * 100)}% van de punten uit de laatste 5`),
     x('Reeks', division.sponsorFactor > 1 ? 1.05 : 1, division.name),

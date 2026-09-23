@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.10.3';
+export const VERSION = '0.17.2';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,125 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.17.2',
+    date: '2026-09-23',
+    title: 'Het weekmoment als venster',
+    items: [
+      'Het weekmoment verschijnt nu als venster zodra je het weekrapport sluit, zodat je het niet meer mist',
+      'Het gevolg van je keuze staat in hetzelfde venster, niet meer als kort meldinkje onderaan',
+      '"Later beslissen" sluit het venster; op je overzicht blijft een kader met een knop om alsnog te beslissen',
+      'Dezelfde situatie komt minstens 12 weken niet terug (ze kwam soms elke week opnieuw)',
+    ],
+  },
+  {
+    version: '0.17.1',
+    date: '2026-09-23',
+    title: 'Jij beslist wie er speelt',
+    items: [
+      'Haal je iemand uit je basiself, dan blijft die plaats open: je trainer vult niet meer vanzelf aan',
+      'Met een open plaats kun je niet naar de volgende week, met uitleg welke linie het betreft',
+      'De spelerstabellen zijn in- en uitklapbaar; bank en niet-beschikbaar staan standaard dicht',
+    ],
+  },
+  {
+    version: '0.17.0',
+    date: '2026-09-23',
+    title: 'Basiself onder controle en evenementen voor elke reeks',
+    items: [
+      'Twee knopjes per speler: ★ vastzetten in de basis, 🪑 deze week op de bank houden',
+      'Vastzetten in een volle linie verdringt nu de zwakste vastgezette speler in plaats van te weigeren',
+      'Spelers springen meteen naar de juiste tabel en de tellers (11/11 en per linie) lopen mee',
+      'Evenementen schalen mee: opbrengst met je club en de inflatie, kosten met de inflatie en +12% per reeks',
+      'Vijf nieuwe evenementen die vrijkomen in hogere reeksen, van het sponsorontbijt tot een internationaal wintertornooi',
+      'Het weekmoment valt beter op: het staat nu ook bij Aandacht en in de tip op de knop "Volgende week"',
+    ],
+  },
+  {
+    version: '0.16.1',
+    date: '2026-09-23',
+    title: 'Scherpere volumekorting op de tribune',
+    items: [
+      'De prijs per zitje zakt agressiever én versnelt: elke volgende honderd zitjes kosten minder dan de vorige',
+      '€360 per extra zitje rond de 100 plaatsen, €210 rond de 1.000 en €80 rond de 2.000',
+      'De uitklapbare prijstabel bij de tribune is weg: de schuifregelaar zegt het al',
+    ],
+  },
+  {
+    version: '0.16.0',
+    date: '2026-09-23',
+    title: 'Bouwen op jouw maat',
+    items: [
+      'Bij de tribune kies je met een schuifregelaar hoeveel plaatsen erbij komen (100 tot 2.000)',
+      'Hoe groter je bestelt, hoe goedkoper per zitje, en die korting versnelt: van ±€450 bij 100 plaatsen naar ±€215 bij 2.000 (−52%)',
+      'Grotere werken duren langer: 4 tot 22 weken',
+      'Zonnepanelen zijn een bouwproject geworden en duren 5 weken',
+      'Er mogen twee bouwprojecten tegelijk lopen',
+    ],
+  },
+  {
+    version: '0.15.0',
+    date: '2026-09-23',
+    title: 'Nederlandse termen',
+    items: [
+      'Staff heet nu Personeel, overal: de tab, de lonen, de tooltips en de taken',
+      'T1, T2 en T3 staan voluit: hoofdtrainer, assistent-trainer en conditietrainer',
+      'Fanshop werd Clubwinkel, webshop werd webwinkel, de merchandisingverantwoordelijke werd winkelverantwoordelijke',
+      'Boekingscategorieën in het Nederlands: clubartikelen, inkoop winkel, werking winkel en lonen personeel',
+      'Clubrating werd Clubscore, dashboard werd overzicht, Vacant werd Niet ingevuld, FAQ werd veelgestelde vragen',
+      'Voetbaltermen blijven: balbezit, counter, pressing, derby, transfer, scout, keeper, kern, ticketprijs',
+    ],
+  },
+  {
+    version: '0.14.0',
+    date: '2026-09-23',
+    title: 'Sterkere reeksen, duidelijkere selectie en doelpuntenmakers',
+    items: [
+      'Elke reeks ligt nu duidelijk boven de vorige: de zwakste ploeg van 2de nationale is steviger dan de zwakste van 3de',
+      'Als promovendus start je onderaan: net gepromoveerde clubs (ook jij) zijn zwakker, net gedegradeerde sterker',
+      'Selectie opgesplitst in basiself, bank en niet-beschikbaar, met een teller per linie tegenover je formatie',
+      'Na elke wedstrijd zie je wie scoorde (met minuut) en wie er begon; doelpunten staan ook in je spelerstabel',
+      'Bankleningen schalen mee met je reeks, je loonmassa en de inflatie',
+      'Het nieuws in het weekrapport rolt trager binnen',
+    ],
+  },
+  {
+    version: '0.13.0',
+    date: '2026-09-23',
+    title: 'Derby, weekmoment en clubmuseum',
+    items: [
+      'Elke reeks heeft nu zijn eigen clubs: dorpsploegen in provinciale, profclubs bovenaan',
+      'Eén echte aartsrivaal met een derby die telt: meer volk, meer kaarten, dubbel effect op de sfeer, en een onderlinge balans die blijft',
+      'Het weekmoment: elke week één concrete beslissing voor de aftrap, met meteen gevolg',
+      'Clubmuseum onder Club: titels, records, mijlpalen, erelijst en de mensen die er iets van maakten',
+      'Passief spelen is scherper afgestraft: een club waar weken niets beslist wordt, verliest sfeer, reputatie en sponsortevredenheid',
+    ],
+  },
+  {
+    version: '0.12.0',
+    date: '2026-09-23',
+    title: 'Een echte jeugdwerking van bij de start',
+    items: [
+      'Je club begint met jeugdploegen (U7 tot U17) én een jeugdcoördinator in dienst',
+      'Elke ploeg bindt twee vrijwilligers: evenementen kunnen alleen de vrije vrijwilligers gebruiken',
+      'Je accommodatie begrenst het aantal ploegen; kunstgras, verlichting en het opleidingscentrum maken plaats',
+      'Te weinig begeleiding remt de instroom en brandt je vrijwilligers op',
+      'Een jeugdcoördinator aanwerven vraagt 3 ploegen, de jeugdsponsor ook',
+      'Elke ploeg kost werkingsgeld en verhoogt de aansluiting bij de bond',
+    ],
+  },
+  {
+    version: '0.11.0',
+    date: '2026-09-23',
+    title: 'De seizoensopening',
+    items: [
+      'Elk seizoen begint met een openingsscherm: affiche, voorbeschouwing van de pers, wat er deze zomer gebeurde en wie er uit de jeugd doorstroomt',
+      'De persconferentie: spreek je ambitie uit (voeten op de grond, meedoen voor de prijzen of wij worden kampioen)',
+      'Die keuze verandert meteen de stemming bij supporters, spelers en sponsors, en wordt op het einde van het seizoen afgerekend in geld en reputatie',
+      'Het bestuur legt drie doelen op tafel, één per categorie van je clubscore, elk met een premie',
+      'De doelen staan het hele seizoen op je overzicht met een voortgangsbalk, en de afrekening staat in het seizoensrapport',
+    ],
+  },
   {
     version: '0.10.3',
     date: '2026-09-23',
@@ -48,7 +167,7 @@ export const CHANGELOG: ChangeEntry[] = [
     title: 'Promotie verandert alles: inkomsten én kosten',
     items: [
       'Kampioenen- en promotiepremie: bescheiden in de amateurreeksen, echt prijzengeld vanaf de Challenger Pro Liga',
-      'Na promotie vragen spelers 14% en staff 10% meer; na degradatie wordt er neerwaarts onderhandeld',
+      'Na promotie vragen spelers 14% en personeel 10% meer; na degradatie wordt er neerwaarts onderhandeld',
       'Aansluiting bij de bond en verzekeringen schalen met je reeks, de gemeentesubsidie ook',
       'De richtprijzen in de fanshop volgen het niveau van je reeks',
     ],
@@ -137,7 +256,7 @@ export const CHANGELOG: ChangeEntry[] = [
     date: '2026-09-22',
     title: 'Winterstop, kopbalk en duidelijkere boekingen',
     items: [
-      'Clubrating staat naast de clubnaam in plaats van eronder',
+      'Clubscore staat naast de clubnaam in plaats van eronder',
       'Winterstop is duidelijk zichtbaar: in de kopbalk, op het overzicht en in het weekrapport',
       'Tijdens de winterstop draait de kantine op halve kracht',
       '"Concessies" heet nu "horeca concessies" in alle overzichten',
@@ -165,7 +284,7 @@ export const CHANGELOG: ChangeEntry[] = [
       'Transferperiode staat duidelijk open of gesloten bovenaan de tab Transfers',
       'Loononderhandelingen lopen vast als je blijft laagbieden: hij vraagt meer, verliest moraal en haakt na drie pogingen af',
       'Cijfers ook per week, met de opbrengst per bron; horeca staat nu overal tussen de inkomsten',
-      'Clubrating staat in de kopbalk naast de clubnaam',
+      'Clubscore staat in de kopbalk naast de clubnaam',
       'Je kiest je eigen clubnaam bij de start',
       'Nieuw bouwproject: scorebord (meer sfeer, bordsponsors betalen meer)',
       'Meer staf vraagt eerst de juiste infrastructuur (analist wifi, kantineverantwoordelijke een degelijke kantine, ...)',

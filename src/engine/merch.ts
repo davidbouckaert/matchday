@@ -1,4 +1,4 @@
-// Fanshop: supporters kopen sjaals, shirts en mokken. Jij kiest het assortiment en de prijzen.
+// Clubwinkel: supporters kopen sjaals, shirts en mokken. Jij kiest het assortiment en de prijzen.
 // Verkoop per week = vraag (supporters, sfeer, resultaten, thuiswedstrijd) × prijsgevoeligheid per artikel.
 
 import type { GameState, MerchItem } from './types';
@@ -35,7 +35,7 @@ export function isHomeMatchWeek(state: GameState): boolean {
 
 function matchFactor(state: GameState): Factor {
   if (isHomeMatchWeek(state)) return x('Wedstrijddag', 3.4, 'thuiswedstrijd: de shop draait op volle toeren');
-  if (MATCH_WEEKS.includes(state.week)) return x('Wedstrijddag', 1.15, 'uitwedstrijd: enkel de webshop');
+  if (MATCH_WEEKS.includes(state.week)) return x('Wedstrijddag', 1.15, 'uitwedstrijd: enkel de webwinkel');
   return x('Wedstrijddag', 0.75, 'geen wedstrijd deze week');
 }
 
@@ -46,13 +46,13 @@ export function merchFactors(state: GameState): Factor[] {
   const pos = played >= 3 ? ownPosition(state.league) : 8;
   const list: Factor[] = [
     matchFactor(state),
-    x('Populariteit', popularity(state).factor, `clubrating, klassement (${played >= 3 ? `${pos}e` : 'nog niet begonnen'}) en recente resultaten`),
+    x('Populariteit', popularity(state).factor, `clubscore, klassement (${played >= 3 ? `${pos}e` : 'nog niet begonnen'}) en recente resultaten`),
     x('Sfeer', 0.6 + c.fanMood / 250, `sfeer ${Math.round(c.fanMood)}/100`),
     x('Verkooppunt', 0.85 + state.infrastructure.kantineLevel * 0.06, `kantine niveau ${state.infrastructure.kantineLevel}/5`),
   ];
   if (isWinter(state.week)) list.push(x('Seizoen', 1.15, 'winter: sjaals en truien verkopen beter'));
   const skill = staffSkill(state, 'merchandising');
-  if (skill) list.push(x('Merchandisingverantwoordelijke', 1 + skill / 120, `vaardigheid ${Math.round(skill)}`));
+  if (skill) list.push(x('Winkelverantwoordelijke', 1 + skill / 120, `vaardigheid ${Math.round(skill)}`));
   const commercial = staffSkill(state, 'commercieel');
   if (commercial) list.push(x('Commercieel medewerker', 1 + commercial / 400, `vaardigheid ${Math.round(commercial)}`));
   if (state.avatar.background === 'lokaal') list.push(x('Achtergrond eigenaar', 1.1, 'lokale verankering'));
@@ -122,8 +122,8 @@ export function weeklyMerch(state: GameState, rng: Rng): MerchWeek | null {
   m.seasonUnits += result.units.reduce((s, u) => s + u.units, 0);
 
   const sold = result.units.reduce((s, u) => s + u.units, 0);
-  if (result.revenue > 0) book(state, 'merchandising', result.revenue, `Fanshop: ${sold} artikelen verkocht`);
-  if (result.cost > 0) book(state, 'inkoop shop', -result.cost, `Inkoop van de ${sold} verkochte artikelen`);
-  book(state, 'werking shop', -result.fixed, 'Werking fanshop en webshop (vaste kost)');
+  if (result.revenue > 0) book(state, 'clubartikelen', result.revenue, `Clubwinkel: ${sold} artikelen verkocht`);
+  if (result.cost > 0) book(state, 'inkoop winkel', -result.cost, `Inkoop van de ${sold} verkochte artikelen`);
+  book(state, 'werking winkel', -result.fixed, 'Werking clubwinkel en webwinkel (vaste kost)');
   return result;
 }

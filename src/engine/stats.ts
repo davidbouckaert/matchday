@@ -20,7 +20,7 @@ export function totalOf(record: Partial<Record<string, number>>): number {
   return Object.values(record).reduce((sum: number, v) => sum + (v ?? 0), 0);
 }
 
-const COUNTED: LedgerCategory[] = ['tickets', 'kantine', 'horeca concessies', 'merchandising', 'inkoop shop', 'werking shop', 'sponsors', 'lidgelden', 'evenementen', 'verhuur', 'subsidies', 'tv-rechten'];
+const COUNTED: LedgerCategory[] = ['tickets', 'kantine', 'horeca concessies', 'clubartikelen', 'inkoop winkel', 'werking winkel', 'sponsors', 'lidgelden', 'evenementen', 'verhuur', 'subsidies', 'tv-rechten'];
 
 /** Bewaart wat er deze week verkocht en verdiend is (voor de weekweergave bij Cijfers). */
 export function recordWeek(state: GameState, before: SeasonStats): void {

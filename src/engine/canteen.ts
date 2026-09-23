@@ -23,7 +23,7 @@ export function canteenFactors(state: GameState): Factor[] {
   const list = [
     x('Kantine', 0.8 + state.infrastructure.kantineLevel * 0.1, `niveau ${state.infrastructure.kantineLevel}/5`),
     x('Vrijwilligers', volunteerFactor(state), `${state.community.volunteers} vrijwilligers (14 = normaal)`),
-    x('Populariteit', popularity(state).factor, `clubrating en sfeer`),
+    x('Populariteit', popularity(state).factor, `clubscore en sfeer`),
   ];
   const k = staffSkill(state, 'kantine');
   if (k) list.push(x('Kantineverantwoordelijke', 1 + k / 300, `vaardigheid ${Math.round(k)}`));

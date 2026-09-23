@@ -67,7 +67,7 @@ export function horecaScreen(s: GameState): string {
     <section class="card span2">
       <h2>Kantine ${hint('De kantine draait op thuiswedstrijden. Je verdient het verschil tussen je prijs en de inkoopprijs; vrijwilligers, het kantineniveau en je populariteit bepalen hoeveel er besteld wordt.')}</h2>
       <p class="muted small">Prijzen passen zich meteen toe, je hoeft niets op te slaan. Verwachting bij een gewone thuiswedstrijd met ongeveer ${attendance} toeschouwers.</p>
-      ${locked ? `<p class="attention-inline small">${esc(manager!.name)} bepaalt de prijzen en de concessies. Neem de taak "Kantine en concessies" terug bij Staff om zelf te beslissen.</p>` : ''}
+      ${locked ? `<p class="attention-inline small">${esc(manager!.name)} bepaalt de prijzen en de concessies. Neem de taak "Kantine en concessies" terug bij Personeel om zelf te beslissen.</p>` : ''}
       <div class="table-wrap"><table class="compact sortable">
         <thead><tr><th>Artikel</th><th class="num">Prijs</th><th class="num">Marge/stuk</th><th class="num">Prijseffect</th><th class="num">Verwacht aantal</th><th class="num">Verwachte winst</th><th class="num">Vorige wedstrijd</th></tr></thead>
         <tbody>${rows}</tbody>

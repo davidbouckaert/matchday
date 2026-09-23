@@ -88,13 +88,55 @@ export const SPONSOR_COMPANIES: { name: string; sector: string }[] = [
 
 export const SPONSOR_NAMES = SPONSOR_COMPANIES.map((c) => c.name);
 
-// Tegenstanders in 3de nationale (knipoog naar echte clubs).
-export const OPPONENT_NAMES = [
-  'KSV Oudenaarden', 'SV Loppum', 'KFC Merelbeek', 'Sparta Petegum', 'KVC Wingenhove',
-  'FC Gullegum', 'Olsa Brakkel', 'KSK Ronsel', 'SK Roeselaere', 'RC Harelbeek',
-  'KM Torhoud', 'VK Zelzaete', 'KFC Lebbeek', 'Mandel Unity', 'SC Wielbeke',
-  'KSC Lokerse', 'FC Knokkem', 'KVK Ieperen', 'SK Deinzee', 'Racing Waregum',
+// Tegenstanders per niveau (knipoog naar echte clubs). Elke reeks heeft zijn eigen wereld:
+// dorpsploegen onderaan, stadsclubs met een echte tribune bovenaan.
+export const DIVISION_CLUBS: string[][] = [
+  // 0 — 1ste Provinciale: dorpsploegen met één terrein en een kantine van eternit
+  [
+    'SK Beernehem', 'VV Ruiseleede', 'KFC Aartrijcke', 'Eendracht Zweveseele', 'SV Kanegum',
+    'FC Doomkerke', 'KSV Tieltsche', 'Jong Lotenhulle', 'VK Oostrozebeecke', 'SV Egemse',
+    'KFC Wontergem', 'Sparta Markeghem', 'VV Dentergem-Sport', 'SK Poekse', 'Olympia Zulte-Dorp',
+    'FC Meulebeekse', 'KVC Ardoye', 'Eendracht Pitthem',
+  ],
+  // 1 — 3de Nationale: de reeks waarin je begint
+  [
+    'KSV Oudenaarden', 'SV Loppum', 'KFC Merelbeek', 'Sparta Petegum', 'KVC Wingenhove',
+    'FC Gullegum', 'Olsa Brakkel', 'KSK Ronsel', 'SK Roeselaere', 'RC Harelbeek',
+    'KM Torhoud', 'VK Zelzaete', 'KFC Lebbeek', 'Mandel Unity', 'SC Wielbeke',
+    'KSC Lokerse', 'FC Knokkem', 'KVK Ieperen', 'SK Deinzee', 'Racing Waregum',
+  ],
+  // 2 — 2de Nationale: streekclubs met een verleden en een bestuur dat vergadert
+  [
+    'KFC Heiste', 'Sparta Lommelse', 'FC Dessel Sportieve', 'KVC Hoogstraeten', 'RC Mechelse',
+    'KSK Halense', 'Verbroedering Denderhoutum', 'KSV Bornemse', 'FC Turnhoutse', 'Eendracht Aalsterse',
+    'KVV Thes Sportief', 'Racing Peer-Noord', 'KSC Grimberghen', 'Berchem Sportief', 'SV Ternesse',
+    'KFC Nijlense', 'Hoogstraten VVA-B', 'KVC Sint-Elooi',
+  ],
+  // 3 — 1ste Nationale: halfprof, met tv-camera's op het parkeerterrein
+  [
+    'RWD Molenbeke', 'Francs Borains-Zuid', 'La Louvière Centrum', 'Tienense Sportkring', 'KSV Rumbeke United',
+    'Olympic Charleroy', 'KFC Diest-Stad', 'Royal Knokkse', 'Sportkring Sint-Niklase', 'KVC Ninove-Stad',
+    'Hasseltse VV', 'Union Namuroise', 'KSK Tongerse', 'Excelsior Virtonse', 'Racing Mandel-United',
+    'KFC Vosselaarse', 'AS Verviétoise', 'Eendracht Wervikse',
+  ],
+  // 4 — Challenger Pro Liga: echte profclubs in tweede klasse
+  [
+    'KVC Westerloo', 'Beveren-Waes', 'Lierse Kempenzoonen', 'RFC Seraingse', 'KMSK Deinse',
+    'Patro Maasmechels', 'RSCA Toekomst', 'Club NXT Brugsch', 'SK Lommelse United', 'KAS Eupense',
+    'Jong Genck', 'KV Oostduinse', 'RAAL La Louvièroise', 'Zulte-Waregum B', 'Francs Borains',
+    'KFCO Beerschotse', 'Lokerse Temse', 'KSV Roeselaarse',
+  ],
+  // 5 — Pro Liga: de grote jongens
+  [
+    'Club Brugsch', 'RSC Anderlecque', 'KRC Genck', 'Royal Antwerpse FC', 'KAA Gendt',
+    'Standaard Luik', 'Union Sint-Gillis-Oost', 'Cercle Brugsch', 'KV Kortrijck', 'SV Zulte-Waregum',
+    'KVC Westerloo', 'KV Mechelse', 'OH Leuvense', 'STVV Truidense', 'Royal Charleroy SC',
+    'KAS Eupense', 'Dender EH-Stad', 'Beerschot Wilrijcke',
+  ],
 ];
+
+/** Alle amateurtegenstanders, voor plaatsen waar het niveau niet uitmaakt. */
+export const OPPONENT_NAMES = DIVISION_CLUBS[1];
 
 // Profclubs die jouw talenten kunnen kopen.
 export const PRO_CLUBS = [

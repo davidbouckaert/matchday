@@ -9,9 +9,9 @@ export interface RoleDef {
 }
 
 export const STAFF_ROLES: RoleDef[] = [
-  { role: 'hoofdtrainer', label: 'Hoofdtrainer (T1)', effect: 'Teamsterkte, ontwikkeling van spelers. Diploma nodig voor de licentie.', baseWage: 400, max: 1 },
-  { role: 'assistent', label: 'Assistent-trainer (T2)', effect: 'Kleine bonus op alle linies, snellere ontwikkeling van jonge spelers. Kan de opstelling overnemen.', baseWage: 220, max: 1 },
-  { role: 'conditietrainer', label: 'Conditietrainer (T3)', effect: 'Betere fysiek, stabielere vorm, minder blessures. Maakt pressing zonder extra blessures mogelijk.', baseWage: 170, max: 1 },
+  { role: 'hoofdtrainer', label: 'Hoofdtrainer', effect: 'Teamsterkte, ontwikkeling van spelers. Diploma nodig voor de licentie.', baseWage: 400, max: 1 },
+  { role: 'assistent', label: 'Assistent-trainer', effect: 'Kleine bonus op alle linies, snellere ontwikkeling van jonge spelers. Kan de opstelling overnemen.', baseWage: 220, max: 1 },
+  { role: 'conditietrainer', label: 'Conditietrainer', effect: 'Betere fysiek, stabielere vorm, minder blessures. Maakt pressing zonder extra blessures mogelijk.', baseWage: 170, max: 1 },
   { role: 'keepertrainer', label: 'Keepertrainer', effect: 'Bonus op de doelman, snellere ontwikkeling van keepers.', baseWage: 120, max: 1 },
   { role: 'voeding', label: 'Voedingsdeskundige', effect: 'Spelers bouwen minder vermoeidheid op en herstellen sneller.', baseWage: 120, max: 1 },
   { role: 'verzorger', label: 'Verzorger / masseur', effect: 'Snellere recuperatie na wedstrijden en trainingen. Goedkoop.', baseWage: 80, max: 1 },
@@ -21,7 +21,7 @@ export const STAFF_ROLES: RoleDef[] = [
   { role: 'afgevaardigde', label: 'Ploegafgevaardigde', effect: 'Verplicht voor de licentie. Minder boetes en administratieve fouten.', baseWage: 60, max: 1 },
   { role: 'scout', label: 'Scout', effect: 'Meer en betere spelers op de transferlijst, betere prijzen.', baseWage: 200, max: 1 },
   { role: 'kantine', label: 'Kantineverantwoordelijke', effect: 'Hogere kantine-omzet, vrijwilligers raken minder snel op.', baseWage: 150, max: 1 },
-  { role: 'merchandising', label: 'Merchandisingverantwoordelijke', effect: 'Meer verkoop in de fanshop, betere inkoopprijzen en minder winkelkosten.', baseWage: 140, max: 1 },
+  { role: 'merchandising', label: 'Winkelverantwoordelijke', effect: 'Meer verkoop in de clubwinkel, betere inkoopprijzen en minder winkelkosten.', baseWage: 140, max: 1 },
   { role: 'commercieel', label: 'Commercieel medewerker', effect: 'Meer en betere sponsoraanbiedingen, meer supporters.', baseWage: 250, max: 1 },
   { role: 'jeugdcoordinator', label: 'Jeugdcoördinator', effect: 'Meer jeugdleden, betere jeugdspelers die doorstromen.', baseWage: 220, max: 1 },
 ];
@@ -53,7 +53,13 @@ export interface UpgradeDef {
 }
 
 export const UPGRADES: UpgradeDef[] = [
-  { id: 'tribune', label: 'Tribune uitbreiden (+300 plaatsen)', description: 'Meer toeschouwers mogelijk, nodig voor hogere reeksen.', cost: 110_000, weeks: 10 },
+  {
+    id: 'tribune',
+    label: 'Tribune uitbreiden',
+    description: 'Jij kiest hoeveel plaatsen erbij komen. Hoe groter je bestelt, hoe goedkoper per zitje — maar hoe langer de werken duren.',
+    cost: 115_000,
+    weeks: 7,
+  },
   { id: 'kantine', label: 'Kantine renoveren (+1 niveau)', description: 'Supporters besteden meer per bezoek. Maximaal niveau 5.', cost: 45_000, weeks: 6 },
   { id: 'kunstgras', label: 'Kunstgras aanleggen', description: 'Minder onderhoud, geen afgelastingen, verhuur aan andere clubs.', cost: 420_000, weeks: 8 },
   { id: 'verlichting', label: 'Verlichting verbeteren (+1 niveau)', description: 'Nodig voor hogere reeksen. Maximaal niveau 3.', cost: 65_000, weeks: 4 },
@@ -70,6 +76,13 @@ export const UPGRADES: UpgradeDef[] = [
   { id: 'ploegbus', label: 'Eigen ploegbus', description: 'Een tweedehands bus met de clubkleuren. Je betaalt nog enkel brandstof en een chauffeur (55% goedkoper per verplaatsing) en een bedrijf kan zijn naam op de bus zetten (nieuwe sponsorplaats).', cost: 32_000, weeks: 2 },
   { id: 'parking', label: 'Parking uitbreiden (+1 niveau)', description: 'Bezoekers van verder af geraken vlot tot aan het veld. Meer toeschouwers, vooral bij een derby. Maximaal niveau 2.', cost: 70_000, weeks: 7 },
   {
+    id: 'zonnepanelen',
+    label: 'Zonnepanelen en ledverlichting',
+    description: 'Panelen op het dak van de tribune en de kantine, led overal. Daarna betaal je elke week 20% minder vaste kosten. De prijs hangt af van hoe groot je complex is.',
+    cost: 0, // dynamisch: zie greenEnergyCost()
+    weeks: 5,
+  },
+  {
     id: 'recuperatie',
     label: 'Recuperatieruimte (+1 niveau)',
     description: 'IJsbad, sauna en massagetafels: spelers herstellen sneller van vermoeidheid. Maximaal niveau 2.',
@@ -85,7 +98,7 @@ export interface TaskDef {
   label: string;
   roles: StaffRole[]; // wie deze taak kan overnemen
   owner: string; // wat je zelf moet doen als je de taak houdt
-  delegated: string; // wat het staflid automatisch doet
+  delegated: string; // wat het personeelslid automatisch doet
 }
 
 export const TASKS: TaskDef[] = [
@@ -189,9 +202,9 @@ export const TASKS: TaskDef[] = [
   },
   {
     id: 'merchandising',
-    label: 'Fanshop en merchandising',
+    label: 'Clubwinkel',
     roles: ['merchandising', 'commercieel', 'kantine'],
-    owner: 'Jij kiest welke artikelen in de shop liggen en wat ze kosten (Club › Fanshop).',
+    owner: 'Jij kiest welke artikelen in de winkel liggen en wat ze kosten (Club › Clubwinkel).',
     delegated: 'Zet de prijzen elke week richting de beste marge en neemt er een artikel bij als de kas het toelaat.',
   },
 ];
@@ -204,6 +217,8 @@ export interface EventContext {
   fanBase: number;
   youthMembers: number;
   mood: number;
+  sponsorWeekly: number; // wat je sponsors samen per week betalen
+  capacity: number; // plaatsen in je tribune
 }
 
 export interface ClubEventDef {
@@ -220,6 +235,9 @@ export interface ClubEventDef {
   moodBoost: number;
   reputationBoost: number;
   fanBaseBoost: number; // procent extra supporters
+  minLevel?: number; // pas beschikbaar vanaf deze reeks (index in DIVISIONS)
+  minCapacity?: number; // je tribune moet dit aankunnen
+  minKantine?: number; // je kantine moet dit niveau halen
 }
 
 export const CLUB_EVENTS: ClubEventDef[] = [
@@ -313,6 +331,92 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     reputationBoost: 4,
     fanBaseBoost: 1,
   },
+
+  // ---------- pas in de hogere reeksen ----------
+  {
+    id: 'sponsorontbijt',
+    label: 'Sponsorontbijt',
+    description: 'Zaterdagochtend, koffie en broodjes, en een zaal vol lokale ondernemers. Weinig volk nodig, maar je kantine moet er staan.',
+    cost: 1_800,
+    cooldown: 12,
+    maxPerSeason: 3,
+    volunteers: 4,
+    payoutWeeks: 1,
+    revenue: (c) => 1_200 + c.sponsorWeekly * 1.6,
+    spread: 0.3,
+    moodBoost: 0,
+    reputationBoost: 2,
+    fanBaseBoost: 0,
+    minLevel: 2,
+    minKantine: 3,
+  },
+  {
+    id: 'galabal',
+    label: 'Galabal van de club',
+    description: 'Een avond in smoking met een liveband, een tombola en een veiling. Duur om op te zetten, maar in een hogere reeks komt iedereen.',
+    cost: 8_000,
+    cooldown: 30,
+    maxPerSeason: 1,
+    volunteers: 12,
+    payoutWeeks: 3,
+    revenue: (c) => (c.fanBase * 9 + c.sponsorWeekly * 3) * (0.7 + c.mood / 200),
+    spread: 0.5,
+    moodBoost: 4,
+    reputationBoost: 5,
+    fanBaseBoost: 1,
+    minLevel: 2,
+  },
+  {
+    id: 'oefenmatch',
+    label: 'Gala-oefenwedstrijd tegen een profclub',
+    description: 'Een profclub komt in de voorbereiding langs. Volle tribune, volle kantine, foto\'s in het streekblad — als je accommodatie het aankan.',
+    cost: 15_000,
+    cooldown: 40,
+    maxPerSeason: 1,
+    volunteers: 16,
+    payoutWeeks: 2,
+    revenue: (c) => c.fanBase * 16 + c.capacity * 4,
+    spread: 0.45,
+    moodBoost: 8,
+    reputationBoost: 6,
+    fanBaseBoost: 5,
+    minLevel: 3,
+    minCapacity: 1_500,
+  },
+  {
+    id: 'businessclub',
+    label: 'Businessclub-lunch',
+    description: 'Twaalf bedrijven aan tafel, een gastspreker en een netwerkmoment. Levert geld én nieuwe sponsorcontacten op.',
+    cost: 6_000,
+    cooldown: 10,
+    maxPerSeason: 4,
+    volunteers: 5,
+    payoutWeeks: 1,
+    revenue: (c) => 4_000 + c.sponsorWeekly * 3,
+    spread: 0.25,
+    moodBoost: 0,
+    reputationBoost: 3,
+    fanBaseBoost: 0,
+    minLevel: 3,
+    minKantine: 4,
+  },
+  {
+    id: 'wintercup',
+    label: 'Internationaal wintertornooi',
+    description: 'Vier profclubs, twee dagen, tv-beelden en een complex dat afgeladen vol staat. Alleen weggelegd voor een club met een echt stadion.',
+    cost: 45_000,
+    cooldown: 52,
+    maxPerSeason: 1,
+    volunteers: 22,
+    payoutWeeks: 3,
+    revenue: (c) => c.fanBase * 22 + c.capacity * 12,
+    spread: 0.4,
+    moodBoost: 10,
+    reputationBoost: 9,
+    fanBaseBoost: 6,
+    minLevel: 4,
+    minCapacity: 4_000,
+  },
 ];
 
 export interface VolunteerActionDef {
@@ -359,7 +463,7 @@ export const VOLUNTEER_ACTIONS: VolunteerActionDef[] = [
   },
 ];
 
-// ---------- Fanshop ----------
+// ---------- Clubwinkel ----------
 
 export interface MerchItemDef {
   id: MerchItemId;
@@ -370,7 +474,7 @@ export interface MerchItemDef {
   setup: number; // eenmalige kost om het in het assortiment te nemen (eerste voorraad, drukwerk)
 }
 
-export const MERCH_START_COST = 3_500; // fanshop inrichten: rekken, kassasysteem, webshop
+export const MERCH_START_COST = 3_500; // clubwinkel inrichten: rekken, kassasysteem, webwinkel
 export const MERCH_WEEK_COST = 55; // vaste weekkost zolang de shop draait
 export const MERCH_ITEM_WEEK_COST = 8; // per artikel in het assortiment
 

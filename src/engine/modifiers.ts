@@ -50,7 +50,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
     explain: 'Aanval = (30% middenveld + 70% aanval + bonussen) × vermoeidheid + tactiek. Verdediging idem met doel, verdediging en middenveld.',
     factors: [
       plus('Samenwerking', st.chemistry, 'spelers die elkaar liggen, leiders, lastpakken'),
-      plus('Staff', st.trainer, 'T1, T2 en data-analist'),
+      plus('Personeel', st.trainer, 'hoofdtrainer, assistent-trainer en data-analist'),
       plus('Moraal', st.morale, 'gemiddelde moraal basiself'),
       plus('Vorm', st.form, 'recente prestaties'),
       plus('Scherpte', st.sharpness, `${state.tactics.trainings} trainingen per week`),
@@ -106,7 +106,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
   const pop = popularity(state);
   groups.push({
     title: 'Populariteit',
-    explain: 'Eén cijfer dat weegt op toeschouwers, kantine, concessies, fanshop, wat mensen voor een shirt betalen en hoeveel jeugdspelers zich inschrijven.',
+    explain: 'Eén cijfer dat weegt op toeschouwers, kantine, concessies, clubwinkel, wat mensen voor een shirt betalen en hoeveel jeugdspelers zich inschrijven.',
     factors: pop.parts,
     result: `Score ${Math.round(pop.score)}/100 → ×${pop.factor.toFixed(3)} op je inkomsten`,
   });
@@ -136,9 +136,9 @@ export function allModifiers(state: GameState): ModifierGroup[] {
     title: 'Ontwikkeling van spelers (per maand)',
     explain: 'Jonge spelers groeien naar hun potentieel, oudere gaan achteruit. Karakter telt mee: harde werker en professioneel ×1,3, feestbeest ×0,7.',
     factors: [
-      x('Hoofdtrainer', dc.trainer, 'hoe beter de T1, hoe sneller (op opleiding: telt niet)'),
+      x('Hoofdtrainer', dc.trainer, 'hoe beter de hoofdtrainer, hoe sneller (op opleiding: telt niet)'),
       x('Trainingen', dc.trainings, `${state.tactics.trainings} per week`),
-      plus('Assistent (T2)', r1(dc.assistant * 100) / 100, 'extra voor spelers t/m 23 jaar'),
+      plus('Assistent-trainer', r1(dc.assistant * 100) / 100, 'extra voor spelers t/m 23 jaar'),
       plus('Opleidingscentrum', dc.academy, 'extra voor spelers t/m 21 jaar'),
       plus('Keepertrainer', r1(dc.keeperCoach * 100) / 100, 'extra voor doelmannen'),
       plus('Conditietrainer', r1(dc.fitness * 100) / 100, 'fysiek per maand'),
@@ -198,11 +198,11 @@ export function allModifiers(state: GameState): ModifierGroup[] {
     result: `Voorbeeld: tribune uitbreiden kost €${upgradeCost(state, 'tribune').toLocaleString('nl-BE')}`,
   });
 
-  // ---------- Fanshop ----------
+  // ---------- Clubwinkel ----------
   if (state.merch.active) {
     const units = state.merch.items.reduce((sum, i) => sum + expectedUnits(state, i), 0);
     groups.push({
-      title: 'Fanshop',
+      title: 'Clubwinkel',
       explain: 'Verkoop per artikel = supporters × aantrekkelijkheid van het artikel × onderstaande factoren × prijsgevoeligheid ((richtprijs / jouw prijs) tot de macht 1,5).',
       factors: merchFactors(state),
       result: `Verwacht deze week: ${Math.round(units)} artikelen`,
@@ -215,7 +215,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
     title: `Reeks: ${d.name}`,
     explain: 'Wat het niveau van je competitie met zich meebrengt.',
     factors: [
-      plus('Gemiddelde tegenstander', d.opponentStrength + OPPONENT_STAFF_BONUS, `basis ${d.opponentStrength} + ${OPPONENT_STAFF_BONUS} voor hun eigen staff en sfeer`),
+      plus('Gemiddelde tegenstander', d.opponentStrength + OPPONENT_STAFF_BONUS, `basis ${d.opponentStrength} + ${OPPONENT_STAFF_BONUS} voor hun eigen personeel en sfeer`),
       plus('Normale ticketprijs (€)', d.refTicketPrice, ''),
       x('Sponsoring', d.sponsorFactor, ''),
       plus('Tv- en radiorechten (€/week)', d.tvRightsPerWeek, ''),

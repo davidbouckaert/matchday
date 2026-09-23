@@ -11,8 +11,11 @@ import { makeDeal, startingSponsors } from './sponsors';
 import { addNews, book } from './util';
 import { CANTEEN_ITEMS } from './data/catalog';
 import { emptyStats } from './stats';
+import { createOpening } from './opening';
+import { teamsFor } from './youth';
+import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 21;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -74,7 +77,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
       teamBus: false,
       maintenance: 'normaal',
       greenEnergy: false,
-      construction: null,
+      constructions: [],
     },
     crest: opts.crest ?? 'schild',
     merch: { active: false, items: [], lastUnits: [], seasonUnits: 0 },
@@ -88,6 +91,13 @@ export function createNewGame(opts: NewGameOptions): GameState {
     lastRecords: [],
     milestones: [],
     lastMilestones: [],
+    derbyRecord: { won: 0, drawn: 0, lost: 0 },
+    weekChoice: null,
+    lastChoice: null,
+    opening: null,
+    ambition: null,
+    seasonGoals: [],
+    lastSeasonSettlement: null,
     community: {
       fanBase: club.fanBase,
       fanMood: club.fanMood,
@@ -95,6 +105,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
       volunteerLoyaltyWeeks: 0,
       reputation: club.reputation,
       youthMembers: club.youthMembers,
+      youthTeams: 0, // wordt hieronder gezet, zodra de infrastructuur bekend is
     },
     inflation: 1,
     marketIndex: 1,
@@ -107,7 +118,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
     eventCooldowns: {},
     eventCounts: {},
     pending: [],
-    tactics: { formation: '4-4-2', mentality: 'gebalanceerd', plan: 'balbezit', manualXI: [], trainings: 3, focus: 'conditie', roles: { kapitein: null, strafschop: null, hoekschop: null } },
+    tactics: { formation: '4-4-2', mentality: 'gebalanceerd', plan: 'balbezit', manualXI: [], benched: [], gaps: {}, trainings: 3, focus: 'conditie', roles: { kapitein: null, strafschop: null, hoekschop: null } },
     delegation: {},
     transferBudget: 0,
     youthFee: 230,
@@ -131,6 +142,8 @@ export function createNewGame(opts: NewGameOptions): GameState {
 
   const rng = createRng(state);
   state.league = createLeague(rng, START_DIVISION);
+  // elke club heeft al een bescheiden jeugdwerking draaien
+  state.community.youthTeams = teamsFor(state);
 
   // spelerskern
   for (const [position, count] of SQUAD) {
@@ -152,6 +165,10 @@ export function createNewGame(opts: NewGameOptions): GameState {
   const delegate = generateStaff(state, rng, 'afgevaardigde', 45);
   delegate.wage = 40;
   state.staff.push(delegate);
+  // de jeugdwerking draait al, dus er staat ook al iemand aan het hoofd (vrijwilligersvergoeding)
+  const youth = generateStaff(state, rng, 'jeugdcoordinator', 42 + Math.round(club.youthMembers / 40));
+  youth.wage = 45;
+  state.staff.push(youth);
 
   // bestaande lening en sponsors
   if (club.loan) {
@@ -201,5 +218,13 @@ export function createNewGame(opts: NewGameOptions): GameState {
 
   addNews(state, 'neutraal', `Welkom, ${opts.avatar.name}! Je bent de nieuwe eigenaar van ${club.name}, net gepromoveerd naar ${DIVISIONS[START_DIVISION].name}.`);
   addNews(state, 'neutraal', 'De transferperiode is open tot eind augustus. De competitie start in week 7.');
+
+  // je eerste persconferentie als eigenaar: de opening staat klaar zodra het dashboard opent
+  state.opening = createOpening(state, rng, [], [
+    `Je nam ${club.name} over van het vorige bestuur`,
+    `De club promoveerde vorig seizoen naar ${DIVISIONS[START_DIVISION].name}`,
+    'Nieuwe truitjes liggen klaar in de kantine',
+  ]);
+  state.weekChoice = makeWeekChoice(state, rng);
   return state;
 }

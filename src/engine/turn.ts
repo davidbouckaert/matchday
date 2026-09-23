@@ -15,8 +15,8 @@ import {
   WEEKS_PER_YEAR,
   isWinter,
 } from './calendar';
-import { OWN_TEAM_ID, applyResult, createLeague, opponentStrength, ownPosition, simulateMatch, sortedTable } from './league';
-import { developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, selectLineup, teamStrength } from './players';
+import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable } from './league';
+import { developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
 import { resolveRequests, sponsorsAfterSeason, weeklySponsors } from './sponsors';
@@ -28,6 +28,9 @@ import { recordWeek, rolloverStats, snapshot } from './stats';
 import { recentForm } from './popularity';
 import { checkMilestones } from './milestones';
 import { checkRecords } from './records';
+import { createOpening, settleSeason } from './opening';
+import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
+import { boundVolunteers, maxYouthTeams, teamNames, updateYouthTeams, youthShortage } from './youth';
 import { runDelegatedTasks, strategyTask } from './delegation';
 import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
 import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from './factors';
@@ -41,6 +44,7 @@ export function advanceWeek(previous: GameState): GameState {
   const rng = createRng(state);
   const statsBefore = snapshot(state);
 
+  resolveWeekChoice(state, rng); // wie niets besliste, laat het gaan
   runDelegatedTasks(state, rng);
   bookWeeklyFlows(state);
   book(state, 'trainingen', -trainingCost(state), `${state.tactics.trainings} trainingen (velden, licht, materiaal)`);
@@ -50,11 +54,13 @@ export function advanceWeek(previous: GameState): GameState {
   weeklyMerch(state, rng);
   resolveRequests(state, rng);
   weeklyCommunity(state);
+  weeklyStagnation(state);
   weeklyVolunteers(state, rng);
   weeklySponsors(state, rng);
   weeklyEvents(state, rng);
   weeklyProgress(state);
   weeklyPlayers(state, rng);
+  announceDerby(state);
   if (state.week === WINTER_BREAK.from) addNews(state, 'neutraal', `De winterstop begint: geen competitie tot week ${WINTER_BREAK.to + 1}. Geen tickets, geen wedstrijdkantine en geen kraampjes, maar de lonen en de vaste kosten lopen door.`);
   if (state.week === WINTER_BREAK.to + 1) addNews(state, 'goed', 'De competitie herbegint: de terugronde start dit weekend.');
   if (state.week === LICENCE_AUDIT_WEEK) licenceAudit(state);
@@ -77,7 +83,10 @@ export function advanceWeek(previous: GameState): GameState {
 
   state.week++;
   if (state.week > WEEKS_PER_YEAR) newSeason(state, rng);
-  if (!state.gameOver) strategyTask(state, rng); // de trainer bereidt de volgende week voor
+  if (!state.gameOver) {
+    strategyTask(state, rng); // de trainer bereidt de volgende week voor
+    state.weekChoice = makeWeekChoice(state, rng); // en er ligt iets op jouw bureau
+  }
   return state;
 }
 
@@ -169,7 +178,7 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     return;
   }
 
-  const { lineup } = selectLineup(state.players, state.tactics.formation, state.tactics.manualXI);
+  const { lineup } = selectLineup(state.players, state.tactics.formation, state.tactics.manualXI, state.tactics.benched, state.tactics.gaps);
   const lineupIds = new Set(lineup.map((p) => p.id));
   state.periodMatches++;
   for (const p of lineup) {
@@ -205,6 +214,7 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
   serveOwnSuspensions(state.players, ownSuspended);
   serveOpponentSuspensions(state, opponentId, theirBanned);
 
+  const scorers = pickScorers(state, lineup, goalsFor, rng);
   state.lastMatch = {
     week: state.week,
     opponent: opponent.name,
@@ -219,6 +229,8 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     ourPlan: state.tactics.plan,
     theirPlan,
     matchup: strength.matchup,
+    lineup: lineup.map((p) => ({ id: p.id, name: p.name, position: p.position, zone: p.position, rating: overall(p) })),
+    scorers,
   };
 
   // gevolgen voor moraal, vorm en supporters
@@ -232,6 +244,23 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     const noise = (p.trait === 'feestbeest' ? 2 : 1) * (1 - staffSkill(state, 'conditietrainer') / 200) * calm;
     if (played) p.form = clamp(p.form * 0.7 + result * 1.5 + rng.normal(0, 1.5) * noise, -10, 10);
   }
+  if (opponent.isRival) {
+    state.derbyRecord ??= { won: 0, drawn: 0, lost: 0 };
+    if (result > 0) state.derbyRecord.won++;
+    else if (result < 0) state.derbyRecord.lost++;
+    else state.derbyRecord.drawn++;
+    addNews(
+      state,
+      result > 0 ? 'goed' : result < 0 ? 'slecht' : 'neutraal',
+      result > 0
+        ? `DERBY GEWONNEN van ${opponent.name} (${goalsFor}-${goalsAgainst})! Het dorp gaat plat, de kantine draait tot in de late uurtjes.`
+        : result < 0
+          ? `Derby verloren van ${opponent.name} (${goalsFor}-${goalsAgainst}). Daar horen we een jaar over.`
+          : `Derby tegen ${opponent.name} eindigt op ${goalsFor}-${goalsAgainst}. Geen held, geen schlemiel.`,
+    );
+    if (result > 0) c.reputation = clamp(c.reputation + 2, 0, 100);
+  }
+
   const moodLoss = state.investor === 'cooperatie' ? 1.5 : 3;
   c.fanMood = clamp(c.fanMood + (result > 0 ? 3 : result < 0 ? -moodLoss : 0) * derby, 0, 100);
   c.reputation = clamp(c.reputation + (result > 0 ? 0.3 : result < 0 ? -0.2 : 0), 0, 100);
@@ -269,8 +298,8 @@ function payPending(state: GameState): void {
 function scheduledPayments(state: GameState): void {
   const c = state.community;
   if (state.week === BOND_FEE_WEEK) {
-    const fee = (5000 + state.players.length * 150 + c.youthMembers * 22) * (1 + state.league.divisionLevel * 0.35) * state.inflation;
-    book(state, 'bond & verzekering', -fee, 'Aansluiting Voetbal Vlaanderland en verzekeringen');
+    const fee = (5000 + state.players.length * 150 + c.youthMembers * 22 + c.youthTeams * 400) * (1 + state.league.divisionLevel * 0.35) * state.inflation;
+    book(state, 'bond & verzekering', -fee, `Aansluiting Voetbal Vlaanderland en verzekeringen (A-kern + ${c.youthTeams} jeugdploegen)`);
   }
   if (state.week === YOUTH_FEE_WEEK) {
     const before = c.youthMembers;
@@ -280,6 +309,16 @@ function scheduledPayments(state: GameState): void {
     addNews(state, diff >= 0 ? 'goed' : 'slecht', `Inschrijvingen jeugd: ${c.youthMembers} leden (${diff >= 0 ? '+' : ''}${diff} tegenover vorig seizoen) aan €${state.youthFee}.`);
     if (state.youthFee > YOUTH_FEE_REF * 1.5) c.fanMood = clamp(c.fanMood - 3, 0, 100);
     if (state.youthFee < YOUTH_FEE_REF * 0.7) c.reputation = clamp(c.reputation + 1, 0, 100);
+    // ploegen volgen de leden, maar één stap per seizoen: een nieuwe reeks moet je ook kunnen bemannen
+    const change = updateYouthTeams(state);
+    if (change > 0) {
+      addNews(state, 'goed', `Er komt een jeugdploeg bij: ${teamNames(state).slice(-1)[0]}. Je hebt nu ${c.youthTeams} ploegen, samen goed voor ${boundVolunteers(state)} vaste vrijwilligers.`);
+    } else if (change < 0) {
+      addNews(state, 'slecht', `Te weinig kinderen (of te weinig plaats): een jeugdploeg wordt opgedoekt. Je houdt er ${c.youthTeams} over.`);
+    }
+    if (c.youthTeams >= maxYouthTeams(state)) {
+      addNews(state, 'neutraal', `Je jeugdwerking zit aan haar plafond (${c.youthTeams} ploegen). Kunstgras, betere verlichting of een opleidingscentrum maken plaats voor meer.`);
+    }
   }
   if (state.week === SUBSIDY_WEEK) {
     book(state, 'subsidies', (8000 + c.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12), 'Subsidie gemeente (jeugdwerking en sportieve uitstraling)');
@@ -294,8 +333,17 @@ export function volunteerSatisfaction(state: GameState): number {
   const c = state.community;
   const events = state.eventLog.filter((e) => e.season === state.season && e.week > state.week - 8).length;
   const load = clamp(c.volunteers / 12, 0.5, 1.5);
+  // wie de jeugd moet draaien met te weinig volk, brandt op
+  const shortage = youthShortage(state);
   return clamp(
-    35 + c.fanMood * 0.3 + c.reputation * 0.15 + staffSkill(state, 'kantine') * 0.15 + (c.volunteerLoyaltyWeeks > 0 ? 12 : 0) - (events * 6) / load,
+    35 +
+      c.fanMood * 0.3 +
+      c.reputation * 0.15 +
+      staffSkill(state, 'kantine') * 0.15 +
+      staffSkill(state, 'jeugdcoordinator') * 0.08 +
+      (c.volunteerLoyaltyWeeks > 0 ? 12 : 0) -
+      (events * 6) / load -
+      shortage * 4,
     0,
     100,
   );
@@ -316,6 +364,39 @@ function weeklyVolunteers(state: GameState, rng: Rng): void {
   }
 }
 
+/**
+ * Een club die stilstaat, gaat achteruit. Wie weken aan een stuk niets beslist
+ * (geen sponsor aangesproken, niets georganiseerd, niets gebouwd, niets gedelegeerd)
+ * verliest sfeer, reputatie en sponsortevredenheid. Actief spelen merkt hier niets van.
+ */
+export const STAGNATION_WEEKS = 10;
+
+export function weeksIdle(state: GameState): number {
+  const last = state.log.find((l) => l.kind === 'beslissing');
+  if (!last) return (state.season - 1) * WEEKS_PER_YEAR + state.week;
+  return (state.season - last.season) * WEEKS_PER_YEAR + (state.week - last.week);
+}
+
+function weeklyStagnation(state: GameState): void {
+  const idle = weeksIdle(state);
+  if (idle < STAGNATION_WEEKS) return;
+  const c = state.community;
+  // de terugval is merkbaar maar niet bodemloos: wie stilzit zakt naar het niveau van een slapende club,
+  // en wie al lager staat (om een andere reden) zakt daar niet verder door
+  const bite = Math.min(1.8, 0.9 + (idle - STAGNATION_WEEKS) / 28);
+  const decay = (value: number, floor: number, amount: number) => (value > floor ? Math.max(floor, value - amount) : value);
+  c.fanMood = decay(c.fanMood, 41, bite * 0.32);
+  c.reputation = decay(c.reputation, 20, bite * 0.1);
+  for (const d of state.sponsors) d.satisfaction = decay(d.satisfaction, 30, bite * 0.2);
+  if (idle === STAGNATION_WEEKS || (idle - STAGNATION_WEEKS) % 16 === 0) {
+    addNews(
+      state,
+      'slecht',
+      `Er zit geen beweging in de club: al ${idle} weken geen enkele beslissing van het bestuur. Supporters haken af en sponsors merken het.`,
+    );
+  }
+}
+
 function weeklyCommunity(state: GameState): void {
   const c = state.community;
   const division = DIVISIONS[state.league.divisionLevel];
@@ -333,27 +414,36 @@ function weeklyCommunity(state: GameState): void {
 }
 
 function weeklyProgress(state: GameState): void {
-  // bouwprojecten
+  // bouwprojecten: er kunnen er twee tegelijk lopen
   const i = state.infrastructure;
-  if (i.construction) {
-    i.construction.weeksLeft--;
-    if (i.construction.weeksLeft <= 0) {
-      const id = i.construction.upgrade;
-      if (id === 'tribune') i.capacity += 300;
-      if (id === 'kantine') i.kantineLevel = Math.min(5, i.kantineLevel + 1);
-      if (id === 'kunstgras') i.pitch = 'kunstgras';
-      if (id === 'verlichting') i.lightingLevel = Math.min(3, i.lightingLevel + 1);
-      if (id === 'opleidingscentrum') i.academyLevel = Math.min(3, i.academyLevel + 1);
-      if (id === 'recuperatie') i.recoveryLevel = Math.min(2, i.recoveryLevel + 1);
-      if (id === 'wifi') i.wifiLevel = Math.min(2, i.wifiLevel + 1);
-      if (id === 'sanitair') i.sanitairLevel = Math.min(2, i.sanitairLevel + 1);
-      if (id === 'parking') i.parkingLevel = Math.min(2, i.parkingLevel + 1);
-      if (id === 'scorebord') i.scoreboardLevel = Math.min(2, i.scoreboardLevel + 1);
-      if (id === 'ploegbus') i.teamBus = true;
-      i.construction = null;
-      addNews(state, 'goed', `Bouwproject afgerond: ${UPGRADES.find((u) => u.id === id)!.label}.`);
-      state.community.fanMood = clamp(state.community.fanMood + 3, 0, 100);
-    }
+  for (const c of [...i.constructions]) {
+    c.weeksLeft--;
+    if (c.weeksLeft > 0) continue;
+    const id = c.upgrade;
+    if (id === 'tribune') i.capacity += c.seats ?? 300;
+    if (id === 'kantine') i.kantineLevel = Math.min(5, i.kantineLevel + 1);
+    if (id === 'kunstgras') i.pitch = 'kunstgras';
+    if (id === 'verlichting') i.lightingLevel = Math.min(3, i.lightingLevel + 1);
+    if (id === 'opleidingscentrum') i.academyLevel = Math.min(3, i.academyLevel + 1);
+    if (id === 'recuperatie') i.recoveryLevel = Math.min(2, i.recoveryLevel + 1);
+    if (id === 'wifi') i.wifiLevel = Math.min(2, i.wifiLevel + 1);
+    if (id === 'sanitair') i.sanitairLevel = Math.min(2, i.sanitairLevel + 1);
+    if (id === 'parking') i.parkingLevel = Math.min(2, i.parkingLevel + 1);
+    if (id === 'scorebord') i.scoreboardLevel = Math.min(2, i.scoreboardLevel + 1);
+    if (id === 'ploegbus') i.teamBus = true;
+    if (id === 'zonnepanelen') i.greenEnergy = true;
+    i.constructions = i.constructions.filter((x) => x !== c);
+    const label = UPGRADES.find((u) => u.id === id)!.label;
+    addNews(
+      state,
+      'goed',
+      id === 'tribune'
+        ? `Bouwproject afgerond: ${label}. Er kunnen nu ${i.capacity} toeschouwers binnen.`
+        : id === 'zonnepanelen'
+          ? 'De zonnepanelen liggen op het dak: je energiefactuur daalt met 20%.'
+          : `Bouwproject afgerond: ${label}.`,
+    );
+    state.community.fanMood = clamp(state.community.fanMood + 3, 0, 100);
   }
   // opleidingen
   for (const s of state.staff) {
@@ -447,6 +537,20 @@ function licenceAudit(state: GameState): void {
   addNews(state, 'slecht', `Licentie-audit: ${problems.join(', ')}. Boete: €${fine.toLocaleString('nl-BE')}. Herhaalde tekortkomingen worden duurder.`);
 }
 
+/** De week voor de derby weet het hele dorp het al. */
+function announceDerby(state: GameState): void {
+  const next = nextDerby(state);
+  if (!next || next.week !== state.week + 1) return;
+  const rival = rivalTeam(state)!;
+  addNews(
+    state,
+    'neutraal',
+    `Volgende week de derby ${next.home ? 'thuis' : 'op verplaatsing'} tegen ${rival.name}. ${
+      next.home ? 'Reken op een volle accommodatie en een drukke kantine.' : 'De supporters gaan massaal mee.'
+    }`,
+  );
+}
+
 // ---------- Seizoenseinde en nieuw seizoen ----------
 
 /**
@@ -507,6 +611,9 @@ function seasonEnd(state: GameState): void {
     state.nextDivisionLevel = level;
     addNews(state, 'neutraal', `Seizoen afgesloten op plaats ${pos}. ${state.clubName} blijft in ${DIVISIONS[level].name}.`);
   }
+
+  // de afrekening: je belofte van de persconferentie en de doelen van het bestuur
+  state.lastSeasonSettlement = settleSeason(state, pos);
 
   if (state.nextDivisionLevel !== level) adjustWagesForDivision(state, level, state.nextDivisionLevel);
   sponsorsAfterSeason(state, createRng(state), result, state.nextDivisionLevel);
@@ -571,6 +678,7 @@ function newSeason(state: GameState, rng: Rng): void {
     p.yellowCards = 0;
     p.redCards = 0;
     p.starts = 0;
+    p.goals = 0;
     p.age++;
     p.friends = p.friends.filter((f) => !leftIds.has(f));
     p.form = 0;
@@ -598,14 +706,36 @@ function newSeason(state: GameState, rng: Rng): void {
   linkFriends(newcomers.length > 1 ? newcomers : state.players, rng, newcomers.length);
   addNews(state, 'goed', `Doorstromers uit de eigen jeugd naar de A-kern: ${newcomers.map((p) => p.name).join(', ')}.`);
 
+  // wat er deze zomer gebeurde, voor op de openingsaffiche
+  const summer: string[] = [];
+  if (hired.length) summer.push(`${hired.length} huurspeler(s) terug naar hun club`);
+  if (back.length) summer.push(`${back.map((p) => p.name).join(', ')} terug van uitleenbeurt`);
+  if (leaving.length) summer.push(`Transfervrij vertrokken: ${leaving.map((p) => p.name).join(', ')}`);
+  const shirt = state.sponsors.find((d) => d.kind === 'shirt');
+  summer.push(shirt ? `Nieuwe truitjes, met ${shirt.name} op de borst` : 'Nieuwe truitjes, nog zonder shirtsponsor op de borst');
+
   // het aantal jeugdleden wijzigt bij de inschrijvingen in week 10 (zie scheduledPayments)
 
-  // nieuwe competitie
-  state.league = createLeague(rng, state.nextDivisionLevel);
+  // nieuwe competitie. Je aartsrivaal blijft in dezelfde reeks altijd meedoen;
+  // ga je op of af, dan is er een kans dat hij dezelfde weg aflegde.
+  const oldRival = state.league.teams.find((t) => t.isRival)?.name;
+  const sameDivision = state.nextDivisionLevel === state.league.divisionLevel;
+  const carry = oldRival && (sameDivision || rng.chance(0.35)) ? [oldRival] : [];
+  state.league = createLeague(rng, state.nextDivisionLevel, carry);
+  if (carry.length && !sameDivision) addNews(state, 'neutraal', `${oldRival} legde dezelfde weg af: de derby staat ook volgend seizoen op de kalender.`);
   state.ticketPrice = Math.max(state.ticketPrice, DIVISIONS[state.nextDivisionLevel].refTicketPrice - 2);
   state.lastMatch = null;
   refreshTransferList(state, rng, true);
   refreshStaffMarket(state, rng);
   refreshLoanMarket(state, rng);
   addNews(state, 'neutraal', `Nieuw seizoen: ${DIVISIONS[state.league.divisionLevel].name}. De transferperiode is open.`);
+
+  // de opening: de pers blikt vooruit, het bestuur legt zijn doelen op tafel en jij moet iets zeggen
+  state.ambition = null;
+  state.opening = createOpening(
+    state,
+    rng,
+    newcomers.map((p) => `${p.name} (${p.age}j, ${p.position})`),
+    summer,
+  );
 }

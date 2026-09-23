@@ -86,6 +86,8 @@ export function generatePlayer(state: GameState, rng: Rng, opts: PlayerOptions):
     redCards: 0,
     suspended: 0,
     starts: 0,
+    goals: 0,
+    careerGoals: 0,
     periodStarts: 0,
     trend: 0,
     negotiations: 0,
@@ -146,9 +148,52 @@ export interface LineupSlot {
  * Stelt de elf samen volgens de formatie. Eerst de spelers die de eigenaar zelf koos,
  * daarna de beste beschikbare per positie; tekorten worden aangevuld met spelers van een andere positie.
  */
-export function selectLineup(players: Player[], formation: Formation = '4-4-2', manualXI: string[] = []): { lineup: Player[]; slots: LineupSlot[]; outOfPosition: number } {
-  const counts = FORMATIONS[formation];
-  const fit = players.filter(canPlay);
+/**
+ * Wie scoort er? Een doelpunt valt eerder aan spitsen toe dan aan verdedigers, en binnen een linie
+ * eerder aan de betere spelers. De strafschopnemer krijgt een extra duwtje.
+ */
+export function pickScorers(state: GameState, lineup: Player[], goals: number, rng: Rng): { name: string; minute: number }[] {
+  if (!goals || !lineup.length) return [];
+  const ZONE_WEIGHT: Record<Position, number> = { DOEL: 0.02, VERD: 0.5, MIDD: 1.4, AANV: 3.2 };
+  const weights = lineup.map((p) => {
+    const base = ZONE_WEIGHT[p.position] * (0.5 + overall(p) / 100);
+    const taker = state.tactics.roles.strafschop === p.id ? 1.35 : 1;
+    return base * taker;
+  });
+  const total = weights.reduce((a, b) => a + b, 0);
+  const minutes = new Set<number>();
+  const out: { name: string; minute: number }[] = [];
+  for (let g = 0; g < goals; g++) {
+    let roll = rng.next() * total;
+    let idx = 0;
+    while (idx < weights.length - 1 && roll > weights[idx]) {
+      roll -= weights[idx];
+      idx++;
+    }
+    let minute = rng.int(1, 90);
+    while (minutes.has(minute)) minute = rng.int(1, 90);
+    minutes.add(minute);
+    const scorer = lineup[idx];
+    scorer.goals++;
+    scorer.careerGoals++;
+    out.push({ name: scorer.name, minute });
+  }
+  return out.sort((a, b) => a.minute - b.minute);
+}
+
+export function selectLineup(
+  players: Player[],
+  formation: Formation = '4-4-2',
+  manualXI: string[] = [],
+  benched: string[] = [],
+  gaps: Partial<Record<Position, number>> = {},
+): { lineup: Player[]; slots: LineupSlot[]; outOfPosition: number } {
+  const base = FORMATIONS[formation];
+  // plaatsen die jij bewust openliet, vult je trainer niet op
+  const counts = { ...base } as Record<Position, number>;
+  for (const pos of POSITIONS) counts[pos] = Math.max(0, base[pos] - (gaps[pos] ?? 0));
+  // wie jij op de bank zet, blijft op de bank: jij beslist wie er speelt
+  const fit = players.filter(canPlay).filter((p) => !benched.includes(p.id));
   const slots: LineupSlot[] = [];
   const used = new Set<string>();
   const take = (p: Player, zone: Position) => {
@@ -229,7 +274,7 @@ export interface StrengthBreakdown {
   zones: Record<Position, number>; // gemiddelde kwaliteit per linie (met keepertrainer)
   quality: number;
   chemistry: number;
-  trainer: number; // T1 + T2 + analist
+  trainer: number; // hoofdtrainer + assistent-trainer + data-analist
   morale: number;
   form: number;
   sharpness: number; // door het aantal trainingen
@@ -287,7 +332,7 @@ export function planFit(state: GameState, plan: GamePlan, slots: LineupSlot[]): 
  */
 export function teamStrength(state: GameState, opponent?: OpponentContext): StrengthBreakdown {
   const t = state.tactics;
-  const { lineup, slots, outOfPosition } = selectLineup(state.players, t.formation, t.manualXI);
+  const { lineup, slots, outOfPosition } = selectLineup(state.players, t.formation, t.manualXI, t.benched, t.gaps);
   const missing = 11 - lineup.length;
 
   const zones = { DOEL: 0, VERD: 0, MIDD: 0, AANV: 0 } as Record<Position, number>;
@@ -517,12 +562,20 @@ export function departureBlock(state: GameState, p: Player, verb = 'verkopen'): 
 }
 
 /** Hoeveel spelers je nog tekortkomt om een volledige elf te kunnen opstellen. */
-export function lineupGap(state: GameState): { available: number; needed: number; missing: Record<Position, number> } {
+export function lineupGap(state: GameState): {
+  available: number;
+  needed: number;
+  missing: Record<Position, number>;
+  open: Partial<Record<Position, number>>;
+  openTotal: number;
+} {
   const counts = FORMATIONS[state.tactics.formation];
-  const fit = state.players.filter(canPlay);
+  const fit = state.players.filter(canPlay).filter((p) => !state.tactics.benched.includes(p.id));
   const missing = {} as Record<Position, number>;
   for (const pos of POSITIONS) missing[pos] = Math.max(0, counts[pos] - fit.filter((p) => p.position === pos).length);
-  return { available: Math.min(11, fit.length), needed: 11, missing };
+  const open = state.tactics.gaps ?? {};
+  const openTotal = POSITIONS.reduce((sum, pos) => sum + Math.min(counts[pos], open[pos] ?? 0), 0);
+  return { available: Math.min(11, fit.length), needed: 11, missing, open, openTotal };
 }
 
 /** Jonge benen verteren de belasting beter, oudere spelers voelen elke wedstrijd. */

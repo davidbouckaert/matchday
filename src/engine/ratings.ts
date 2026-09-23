@@ -5,6 +5,7 @@ import { teamStrength } from './players';
 import { hasStaff, staffSkill } from './staff';
 import { creditLimit, sponsorWeekly, totalDebt } from './loans';
 import { facilityCost } from './finance';
+import { youthShortage } from './youth';
 
 export interface SubScore {
   label: string;
@@ -31,8 +32,15 @@ export function clubRatings(state: GameState): CategoryRating[] {
   const i = state.infrastructure;
   const sport: SubScore[] = [
     { label: 'Eerste elftal', score: clamp(50 + (strength - division.opponentStrength) * 5, 0, 100) },
-    { label: 'Jeugd', score: clamp(state.community.youthMembers / 4 + staffSkill(state, 'jeugdcoordinator') / 3, 0, 100) },
-    { label: 'Staff', score: clamp(staffCoverage * 60 + staffSkill(state, 'hoofdtrainer') * 0.4, 0, 100) },
+    {
+      label: 'Jeugd',
+      score: clamp(
+        state.community.youthMembers / 5 + state.community.youthTeams * 5 + staffSkill(state, 'jeugdcoordinator') / 3 - youthShortage(state) * 4,
+        0,
+        100,
+      ),
+    },
+    { label: 'Personeel', score: clamp(staffCoverage * 60 + staffSkill(state, 'hoofdtrainer') * 0.4, 0, 100) },
     {
       label: 'Infrastructuur',
       score: clamp((i.capacity / division.requiredCapacity) * 35 + i.kantineLevel * 6 + i.lightingLevel * 8 + (i.pitch === 'kunstgras' ? 15 : 0), 0, 100),

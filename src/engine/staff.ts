@@ -36,7 +36,7 @@ export function generateStaff(state: GameState, rng: Rng, role: StaffRole, meanS
   };
 }
 
-/** Effectieve vaardigheid van een staflid in een rol (0 als niemand, of als hij op opleiding is: half). */
+/** Effectieve vaardigheid van een personeelslid in een rol (0 als niemand, of als hij op opleiding is: half). */
 export function staffSkill(state: GameState, role: StaffRole): number {
   const s = state.staff.find((x) => x.role === role);
   if (!s) return 0;

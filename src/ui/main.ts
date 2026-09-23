@@ -26,6 +26,11 @@ import { contractsScreen } from './screens/contracts';
 import { VERSION } from '../version';
 import { lineupGap } from '../engine/players';
 import { animationOverlay, reportOverlay, type WeekRef } from './screens/report';
+import { openingOverlay } from './screens/opening';
+import { momentOverlay } from './screens/moment';
+import { museumScreen } from './screens/museum';
+import { AMBITIONS, chooseAmbition } from '../engine/opening';
+import { answerWeekChoice } from '../engine/weekmoment';
 import { teamStrength } from '../engine/players';
 import { OWN_TEAM_ID, ownPosition } from '../engine/league';
 import { mainSponsor } from '../engine/sponsors';
@@ -41,20 +46,20 @@ const SLOT = 'slot1';
 
 type Screen =
   | 'overzicht' | 'ploeg' | 'strategie' | 'transfers' | 'contracten' | 'staff' | 'opleiding'
-  | 'kalender' | 'financien' | 'sponsors' | 'fanshop' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club'
-  | 'competitie' | 'invloeden' | 'opslaan' | 'handleiding';
+  | 'kalender' | 'financien' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club'
+  | 'competitie' | 'invloeden' | 'opslaan' | 'handleiding' | 'museum';
 
 /** Navigatie in groepen: hoofdtabs met subtabs. */
 const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
   { id: 'overzicht', label: 'Overzicht', screens: [['overzicht', 'Overzicht']] },
   { id: 'ploeg', label: 'Ploeg', screens: [['ploeg', 'Selectie'], ['strategie', 'Strategie'], ['transfers', 'Transfers'], ['contracten', 'Contracten']] },
-  { id: 'staff', label: 'Staff', screens: [['staff', 'Staff'], ['opleiding', 'Opleiding']] },
+  { id: 'staff', label: 'Personeel', screens: [['staff', 'Personeel'], ['opleiding', 'Opleiding']] },
   {
     id: 'club',
     label: 'Club',
     screens: [
       ['kalender', 'Kalender'], ['financien', 'Financiën'], ['cijfers', 'Cijfers'], ['sponsors', 'Sponsors'],
-      ['fanshop', 'Fanshop'], ['horeca', 'Horeca'], ['evenementen', 'Evenementen'], ['infrastructuur', 'Infrastructuur'], ['club', 'Clubinfo'],
+      ['clubwinkel', 'Clubwinkel'], ['horeca', 'Horeca'], ['evenementen', 'Evenementen'], ['infrastructuur', 'Infrastructuur'], ['museum', 'Museum'], ['club', 'Clubinfo'],
     ],
   },
   { id: 'competitie', label: 'Competitie', screens: [['competitie', 'Stand, kalender en tucht']] },
@@ -80,6 +85,8 @@ interface UiState {
   report: { phase: 'anim' | 'report'; prev: WeekRef } | null;
   animate: boolean;
   lastScreen: Record<string, Screen>; // laatst bezochte subtab per groep
+  openTables: Record<string, boolean>; // welke inklapbare tabellen openstaan
+  moment: 'dicht' | 'vraag' | 'gevolg'; // popup van het weekmoment
 }
 
 const ui: UiState = {
@@ -98,6 +105,8 @@ const ui: UiState = {
   report: null,
   animate: readPref('vcg-anim', true),
   lastScreen: {},
+  openTables: { basis: true, bank: false, out: false },
+  moment: 'dicht',
 };
 
 /** Kleine voorkeur in de browser (fout = standaardwaarde). */
@@ -146,7 +155,7 @@ function showToast(result: ActionResult): void {
 function renderScreen(g: GameState): string {
   switch (ui.screen) {
     case 'overzicht': return overviewScreen(g);
-    case 'ploeg': return squadScreen(g);
+    case 'ploeg': return squadScreen(g, ui.openTables);
     case 'strategie': return strategyScreen(g);
     case 'opleiding': return trainingScreen(g);
     case 'invloeden': return influencesScreen(g);
@@ -161,10 +170,11 @@ function renderScreen(g: GameState): string {
     case 'opslaan': return saveScreen(g, ui.lastSaved, ui.animate);
     case 'kalender': return calendarScreen(g);
     case 'handleiding': return guideScreen(g);
-    case 'fanshop': return merchScreen(g);
+    case 'clubwinkel': return merchScreen(g);
     case 'horeca': return horecaScreen(g);
     case 'cijfers': return numbersScreen(g, ui.statsView);
     case 'contracten': return contractsScreen(g);
+    case 'museum': return museumScreen(g);
   }
 }
 
@@ -187,7 +197,16 @@ function render(): void {
   const group = groupOf(ui.screen);
   const weekLabel = nextWeekLabel(g);
   const gap = lineupGap(g);
-  const blocked = gap.available < 11 ? `Je kunt geen elf opstellen: nog maar ${gap.available} speelklare spelers. Ga naar Ploeg › Selectie en haal spelers bij Transfers.` : '';
+  const ZONES: Record<string, string> = { DOEL: 'doel', VERD: 'verdediging', MIDD: 'middenveld', AANV: 'aanval' };
+  const openLines = Object.entries(g.tactics.gaps ?? {})
+    .filter(([, n]) => (n ?? 0) > 0)
+    .map(([pos, n]) => `${n}× ${ZONES[pos] ?? pos}`);
+  const blocked =
+    gap.available < 11
+      ? `Je kunt geen elf opstellen: nog maar ${gap.available} speelklare spelers. Ga naar Ploeg › Selectie en haal spelers bij Transfers.`
+      : openLines.length
+        ? `Je liet plaatsen open in je basiself (${openLines.join(', ')}). Duid bij Ploeg › Selectie zelf iemand aan met de ster, of klik op "Alles loslaten" om je trainer te laten aanvullen.`
+        : '';
   const table = g.league.table.find((r) => r.teamId === OWN_TEAM_ID);
   root.innerHTML = `
     <header class="topbar">
@@ -230,7 +249,7 @@ function render(): void {
     ${
       ui.menuOpen
         ? `<div class="menu-pop">
-            <button data-action="nav" data-id="handleiding">📖 Handleiding en FAQ</button>
+            <button data-action="nav" data-id="handleiding">📖 Handleiding en veelgestelde vragen</button>
             <button data-action="nav" data-id="opslaan">💾 Opslaan en instellingen</button>
           </div>`
         : ''
@@ -238,11 +257,13 @@ function render(): void {
     ${group.screens.length > 1 ? `<nav class="subtabs">${group.screens.map(([id, label]) => `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}</button>`).join('')}</nav>` : ''}
     <main class="content">${
       inWinterBreak(g.week)
-        ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de fanshop te laten draaien.</p></section>`
+        ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de clubwinkel te laten draaien.</p></section>`
         : ''
     }${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${renderScreen(g)}</main>
     <footer class="app-footer"><span class="muted small">Clubeigenaar ${VERSION} · ${esc(g.clubName)} · seizoen ${g.season}, week ${g.week}</span></footer>
     ${ui.report ? (ui.report.phase === 'anim' ? animationOverlay(g, ui.report.prev) : reportOverlay(g, ui.report.prev)) : ''}
+    ${!ui.report && g.opening && !g.opening.done ? openingOverlay(g) : ''}
+    ${!ui.report && !(g.opening && !g.opening.done) && ui.moment !== 'dicht' && g.weekChoice ? momentOverlay(g, ui.moment === 'gevolg' ? 'gevolg' : 'vraag') : ''}
     ${toast}`;
   applySorts();
   measureBars();
@@ -308,11 +329,11 @@ function revealLines(key: string): void {
   }
   revealedFor = key;
   for (const ul of lists) ul.classList.add('staged');
-  // ongeveer 150 ms per regel, maar samen nooit langer dan de cijfertellers
-  const stagger = Math.min(150, 1900 / Math.max(1, items.length));
+  // ongeveer 260 ms per regel: je kunt elke regel lezen terwijl hij verschijnt
+  const stagger = Math.min(260, 3200 / Math.max(1, items.length));
   requestAnimationFrame(() => {
     items.forEach((li, i) => {
-      window.setTimeout(() => li.classList.add('shown'), 260 + i * stagger);
+      window.setTimeout(() => li.classList.add('shown'), 300 + i * stagger);
     });
   });
 }
@@ -320,6 +341,10 @@ function revealLines(key: string): void {
 /** Wat er volgende week gebeurt, in de knop zelf. */
 function nextWeekLabel(g: GameState): { text: string; tip: string; highlight: boolean } {
   const last = MATCH_WEEKS[MATCH_WEEKS.length - 1];
+  const open = g.weekChoice && !g.weekChoice.answer ? ` Let op: "${g.weekChoice.title}" staat nog open op je overzicht — beslis je niet, dan gaat de laatste optie door.` : '';
+  if (open && g.week !== last && g.week !== SEASON_END_WEEK && g.week !== WEEKS_PER_YEAR) {
+    return { text: 'Volgende week ▶', tip: `Speel de volgende week (spatie).${open}`, highlight: false };
+  }
   if (g.week === last) {
     return { text: 'Laatste speeldag ▶', tip: 'De laatste wedstrijd van het seizoen. Daarna vallen de beslissingen over promotie en degradatie.', highlight: true };
   }
@@ -376,6 +401,29 @@ function applySorts(): void {
   });
 }
 
+/** De tribuneschuifregelaar rekent live mee terwijl je sleept. */
+function updateTribuneInfo(): void {
+  const g = ui.game;
+  const slider = root.querySelector<HTMLInputElement>('#tribune-seats');
+  const info = root.querySelector<HTMLElement>('#tribune-info');
+  if (!g || !slider || !info) return;
+  const seats = Number(slider.value);
+  info.innerHTML = `<strong>${seats} plaatsen</strong> · ${euro(actions.tribuneCost(g, seats))}
+    <span class="muted">(€${actions.tribunePerSeat(g, seats)} per zitje)</span> · ${actions.tribuneWeeks(seats)} weken bouwtijd`;
+  const button = root.querySelector<HTMLButtonElement>('[data-action="upgrade"][data-id="tribune"]');
+  if (button) button.disabled = g.cash < actions.tribuneCost(g, seats);
+}
+
+// inklapbare tabellen: onthouden wat je openliet
+root.addEventListener('toggle', (e) => {
+  const el = e.target as HTMLDetailsElement;
+  if (el?.tagName === 'DETAILS' && el.dataset.table) ui.openTables[el.dataset.table] = el.open;
+}, true);
+
+root.addEventListener('input', (e) => {
+  if ((e.target as HTMLElement).dataset?.live === 'tribune') updateTribuneInfo();
+});
+
 // ---------- Een week spelen ----------
 
 let animTimer = 0;
@@ -385,6 +433,8 @@ const ANIM_MS = 3600;
 
 async function playWeek(): Promise<void> {
   if (!ui.game || ui.busy || ui.game.gameOver) return;
+  // eerst de persconferentie: de zaal zit te wachten
+  if (ui.game.opening && !ui.game.opening.done) return;
   ui.busy = true;
   const prev = { week: ui.game.week, season: ui.game.season };
   try {
@@ -398,6 +448,7 @@ async function playWeek(): Promise<void> {
   }
   ui.busy = false;
   await persist();
+  ui.moment = 'dicht';
   ui.report = { phase: ui.animate ? 'anim' : 'report', prev };
   if (ui.animate) {
     window.clearTimeout(animTimer);
@@ -465,10 +516,29 @@ const handlers: Record<string, Handler> = {
     ui.report = null;
     ui.screen = 'overzicht';
     ui.lastScreen.overzicht = 'overzicht';
+    if (ui.game?.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
   },
   'report-overview': () => {
     ui.report = null;
     ui.screen = 'overzicht';
+    if (ui.game?.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+  },
+  'week-choice': (id) => {
+    if (!ui.game?.weekChoice || ui.game.weekChoice.answer) return;
+    const outcome = answerWeekChoice(ui.game, id);
+    if (!outcome) return;
+    ui.moment = 'gevolg'; // het gevolg verschijnt in hetzelfde venster
+    void persist();
+  },
+  'moment-open': () => void (ui.moment = ui.game?.weekChoice?.answer ? 'gevolg' : 'vraag'),
+  'moment-close': () => void (ui.moment = 'dicht'),
+  'choose-ambition': (id) => {
+    if (!ui.game?.opening || ui.game.opening.done) return;
+    const def = AMBITIONS.find((a) => a.id === id);
+    if (!def) return;
+    chooseAmbition(ui.game, def.id);
+    void persist();
+    return { ok: true, message: `Uitgesproken: "${def.label}". Nu waarmaken.` };
   },
 
   'toggle-anim': () => {
@@ -528,6 +598,7 @@ const handlers: Record<string, Handler> = {
   mentality: gameAction((g, id) => actions.setMentality(g, id as Mentality)),
   plan: gameAction((g, id) => actions.setPlan(g, id as GamePlan)),
   starter: gameAction(actions.toggleStarter),
+  bench: gameAction(actions.toggleBench),
   'auto-lineup': gameAction((g) => actions.autoLineup(g)),
   approach: gameAction(actions.approachProspect),
   network: gameAction((g) => actions.networkEvening(g)),
@@ -550,7 +621,12 @@ const handlers: Record<string, Handler> = {
   repay: gameAction(actions.repayLoan),
   'accept-sponsor': gameAction(actions.acceptSponsor),
   'decline-sponsor': gameAction(actions.declineSponsor),
-  upgrade: gameAction((g, id) => actions.startUpgrade(g, id as Parameters<typeof actions.startUpgrade>[1])),
+  upgrade: gameAction((g, id) => {
+    // bij de tribune bepaalt de schuifregelaar hoeveel plaatsen erbij komen
+    const slider = root.querySelector<HTMLInputElement>('#tribune-seats');
+    const seats = id === 'tribune' && slider ? Number(slider.value) : undefined;
+    return actions.startUpgrade(g, id as Parameters<typeof actions.startUpgrade>[1], seats);
+  }),
   event: gameAction(actions.organiseEvent),
 
   // opslaan
@@ -579,6 +655,12 @@ root.addEventListener('click', async (e) => {
   }
   render();
 });
+
+// inklapbare tabellen: onthouden wat je openliet
+root.addEventListener('toggle', (e) => {
+  const el = e.target as HTMLDetailsElement;
+  if (el?.tagName === 'DETAILS' && el.dataset.table) ui.openTables[el.dataset.table] = el.open;
+}, true);
 
 root.addEventListener('input', (e) => {
   const el = e.target as HTMLInputElement;

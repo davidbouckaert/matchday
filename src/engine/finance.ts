@@ -24,7 +24,7 @@ export interface AttendanceInput {
 
 export function expectedAttendance(state: GameState, input: AttendanceInput): number {
   const base = state.community.fanBase * product(attendanceFactors(state));
-  const derby = input.derby ? 1.45 : 1;
+  const derby = input.derby ? 1.75 : 1; // de derby: iedereen komt kijken
   const awayFans = 25 + state.league.divisionLevel * 30;
   const total = base * WEATHER_FACTOR[input.weather] * derby * input.positionFactor + awayFans;
   return Math.round(clamp(total, 30, state.infrastructure.capacity));
@@ -35,6 +35,7 @@ export function spendPerHead(state: GameState): number {
 }
 
 /** Inkomsten van een thuiswedstrijd. Geeft het aantal toeschouwers terug. */
+export const YOUTH_TEAM_COST = 30; // per ploeg per week
 export const MATCH_FEE_SHARE = 0.3; // deel van de spelersvergoeding dat aan een wedstrijd hangt
 export const WIN_BONUS_SHARE = 0.12; // extra premie voor de basiself na een zege
 
@@ -63,7 +64,7 @@ export const MAINTENANCE_FACTOR: Record<Infrastructure['maintenance'], number> =
 
 export function facilityCost(state: GameState): number {
   const i = state.infrastructure;
-  let cost = 730 + i.capacity * 0.34 + (i.pitch === 'natuurgras' ? 430 : 160) + i.kantineLevel * 70 + i.academyLevel * 400;
+  let cost = 726 + i.capacity * 0.34 + (i.pitch === 'natuurgras' ? 430 : 160) + i.kantineLevel * 70 + i.academyLevel * 400;
   cost += i.wifiLevel * 60 + i.sanitairLevel * 80 + i.parkingLevel * 45 + i.recoveryLevel * 90 + i.scoreboardLevel * 55 + (i.teamBus ? 95 : 0);
   if (isWinter(state.week)) cost += 180 * i.lightingLevel + 150;
   cost *= MAINTENANCE_FACTOR[i.maintenance];
@@ -85,9 +86,11 @@ export function bookWeeklyFlows(state: GameState): void {
   const playerWages = state.players.reduce((s, p) => s + p.wage * share * (p.loan?.type === 'uit' ? 1 - p.loan.wageShare : 1), 0);
   const staffWages = state.staff.reduce((s, x) => s + x.wage, 0);
   book(state, 'lonen spelers', -playerWages, playing ? 'Spelersvergoedingen (vast deel en wedstrijdpremie)' : 'Spelersvergoedingen (vast deel, geen wedstrijdpremie)');
-  book(state, 'lonen staff', -staffWages, 'Lonen staff');
+  book(state, 'lonen personeel', -staffWages, 'Lonen personeel');
   book(state, 'onderhoud & energie', -facilityCost(state), 'Onderhoud terreinen, energie, materiaal');
-  book(state, 'onderhoud & energie', -state.community.youthMembers * 3, 'Werking jeugd (materiaal, vergoedingen)');
+  // elke jeugdploeg kost geld: ballen, uitrusting, scheidsrechters, verplaatsingen, tornooien
+  const youthCost = state.community.youthMembers * 3 + state.community.youthTeams * YOUTH_TEAM_COST;
+  book(state, 'onderhoud & energie', -Math.round(youthCost), `Werking jeugd (${state.community.youthTeams} ploegen: materiaal, scheidsrechters, verplaatsingen)`);
   book(state, 'sponsors', sponsorWeekly(state), 'Sponsorcontracten');
 
   // tijdens de winterstop ligt alles stil: geen jeugdwedstrijden, veel minder volk in de kantine

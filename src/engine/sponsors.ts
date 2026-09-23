@@ -57,7 +57,7 @@ const KIND_ORDER: Kind[] = ['bord', 'bal', 'jeugd', 'scherm', 'evenement', 'bus'
 export function kindLock(state: GameState, kind: Kind): string | null {
   if (kind === 'scherm' && state.infrastructure.kantineLevel < 2) return 'Kantine niveau 2 nodig';
   if (kind === 'evenement' && state.eventLog.filter((e) => e.season === state.season).length < 1) return 'Eerst een evenement organiseren';
-  if (kind === 'jeugd' && state.community.youthMembers < 40) return '40 jeugdleden nodig';
+  if (kind === 'jeugd' && state.community.youthTeams < 3) return '3 jeugdploegen nodig';
   if (kind === 'bus' && !state.infrastructure.teamBus) return 'Eerst een eigen ploegbus kopen';
   if (kind === 'bal' && state.community.fanBase < 250) return '250 supporters nodig';
   return null;

@@ -29,18 +29,18 @@ src/
     finance.ts     ← toeschouwers, kantine, vaste kosten
     loans.ts       ← bankleningen (annuïteiten)
     sponsors.ts    ← sponsorcontracten, werving, tevredenheid
-    merch.ts       ← fanshop: assortiment, prijzen en wekelijkse verkoop
+    merch.ts       ← clubwinkel: assortiment, prijzen en wekelijkse verkoop
     canteen.ts     ← kantineprijzen en horecaconcessies
     popularity.ts  ← populariteit: één vermenigvuldiger op alle inkomsten
     stats.ts       ← cijfers per seizoen (tickets, consumpties, artikelen, leden)
-    market.ts      ← volatiele transfermarkt, transferlijst, staffmarkt
+    market.ts      ← volatiele transfermarkt, transferlijst, personeelsmarkt
     events.ts      ← meevallers, tegenslagen, biedingen, blessures, faillissement
     discipline.ts  ← gele en rode kaarten, schorsingen, tuchtboetes
-    delegation.ts  ← taken die staff van je overneemt en automatisch uitvoert
+    delegation.ts  ← taken die je personeel van je overneemt en automatisch uitvoert
     strategy.ts    ← training, mentaliteit, spelplannen en hun sterkte/zwakte-tabel, scouting
     factors.ts     ← vermenigvuldigers als lijsten (sponsors, toeschouwers, kantine, vermoeidheid, blessures)
     modifiers.ts   ← overzicht van alle invloeden voor de tab Invloeden
-    ratings.ts     ← clubrating: sportief, financieel, gemeenschap
+    ratings.ts     ← clubscore: sportief, financieel, gemeenschap
     calendar.ts    ← weken, transferperiodes, vaste momenten in het jaar
     rng.ts         ← voorspelbare toevalsgenerator (zelfde seed = zelfde spel)
     data/          ← spelwaarden: reeksen, clubs, investeerders, namen, catalogus
@@ -48,7 +48,7 @@ src/
   ui/              ← schermen als HTML-templates, geen framework
     screens/report.ts   ← animatie en weekrapport na elke gespeelde week
     screens/calendar.ts ← seizoenskalender (Club › Kalender)
-    screens/merch.ts    ← fanshop (Club › Fanshop)
+    screens/merch.ts    ← clubwinkel (Club › Clubwinkel)
     screens/horeca.ts   ← kantine en concessies (Club › Horeca)
     screens/numbers.ts  ← cijfers per seizoen (Club › Cijfers)
     screens/contracts.ts← contracten en loononderhandeling (Ploeg › Contracten)
@@ -152,7 +152,210 @@ scripts/balance.ts ← balanstest over meerdere seizoenen
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 9 (deze versie)
+## Laag 10 (deze versie)
+
+### 0.17.2 — Het weekmoment als venster
+
+**Het kwam elke week terug.** Bij het kiezen van een nieuwe situatie werd alleen de vorige uitgesloten, en die stond op dat moment al op `null` — dus kon dezelfde situatie eindeloos herhalen. Elke situatie heeft nu een wachttijd van 12 weken. Over 30 weken gemeten: ketel → bus → sponsorbezoek → kaartverkoop → scheidsrechter → kernspeler → bus → sponsorbezoek.
+
+**Het viel niet op.** Het weekmoment stond als kaart op je overzicht, tussen de rest. Nu verschijnt het als **venster** zodra je het weekrapport sluit. Je kiest daar, en **in hetzelfde venster** lees je meteen wat je keuze opleverde ("Je koos: Nu herstellen (€900) — Ketel hersteld voor €900. Een zorg minder.") met een knop **Verder**. Geen kort meldinkje onderaan het scherm meer.
+
+Wil je eerst rondkijken, dan klik je op **Later beslissen**. Op je overzicht blijft een kader met een groene rand staan met de knop "Beslissen (2 keuzes)", en bij **Aandacht** staat een link die het venster opnieuw opent.
+
+### 0.17.1 — Jij beslist wie er speelt
+
+**Geen automatische invaller meer.** Haal je iemand uit je basiself (🪑), dan blijft die plaats **open**. Je trainer schuift er niet vanzelf een ander in: de teller zakt naar 10/11, de linie toont "— open, duid zelf iemand aan —", en de knop "Volgende week" gaat op slot met de reden erbij ("Je liet plaatsen open in je basiself (1× doel)"). Je lost het op door zelf iemand aan te duiden met de ster, de speler weer beschikbaar te maken, of op **Alles loslaten** te klikken — dan neemt je trainer het weer over.
+
+Details:
+- Een **reservespeler** op de bank zetten verandert niets aan je elf: er ontstaat alleen een gat als je iemand weghaalt die écht speelde.
+- Iemand vastzetten met de ster vult een open plaats in die linie meteen op.
+- Besteed je de opstelling uit aan een personeelslid, dan wist hij je open plaatsen en je bank: hij stelt gewoon zijn beste elf op.
+
+**Inklapbare tabellen.** Basiself, Bank en reserve en Niet beschikbaar zijn nu uitklapbaar. De bank en de niet-beschikbaren staan standaard dicht, zodat je scherm niet volloopt; wat je openklapt blijft open terwijl je verder speelt.
+
+Opslagversie 21.
+
+### 0.17.0 — Basiself onder controle en evenementen voor elke reeks
+
+**De selectie werkt nu zoals je verwacht.** Elke speler heeft twee knopjes in plaats van één ster met dubbele betekenis:
+
+- **★ vastzetten** — hij staat in de basis en je trainer laat hem staan. Nog eens klikken laat hem los (✓ = door de trainer gekozen).
+- **🪑 op de bank** — hij wordt deze week niet opgesteld, ook niet door je trainer. Nog eens klikken maakt hem weer beschikbaar.
+
+Zet je iemand vast terwijl die linie al vol staat met vastgezette spelers, dan **maakt de zwakste van hen plaats** (met melding wie) in plaats van een foutmelding. Vastzetten en bankzitten sluiten elkaar uit. Je kunt niet zoveel spelers op de bank zetten dat er geen elftal overblijft. Spelers springen meteen naar de juiste tabel (basiself / bank / niet beschikbaar), en de tellers — 11/11 speelklaar én per linie 1/1 doel, 4/4 verdediging, 4/4 middenveld, 2/2 aanval — lopen mee. Geblesseerde, geschorste en uitgeleende spelers hebben geen knopjes meer. Opslagversie 20.
+
+**Evenementen schalen mee met je club.** De opbrengst hing al aan je supporters en jeugdleden; daar komen nu je sponsorbedragen en je tribune bij, en alles wordt met de inflatie vermenigvuldigd. De kosten deden dat nog niet en waren dus stilaan gratis geworden: die volgen nu de inflatie plus 12% per reeks. Ook de vrijwilligersacties volgen de inflatie.
+
+**Vijf nieuwe evenementen die vrijkomen als je stijgt:**
+
+| Evenement | Vanaf | Extra eis | Vrijwilligers |
+| --- | --- | --- | --- |
+| Sponsorontbijt | 2de Nationale | kantine niveau 3 | 4 |
+| Galabal van de club | 2de Nationale | — | 12 |
+| Gala-oefenwedstrijd tegen een profclub | 1ste Nationale | 1.500 plaatsen | 16 |
+| Businessclub-lunch | 1ste Nationale | kantine niveau 4 | 5 |
+| Internationaal wintertornooi | Challenger Pro Liga | 4.000 plaatsen | 22 |
+
+Waarom je ze niet kunt organiseren staat er meteen bij ("Pas mogelijk vanaf 1ste Nationale", "Je hebt minstens 1.500 plaatsen nodig").
+
+**Het weekmoment valt beter op.** Die melding over een defecte bus of een lange rij aan de poort kwam uit het weekmoment: de beslissing die bovenaan je overzicht ligt. Speelde je de week zonder te beslissen, dan ging de laatste optie vanzelf door — dat stond er wel, maar te onopvallend. Nu staat een openstaande beslissing ook in het kader **Aandacht**, in de tip op de knop "Volgende week", en het resultaat heet in het rapport en in het nieuws voortaan "Weekmoment — …" met de zin *"Je besliste niets, dus … ging door."*
+
+### 0.16.1 — Scherpere volumekorting
+
+De korting per zitje is agressiever en versnelt nu echt. Wat elke volgende honderd zitjes extra kosten:
+
+| Van → tot | Per extra zitje |
+| --- | --- |
+| 100 → 200 | €360 |
+| 400 → 500 | €290 |
+| 900 → 1.000 | €210 |
+| 1.400 → 1.500 | €160 |
+| 1.900 → 2.000 | €80 |
+
+De uitklapbare prijstabel onder de schuifregelaar is weg: het regeltje onder de slider zegt hetzelfde, live.
+
+### 0.16.0 — Bouwen op jouw maat
+
+**De tribune met een schuifregelaar.** Geen vast blok van 300 plaatsen meer: je kiest zelf tussen 100 en 2.000 plaatsen, in stappen van 50. Terwijl je sleept rekent het scherm live mee — aantal, totaalprijs, prijs per zitje en bouwtijd.
+
+**Volumekorting, en ze versnelt.** De aannemer rekent minder per stoel naarmate je er meer bestelt: dezelfde opstart, dezelfde kraan, dezelfde ploeg. De prijs per zitje volgt `450 − 150 × log10(plaatsen / 100) − 40 × (plaatsen / 2000)²`, maal de inflatie en maal 0,85 als je aannemer-investeerder nog aan boord is. Het kwadratische stuk zorgt dat de korting oploopt in plaats van af te vlakken: één grote tribune is duidelijk voordeliger dan drie kleine blokken.
+
+| Plaatsen | Per zitje | Korting | Totaal | Bouwtijd |
+| --- | --- | --- | --- | --- |
+| 100 | €450 | — | €45.000 | 4 weken |
+| 300 | €378 | −16% | €113.000 | 6 weken |
+| 600 | €330 | −27% | €198.000 | 8 weken |
+| 1.000 | €290 | −36% | €290.000 | 12 weken |
+| 1.500 | €251 | −44% | €377.000 | 17 weken |
+| 2.000 | €215 | −52% | €430.000 | 21 weken |
+
+(bedragen zonder aannemerskorting; bouwtijd = `3 + plaatsen / 110`, begrensd op 4 tot 22 weken)
+
+**Zonnepanelen zijn een bouwproject.** Ze stonden bij Onderhoud en energie en waren meteen klaar; nu staan ze tussen de bouwprojecten en duren ze 5 weken. De prijs blijft afhangen van de grootte van je complex (ongeveer drie seizoenen terugverdientijd).
+
+**Twee werven tegelijk.** De limiet van één project is opgetrokken naar twee. Je ziet bovenaan Infrastructuur hoeveel er lopen, per project staat "bezig, nog X weken", en een derde project wordt geweigerd met uitleg. Ook je kalender, het weekrapport en de Clubinfo tonen beide werven.
+
+Opslagversie 19: een lopend project uit een ouder bestand verhuist naar de nieuwe lijst (een tribune in aanbouw wordt gelezen als +300 plaatsen).
+
+### 0.15.0 — Nederlandse termen
+
+Engelse woorden in de interface zijn vervangen door Nederlandse. Typische voetbaltermen blijven staan.
+
+| Was | Is nu | Waar |
+| --- | --- | --- |
+| Staff | **Personeel** | hoofdtab, subtab, "Eerste stappen", tooltips, handleiding |
+| staflid / stafleden | **personeelslid / personeelsleden** | overal |
+| lonen staff | **lonen personeel** | boekingscategorie |
+| T1, T2, T3 | **hoofdtrainer, assistent-trainer, conditietrainer** | personeelsrollen, opleiding, invloeden |
+| Fanshop | **Clubwinkel** | tab Club › Clubwinkel, teksten, links |
+| shop / webshop | **winkel / webwinkel** | clubwinkelscherm, cijfers |
+| merchandising | **clubartikelen** | boekingscategorie |
+| inkoop shop / werking shop | **inkoop winkel / werking winkel** | boekingscategorieën |
+| Merchandisingverantwoordelijke | **Winkelverantwoordelijke** | personeelsrol, delegatie |
+| Clubrating | **Clubscore** | overzicht, kopbalk, seizoensdoelen |
+| dashboard | **overzicht** | knop in het weekrapport, handleiding |
+| Vacant | **Niet ingevuld** | personeelstabel |
+| FAQ | **veelgestelde vragen** | hamburgermenu |
+
+**Blijft staan (voetbaltaal):** balbezit · counter · pressing · lange bal · vleugelspel · derby · transfer, transferperiode, transfermarkt, transferlijst, transfervrij · keeper · kern, A-kern · scout, scouting · ticket, ticketprijs · mentale coach · EUFA-diploma's · Challenger Pro Liga · forfait · sponsor, shirtsponsor, mouwsponsor · kantine · concessie.
+
+De vier hernoemde boekingscategorieën zijn tegelijk data en zichtbare tekst. Opslagversie 18 verhuist de bedragen mee: seizoenstotalen, vorig seizoen, de weekgeschiedenis, de weekcijfers, de lopende boekingen en wat nog moet binnenkomen. Je cijfers per categorie blijven dus kloppen.
+
+Codenamen (`staffSkill`, `merchScreen`, `s.merch`) blijven Engels — dat is techniek, geen interface.
+
+### 0.14.0 — Sterkere reeksen, duidelijkere selectie en doelpuntenmakers
+
+**Elke reeks ligt nu écht boven de vorige.** De sterkte van een tegenstander wordt bepaald door `teamLevel()`: de bodem van een reeks ligt boven het gemiddelde van de reeks eronder, en de spreiding is smaller (sd 3,4 in plaats van 5,5). Gemeten over vier seizoenen promoveren:
+
+| Reeks | Eigen ploeg | Tegenstanders gemiddeld | Zwakste |
+| --- | --- | --- | --- |
+| 3de Nationale | 52,9 | 55,6 | 51,5 |
+| 2de Nationale | 54,5 | 61,1 | 57,5 |
+| 1ste Nationale | 60,6 | 68,3 | 63,5 |
+| Challenger Pro Liga | 68,9 | 73,9 | 69,5 |
+
+**Als promovendus hoor je onderaan.** Clubs die net promoveerden krijgen −3,2, clubs die net degradeerden +2,8. Jij bent na een promotie dus zelf de zwakste van de reeks — je moet je plaats verdienen, niet meteen domineren.
+
+**De selectie is opgesplitst.** Drie tabellen in plaats van één lange lijst: **A-kern: de basiself** (de elf die zondag begint), **Bank en reserve** (speelklaar, niet in de basis) en **Niet beschikbaar** (geblesseerd, geschorst, uitgeleend). Daarboven een nieuwe kaart **Basiself: 11/11** met per linie een teller tegenover je formatie — Doel 1/1, Verdediging 4/4, Middenveld 4/4, Aanval 2/2 — plus hoeveel spelers je per linie speelklaar hebt, wie er buiten zijn positie staat en welke plaatsen leeg zijn. Groen = in orde, oranje = iemand uit positie, rood = plaatsen leeg.
+
+**Doelpuntenmakers.** Elk doelpunt krijgt een maker en een minuut. Aanvallers wegen 3,2×, middenvelders 1,4×, verdedigers 0,5×, keepers 0,02×; binnen een linie scoort de betere speler vaker en je strafschopnemer krijgt ×1,35. In het weekrapport staat `⚽ Kobe Trossaert 22'`, met daaronder een uitklapbare lijst van **de elf die begon** (met rating en een balletje bij wie scoorde). De kolom **Goals** staat ook in je spelerstabel; `careerGoals` telt door over seizoenen heen voor het clubmuseum.
+
+**Bankleningen schalen mee** met je reeks (+40% per niveau), je loonmassa (±5.000 euro per week = een club in 3de nationale, gecapt op 2,2×) en de inflatie. Kaskrediet €30k in 3de nationale, €46k in 2de, €112k in de Challenger Pro Liga. De noodlening schaalt maar half mee: dat blijft een reddingsboei, geen kredietlijn.
+
+**Het nieuws rolt trager binnen:** 260 ms per regel in plaats van 150 (samen tot 3,2 seconden), zodat je elke regel kunt lezen terwijl hij verschijnt.
+
+Balanstest na deze wijzigingen: Zuidrand-aannemer 16/20 failliet bij passief spelen, Zuidrand-coöperatie 20/20, Heidebeke 5/2/16. Opslagversie 17.
+
+### 0.13.0 — Derby, weekmoment en clubmuseum
+
+**Elke reeks heeft nu zijn eigen wereld.** Vroeger speelde je in 2de nationale tegen dezelfde ploegen als in 3de. Nu heeft elk niveau zijn eigen clubs — dorpsploegen in 1ste Provinciale (SK Beernehem, VV Ruiseleede), streekclubs in 2de Nationale (KFC Heiste, RC Mechelse), halfprof in 1ste Nationale (RWD Molenbeke), echte profclubs in de Challenger Pro Liga. Twee ploegen komen uit de reeks eronder (net gepromoveerd) en twee uit de reeks erboven (net gedegradeerd), zodat een promotie aanvoelt als een verhuis en niet als hetzelfde seizoen met andere cijfers.
+
+**De derby (idee 2).** Eén club is je aartsrivaal, met naam. Die wedstrijd:
+
+- trekt **75% meer volk** (was 45%) en dus ook meer kantine en kraampjes;
+- levert meer kaarten op aan beide kanten;
+- weegt **dubbel** op de sfeer in het dorp, en een zege geeft +2 reputatie;
+- wordt een week vooraf aangekondigd in het nieuws en staat met 🔥 DERBY op je dashboard, in het klassement en in het weekrapport;
+- houdt een **onderlinge balans** bij (W-G-V) die over seizoenen heen blijft staan.
+
+Blijf je in dezelfde reeks, dan blijft hij je rivaal. Promoveer of degradeer je, dan is er 35% kans dat hij dezelfde weg aflegde — met een nieuwsbericht als het zo is.
+
+**Het weekmoment (idee 4).** Elke week ligt er één concrete beslissing op je bureau, bovenaan je dashboard. Drie zinnen, twee of drie knoppen, meteen gevolg:
+
+- het regent al drie dagen: zeil leggen (€450) of erop gokken;
+- de huurbus is defect: duurdere bus (€600) of met eigen wagens;
+- je beste man loopt op zijn tandvlees: sparen of laten spelen (28% kans op een blessure);
+- de scheidsrechter is er niet: wachten (en de kantine draait) of een clubref vragen;
+- je hoofdsponsor komt met tien klanten: ontvangst met hapjes of een plaatsje op de tribune;
+- plus de derbytent, de verwarmingsketel, het jeugdtornooi, de mopperende speler en de bus bezoekende supporters.
+
+Tien situaties, elk met eigen voorwaarden, zodat je alleen krijgt wat bij jouw club past. Ongeveer twee op de drie wedstrijdweken, af en toe in een vrije week. Beslis je niet voor je op "Volgende week" drukt, dan gaat de laatste optie door. Het resultaat staat in je weekrapport en in je logboek.
+
+**Het clubmuseum (idee 5).** Nieuw scherm onder Club: je titels, promoties en degradaties als trofeeënkast, al je records (grootste opkomst, beste week, langste zegereeks), je hoogtepunten (hoogste reeks, beste plaats, premies verdiend, balans tegen je rivaal), de mensen (sterkste speler, duurste aankoop, eigen jeugd in de A-kern), de lijn van je gemiddelde opkomst per seizoen, de volledige erelijst en een muur met alle elf mijlpalen — behaald of nog op slot. Niets extra om bij te houden: alles stond er al.
+
+**Passief spelen is scherper afgestraft.** Een club waar tien weken lang niets beslist wordt — geen sponsor aangesproken, niets georganiseerd, gebouwd of uitbesteed — verliest langzaam sfeer (tot 45), reputatie (tot 20) en sponsortevredenheid (tot 30), met een nieuwsbericht erover. Eén beslissing zet die klok op nul, dus wie speelt merkt er niets van. Balanstest over 3 seizoenen zonder ook maar één ingreep: Zuidrand-aannemer **16/20 failliet** (was 9/20), Zuidrand-fonds 12/20, Zuidrand-coöperatie 20/20, Heidebeke 1/4/16.
+
+Opslagversie 16.
+
+### 0.12.0 — Een echte jeugdwerking van bij de start
+
+Je club is geen lege doos meer: er draait al een bescheiden jeugdwerking op de dag dat jij de sleutels krijgt.
+
+- **Ploegen in plaats van een getal.** Je jeugd bestaat uit ploegen (U7, U9, U11, U13, …), ongeveer één per 55 leden. KFC Zuidrand start met 4, VV Heidebeke met 5.
+- **Een jeugdcoördinator staat er al** (vrijwilligersvergoeding €45/week). Hij telt mee voor je clubrating, voor de instroom van nieuwe leden en voor de tevredenheid van je vrijwilligers.
+- **Elke ploeg bindt 2 vrijwilligers** — een jeugdtrainer en een ploegafgevaardigde. Evenementen kunnen alleen de **vrije** vrijwilligers gebruiken: bij Club › Evenementen staat per evenement hoeveel er vrij nodig zijn en hoeveel je er hebt. Dat is de kern van de afweging: elke ploeg erbij is twee mensen minder voor je spaghettiavond.
+- **Te weinig begeleiding doet pijn.** Per ontbrekende vrijwilliger: −6% instroom bij de inschrijvingen, −4 punten vrijwilligerstevredenheid en −4 op je jeugdrating.
+- **Je complex is het plafond:** 4 ploegen, +2 met kunstgras, +1 met verlichting niveau 2, +2 per niveau opleidingscentrum. Zit je aan dat plafond, dan zakt de instroom naar 85% en haken ouders af. Zo wordt bouwen een echte jeugdbeslissing, niet alleen een A-kernbeslissing.
+- **Ploegen schuiven één stap per seizoen** (bij de inschrijvingen in week 10), met een nieuwsbericht als er een bijkomt of verdwijnt.
+- **Staffregel:** een jeugdcoördinator aanwerven vraagt minstens 3 ploegen (vroeger 20 leden). Ook de jeugdsponsor vraagt nu 3 ploegen.
+- **En het kost geld:** €30 per ploeg per week aan werking (ballen, scheidsrechters, verplaatsingen, tornooien) plus €400 per ploeg bij de aansluiting bij de bond. De jeugd is een investering, geen gratis inkomstenbron — de balanstest bevestigt dat passief spelen er niet makkelijker van wordt.
+
+Alles staat samen op een nieuwe kaart bij **Club › Clubinfo**: je reeksen, leden, begeleiding, coördinator, plaats op het complex, instroompercentage en wat er volgend seizoen bijkomt of wegvalt. Opslagversie 15; bestaande saves krijgen het aantal ploegen dat bij hun ledenaantal past.
+
+### 0.11.0 — De seizoensopening
+
+Week 1 is geen gewone week meer. Voor je iets anders kunt doen, opent de **seizoensopening**:
+
+- **De affiche:** je clublogo, de reeks, het seizoen en de datum van de eerste speeldag
+- **De voorbeschouwing:** een (verzonnen) blad of podcast voorspelt waar je eindigt, met een citaat dat je kunt uitprinten en boven de deur hangen. De voorspelling volgt je teamsterkte tegenover de reeks, met een vleugje toeval
+- **Deze zomer:** wie transfervrij vertrok, wie terug is van uitleenbeurt, en welke shirtsponsor op de nieuwe truitjes staat
+- **Uit de eigen jeugd:** de doorstromers met hun leeftijd en positie
+- **De doelen van het bestuur:** drie doelen, één per categorie van je clubrating (sportief, financieel, gemeenschap), berekend op waar je vandaag staat plus een duw. Elk met zijn eigen premie
+- **De persconferentie:** je kiest één van drie ambities. Dat is het enige wat de opening van je vraagt, en het is niet terug te nemen
+
+| Ambitie | Belofte | Supporters | Spelers | Sponsors |
+| --- | --- | --- | --- | --- |
+| Voeten op de grond | niet in de degradatiezone | −4 | +6 (rust) | −3 |
+| Meedoen voor de prijzen | bij de eerste vijf | +6 | −2 | +5 |
+| Wij worden kampioen | kampioen worden | +14 | −8 (druk) | +12 |
+
+Op het einde van het seizoen wordt er afgerekend. Waarmaken levert een premie op (0,35× tot 2× de basispremie van je reeks) plus reputatie en tevreden sponsors; het niet waarmaken kost geld, reputatie, sfeer en sponsortevredenheid. Grootspraak betaalt het dubbele en kost ook het dubbele.
+
+De drie doelen staan het hele seizoen op je **dashboard**, met je belofte erboven, hoever je staat en een voortgangsbalk. De volledige afrekening (✅/❌ per doel, met wat je effectief haalde) staat in het **seizoensrapport**, en alle premies worden geboekt onder **premies**.
+
+Oude opslagbestanden: sta je nog voor de eerste speeldag, dan krijg je de opening alsnog; sta je middenin een seizoen, dan begint het bij je volgende seizoenstart. Opslagversie 14.
+
+## Laag 9
 
 ### 0.10.3
 

@@ -2,7 +2,7 @@ import type { Fixture, GamePlan, GameState, League, OpponentTeam, TableRow } fro
 import type { Rng } from './rng';
 import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
-import { FIRST_NAMES, LAST_NAMES, OPPONENT_NAMES, PRO_CLUBS } from './data/names';
+import { DIVISION_CLUBS, FIRST_NAMES, LAST_NAMES } from './data/names';
 import { MATCH_WEEKS } from './calendar';
 
 /** Ook de tegenstanders hebben een trainer, sfeer en vorm. */
@@ -10,19 +10,74 @@ export const OPPONENT_STAFF_BONUS = 4.5;
 
 export const OWN_TEAM_ID = 'club';
 
-export function createLeague(rng: Rng, divisionLevel: number): League {
+/** Je aartsrivaal in deze reeks: de derby waar het dorp een jaar over praat. */
+export function rivalTeam(state: GameState): OpponentTeam | undefined {
+  return state.league.teams.find((t) => t.isRival);
+}
+
+/** De eerstvolgende derby, als die nog op de kalender staat. */
+export function nextDerby(state: GameState): { week: number; home: boolean } | null {
+  const rival = rivalTeam(state);
+  if (!rival) return null;
+  const f = state.league.fixtures
+    .filter(
+      (x) =>
+        x.homeGoals === undefined &&
+        ((x.homeId === OWN_TEAM_ID && x.awayId === rival.id) || (x.awayId === OWN_TEAM_ID && x.homeId === rival.id)),
+    )
+    .sort((a, b) => a.week - b.week)[0];
+  return f ? { week: f.week, home: f.homeId === OWN_TEAM_ID } : null;
+}
+
+/**
+ * De sterkte van één tegenstander. Elke reeks ligt duidelijk boven de vorige: de zwakste ploeg
+ * van 2de nationale is nog altijd steviger dan de zwakste van 3de. Wie net promoveerde hoort
+ * onderaan, wie net degradeerde hoort bij de betere ploegen — en jij, als nieuwkomer, ook onderaan.
+ */
+export function teamLevel(rng: Rng, divisionLevel: number, origin: 'eigen' | 'promovendus' | 'degradant'): number {
   const division = DIVISIONS[divisionLevel];
-  const pool = divisionLevel >= 4 ? [...PRO_CLUBS, ...OPPONENT_NAMES] : [...OPPONENT_NAMES];
-  const names: string[] = [];
-  while (names.length < division.teams - 1) {
-    const n = rng.pick(pool);
-    if (!names.includes(n)) names.push(n);
+  const below = DIVISIONS[divisionLevel - 1];
+  const base = division.opponentStrength + OPPONENT_STAFF_BONUS;
+  const shift = origin === 'promovendus' ? -3.2 : origin === 'degradant' ? 2.8 : 0;
+  // de bodem van deze reeks ligt boven het gemiddelde van de reeks eronder
+  const floor = below ? below.opponentStrength + OPPONENT_STAFF_BONUS + 1 : base - 6;
+  const value = clamp(rng.normal(base + shift, 3.4), floor, base + 8);
+  return Math.round(value * 10) / 10;
+}
+
+/**
+ * De tegenstanders van één reeks. Elk niveau heeft zijn eigen clubs; twee ploegen komen
+ * uit de reeks eronder (net gepromoveerd) en twee uit de reeks erboven (net gedegradeerd),
+ * zodat een promotie ook echt een andere wereld is. `carryOver` houdt je aartsrivaal bij je
+ * als die samen met jou op- of afzakt.
+ */
+export function createLeague(rng: Rng, divisionLevel: number, carryOver: string[] = []): League {
+  const division = DIVISIONS[divisionLevel];
+  const own = DIVISION_CLUBS[divisionLevel] ?? DIVISION_CLUBS[1];
+  const below = DIVISION_CLUBS[divisionLevel - 1] ?? [];
+  const above = DIVISION_CLUBS[divisionLevel + 1] ?? [];
+  const names: { name: string; origin: 'eigen' | 'promovendus' | 'degradant' }[] = [];
+  const add = (n: string, origin: 'eigen' | 'promovendus' | 'degradant') => {
+    if (n && !names.some((x) => x.name === n) && names.length < division.teams - 1) names.push({ name: n, origin });
+  };
+  for (const n of carryOver) add(n, 'eigen');
+  // net gepromoveerd en net gedegradeerd
+  for (let i = 0; i < 2 && below.length; i++) add(rng.pick(below), 'promovendus');
+  for (let i = 0; i < 2 && above.length; i++) add(rng.pick(above), 'degradant');
+  let guard = 0;
+  while (names.length < division.teams - 1 && guard++ < 500) add(rng.pick(own), 'eigen');
+  // mocht een reeks te klein zijn: vul aan met de buren
+  for (const pool of [below, above, DIVISION_CLUBS[1]]) {
+    for (const n of pool) add(n, 'eigen');
   }
-  const teams: OpponentTeam[] = names.map((name, i) => ({
+
+  // precies één aartsrivaal: de club van het dorp ernaast
+  const rivalIndex = carryOver.length ? 0 : rng.int(0, names.length - 1);
+  const teams: OpponentTeam[] = names.map((entry, i) => ({
     id: `t${i}`,
-    name,
-    strength: Math.round(rng.normal(division.opponentStrength + OPPONENT_STAFF_BONUS, 5.5) * 10) / 10,
-    isRival: i < 2, // de twee dichtstbijzijnde clubs zijn derby's
+    name: entry.name,
+    strength: teamLevel(rng, divisionLevel, entry.origin),
+    isRival: i === rivalIndex,
     plan: rng.pick(PLAN_LIST),
     roster: makeRoster(rng),
   }));

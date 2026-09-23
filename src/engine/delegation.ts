@@ -1,4 +1,4 @@
-// Taken die je aan staff overlaat. Elke week, vóór de wedstrijden, doet elk staflid
+// Taken die je aan staff overlaat. Elke week, vóór de wedstrijden, doet elk personeelslid
 // het werk waarvoor hij is aangeduid. Hoe beter hij is, hoe beter zijn keuzes.
 
 import type { GameState, Mentality, Position, Staff, TaskId, TrainingFocus, UpgradeId } from './types';
@@ -19,7 +19,7 @@ import {
 } from './actions';
 import { bestPrice } from './merch';
 import { acceptedMargin } from './canteen';
-import { usedConcessionSpace } from './actions';
+import { MAX_PROJECTS, usedConcessionSpace } from './actions';
 import { addNews } from './util';
 
 /** Wie doet deze taak? undefined = de eigenaar. */
@@ -32,13 +32,13 @@ export function tasksOf(state: GameState, staffId: string): TaskId[] {
   return TASKS.filter((t) => state.delegation[t.id] === staffId).map((t) => t.id);
 }
 
-/** Kans op een minder goede keuze: 0 bij een topper, ~0,35 bij een zwak staflid. */
+/** Kans op een minder goede keuze: 0 bij een topper, ~0,35 bij een zwak personeelslid. */
 function errorChance(skill: number): number {
   return clamp((100 - skill) / 200, 0, 0.4);
 }
 
 /**
- * Hoeveel taken iemand aankan. Een zwak staflid doet er één, een topper vier.
+ * Hoeveel taken iemand aankan. Een zwak personeelslid doet er één, een topper vier.
  * Wie te veel op zijn bord krijgt, zou toch beginnen te knoeien.
  */
 export function taskCapacity(staff: Staff): number {
@@ -91,7 +91,12 @@ export function strategyTask(state: GameState, rng: Rng = createRng(state)): voi
   const skill = taskSkill(state, lineupStaff ? 'opstelling' : tacticStaff ? 'tactiek' : 'training', lead) + analyst / 4;
   const err = errorChance(skill);
   const t = state.tactics;
-  if (lineupStaff) t.manualXI = [];
+  if (lineupStaff) {
+    // geeft je trainer de opstelling in handen: hij vult zelf aan en laat geen plaatsen open
+    t.manualXI = [];
+    t.benched = [];
+    t.gaps = {};
+  }
 
   // spelersrollen
   if (roleStaff) {
@@ -281,7 +286,7 @@ function youthTask(state: GameState): void {
       best = fee;
     }
   }
-  // een zwakker staflid mikt ernaast
+  // een zwakker personeelslid mikt ernaast
   const off = Math.round(errorChance(taskSkill(state, 'jeugd', s)) * 120);
   setYouthFee(state, clamp(best - off, 100, 500));
 }
@@ -314,7 +319,7 @@ function facilityTask(state: GameState): void {
   const buffer = weekly * 12;
   const level = state.cash > buffer * 2 ? 'premium' : state.cash > buffer ? 'normaal' : 'basis';
   if (state.infrastructure.maintenance !== level) setMaintenance(state, level as 'basis' | 'normaal' | 'premium');
-  if (state.infrastructure.construction || (state.eventCooldowns['auto-bouw'] ?? 0) > 0) return;
+  if (state.infrastructure.constructions.length >= MAX_PROJECTS || (state.eventCooldowns['auto-bouw'] ?? 0) > 0) return;
   const division = DIVISIONS[state.league.divisionLevel];
   const next = DIVISIONS[Math.min(DIVISIONS.length - 1, state.league.divisionLevel + 1)];
   const i = state.infrastructure;
@@ -344,7 +349,7 @@ function horecaTask(state: GameState): void {
   const err = errorChance(taskSkill(state, 'horeca', s));
   for (const item of state.canteen.items) {
     const def = CANTEEN_ITEMS.find((c) => c.id === item.id)!;
-    // de beste prijs ligt iets boven de richtprijs; een zwakker staflid mikt ernaast
+    // de beste prijs ligt iets boven de richtprijs; een zwakker personeelslid mikt ernaast
     item.price = Math.round(def.ref * (1.12 - err) * 10) / 10;
   }
   if ((state.eventCooldowns['auto-concessie'] ?? 0) > 0) return;
@@ -356,16 +361,16 @@ function horecaTask(state: GameState): void {
   }
 }
 
-// ---------- Fanshop ----------
+// ---------- Clubwinkel ----------
 
-/** Het staflid zet elke prijs op de beste marge en breidt het assortiment uit als de kas het toelaat. */
+/** Het personeelslid zet elke prijs op de beste marge en breidt het assortiment uit als de kas het toelaat. */
 function merchTask(state: GameState): void {
   const s = delegate(state, 'merchandising');
   if (!s || !state.merch.active) return;
   const sloppy = errorChance(taskSkill(state, 'merchandising', s));
   for (const item of state.merch.items) {
     const target = bestPrice(state, item.id);
-    // een zwakker staflid mikt er wat naast
+    // een zwakker personeelslid mikt er wat naast
     item.price = Math.max(1, Math.round(target * (1 + (sloppy ? (state.week % 3) - 1 : 0) * sloppy * 0.5)));
   }
   const missing = MERCH_ITEMS.filter((d) => !state.merch.items.some((i) => i.id === d.id)).sort((a, b) => b.appeal - a.appeal);
@@ -373,7 +378,7 @@ function merchTask(state: GameState): void {
   if (next && state.cash > next.setup + 25_000 && (state.eventCooldowns['auto-merch'] ?? 0) === 0) {
     if (addMerchItem(state, next.id).ok) {
       state.eventCooldowns['auto-merch'] = 6;
-      addNews(state, 'neutraal', `${s.name} neemt ${next.label.toLowerCase()} op in het assortiment van de fanshop.`);
+      addNews(state, 'neutraal', `${s.name} neemt ${next.label.toLowerCase()} op in het assortiment van de clubwinkel.`);
     }
   }
 }

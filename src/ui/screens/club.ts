@@ -2,9 +2,13 @@ import type { GameState } from '../../engine/types';
 import { CLUB_EVENTS, UPGRADES, VOLUNTEER_ACTIONS } from '../../engine/data/catalog';
 import { DIVISIONS } from '../../engine/data/divisions';
 import { BACKGROUNDS, INVESTORS } from '../../engine/data/setup';
-import { GREEN_ENERGY_SAVING, greenEnergyCost, YOUTH_FEE_REF, YOUTH_FEE_WEEK, eventsThisSeason, canOrganise, canUpgrade, eventForecast, upgradeCost, youthForecast, youthTarget } from '../../engine/actions';
+import {
+  GREEN_ENERGY_SAVING, MAX_PROJECTS, TRIBUNE_MAX, TRIBUNE_MIN, TRIBUNE_STEP, YOUTH_FEE_REF, YOUTH_FEE_WEEK,
+  canOrganise, canUpgrade, eventForecast, eventsThisSeason, tribuneCost, tribunePerSeat, tribuneWeeks, upgradeCost, upgradeWeeks, youthForecast, youthTarget,
+} from '../../engine/actions';
 import { MAINTENANCE_FACTOR, facilityCost } from '../../engine/finance';
 import { volunteerSatisfaction } from '../../engine/turn';
+import { MEMBERS_PER_TEAM, VOLUNTEERS_PER_TEAM, boundVolunteers, freeVolunteers, maxYouthTeams, teamNames, teamsFor, youthCapacityFactor, youthShortage } from '../../engine/youth';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
 import { RED_FINE, YELLOW_FINE, YELLOW_LIMIT } from '../../engine/discipline';
@@ -16,11 +20,41 @@ import { avatarSvg } from '../avatar';
 import { bar, esc, euro, signedEuro, stars } from '../format';
 import { hint, tip } from '../tooltip';
 
+/** De tribune: jij kiest hoeveel plaatsen erbij komen, en hoe groter je bestelt hoe goedkoper per zitje. */
+function tribuneCard(s: GameState): string {
+  const i = s.infrastructure;
+  const busy = i.constructions.find((c) => c.upgrade === 'tribune');
+  const reason = canUpgrade(s, 'tribune');
+  const seats = 300;
+  const division = DIVISIONS[s.league.divisionLevel];
+  const next = DIVISIONS[Math.min(DIVISIONS.length - 1, s.league.divisionLevel + 1)];
+  const needed = Math.max(0, next.requiredCapacity - i.capacity);
+
+  return `<div class="tribune-builder">
+    <h3>Tribune uitbreiden ${hint('De aannemer rekent minder per zitje naarmate je er meer bestelt: dezelfde opstart, dezelfde kraan, dezelfde ploeg. Grotere werken duren wel langer.')}</h3>
+    <p class="muted small">Nu ${i.capacity} plaatsen. Nodig in ${esc(division.name)}: ${division.requiredCapacity}${
+      needed ? ` · voor ${esc(next.name)} kom je nog <strong>${needed}</strong> plaatsen te kort` : ' · ook de volgende reeks is in orde'
+    }.</p>
+    ${
+      busy
+        ? `<p class="attention-inline">🏗️ Er wordt gebouwd: +${busy.seats} plaatsen, nog ${weeks(busy.weeksLeft)}.</p>`
+        : reason
+          ? `<p class="muted small">${esc(reason)}</p>`
+          : `<div class="slider-row">
+              <input type="range" id="tribune-seats" min="${TRIBUNE_MIN}" max="${TRIBUNE_MAX}" step="${TRIBUNE_STEP}" value="${seats}" data-live="tribune" aria-label="Aantal plaatsen"/>
+              <button class="primary" data-action="upgrade" data-id="tribune">Werken starten</button>
+            </div>
+            <p id="tribune-info" class="tribune-info"><strong>${seats} plaatsen</strong> · ${euro(tribuneCost(s, seats))}
+              <span class="muted">(€${tribunePerSeat(s, seats)} per zitje)</span> · ${tribuneWeeks(seats)} weken bouwtijd</p>`
+    }
+  </div>`;
+}
+
 export function infraScreen(s: GameState): string {
   const i = s.infrastructure;
   const division = DIVISIONS[s.league.divisionLevel];
   const next = DIVISIONS[Math.min(DIVISIONS.length - 1, s.league.divisionLevel + 1)];
-  const building = i.construction ? UPGRADES.find((u) => u.id === i.construction!.upgrade) : null;
+
   return `<div class="grid">
     <section class="card">
       <h2>Accommodatie</h2>
@@ -32,7 +66,13 @@ export function infraScreen(s: GameState): string {
         <dt>Recuperatieruimte</dt><dd>${i.recoveryLevel ? `niveau ${i.recoveryLevel}/2 (−${i.recoveryLevel * 3} vermoeidheid per week)` : 'geen'}</dd>
         <dt>Opleidingscentrum</dt><dd>${i.academyLevel ? `niveau ${i.academyLevel}/3` : 'geen'} <span class="muted small">(${i.academyLevel ? `+${i.academyLevel} doorstromer(s) per seizoen, betere talenten` : 'jeugd traint op het A-terrein'})</span></dd>
       </dl>
-      ${building ? `<p class="attention-inline">🏗️ Bezig: ${esc(building.label)}, nog ${i.construction!.weeksLeft} weken.</p>` : ''}
+      ${
+        i.constructions.length
+          ? `<p class="attention-inline">🏗️ Bezig: ${i.constructions
+              .map((c) => `${esc(UPGRADES.find((u) => u.id === c.upgrade)!.label)}${c.seats ? ` (+${c.seats} plaatsen)` : ''}, nog ${weeks(c.weeksLeft)}`)
+              .join(' · ')}</p>`
+          : ''
+      }
     </section>
     <section class="card">
       <h2>Onderhoud en energie ${hint('Dit is de post "onderhoud & energie" op je weekrekening: gras, verwarming, verlichting, poetsen en klein herstel. Minder onderhouden is goedkoper, maar het complex ziet er slechter uit (minder toeschouwers) en er gaat vaker iets stuk.')}</h2>
@@ -48,28 +88,67 @@ export function infraScreen(s: GameState): string {
           )
           .join('')}
       </div>
-      <h3>Zonnepanelen en led</h3>
-      <p class="muted small">Eenmalige investering van ${euro(greenEnergyCost(s))}: daarna betaal je elke week ${Math.round(GREEN_ENERGY_SAVING * 100)}% minder
-      (${euro(Math.round(facilityCost(s) * GREEN_ENERGY_SAVING))} per week). Terugverdiend na ongeveer drie seizoenen; de prijs hangt af van hoe groot je complex is.</p>
-      ${
-        i.greenEnergy
-          ? `<p class="attention-inline small">☀️ De panelen liggen er: ${Math.round(GREEN_ENERGY_SAVING * 100)}% minder vaste kosten.</p>`
-          : `<button class="primary" data-action="green-energy" ${s.cash < greenEnergyCost(s) ? 'disabled' : ''}>Zonnepanelen plaatsen (${euro(greenEnergyCost(s))})</button>`
-      }
+      <p class="muted small">☀️ Zonnepanelen en led drukken deze factuur met ${Math.round(GREEN_ENERGY_SAVING * 100)}%
+      (${euro(Math.round(facilityCost(s) * GREEN_ENERGY_SAVING))} per week). ${
+        i.greenEnergy ? 'Ze liggen er al.' : 'Je vindt ze bij de bouwprojecten hieronder.'
+      }</p>
     </section>
     <section class="card span2">
-      <h2>Bouwprojecten</h2>
-      <p class="muted small">Eén project tegelijk. Te weinig geld? Neem een lening bij Financiën.${s.investor === 'aannemer' ? ' Je aannemer bouwt 15% goedkoper.' : ''}</p>
+      <h2>Bouwprojecten ${hint(`Er mogen ${MAX_PROJECTS} werven tegelijk lopen. Elk project wordt meteen betaald en is klaar na de vermelde bouwtijd.`)}</h2>
+      <p class="muted small">Maximaal ${MAX_PROJECTS} projecten tegelijk — nu bezig: <strong>${i.constructions.length}</strong>.
+        Te weinig geld? Neem een lening bij Financiën.${s.investor === 'aannemer' ? ' Je aannemer bouwt 15% goedkoper.' : ''}</p>
+      ${tribuneCard(s)}
       <div class="choice-grid two">
-        ${UPGRADES.map((u) => {
-          const reason = canUpgrade(s, u.id);
-          return `<div class="choice static"><strong>${esc(u.label)}</strong><span>${esc(u.description)}</span>
-            <span class="big">${euro(upgradeCost(s, u.id))}</span><span class="muted small">${u.weeks} weken bouwtijd</span>
-            ${reason ? `<span class="muted small">${esc(reason)}</span>` : `<button class="sm primary" data-action="upgrade" data-id="${u.id}">Starten</button>`}</div>`;
-        }).join('')}
+        ${UPGRADES.filter((u) => u.id !== 'tribune')
+          .map((u) => {
+            const reason = canUpgrade(s, u.id);
+            const busy = s.infrastructure.constructions.find((c) => c.upgrade === u.id);
+            return `<div class="choice static"><strong>${esc(u.label)}</strong><span>${esc(u.description)}</span>
+            <span class="big">${euro(upgradeCost(s, u.id))}</span><span class="muted small">${upgradeWeeks(u.id)} weken bouwtijd</span>
+            ${
+              busy
+                ? `<span class="attention-inline small">🏗️ bezig, nog ${weeks(busy.weeksLeft)}</span>`
+                : reason
+                  ? `<span class="muted small">${esc(reason)}</span>`
+                  : `<button class="sm primary" data-action="upgrade" data-id="${u.id}" ${s.cash < upgradeCost(s, u.id) ? 'disabled' : ''}>Starten</button>`
+            }</div>`;
+          })
+          .join('')}
       </div>
     </section>
   </div>`;
+}
+
+/** De jeugdwerking: welke ploegen je in competitie hebt en wat ze vragen. */
+function youthCard(s: GameState): string {
+  const c = s.community;
+  const max = maxYouthTeams(s);
+  const want = teamsFor(s);
+  const shortage = youthShortage(s);
+  const coach = s.staff.find((x) => x.role === 'jeugdcoordinator');
+  const factor = youthCapacityFactor(s);
+
+  const reasons: string[] = [];
+  if (s.infrastructure.pitch !== 'kunstgras') reasons.push('kunstgras (+2 ploegen)');
+  if (s.infrastructure.lightingLevel < 2) reasons.push('verlichting niveau 2 (+1)');
+  if (s.infrastructure.academyLevel < 3) reasons.push(`opleidingscentrum (+2 per niveau, nu ${s.infrastructure.academyLevel}/3)`);
+
+  return `<section class="card span2">
+    <h2>Jeugdwerking: ${c.youthTeams} ploegen ${hint(`Elke ploeg telt ongeveer ${MEMBERS_PER_TEAM} leden en bindt ${VOLUNTEERS_PER_TEAM} vrijwilligers: een jeugdtrainer en een ploegafgevaardigde. Zit je aan het plafond van je accommodatie, dan haken ouders af en groeit je ledenaantal niet meer.`)}</h2>
+    <p class="small">${teamNames(s).map((t) => `<span class="tag">${t}</span>`).join(' ')}</p>
+    <dl class="facts">
+      <dt>Leden</dt><dd>${c.youthMembers} <span class="muted small">(±${MEMBERS_PER_TEAM} per ploeg)</span></dd>
+      <dt>Begeleiding</dt><dd class="${shortage ? 'neg' : ''}">${boundVolunteers(s)} vrijwilligers nodig, ${Math.min(c.volunteers, boundVolunteers(s))} beschikbaar${
+        shortage ? ` — <strong>${shortage} te kort</strong>: ouders haken af en je vrijwilligers branden op` : ''
+      }</dd>
+      <dt>Coördinator</dt><dd>${coach ? `${esc(coach.name)} (${coach.skill}/100)` : '<span class="neg">geen — je jeugd draait op goodwill</span>'}</dd>
+      <dt>Plaats op het complex</dt><dd class="${c.youthTeams >= max ? 'neg' : ''}">${c.youthTeams} van ${max} ploegen${c.youthTeams >= max ? ' — vol' : ''}</dd>
+      <dt>Instroom</dt><dd>${Math.round(factor * 100)}% van normaal${factor < 1 ? ' door plaatsgebrek of te weinig begeleiding' : ''}</dd>
+      <dt>Bij dit ledenaantal</dt><dd>${want} ploegen ${want > c.youthTeams ? '<span class="pos">(er komt er een bij in week 10)</span>' : want < c.youthTeams ? '<span class="neg">(er verdwijnt er een in week 10)</span>' : '(stabiel)'}</dd>
+    </dl>
+    <p class="muted small">Meer ploegen betekent meer leden, meer lidgeld, meer subsidie en meer doorstroming naar je A-kern — maar ook meer vrijwilligers die je niet voor evenementen kunt inzetten.
+    ${reasons.length ? `Meer plaats maken kan met: ${reasons.join(', ')}.` : 'Je complex kan geen ploegen meer bijnemen.'}</p>
+  </section>`;
 }
 
 export function eventsScreen(s: GameState): string {
@@ -82,7 +161,9 @@ export function eventsScreen(s: GameState): string {
     .join('');
   return `
   <section class="card">
-    <h2>Vrijwilligers: ${c.volunteers} ${hint('Vrijwilligers dragen de kantine en elk evenement. Hun tevredenheid hangt af van de sfeer, je reputatie, je kantineverantwoordelijke en hoeveel evenementen je kort na elkaar organiseert. Onder 50 haken er mensen af, boven 65 sluiten er spontaan mensen aan.')}</h2>
+    <h2>Vrijwilligers: ${c.volunteers} ${hint('Vrijwilligers dragen de kantine, de jeugdploegen en elk evenement. Elke jeugdploeg bindt er twee (een jeugdtrainer en een ploegafgevaardigde); alleen de rest kun je voor evenementen inzetten. Hun tevredenheid hangt af van de sfeer, je reputatie, je kantineverantwoordelijke, je jeugdcoördinator en hoeveel evenementen je kort na elkaar organiseert.')}</h2>
+    <p class="small"><span class="tag">${boundVolunteers(s)} bij de jeugd</span> <span class="tag">${freeVolunteers(s)} vrij voor evenementen</span>
+      ${youthShortage(s) ? `<span class="tag bad">${youthShortage(s)} te kort bij de jeugd</span>` : ''}</p>
     <p class="muted small">Tevredenheid: <strong class="${sat < 45 ? 'neg' : sat > 65 ? 'pos' : ''}">${Math.round(sat)}/100</strong> — ${sat < 45 ? 'er haken regelmatig mensen af' : sat > 65 ? 'er sluiten spontaan mensen aan' : 'stabiel'}.
     Elk evenement vraagt een minimum aantal vrijwilligers en weegt daarna een aantal weken op de groep${c.volunteerLoyaltyWeeks ? `; dankzij het vrijwilligersfeest haakt er de komende ${weeks(c.volunteerLoyaltyWeeks)} bijna niemand af` : ''}.</p>
     ${recruiter ? `<p class="attention-inline small">${esc(recruiter.name)} regelt de werving van vrijwilligers.</p>` : ''}
@@ -114,7 +195,7 @@ export function eventsScreen(s: GameState): string {
             <dt>Opbrengst</dt><dd>${euro(min)} tot ${euro(max)}</dd>
             <dt>Netto</dt><dd><span class="${netMin < 0 ? 'neg' : 'pos'}">${euro(netMin)}</span> tot <span class="${netMax < 0 ? 'neg' : 'pos'}">${euro(netMax)}</span></dd>
             <dt>Uitbetaling</dt><dd>na ${weeks(e.payoutWeeks)}</dd>
-            <dt>Vrijwilligers</dt><dd class="${c.volunteers < e.volunteers ? 'neg' : ''}">${e.volunteers} nodig ${c.volunteers < e.volunteers ? `<span class="muted small">(je hebt er ${c.volunteers})</span>` : ''}</dd>
+            <dt>Vrijwilligers</dt><dd class="${freeVolunteers(s) < e.volunteers ? 'neg' : ''}">${e.volunteers} vrij nodig ${freeVolunteers(s) < e.volunteers ? `<span class="muted small">(je hebt er ${freeVolunteers(s)} vrij)</span>` : ''}</dd>
             <dt>Daarna</dt><dd>${e.cooldown} weken wachten</dd>
             <dt>Dit seizoen</dt><dd class="${eventsThisSeason(s, e.id) >= e.maxPerSeason ? 'neg' : ''}">${eventsThisSeason(s, e.id)}/${e.maxPerSeason}</dd>
           </dl>
@@ -226,6 +307,7 @@ export function clubScreen(s: GameState): string {
         <table class="compact"><tbody>${r.parts.map((p) => `<tr><td>${p.label}</td><td>${bar(p.score)}</td><td class="num">${p.score}</td></tr>`).join('')}</tbody></table></section>`,
       )
       .join('')}
+    ${youthCard(s)}
     <section class="card">
       <h2>Clubbeleid: lidgeld jeugd</h2>
       <div class="inline-form">
@@ -244,9 +326,9 @@ export function clubScreen(s: GameState): string {
       <dl class="facts">
         <dt>Supporters</dt><dd>${c.fanBase}</dd>
         <dt>Sfeer</dt><dd>${bar(c.fanMood)} ${Math.round(c.fanMood)}</dd>
-        <dt>Vrijwilligers</dt><dd>${c.volunteers}</dd>
+        <dt>Vrijwilligers</dt><dd>${c.volunteers} <span class="muted small">(${boundVolunteers(s)} bij de jeugd, ${freeVolunteers(s)} vrij)</span></dd>
         <dt>Reputatie</dt><dd>${bar(c.reputation)} ${Math.round(c.reputation)}</dd>
-        <dt>Jeugdleden</dt><dd>${c.youthMembers}</dd>
+        <dt>Jeugdleden</dt><dd>${c.youthMembers} <span class="muted small">in ${c.youthTeams} ploegen</span></dd>
       </dl>
     </section>
     <section class="card span2">

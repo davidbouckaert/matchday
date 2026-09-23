@@ -47,7 +47,7 @@ export function contractsScreen(s: GameState): string {
       <p class="muted small">Een contract loopt af op het einde van een seizoen. Verleng je niet op tijd, dan vertrekt de speler gratis.
       Bied je minder dan hij vraagt, dan is de kans op een akkoord kleiner en zakt zijn moraal; bied je meer, dan tekent hij graag,
       maar je betaalt het elke week opnieuw. Loonmassa nu: <strong>${euro(wages)}</strong> per week.</p>
-      ${agent ? `<p class="attention-inline small">${esc(agent.name)} regelt de verlengingen vanaf week 36. Neem de taak terug bij Staff om zelf te onderhandelen.</p>` : ''}
+      ${agent ? `<p class="attention-inline small">${esc(agent.name)} regelt de verlengingen vanaf week 36. Neem de taak terug bij Personeel om zelf te onderhandelen.</p>` : ''}
       <h3>Loopt af (${expiring.length})</h3>
       <div class="table-wrap"><table class="compact" data-sort-id="contracten-af">
         <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Contract</th><th>Loon nu</th><th>Vraagt</th><th data-nosort>Jouw voorstel</th></tr></thead>

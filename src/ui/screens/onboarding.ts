@@ -35,14 +35,14 @@ export function onboardingSteps(s: GameState): Step[] {
     },
     {
       done: s.staff.length > 2,
-      text: 'Werf minstens één extra staflid aan (een T2 of een scout is een goede eerste stap)',
-      where: 'Staff',
+      text: 'Werf minstens één extra personeelslid aan (een assistent-trainer of een scout is een goede eerste stap)',
+      where: 'Personeel',
       screen: 'staff',
     },
     {
       done: TASKS.some((t) => !!delegate(s, t.id)),
       text: 'Besteed een taak uit: kies per taak wie ze doet',
-      where: 'Staff',
+      where: 'Personeel',
       screen: 'staff',
     },
     {
@@ -53,9 +53,9 @@ export function onboardingSteps(s: GameState): Step[] {
     },
     {
       done: s.merch.active,
-      text: 'Open je fanshop: sjaals verkopen bijna zichzelf',
-      where: 'Club › Fanshop',
-      screen: 'fanshop',
+      text: 'Open je clubwinkel: sjaals verkopen bijna zichzelf',
+      where: 'Club › Clubwinkel',
+      screen: 'clubwinkel',
     },
     {
       done: s.canteen.items.some((i) => Math.abs(i.price - canteenDef(i.id).ref) > 0.01) || !!delegate(s, 'horeca') || s.canteen.concessions.length > 0,

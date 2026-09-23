@@ -43,7 +43,7 @@ export function strategyScreen(s: GameState): string {
   const t = s.tactics;
   const coach = delegate(s, 'opstelling');
   const lockTip = coach
-    ? `Uitbesteed aan ${coach.name} (${roleDef(coach.role).label}). Neem de taak "Strategie" terug bij Staff om hier zelf te beslissen.`
+    ? `Uitbesteed aan ${coach.name} (${roleDef(coach.role).label}). Neem de taak "Strategie" terug bij Personeel om hier zelf te beslissen.`
     : '';
   const fs = (inner: string) =>
     coach ? `<fieldset class="locked" disabled title="${esc(lockTip)}">${inner}</fieldset>` : `<fieldset>${inner}</fieldset>`;

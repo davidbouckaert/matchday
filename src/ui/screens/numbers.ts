@@ -34,9 +34,9 @@ function weekView(s: GameState, toggle: string): string {
     .join('');
   return `<section class="card span2">
     ${toggle}
-    <h2>Cijfers per week ${hint('De laatste 20 weken. Tickets, consumpties, porties en artikelen zijn aantallen; het bedrag is wat die bronnen die week opbrachten (inkoop van de shop inbegrepen).')}</h2>
+    <h2>Cijfers per week ${hint('De laatste 20 weken. Tickets, consumpties, porties en artikelen zijn aantallen; het bedrag is wat die bronnen die week opbrachten (inkoop van de winkel inbegrepen).')}</h2>
     <div class="table-wrap"><table class="compact">
-      <thead><tr><th>Week</th><th class="num">Tickets</th><th class="num">Consumpties</th><th class="num">Porties kraam</th><th class="num">Artikelen shop</th><th class="num">Opbrengst</th><th>Waarvan</th></tr></thead>
+      <thead><tr><th>Week</th><th class="num">Tickets</th><th class="num">Consumpties</th><th class="num">Porties kraam</th><th class="num">Artikelen winkel</th><th class="num">Opbrengst</th><th>Waarvan</th></tr></thead>
       <tbody>${rows || '<tr><td colspan="7" class="muted">Speel eerst een week.</td></tr>'}</tbody>
     </table></div>
   </section>`;
@@ -61,7 +61,7 @@ function seasonView(s: GameState, toggle: string): string {
     <section class="card span2">
       ${toggle}
       <h2>Cijfers per seizoen ${hint('Alles wordt geteld op het moment van de verkoop. Vergelijk seizoenen om te zien wat een prijswijziging, een bouwproject of een betere ploeg opbrengt.')}</h2>
-      <p class="muted small">Het lopende seizoen telt nog verder op. Tickets en consumpties komen van thuiswedstrijden, merchandising ook van de webshop.</p>
+      <p class="muted small">Het lopende seizoen telt nog verder op. Tickets en consumpties komen van thuiswedstrijden, clubartikelen ook van de webwinkel.</p>
       <div class="table-wrap"><table class="compact">
         <thead><tr><th>Cijfer</th>${shown.map((st) => column(s, st, st.season === s.season)).join('')}</tr></thead>
         <tbody>
@@ -74,11 +74,11 @@ function seasonView(s: GameState, toggle: string): string {
           <tr class="total"><td>Samen aan de toog</td>${cell((st) => n(totalOf(st.canteen)))}</tr>
           <tr class="section"><td colspan="${shown.length + 1}"><strong>Concessies (porties)</strong></td></tr>
           ${CONCESSIONS.map((d) => `<tr><td>${esc(d.label)}</td>${cell((st) => n(st.concessions[d.id]))}</tr>`).join('')}
-          <tr class="section"><td colspan="${shown.length + 1}"><strong>Fanshop (artikelen)</strong></td></tr>
+          <tr class="section"><td colspan="${shown.length + 1}"><strong>Clubwinkel (artikelen)</strong></td></tr>
           ${MERCH_ITEMS.map((d) => `<tr><td>${esc(d.label)}</td>${cell((st) => n(st.merch[d.id]))}</tr>`).join('')}
-          <tr class="total"><td>Samen in de shop</td>${cell((st) => n(totalOf(st.merch)))}</tr>
+          <tr class="total"><td>Samen in de winkel</td>${cell((st) => n(totalOf(st.merch)))}</tr>
           <tr class="section"><td colspan="${shown.length + 1}"><strong>Opbrengst per bron (dit en vorig seizoen)</strong></td></tr>
-          ${(['tickets', 'kantine', 'horeca concessies', 'merchandising', 'inkoop shop', 'werking shop', 'sponsors', 'lidgelden', 'evenementen', 'premies'] as const)
+          ${(['tickets', 'kantine', 'horeca concessies', 'clubartikelen', 'inkoop winkel', 'werking winkel', 'sponsors', 'lidgelden', 'evenementen', 'premies'] as const)
             .map(
               (cat) =>
                 `<tr><td>${cat}</td>${shown

@@ -16,7 +16,7 @@ function faq(): QA[] {
     {
       q: 'Hoe verdien ik geld?',
       a: `Sponsors en lidgelden lopen elke week door. Tickets, kantine en de kraampjes verdien je alleen op een <strong>thuiswedstrijd</strong>;
-        de fanshop draait ook tussendoor. Evenementen brengen in één klap iets op, maar het geld komt pas een paar weken later.
+        de clubwinkel draait ook tussendoor. Evenementen brengen in één klap iets op, maar het geld komt pas een paar weken later.
         Van elke ticketeuro gaat 8% naar de bezoekende club en de bond.`,
     },
     {
@@ -34,15 +34,23 @@ function faq(): QA[] {
     },
     {
       q: 'Wat doet een taak uitbesteden?',
-      a: 'Bij Staff kies je per taak wie ze doet. Een staflid beslist dan elke week zelf. Zijn eigen vakgebied doet hij op vol niveau, een taak die er naast ligt met minder kennis. Hoe beter hij is, hoe meer taken hij aankan (1 tot 4).',
+      a: 'Bij Personeel kies je per taak wie ze doet. Een personeelslid beslist dan elke week zelf. Zijn eigen vakgebied doet hij op vol niveau, een taak die er naast ligt met minder kennis. Hoe beter hij is, hoe meer taken hij aankan (1 tot 4).',
     },
     {
       q: 'Hoe ontwikkelen mijn spelers zich?',
       a: 'Om de 4 weken. Jong = veel groei (17 jaar is maximaal, vanaf 31 groeit niemand nog), veel spelen helpt, minstens 3 trainingen per week ook. Wie op de bank zit, gaat er vanaf zijn 26ste op achteruit.',
     },
     {
-      q: 'Waarom kan ik die staflid niet aanwerven?',
-      a: 'Sommige functies hebben eerst infrastructuur of een werking nodig: een kinesist een recuperatieruimte, een data-analist wifi, een kantineverantwoordelijke een kantine van niveau 2. Je ziet de reden bij de kandidaat.',
+      q: 'Hoe werkt mijn jeugdwerking?',
+      a: `Je club start met een paar jeugdploegen (U7 tot U17). Elke ploeg telt ongeveer 55 leden en bindt <strong>2 vrijwilligers</strong>:
+        een jeugdtrainer en een ploegafgevaardigde. Die kun je niet meer voor een evenement inzetten — bij Club › Evenementen zie je hoeveel er nog vrij zijn.
+        Bij de inschrijvingen (week 10) komt er een ploeg bij of gaat er een weg, één per seizoen. Hoeveel ploegen je complex aankan hangt af van kunstgras,
+        verlichting en je opleidingscentrum; zit je aan dat plafond, dan haken ouders af. Meer ploegen = meer lidgeld, meer subsidie en meer doorstroming,
+        maar ook meer werkingskosten en meer volk dat je moet vinden.`,
+    },
+    {
+      q: 'Waarom kan ik die personeelslid niet aanwerven?',
+      a: 'Sommige functies hebben eerst infrastructuur of een werking nodig: een kinesist een recuperatieruimte, een data-analist wifi, een kantineverantwoordelijke een kantine van niveau 2, een jeugdcoördinator minstens 3 jeugdploegen. Je ziet de reden bij de kandidaat.',
     },
     {
       q: 'Waarom krijg ik geen sponsor van een bepaald type?',
@@ -50,12 +58,75 @@ function faq(): QA[] {
     },
     {
       q: 'Wat levert promotie op?',
-      a: `Alles schaalt mee: het supportersplafond, de normale ticketprijs, de sponsorbedragen voor nieuwe contracten, de tv-rechten en de richtprijzen in de fanshop.
+      a: `Alles schaalt mee: het supportersplafond, de normale ticketprijs, de sponsorbedragen voor nieuwe contracten, de tv-rechten en de richtprijzen in de clubwinkel.
         Je bestaande sponsors blijven op hun oude bedrag, maar ze zijn na promotie een pak tevredener: de besten bieden spontaan een hoger contract aan en een extra bijdrage vragen lukt vaker.
         Er is ook een premie, die je op het einde van het seizoen apart geboekt ziet staan onder <strong>premies</strong> (in het weekrapport, bij Club › Cijfers en in je clubgeschiedenis).
         Voetbal Vlaanderland betaalt in de amateurreeksen géén prijzengeld: wat je krijgt zijn premies van je sponsors, een kampioenenreceptie en een tombola.
         1ste Provinciale €2.000 (plaats 2: €1.000), 3de Nationale €4.500 (€2.500), 2de Nationale €7.000 (€4.000), 1ste Nationale €40.000 (€25.000), Challenger Pro Liga €160.000 (€95.000).
-        Daar staat tegenover dat spelers ongeveer 14% en staff 10% meer vragen, en dat de aansluiting bij de bond en de verzekeringen duurder worden.`,
+        Daar staat tegenover dat spelers ongeveer 14% en personeel 10% meer vragen, en dat de aansluiting bij de bond en de verzekeringen duurder worden.`,
+    },
+    {
+      q: 'Wat is die persconferentie in week 1?',
+      a: `Elk seizoen begint met een opening: de pers voorspelt waar je eindigt, je ziet wie er uit de jeugd doorstroomt, het bestuur legt drie doelen op tafel
+        (één per categorie van je clubscore) en jij spreekt je ambitie uit. Die keuze is meteen voelbaar — supporters, spelers en sponsors reageren erop —
+        en op het einde van het seizoen word je erop afgerekend: waarmaken levert een premie op, grootspraak die niet lukt kost geld én reputatie.
+        De drie doelen van het bestuur staan het hele seizoen op je overzicht, met hoever je staat.`,
+    },
+    {
+      q: 'Hoe sterk zijn mijn tegenstanders?',
+      a: `Elke reeks ligt duidelijk boven de vorige: de zwakste ploeg van 2de nationale is nog altijd steviger dan de zwakste van 3de.
+        Binnen een reeks zijn de net gepromoveerde clubs het zwakst en de net gedegradeerde het sterkst — en als jij promoveert, hoor je zelf bij de zwakste.
+        Bij Ploeg › Selectie zie je je teamsterkte tegenover de gemiddelde tegenstander van je reeks.`,
+    },
+    {
+      q: 'Wie scoort er in mijn ploeg?',
+      a: `Elk doelpunt krijgt een maker en een minuut. Aanvallers scoren het vaakst, middenvelders geregeld, verdedigers af en toe;
+        binnen een linie scoort de betere speler meer, en je strafschopnemer krijgt een duwtje. Je ziet het in het weekrapport
+        (met de volledige opstelling eronder) en in de kolom Goals bij Ploeg › Selectie.`,
+    },
+    {
+      q: 'Wat is het weekmoment op mijn dashboard?',
+      a: `Elke week ligt er iets op je bureau dat nu beslist moet worden: het regent al drie dagen, de bus is defect, je hoofdsponsor komt kijken.
+        Het verschijnt als een venster zodra je het weekrapport sluit: twee of drie knoppen, en meteen daarna lees je in hetzelfde venster wat je keuze opleverde.
+        Wil je eerst rondkijken, klik dan op "Later beslissen"; op je overzicht blijft een kader staan met een knop om alsnog te beslissen.
+        Doe je niets voor je op "Volgende week" drukt, dan gaat de laatste optie door — niet beslissen is ook beslissen.
+        Dezelfde situatie komt minstens 12 weken lang niet opnieuw.`,
+    },
+    {
+      q: 'Schalen mijn evenementen mee als ik promoveer?',
+      a: `Ja. De opbrengst hangt af van je supporters, je jeugdleden, je sponsorbedragen en je tribune — die groeien allemaal mee — en wordt bovendien
+        met de inflatie vermenigvuldigd. De kosten volgen dezelfde weg: de inflatie plus 12% per reeks, want een tent, een band en een traiteur
+        kosten in 1ste nationale meer dan in provinciale. Bovendien komen er in hogere reeksen nieuwe evenementen bij: een sponsorontbijt en een galabal
+        vanaf 2de nationale, een gala-oefenwedstrijd tegen een profclub en een businessclub-lunch vanaf 1ste nationale, en een internationaal
+        wintertornooi vanaf de Challenger Pro Liga. Die vragen wel een betere kantine of een grotere tribune.`,
+    },
+    {
+      q: 'Wat is mijn aartsrivaal?',
+      a: `Eén club in je reeks is je derby. Die twee wedstrijden per seizoen trekken 75% meer volk, leveren meer kaarten op en wegen dubbel
+        op de sfeer in het dorp. De onderlinge balans blijft bij, ook over seizoenen heen, en staat in je clubmuseum. Blijf je in dezelfde reeks,
+        dan blijft hij je rivaal; promoveer of degradeer je, dan is er een kans dat hij dezelfde weg aflegde.`,
+    },
+    {
+      q: 'Wat gebeurt er als ik niets doe?',
+      a: `Een club die stilstaat, gaat achteruit. Beslis je tien weken lang niets — geen sponsor aangesproken, niets georganiseerd, gebouwd of uitbesteed —
+        dan zakken je sfeer, je reputatie en de tevredenheid van je sponsors langzaam weg, tot het niveau van een slapende club. Je krijgt er een bericht over.
+        Eén beslissing zet die klok weer op nul.`,
+    },
+    {
+      q: 'Hoe stel ik mijn basiself samen?',
+      a: `Elke speler heeft twee knopjes. Met de <strong>ster</strong> zet je hem vast in de basis (★); klik nog eens en je trainer kiest weer zelf.
+        Met het <strong>stoeltje</strong> hou je hem deze week op de bank (⛔) — dan wordt hij niet opgesteld, ook niet door je trainer.
+        Een ✓ betekent: je trainer koos hem. Zet je iemand vast terwijl die linie al vol staat met vastgezette spelers, dan maakt de zwakste van hen plaats.
+        Haal je iemand <strong>uit je basiself</strong>, dan blijft die plaats leeg — je trainer schuift er niemand in. Zolang er een plaats openstaat,
+        kun je niet naar de volgende week: duid zelf iemand aan met de ster, maak de speler weer beschikbaar, of klik op "Alles loslaten".
+        Boven de tabellen zie je per linie hoeveel plaatsen je formatie vraagt en hoeveel er ingevuld zijn (1/1 doel, 4/4 verdediging …).
+        Spelers springen meteen naar de juiste tabel: basiself, bank of niet beschikbaar. Elke tabel kun je in- en uitklappen; de bank staat standaard dicht.`,
+    },
+    {
+      q: 'Hoe werken bouwprojecten?',
+      a: `Er mogen <strong>twee werven tegelijk</strong> lopen. Je betaalt meteen, de werken duren een aantal weken en het resultaat telt pas mee als ze klaar zijn.
+        Bij de tribune kies je zelf hoeveel plaatsen erbij komen (100 tot 2.000): hoe groter je bestelt, hoe goedkoper per zitje, en die korting versnelt: van ongeveer €450 per plaats bij 100
+        naar ongeveer €215 bij 2.000 (ruim de helft goedkoper) — maar hoe langer de werken duren (4 tot 22 weken). Ook de zonnepanelen zijn een bouwproject van 5 weken.`,
     },
     {
       q: 'Wat gebeurt er als ik in het rood ga?',
@@ -85,10 +156,10 @@ export function guideScreen(s: GameState): string {
       Versie ${VERSION}.</p>
       <h3>In het kort</h3>
       <ol class="small">
-        <li><strong>Overzicht</strong> — je dashboard: clubrating, volgende wedstrijd, nieuws en je logboek.</li>
+        <li><strong>Overzicht</strong> — je overzichtsscherm: clubscore, volgende wedstrijd, nieuws en je logboek.</li>
         <li><strong>Ploeg</strong> — selectie en spelersrollen, strategie, transfers en contracten.</li>
-        <li><strong>Staff</strong> — aanwerven, opleiden en per taak kiezen wie ze doet.</li>
-        <li><strong>Club</strong> — kalender, financiën, cijfers, sponsors, fanshop, horeca, evenementen, infrastructuur en clubinfo.</li>
+        <li><strong>Personeel</strong> — aanwerven, opleiden en per taak kiezen wie ze doet.</li>
+        <li><strong>Club</strong> — kalender, financiën, cijfers, sponsors, clubwinkel, horeca, evenementen, infrastructuur en clubinfo.</li>
         <li><strong>Competitie</strong> — de stand, de kalender en de tuchtzaken.</li>
         <li><strong>Invloeden</strong> — elke vermenigvuldiger die op dit moment meespeelt, met zijn herkomst.</li>
       </ol>

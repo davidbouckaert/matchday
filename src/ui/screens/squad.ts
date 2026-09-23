@@ -1,7 +1,7 @@
 import type { GameState, Player, Position } from '../../engine/types';
 import { formatWeek, isTransferWindow } from '../../engine/calendar';
 import { DIVISIONS } from '../../engine/data/divisions';
-import { POSITIONS, currentBid, isCorePlayer, lineupGap, marketValue, overall, selectLineup, teamStrength } from '../../engine/players';
+import { FORMATIONS, POSITIONS, currentBid, isCorePlayer, lineupGap, marketValue, overall, selectLineup, teamStrength } from '../../engine/players';
 import { PLAN_INFO } from '../../engine/strategy';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
@@ -61,7 +61,7 @@ export function squadStats(s: GameState): string {
     <h3>Bonussen en minpunten</h3>
     <div class="mods">
       <span>Samenwerking ${signed(st.chemistry)}</span>
-      <span>Staff (T1, T2, analist) ${signed(st.trainer)}</span>
+      <span>Personeel (hoofdtrainer, assistent-trainer, data-analist) ${signed(st.trainer)}</span>
       <span>Moraal ${signed(st.morale)}</span>
       <span>Vorm ${signed(st.form)}</span>
       <span>Training (scherpte) ${signed(st.sharpness)}</span>
@@ -112,13 +112,109 @@ export function rolesCard(s: GameState): string {
   </section>`;
 }
 
-export function squadScreen(s: GameState): string {
-  const { slots } = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI);
+/** Wie er in de basis staat per linie, met een teller tegenover je formatie. */
+export function lineupCard(s: GameState): string {
+  const need = FORMATIONS[s.tactics.formation];
+  const { slots } = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps);
+  const coach = delegate(s, 'opstelling');
+
+  const lines = POSITIONS.map((pos) => {
+    const filled = slots.filter((x) => x.zone === pos);
+    const own = filled.filter((x) => x.player.position === pos).length;
+    const foreign = filled.length - own;
+    const ready = s.players.filter(
+      (p) => p.position === pos && p.injuryWeeks === 0 && p.suspended === 0 && p.loan?.type !== 'uit' && !s.tactics.benched.includes(p.id),
+    ).length;
+    const openHere = Math.min(need[pos], s.tactics.gaps?.[pos] ?? 0);
+    const ok = filled.length >= need[pos] && !foreign;
+    return `<div class="line ${ok ? 'ok' : filled.length < need[pos] ? 'bad' : 'warn'}">
+      <span class="line-head"><strong>${ZONE_LABEL[pos]}</strong>
+        <span class="count">${filled.length}/${need[pos]}</span></span>
+      <span class="muted small">${ready} speelklaar in de kern${foreign ? ` · <span class="neg">${foreign} buiten positie</span>` : ''}${
+        openHere ? ` · <span class="neg">${openHere} plaats(en) die jij openliet</span>` : filled.length < need[pos] ? ` · <span class="neg">${need[pos] - filled.length} plaats(en) leeg</span>` : ''
+      }</span>
+      <ul class="line-players small">
+        ${Array.from({ length: openHere }, () => '<li class="neg open-slot">— open, duid zelf iemand aan —</li>').join('')}
+        ${filled
+          .sort((a, b) => b.rating - a.rating)
+          .map(
+            (x) => `<li>${s.tactics.manualXI.includes(x.player.id) ? '<span class="pin" title="door jou vastgezet">★</span>' : '<span class="auto" title="gekozen door je trainer">✓</span>'}
+              ${esc(x.player.name)} <span class="muted">${overall(x.player)}</span>${
+                x.player.position !== pos ? ` <span class="tag bad" title="eigenlijk ${x.player.position}">${x.player.position}</span>` : ''
+              }${roleTag(s, x.player.id)}</li>`,
+          )
+          .join('') || (openHere ? '' : '<li class="neg">niemand</li>')}
+      </ul>
+    </div>`;
+  }).join('');
+
+  const total = slots.length;
+  const pinned = s.tactics.manualXI.length;
+  const benched = s.tactics.benched.length;
+  return `<section class="card">
+    <h2>Basiself: <span class="${total < 11 ? 'neg' : ''}">${total}/11</span> ${hint('De teller per linie komt uit je formatie. ★ = door jou vastgezet, ✓ = aangevuld door je trainer. Staat er iemand buiten zijn positie, dan verliest hij 8 punten kwaliteit.')}</h2>
+    <p class="muted small">Formatie <strong>${s.tactics.formation}</strong>${coach ? ` · gekozen door ${esc(coach.name)}` : ''} · wijzig de formatie bij Ploeg › Strategie.
+      ${pinned ? `<strong>${pinned}</strong> speler(s) vastgezet` : 'Je trainer kiest voorlopig alles zelf'}${benched ? ` · <strong>${benched}</strong> op de bank gezet` : ''}.</p>
+    <div class="lineup-lines">${lines}</div>
+    ${
+      coach || (!pinned && !benched)
+        ? ''
+        : '<p class="actions left"><button class="sm ghost" data-action="auto-lineup">Alles loslaten (trainer kiest)</button></p>'
+    }
+  </section>`;
+}
+
+/** Eén rij in de spelerstabel. */
+function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, window: boolean, coach: ReturnType<typeof delegate>, lockTip: string): string {
+  const expiring = p.contractUntil <= s.season;
+  const zone = zoneOf.get(p.id);
+  const pinned = s.tactics.manualXI.includes(p.id);
+  const benched = s.tactics.benched.includes(p.id);
+  const unavailable = p.injuryWeeks > 0 || p.suspended > 0 || p.loan?.type === 'uit';
+  const pick = coach
+    ? `<span class="locked-cell" title="${esc(lockTip)}"><button class="star" disabled>${zone ? '✓' : '☆'}</button></span>`
+    : unavailable
+      ? '<span class="muted">–</span>'
+      : `<button class="star ${pinned ? 'on' : ''}" data-action="starter" data-id="${p.id}" title="${
+          pinned ? 'Niet meer vastzetten: je trainer kiest weer' : 'Vast in de basis zetten'
+        }">${pinned ? '★' : zone ? '✓' : '☆'}</button>
+        <button class="bench ${benched ? 'on' : ''}" data-action="bench" data-id="${p.id}" title="${
+          benched ? 'Weer beschikbaar maken' : 'Deze week niet opstellen'
+        }">${benched ? '⛔' : '🪑'}</button>`;
+  return `<tr class="${zone ? 'starter' : benched ? 'benched' : ''}">
+    <td data-v="${zone ? 0 : benched ? 2 : 1}" class="pick-cell">${pick}${zone && zone !== p.position ? ` <span class="tag bad" title="speelt buiten zijn positie">${zone}</span>` : ''}</td>
+    <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
+    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" title="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">🩹 ${p.injuryWeeks}w</span>` : ''}${p.suspended ? ` <span class="tag bad" title="geschorst">⛔ ${p.suspended} wedstr.</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
+    <td>${p.age}</td>
+    <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
+    <td data-v="${p.trend}" class="small ${p.trend > 0 ? 'pos' : p.trend < 0 ? 'neg' : 'muted'}" title="Verandering bij de laatste evolutie (om de 4 weken)">${p.trend > 0 ? `▲ +${p.trend}` : p.trend < 0 ? `▼ ${p.trend}` : '–'}</td>
+    <td class="small" data-v="${p.technique}">T ${Math.round(p.technique)} · F ${Math.round(p.physical)}</td>
+    <td data-v="${p.starts}" title="Basisplaatsen dit seizoen (deze periode: ${p.periodStarts})">${p.starts}</td>
+    <td data-v="${p.goals}" title="Doelpunten dit seizoen">${p.goals ? `⚽ ${p.goals}` : '–'}</td>
+    <td data-v="${p.morale}">${bar(p.morale)}</td>
+    <td data-v="${p.form}">${signed(Math.round(p.form))}</td>
+    <td data-v="${p.fatigue}" class="${p.fatigue > 35 ? 'fatigue-hi' : ''}">${Math.round(p.fatigue)}</td>
+    <td data-v="${p.yellowCards * 10 + p.redCards * 30}" class="small">${p.yellowCards ? `🟨${p.yellowCards}` : ''}${p.redCards ? ` 🟥${p.redCards}` : ''}</td>
+    <td data-v="${p.wage}">${euro(p.wage)}</td>
+    <td data-v="${p.contractUntil}" class="${expiring ? 'neg' : ''}">S${p.contractUntil}</td>
+    <td data-v="${marketValue(p, s.marketIndex)}">${euro(marketValue(p, s.marketIndex))}</td>
+    <td class="btns">
+      <button class="sm" data-action="goto-contracts" data-id="${p.id}" title="Onderhandelen over een nieuw contract (tab Contracten)">Contract</button>
+      ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" title="Verkoop tegen het bod van deze week">Verkoop ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
+      <button class="sm ghost" data-action="release" data-id="${p.id}" title="Contract ontbinden">Ontbind</button>
+    </td>
+  </tr>`;
+}
+
+const TABLE_HEAD = `<thead><tr><th>Basis</th><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th title="Evolutie om de 4 weken">Trend</th><th>Techn/Fys</th><th title="Basisplaatsen dit seizoen">Basis</th><th title="Doelpunten dit seizoen">Goals</th><th>Moraal</th><th>Vorm</th><th title="Vermoeidheid 0-100">Moe</th><th>Kaarten</th><th>Loon/w</th><th>Contract</th><th>Waarde</th><th data-nosort></th></tr></thead>`;
+
+export function squadScreen(s: GameState, open: Record<string, boolean> = { basis: true, bank: false, out: false }): string {
+  const { slots } = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps);
   const zoneOf = new Map(slots.map((x) => [x.player.id, x.zone]));
   const window = isTransferWindow(s.week);
   const wages = s.players.reduce((sum, p) => sum + p.wage, 0);
   const coach = delegate(s, 'opstelling');
-  const lockTip = coach ? `De basiself wordt gekozen door ${coach.name}. Neem de taak "Strategie" terug bij Staff om zelf spelers vast te zetten.` : '';
+  const lockTip = coach ? `De basiself wordt gekozen door ${coach.name}. Neem de taak "Strategie" terug bij Personeel om zelf spelers vast te zetten.` : '';
 
   const offers = s.playerOffers
     .map((o) => {
@@ -129,49 +225,35 @@ export function squadScreen(s: GameState): string {
     })
     .join('');
 
-  const rows = [...s.players]
-    .sort((a, b) => POSITIONS.indexOf(a.position) - POSITIONS.indexOf(b.position) || overall(b) - overall(a))
-    .map((p) => {
-      const expiring = p.contractUntil <= s.season;
-      const zone = zoneOf.get(p.id);
-      const pinned = s.tactics.manualXI.includes(p.id);
-      return `<tr class="${zone ? 'starter' : ''}">
-        <td data-v="${zone ? 0 : 1}">${coach ? `<span class="locked-cell" title="${esc(lockTip)}"><button class="star" disabled>${zone ? '✓' : '☆'}</button></span>` : `<button class="star ${pinned ? 'on' : ''}" data-action="starter" data-id="${p.id}" title="${pinned ? 'Uit je basiself halen' : 'Vast in de basis zetten'}">${pinned ? '★' : zone ? '✓' : '☆'}</button>`}${zone && zone !== p.position ? ` <span class="tag bad" title="speelt buiten zijn positie">${zone}</span>` : ''}</td>
-        <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-        <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" title="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">🩹 ${p.injuryWeeks}w</span>` : ''}${p.suspended ? ` <span class="tag bad" title="geschorst">⛔ ${p.suspended} wedstr.</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
-        <td>${p.age}</td>
-        <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
-        <td data-v="${p.trend}" class="small ${p.trend > 0 ? 'pos' : p.trend < 0 ? 'neg' : 'muted'}" title="Verandering bij de laatste evolutie (om de 4 weken)">${p.trend > 0 ? `▲ +${p.trend}` : p.trend < 0 ? `▼ ${p.trend}` : '–'}</td>
-        <td class="small" data-v="${p.technique}">T ${Math.round(p.technique)} · F ${Math.round(p.physical)}</td>
-        <td data-v="${p.starts}" title="Basisplaatsen dit seizoen (deze periode: ${p.periodStarts})">${p.starts}</td>
-        <td data-v="${p.morale}">${bar(p.morale)}</td>
-        <td data-v="${p.form}">${signed(Math.round(p.form))}</td>
-        <td data-v="${p.fatigue}" class="${p.fatigue > 35 ? 'fatigue-hi' : ''}">${Math.round(p.fatigue)}</td>
-        <td data-v="${p.yellowCards * 10 + p.redCards * 30}" class="small">${p.yellowCards ? `🟨${p.yellowCards}` : ''}${p.redCards ? ` 🟥${p.redCards}` : ''}</td>
-        <td data-v="${p.wage}">${euro(p.wage)}</td>
-        <td data-v="${p.contractUntil}" class="${expiring ? 'neg' : ''}">S${p.contractUntil}</td>
-        <td data-v="${marketValue(p, s.marketIndex)}">${euro(marketValue(p, s.marketIndex))}</td>
-        <td class="btns">
-          <button class="sm" data-action="goto-contracts" data-id="${p.id}" title="Onderhandelen over een nieuw contract (tab Contracten)">Contract</button>
-          ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" title="Verkoop tegen het bod van deze week">Verkoop ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
-          <button class="sm ghost" data-action="release" data-id="${p.id}" title="Contract ontbinden">Ontbind</button>
-        </td>
-      </tr>`;
-    })
-    .join('');
+  const order = (a: Player, b: Player) => POSITIONS.indexOf(a.position) - POSITIONS.indexOf(b.position) || overall(b) - overall(a);
+  const unavailable = (p: Player) => p.injuryWeeks > 0 || p.suspended > 0 || p.loan?.type === 'uit';
+  const starters = s.players.filter((p) => zoneOf.has(p.id)).sort(order);
+  const bench = s.players.filter((p) => !zoneOf.has(p.id) && !unavailable(p)).sort(order);
+  const out = s.players.filter((p) => !zoneOf.has(p.id) && unavailable(p)).sort(order);
+
+  const table = (title: string, list: Player[], hintText: string, empty: string, id: string) => `<section class="card">
+    <details data-table="${id}" ${open[id] ? 'open' : ''}>
+      <summary><span class="table-title">${title} <span class="muted">(${list.length})</span></span> ${hint(hintText)}</summary>
+      ${
+        list.length
+          ? `<div class="table-wrap"><table data-sort-id="${id}">${TABLE_HEAD}
+              <tbody>${list.map((p) => playerRow(s, p, zoneOf, window, coach, lockTip)).join('')}</tbody>
+            </table></div>`
+          : `<p class="muted">${empty}</p>`
+      }
+    </details>
+  </section>`;
 
   return `
   ${offers ? `<section class="card attention"><h2>Biedingen op je spelers (${s.playerOffers.length})</h2><ul class="offers">${offers}</ul></section>` : ''}
   ${squadStats(s)}
+  ${lineupCard(s)}
   ${rolesCard(s)}
-  <section class="card">
-    <h2>Selectie (${s.players.length} spelers · ${euro(wages)}/week)</h2>
-    <p class="muted small">★/✓ = basisspeler. Trend: evolutie om de 4 weken (veel spelen en trainen = groeien, weinig = achteruitgaan). Klik op een kolomkop om te sorteren. Marktindex: ${(s.marketIndex * 100).toFixed(0)}%. ${window ? '' : 'Verkopen kan alleen tijdens de transferperiode.'}</p>
-    <div class="table-wrap"><table data-sort-id="ploeg">
-      <thead><tr><th>Basis</th><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th title="Evolutie om de 4 weken">Trend</th><th>Techn/Fys</th><th title="Basisplaatsen dit seizoen">Basis</th><th>Moraal</th><th>Vorm</th><th title="Vermoeidheid 0-100">Moe</th><th>Kaarten</th><th>Loon/w</th><th>Contract</th><th>Waarde</th><th data-nosort></th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>
-  </section>`;
+  <p class="muted small">★ = door jou vastgezet, ✓ = gekozen door je trainer. Trend: evolutie om de 4 weken. Klik op een kolomkop om te sorteren.
+    Marktindex: ${(s.marketIndex * 100).toFixed(0)}%. Kern: ${s.players.length} spelers voor ${euro(wages)}/week.${window ? '' : ' Verkopen kan alleen tijdens de transferperiode.'}</p>
+  ${table('A-kern: de basiself', starters, '★ = door jou vastgezet, ✓ = aangevuld door je trainer. Klik op de ster om iemand vast te zetten of weer los te laten; met 🪑 zet je hem deze week op de bank.', 'Nog niemand opgesteld.', 'basis')}
+  ${table('Bank en reserve', bench, 'Speelklaar, maar niet in de basis. Wie jij met ⛔ op de bank hield, wordt niet opgesteld; klik nogmaals om hem weer beschikbaar te maken.', 'Geen reserves beschikbaar — dat is gevaarlijk bij een blessure.', 'bank')}
+  ${out.length ? table('Niet beschikbaar', out, 'Geblesseerd, geschorst of uitgeleend. Zij kunnen deze week niet spelen.', '', 'out') : ''}`;
 }
 
 function offersList(s: GameState): string {

@@ -31,7 +31,7 @@ export function calendarScreen(s: GameState): string {
   };
 
   // vaste momenten
-  add(1, 'fixed', 'Start seizoen · jeugd stroomt door · nieuwe competitie');
+  add(1, 'fixed', 'Seizoensopening: voorbeschouwing, doorstromers uit de jeugd en jouw persconferentie');
   add(1, 'transfer', 'Zomertransferperiode open (tot week 9)');
   add(9, 'transfer', 'Laatste week zomertransferperiode');
   add(28, 'transfer', 'Wintertransferperiode open (tot week 32)');
@@ -68,9 +68,9 @@ export function calendarScreen(s: GameState): string {
     add(e.week, 'plan', `Evenement: ${CLUB_EVENTS.find((d) => d.id === e.id)?.label ?? e.id}`);
   }
   for (const p of s.pending) add(s.week + p.weeksLeft - 1, 'money', `${esc(p.label)}${p.amount ? ` (${euro(p.amount)})` : ''}`);
-  if (s.infrastructure.construction) {
-    const u = UPGRADES.find((x) => x.id === s.infrastructure.construction!.upgrade)!;
-    add(s.week + s.infrastructure.construction.weeksLeft - 1, 'plan', `Bouwproject klaar: ${esc(u.label)}`);
+  for (const c of s.infrastructure.constructions) {
+    const u = UPGRADES.find((x) => x.id === c.upgrade)!;
+    add(s.week + c.weeksLeft - 1, 'plan', `Bouwproject klaar: ${esc(u.label)}${c.seats ? ` (+${c.seats} plaatsen)` : ''}`);
   }
   for (const st of s.staff.filter((x) => x.courseWeeksLeft > 0)) add(s.week + st.courseWeeksLeft - 1, 'plan', `Opleiding klaar: ${esc(st.name)}`);
   for (const d of s.sponsors.filter((x) => x.kind !== 'stadion' && s.week + x.weeksLeft <= 52)) {

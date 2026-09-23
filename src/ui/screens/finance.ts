@@ -89,7 +89,7 @@ export function financeScreen(s: GameState): string {
   const attendance = expectedAttendance(s, { weather: 'bewolkt', derby: false, positionFactor: 1 });
   const ticketer = delegate(s, 'ticketing');
   const offers = loanOffers(s);
-  if (s.emergencyLoanOffered) offers.unshift(emergencyOffer());
+  if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
   return `<section class="card">
     <h2>Operationeel per week</h2>

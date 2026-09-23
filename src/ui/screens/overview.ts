@@ -1,7 +1,7 @@
 import type { GameState, LedgerEntry } from '../../engine/types';
 import { DIVISIONS } from '../../engine/data/divisions';
 import { MATCH_WEEKS, WINTER_BREAK, inWinterBreak, isTransferWindow } from '../../engine/calendar';
-import { OPPONENT_STAFF_BONUS, OWN_TEAM_ID, ownPosition, teamName } from '../../engine/league';
+import { OPPONENT_STAFF_BONUS, OWN_TEAM_ID, nextDerby, ownPosition, rivalTeam, teamName } from '../../engine/league';
 import { clubRatings } from '../../engine/ratings';
 import { teamStrength } from '../../engine/players';
 import { esc, resultIcon, signedEuro, sparkline, stars } from '../format';
@@ -9,6 +9,7 @@ import { hint } from '../tooltip';
 import { onboardingCard } from './onboarding';
 import { weeks } from '../../engine/util';
 import { available } from '../../engine/discipline';
+import { ambitionDef, goalProgress } from '../../engine/opening';
 
 export function weekSummary(entries: LedgerEntry[]): { income: number; costs: number } {
   let income = 0;
@@ -21,13 +22,71 @@ export function weekSummary(entries: LedgerEntry[]): { income: number; costs: nu
   return { income, costs };
 }
 
+/** Het weekmoment: één beslissing voor de aftrap. */
+function weekChoiceCard(s: GameState): string {
+  const w = s.weekChoice;
+  if (!w) return '';
+  if (w.answer) {
+    return `<section class="card full moment done">
+      <h2>📌 ${esc(w.title)}</h2>
+      <p class="small">${esc(w.outcome ?? '')}</p>
+    </section>`;
+  }
+  return `<section class="card full moment open">
+    <h2>📌 ${esc(w.title)} ${hint('Elke week ligt er iets op je bureau dat nu beslist moet worden. Beslis je niet voor je op "Volgende week" drukt, dan gaat de laatste optie door.')}</h2>
+    <p>${esc(w.text)}</p>
+    <p class="actions left"><button class="primary" data-action="moment-open">Beslissen (${w.options.length} keuzes)</button></p>
+  </section>`;
+}
+
+const GOAL_ICON: Record<string, string> = { sportief: '⚽', financieel: '💶', gemeenschap: '🤝' };
+
+/** Je belofte van de persconferentie en de drie doelen van het bestuur, met hoever je staat. */
+function goalsCard(s: GameState): string {
+  if (!s.seasonGoals.length && !s.ambition) return '';
+  const def = s.ambition ? ambitionDef(s.ambition) : null;
+  const teams = s.league.table.length;
+  const pos = ownPosition(s.league);
+  const onTrack = def ? (def.place < 0 ? pos <= teams + def.place : pos <= def.place) : false;
+
+  const rows = s.seasonGoals
+    .map((g) => {
+      const p = goalProgress(s, g);
+      const played = s.league.table.find((r) => r.teamId === OWN_TEAM_ID)?.played ?? 0;
+      const value =
+        g.kind === 'plaats' ? (played ? `${p.now}e` : 'nog niet gespeeld') : g.unit === '€' ? `€${Math.round(p.now).toLocaleString('nl-BE')}` : p.now.toLocaleString('nl-BE');
+      const target = g.kind === 'plaats' ? `top ${g.target}` : g.unit === '€' ? `€${g.target.toLocaleString('nl-BE')}` : `${g.target.toLocaleString('nl-BE')}`;
+      return `<li class="${p.done ? 'done' : ''}">
+        <span class="goal-cat">${GOAL_ICON[g.category]}</span>
+        <span class="goal-text"><strong>${esc(g.label)}</strong><span class="muted small">nu ${value} van ${target} · premie ${signedEuro(g.reward)}</span>
+          <span class="goal-bar"><span style="width:${Math.round(p.pct)}%"></span></span></span>
+        <span class="goal-state">${p.done ? '✅' : '⏳'}</span>
+      </li>`;
+    })
+    .join('');
+
+  return `<section class="card full goals">
+    <h2>Seizoensdoelen ${hint('Drie doelen van je bestuur, één per categorie van je clubscore, plus de belofte die je zelf deed op de persconferentie. Op het einde van het seizoen wordt er afgerekend.')}</h2>
+    ${
+      def
+        ? `<p class="promise-line ${onTrack ? 'ok' : 'off'}">🎙️ Jouw belofte: <strong>${esc(def.belofte)}</strong> — ${
+            pos ? (onTrack ? `je staat ${pos}e, dat volstaat voorlopig` : `je staat ${pos}e, dus daar moet nog wat gebeuren`) : 'de competitie moet nog beginnen'
+          }</p>`
+        : ''
+    }
+    ${rows ? `<ul class="goal-list live">${rows}</ul>` : ''}
+  </section>`;
+}
+
 export function overviewScreen(s: GameState): string {
   const ratings = clubRatings(s);
   const next = s.league.fixtures
     .filter((f) => f.homeGoals === undefined && (f.homeId === OWN_TEAM_ID || f.awayId === OWN_TEAM_ID))
     .sort((a, b) => a.week - b.week)[0];
+  const rival = rivalTeam(s);
+  const nextIsDerby = !!next && !!rival && (next.homeId === rival.id || next.awayId === rival.id);
   const nextLabel = next
-    ? `<span class="venue ${next.homeId === OWN_TEAM_ID ? 'home' : 'away'}">${next.homeId === OWN_TEAM_ID ? '🏠 Thuis' : '🚌 Uit'}</span> tegen <strong>${esc(teamName(s, next.homeId === OWN_TEAM_ID ? next.awayId : next.homeId))}</strong> in week ${next.week}${next.week === s.week ? ' (deze week)' : ''}`
+    ? `<span class="venue ${next.homeId === OWN_TEAM_ID ? 'home' : 'away'}">${next.homeId === OWN_TEAM_ID ? '🏠 Thuis' : '🚌 Uit'}</span> tegen <strong>${esc(teamName(s, next.homeId === OWN_TEAM_ID ? next.awayId : next.homeId))}</strong>${nextIsDerby ? ' <span class="tag derby">🔥 DERBY</span>' : ''} in week ${next.week}${next.week === s.week ? ' (deze week)' : ''}`
     : MATCH_WEEKS[0] > s.week
       ? `Competitie start in week ${MATCH_WEEKS[0]}`
       : 'Geen wedstrijden meer dit seizoen';
@@ -35,10 +94,15 @@ export function overviewScreen(s: GameState): string {
   const division = DIVISIONS[s.league.divisionLevel];
   const played = s.league.table.find((r) => r.teamId === OWN_TEAM_ID)?.played ?? 0;
   const { income, costs } = weekSummary(s.lastWeek);
+  const derbyWeek = nextDerby(s);
+  const derby = s.derbyRecord.won + s.derbyRecord.drawn + s.derbyRecord.lost > 0;
   const m = s.lastMatch;
 
   const warnings: { text: string; screen: string; where: string }[] = [];
   const warn = (text: string, screen: string, where: string) => warnings.push({ text, screen, where });
+  if (s.weekChoice && !s.weekChoice.answer) {
+    warn(`Er ligt een beslissing op je bureau: ${s.weekChoice.title}. Beslis je niet, dan gaat de laatste optie vanzelf door.`, 'moment', 'Beslissen →');
+  }
   if (s.weeksNegative > 0) warn(`Saldo al ${weeks(s.weeksNegative)} onder nul. Na 8 weken is de club failliet.`, 'financien', 'Financiën');
   if (s.emergencyLoanOffered) warn('De bank biedt een noodlening aan.', 'financien', 'Financiën');
   if (s.playerOffers.length) warn(s.playerOffers.length === 1 ? 'Er ligt een bod op een van je spelers.' : `Er liggen ${s.playerOffers.length} biedingen op je spelers.`, 'transfers', 'Transfers');
@@ -56,7 +120,7 @@ export function overviewScreen(s: GameState): string {
   <div class="grid">
     ${onboardingCard(s)}
     <section class="card span2">
-      <h2>Clubrating</h2>
+      <h2>Clubscore</h2>
       <div class="ratings">
         ${ratings
           .map(
@@ -66,11 +130,15 @@ export function overviewScreen(s: GameState): string {
       </div>
     </section>
 
+    ${weekChoiceCard(s)}
+    ${goalsCard(s)}
+
     <section class="card">
       <h2>Volgende wedstrijd</h2>
       <p>${nextLabel}</p>
       <p class="muted small">Teamsterkte ${strength.total} · gemiddelde tegenstander ${division.opponentStrength + OPPONENT_STAFF_BONUS}</p>
       ${played ? `<p>Stand: <strong>${ownPosition(s.league)}e</strong> in ${division.name}</p>` : ''}
+      ${rival ? `<p class="small muted">Aartsrivaal: <strong>${esc(rival.name)}</strong>${derby ? ` · onderling ${s.derbyRecord.won}W ${s.derbyRecord.drawn}G ${s.derbyRecord.lost}V` : ''}${derbyWeek ? ` · volgende derby in week ${derbyWeek.week} (${derbyWeek.home ? 'thuis' : 'uit'})` : ''}</p>` : ''}
     </section>
 
     <section class="card">
@@ -82,7 +150,11 @@ export function overviewScreen(s: GameState): string {
     ${
       warnings.length
         ? `<section class="card full attention"><h2>Aandacht</h2><ul class="attention-list">${warnings
-            .map((w) => `<li>${esc(w.text)} <button class="link-btn small" data-action="nav" data-id="${w.screen}">${esc(w.where)} →</button></li>`)
+            .map(
+              (w) => `<li>${esc(w.text)} <button class="link-btn small" data-action="${w.screen === 'moment' ? 'moment-open' : 'nav'}" ${
+                w.screen === 'moment' ? '' : `data-id="${w.screen}"`
+              }>${esc(w.where)}${w.screen === 'moment' ? '' : ' →'}</button></li>`,
+            )
             .join('')}</ul></section>`
         : ''
     }

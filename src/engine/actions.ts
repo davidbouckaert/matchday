@@ -3,7 +3,7 @@
 
 import type {
   ActionResult, CanteenItemId, ConcessionId, Formation, GamePlan, GameState, Infrastructure, Mentality, MerchItemId,
-  Player, PlayerLoan, PlayerRoles, StaffRole, TaskId, TrainingFocus, UpgradeId,
+  Player, PlayerLoan, PlayerRoles, Position, StaffRole, TaskId, TrainingFocus, UpgradeId,
 } from './types';
 import { clamp, createRng, round } from './rng';
 import { DIVISIONS } from './data/divisions';
@@ -12,12 +12,13 @@ import {
   canteenDef, concessionDef, merchDef, roleDef, type ClubEventDef,
 } from './data/catalog';
 import { isTransferWindow } from './calendar';
-import { FORMATIONS, currentBid, departureBlock, isCorePlayer, overall, wageDemand } from './players';
+import { FORMATIONS, currentBid, departureBlock, isCorePlayer, overall, selectLineup, wageDemand } from './players';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
-import { emergencyOffer, loanOffers } from './loans';
+import { emergencyOffer, loanOffers, sponsorWeekly } from './loans';
 import { acceptSponsorOffer } from './sponsors';
 import { hasDiploma, staffSkill } from './staff';
 import { taskCapacity, taskSkill, tasksOf } from './delegation';
+import { boundVolunteers, freeVolunteers, youthCapacityFactor } from './youth';
 import { bestPrice, margin } from './merch';
 import { acceptedMargin, concessionPartner } from './canteen';
 import { popularity } from './popularity';
@@ -204,14 +205,16 @@ export function releasePlayer(state: GameState, playerId: string): ActionResult 
 
 // ---------- Staff ----------
 
-/** Sommige stafleden hebben eerst de juiste infrastructuur nodig. */
+/** Sommige personeelsleden hebben eerst de juiste infrastructuur nodig. */
 export function staffLock(state: GameState, role: StaffRole): string | null {
   const i = state.infrastructure;
   if ((role === 'kinesist' || role === 'verzorger') && i.recoveryLevel < 1) {
     return 'Hiervoor heb je eerst een recuperatieruimte nodig (Infrastructuur): zonder behandeltafel, ijsbad en sauna kan hij niet werken.';
   }
-  if (role === 'merchandising' && !state.merch.active) return 'Open eerst je fanshop (Club › Fanshop).';
-  if (role === 'jeugdcoordinator' && state.community.youthMembers < 20) return 'Je jeugdwerking is te klein: je hebt minstens 20 jeugdleden nodig.';
+  if (role === 'merchandising' && !state.merch.active) return 'Open eerst je clubwinkel (Club › Clubwinkel).';
+  if (role === 'jeugdcoordinator' && state.community.youthTeams < 3) {
+    return `Je jeugdwerking is te klein voor een vaste coördinator: je hebt minstens 3 jeugdploegen nodig (nu ${state.community.youthTeams}).`;
+  }
   if (role === 'analist' && i.wifiLevel < 1) return 'Een data-analist heeft wifi en degelijk bereik nodig om beelden en data binnen te halen (Infrastructuur).';
   if (role === 'kantine' && i.kantineLevel < 2) return 'Je kantine is te basic voor een vaste verantwoordelijke: renoveer eerst naar niveau 2.';
   if (role === 'voeding' && i.kantineLevel < 3) return 'Een voedingsdeskundige heeft een degelijke keuken nodig: kantine niveau 3.';
@@ -230,7 +233,7 @@ export function hireStaff(state: GameState, staffId: string): ActionResult {
   const lock = staffLock(state, s.role);
   if (lock) return fail(lock);
   const signingFee = s.wage * 2;
-  book(state, 'lonen staff', -signingFee, `Tekengeld ${s.name}`);
+  book(state, 'lonen personeel', -signingFee, `Tekengeld ${s.name}`);
   state.staffMarket = state.staffMarket.filter((x) => x.id !== staffId);
   state.staff.push(s);
   addLog(state, 'beslissing', `${s.name} aangeworven als ${roleDef(s.role).label.toLowerCase()} (€${s.wage}/week).`);
@@ -244,7 +247,7 @@ export function fireStaff(state: GameState, staffId: string): ActionResult {
   const s = state.staff.find((x) => x.id === staffId);
   if (!s) return fail('Staflid niet gevonden.');
   const payoff = s.wage * 8;
-  book(state, 'lonen staff', -payoff, `Opzegvergoeding ${s.name}`);
+  book(state, 'lonen personeel', -payoff, `Opzegvergoeding ${s.name}`);
   state.staff = state.staff.filter((x) => x.id !== staffId);
   const dropped: string[] = [];
   for (const t of TASKS) {
@@ -258,7 +261,7 @@ export function fireStaff(state: GameState, staffId: string): ActionResult {
   return ok(`${s.name} is ontslagen (vergoeding €${payoff.toLocaleString('nl-BE')}).`);
 }
 
-/** Diploma-opleiding voor trainers (T1/T2), of bijscholing voor iedereen. */
+/** Diploma-opleiding voor de hoofdtrainer en de assistent-trainer, of bijscholing voor iedereen. */
 export function startCourse(state: GameState, staffId: string, type: 'diploma' | 'bijscholing' = 'diploma'): ActionResult {
   const g = guard(state);
   if (g) return g;
@@ -266,7 +269,7 @@ export function startCourse(state: GameState, staffId: string, type: 'diploma' |
   if (!s) return fail('Staflid niet gevonden.');
   if (s.courseWeeksLeft > 0) return fail('Volgt al een opleiding.');
   if (type === 'diploma') {
-    if (!hasDiploma(s.role)) return fail('Alleen de T1 en T2 volgen een diplomaopleiding.');
+    if (!hasDiploma(s.role)) return fail('Alleen de hoofdtrainer en de assistent-trainer volgen een diplomaopleiding.');
     const course = COURSES.find((c) => c.from === s.diploma);
     if (!course) return fail('Hoogste diploma al behaald.');
     if (state.cash < course.cost) return fail('Niet genoeg geld.');
@@ -294,7 +297,7 @@ export function takeLoan(state: GameState, key: string): ActionResult {
   const g = guard(state);
   if (g) return g;
   const emergency = key === 'nood' && state.emergencyLoanOffered;
-  const offer = emergency ? emergencyOffer() : loanOffers(state).find((o) => o.key === key);
+  const offer = emergency ? emergencyOffer(state) : loanOffers(state).find((o) => o.key === key);
   if (!offer) return fail('Deze lening is niet (meer) beschikbaar.');
   if (emergency) {
     grantLoan(state, offer);
@@ -368,14 +371,60 @@ export { approachProspect, networkEvening, startCampaign, cancelSponsor, askExtr
 
 // ---------- Infrastructuur ----------
 
-export function upgradeCost(state: GameState, id: UpgradeId): number {
+export const MAX_PROJECTS = 2; // zoveel bouwwerven mogen er tegelijk lopen
+
+// ---------- Tribune: jij kiest hoeveel plaatsen ----------
+
+export const TRIBUNE_MIN = 100;
+export const TRIBUNE_MAX = 2000;
+export const TRIBUNE_STEP = 50;
+
+/**
+ * Prijs per zitje. Een aannemer die 1.000 stoelen plaatst rekent minder per stuk dan een
+ * aannemer die er 100 plaatst: dezelfde kraan, dezelfde ploeg, dezelfde opstart. De korting
+ * loopt bovendien op naarmate de bestelling groeit (het kwadratische stuk), zodat één grote
+ * tribune duidelijk voordeliger is dan drie kleine blokken.
+ * Van ±€450 per zitje bij 100 plaatsen naar ±€215 bij 2.000.
+ */
+export function tribunePerSeat(state: GameState, seats: number): number {
+  const n = clamp(seats, TRIBUNE_MIN, TRIBUNE_MAX);
+  const base = 450 - 150 * Math.log10(n / TRIBUNE_MIN) - 40 * (n / TRIBUNE_MAX) ** 2;
+  const discount = state.investor === 'aannemer' && state.investorActive ? 0.85 : 1;
+  return Math.round(base * discount * state.inflation);
+}
+
+export function tribuneCost(state: GameState, seats: number): number {
+  return round(clamp(seats, TRIBUNE_MIN, TRIBUNE_MAX) * tribunePerSeat(state, seats), 1000);
+}
+
+/** Grotere werken duren langer: van 4 weken voor een klein blok tot een half seizoen voor een echte tribune. */
+export function tribuneWeeks(seats: number): number {
+  return clamp(Math.round(3 + clamp(seats, TRIBUNE_MIN, TRIBUNE_MAX) / 110), 4, 22);
+}
+
+// ---------- Bouwprojecten ----------
+
+export function upgradeCost(state: GameState, id: UpgradeId, seats = 300): number {
+  if (id === 'tribune') return tribuneCost(state, seats);
+  if (id === 'zonnepanelen') return greenEnergyCost(state);
   const def = UPGRADES.find((u) => u.id === id)!;
   return state.investor === 'aannemer' && state.investorActive ? round(def.cost * 0.85, 1000) : def.cost;
 }
 
+export function upgradeWeeks(id: UpgradeId, seats = 300): number {
+  if (id === 'tribune') return tribuneWeeks(seats);
+  return UPGRADES.find((u) => u.id === id)!.weeks;
+}
+
+/** Loopt dit project al? */
+export function isBuilding(state: GameState, id: UpgradeId): boolean {
+  return state.infrastructure.constructions.some((c) => c.upgrade === id);
+}
+
 export function canUpgrade(state: GameState, id: UpgradeId): string | null {
   const i = state.infrastructure;
-  if (i.construction) return 'Er loopt al een bouwproject.';
+  if (isBuilding(state, id)) return 'Dit project is al bezig.';
+  if (i.constructions.length >= MAX_PROJECTS) return `Er lopen al ${MAX_PROJECTS} bouwprojecten. Wacht tot er een klaar is.`;
   if (id === 'kantine' && i.kantineLevel >= 5) return 'De kantine is al op het hoogste niveau.';
   if (id === 'verlichting' && i.lightingLevel >= 3) return 'De verlichting is al op het hoogste niveau.';
   if (id === 'kunstgras' && i.pitch === 'kunstgras') return 'Er ligt al kunstgras.';
@@ -386,31 +435,52 @@ export function canUpgrade(state: GameState, id: UpgradeId): string | null {
   if (id === 'parking' && i.parkingLevel >= 2) return 'De parking is al op het hoogste niveau.';
   if (id === 'scorebord' && i.scoreboardLevel >= 2) return 'Het scorebord is al op het hoogste niveau.';
   if (id === 'ploegbus' && i.teamBus) return 'Je hebt al een eigen ploegbus.';
+  if (id === 'zonnepanelen' && i.greenEnergy) return 'De zonnepanelen liggen er al.';
   return null;
 }
 
-export function startUpgrade(state: GameState, id: UpgradeId): ActionResult {
+export function startUpgrade(state: GameState, id: UpgradeId, seats = 300): ActionResult {
   const g = guard(state);
   if (g) return g;
   const reason = canUpgrade(state, id);
   if (reason) return fail(reason);
   const def = UPGRADES.find((u) => u.id === id)!;
-  const cost = upgradeCost(state, id);
+  const rounded = id === 'tribune' ? clamp(Math.round(seats / TRIBUNE_STEP) * TRIBUNE_STEP, TRIBUNE_MIN, TRIBUNE_MAX) : 0;
+  const cost = upgradeCost(state, id, rounded);
+  const weeks = upgradeWeeks(id, rounded);
   if (state.cash < cost) return fail(`Niet genoeg geld (€${cost.toLocaleString('nl-BE')} nodig). Een lening kan helpen.`);
-  book(state, 'infrastructuur', -cost, def.label);
-  state.infrastructure.construction = { upgrade: id, weeksLeft: def.weeks };
-  addLog(state, 'beslissing', `Bouwproject gestart: ${def.label} (${def.weeks} weken, ${euro(cost)}).`);
-  return ok(`Werken gestart: ${def.label} (${def.weeks} weken).`);
+  const label = id === 'tribune' ? `${def.label} (+${rounded} plaatsen)` : def.label;
+  book(state, 'infrastructuur', -cost, label);
+  state.infrastructure.constructions.push({ upgrade: id, weeksLeft: weeks, seats: id === 'tribune' ? rounded : undefined, cost });
+  addLog(state, 'beslissing', `Bouwproject gestart: ${label} (${weeks} weken, ${euro(cost)}).`);
+  const others = state.infrastructure.constructions.length - 1;
+  return ok(`Werken gestart: ${label} (${weeks} weken).${others ? ` Er loopt er nog ${others}.` : ''}`);
 }
 
 // ---------- Evenementen en vrijwilligers ----------
 
 const WEEK_EVENT_KEY = 'evenement-deze-week';
 
+/**
+ * Wat een evenement vandaag kost. Alles wordt duurder: een tent, een band, een traiteur en
+ * een zaal kosten in een hogere reeks meer dan in provinciale, en de inflatie telt mee.
+ */
+export function eventCost(state: GameState, def: ClubEventDef): number {
+  return round(def.cost * state.inflation * (1 + state.league.divisionLevel * 0.12), 50);
+}
+
 /** Prognose van een evenement: [minimum, maximum] opbrengst. */
 export function eventForecast(state: GameState, def: ClubEventDef): [number, number] {
   const c = state.community;
-  const mid = def.revenue({ fanBase: c.fanBase, youthMembers: c.youthMembers, mood: c.fanMood }) * (1 + staffSkill(state, 'kantine') / 400);
+  const ctx = {
+    fanBase: c.fanBase,
+    youthMembers: c.youthMembers,
+    mood: c.fanMood,
+    sponsorWeekly: sponsorWeekly(state),
+    capacity: state.infrastructure.capacity,
+  };
+  // net als je tickets en je kantine volgt ook de opbrengst van een evenement de prijzen van vandaag
+  const mid = def.revenue(ctx) * (1 + staffSkill(state, 'kantine') / 400) * state.inflation;
   return [round(mid * (1 - def.spread), 50), round(mid * (1 + def.spread), 50)];
 }
 
@@ -419,12 +489,24 @@ export function eventsThisSeason(state: GameState, id: string): number {
 }
 
 export function canOrganise(state: GameState, def: ClubEventDef): string | null {
+  if (def.minLevel !== undefined && state.league.divisionLevel < def.minLevel) {
+    return `Pas mogelijk vanaf ${DIVISIONS[def.minLevel].name}: in jouw reeks komt daar te weinig volk op af.`;
+  }
+  if (def.minKantine !== undefined && state.infrastructure.kantineLevel < def.minKantine) {
+    return `Je kantine moet minstens niveau ${def.minKantine} halen (nu ${state.infrastructure.kantineLevel}).`;
+  }
+  if (def.minCapacity !== undefined && state.infrastructure.capacity < def.minCapacity) {
+    return `Je hebt minstens ${def.minCapacity.toLocaleString('nl-BE')} plaatsen nodig (nu ${state.infrastructure.capacity.toLocaleString('nl-BE')}).`;
+  }
   if (eventsThisSeason(state, def.id) >= def.maxPerSeason) return `Maximaal ${def.maxPerSeason}× per seizoen: dit seizoen al georganiseerd.`;
   if ((state.eventCooldowns[WEEK_EVENT_KEY] ?? 0) > 0) return 'Er is deze week al een evenement. Maximaal één per week.';
   const wait = state.eventCooldowns[def.id] ?? 0;
   if (wait > 0) return `Nog ${weeks(wait)} wachten.`;
-  if (state.community.volunteers < def.volunteers) return `Je hebt ${def.volunteers} vrijwilligers nodig (nu ${state.community.volunteers}).`;
-  if (state.cash < def.cost) return 'Niet genoeg geld.';
+  const free = freeVolunteers(state);
+  if (free < def.volunteers) {
+    return `Je hebt ${def.volunteers} vrije vrijwilligers nodig (nu ${free}: ${state.community.volunteers} in totaal, ${boundVolunteers(state)} vast bij de jeugd).`;
+  }
+  if (state.cash < eventCost(state, def)) return `Niet genoeg geld (€${eventCost(state, def).toLocaleString('nl-BE')} nodig).`;
   return null;
 }
 
@@ -438,7 +520,7 @@ export function organiseEvent(state: GameState, eventId: string): ActionResult {
   const [min, max] = eventForecast(state, def);
   const revenue = round(createRng(state).range(min, max), 10);
   const c = state.community;
-  book(state, 'evenementen', -def.cost, `${def.label}: kosten`);
+  book(state, 'evenementen', -eventCost(state, def), `${def.label}: kosten`);
   state.pending.push({ weeksLeft: def.payoutWeeks, amount: revenue, category: 'evenementen', label: `${def.label}: opbrengst` });
   c.fanMood = clamp(c.fanMood + def.moodBoost, 0, 100);
   c.reputation = clamp(c.reputation + def.reputationBoost, 0, 100);
@@ -457,10 +539,11 @@ export function volunteerAction(state: GameState, actionId: string): ActionResul
   if (!def) return fail('Onbekende actie.');
   const key = `vrijwilligers-${def.id}`;
   if ((state.eventCooldowns[key] ?? 0) > 0) return fail(`Nog ${weeks(state.eventCooldowns[key])} wachten.`);
-  if (state.cash < def.cost) return fail('Niet genoeg geld.');
+  const cost = round(def.cost * state.inflation, 50);
+  if (state.cash < cost) return fail(`Niet genoeg geld (€${cost.toLocaleString('nl-BE')} nodig).`);
   const [min, max] = def.gain(state.community.youthMembers);
   const gained = createRng(state).int(min, max);
-  book(state, 'evenementen', -def.cost, def.label);
+  book(state, 'evenementen', -cost, def.label);
   state.pending.push({ weeksLeft: def.weeks, amount: 0, category: 'evenementen', label: def.label, volunteers: gained });
   if (def.loyaltyWeeks) state.community.volunteerLoyaltyWeeks = def.loyaltyWeeks;
   state.eventCooldowns[key] = def.cooldown;
@@ -469,13 +552,13 @@ export function volunteerAction(state: GameState, actionId: string): ActionResul
 
 // ---------- Opstelling en tactiek ----------
 
-/** Geeft een foutmelding als een staflid deze taak overnam. */
+/** Geeft een foutmelding als een personeelslid deze taak overnam. */
 export function taskLocked(state: GameState, task: TaskId): ActionResult | null {
   const id = state.delegation[task];
   if (!id) return null;
   const who = state.staff.find((x) => x.id === id);
   const label = TASKS.find((t) => t.id === task)?.label ?? task;
-  return fail(`${who?.name ?? 'Je staflid'} regelt dit (taak "${label}"). Neem de taak terug bij Staff om zelf te beslissen.`);
+  return fail(`${who?.name ?? 'Je personeelslid'} regelt dit (taak "${label}"). Neem de taak terug bij Personeel om zelf te beslissen.`);
 }
 
 export function setFormation(state: GameState, formation: Formation): ActionResult {
@@ -523,27 +606,73 @@ export function setFocus(state: GameState, focus: TrainingFocus): ActionResult {
 }
 
 /** Zet een speler in of uit de zelfgekozen basiself. */
+/**
+ * Zet een speler vast in de basis, of haal hem er weer uit. Zit die linie al vol met spelers
+ * die jij vastzette, dan maakt de zwakste van hen plaats — je krijgt te horen wie.
+ */
 export function toggleStarter(state: GameState, playerId: string): ActionResult {
   const locked = taskLocked(state, 'opstelling');
   if (locked) return locked;
   const t = state.tactics;
-  if (t.manualXI.includes(playerId)) {
-    t.manualXI = t.manualXI.filter((id) => id !== playerId);
-    return ok('Speler uit je basiself gehaald.');
-  }
   const p = state.players.find((x) => x.id === playerId);
   if (!p) return fail('Speler niet gevonden.');
-  const samePos = t.manualXI.filter((id) => state.players.find((x) => x.id === id)?.position === p.position).length;
-  if (samePos >= FORMATIONS[t.formation][p.position]) return fail(`Je formatie heeft maar ${FORMATIONS[t.formation][p.position]} plaats(en) voor ${p.position}. Haal eerst iemand weg.`);
+  if (t.manualXI.includes(playerId)) {
+    t.manualXI = t.manualXI.filter((id) => id !== playerId);
+    return ok(`${p.name} staat niet meer vast: je trainer kiest weer zelf.`);
+  }
+  if (p.injuryWeeks > 0) return fail(`${p.name} is geblesseerd en kan niet spelen.`);
+  if (p.suspended > 0) return fail(`${p.name} is geschorst.`);
+  if (p.loan?.type === 'uit') return fail(`${p.name} is uitgeleend.`);
+
+  t.benched = t.benched.filter((id) => id !== playerId); // vast in de basis en op de bank gaat niet samen
+  t.gaps = { ...t.gaps, [p.position]: Math.max(0, (t.gaps?.[p.position] ?? 0) - 1) }; // jij vult de open plaats zelf in
+  const room = FORMATIONS[t.formation][p.position];
+  const sameLine = t.manualXI
+    .map((id) => state.players.find((x) => x.id === id))
+    .filter((x): x is Player => !!x && x.position === p.position);
+  let replaced = '';
+  if (sameLine.length >= room) {
+    const weakest = [...sameLine].sort((a, b) => overall(a) - overall(b))[0];
+    t.manualXI = t.manualXI.filter((id) => id !== weakest.id);
+    replaced = ` ${weakest.name} maakt plaats.`;
+  }
   t.manualXI.push(playerId);
-  return ok(`${p.name} staat in je basiself.`);
+  return ok(`${p.name} staat vast in je basiself.${replaced}`);
+}
+
+/**
+ * Zet een speler op de bank (of haal hem er weer af). Haal je iemand uit je basiself,
+ * dan blijft die plaats leeg: je trainer schuift er niet vanzelf een ander in. Zolang er een
+ * plaats openstaat, kun je niet naar de volgende week — jij beslist wie er speelt.
+ */
+export function toggleBench(state: GameState, playerId: string): ActionResult {
+  const locked = taskLocked(state, 'opstelling');
+  if (locked) return locked;
+  const t = state.tactics;
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  const gapsOf = (pos: Position) => t.gaps?.[pos] ?? 0;
+  if (t.benched.includes(playerId)) {
+    t.benched = t.benched.filter((id) => id !== playerId);
+    t.gaps = { ...t.gaps, [p.position]: Math.max(0, gapsOf(p.position) - 1) };
+    return ok(`${p.name} is weer beschikbaar. Je trainer mag hem opnieuw opstellen.`);
+  }
+  const starting = selectLineup(state.players, t.formation, t.manualXI, t.benched, t.gaps).lineup.some((x) => x.id === playerId);
+  t.benched.push(playerId);
+  t.manualXI = t.manualXI.filter((id) => id !== playerId);
+  if (!starting) return ok(`${p.name} blijft op de bank. Klik nogmaals om hem weer beschikbaar te maken.`);
+  const room = FORMATIONS[t.formation][p.position];
+  t.gaps = { ...t.gaps, [p.position]: Math.min(room, gapsOf(p.position) + 1) };
+  return ok(`${p.name} staat niet meer in je basiself. Die plaats blijft open: duid zelf iemand aan met de ster.`);
 }
 
 export function autoLineup(state: GameState): ActionResult {
   const locked = taskLocked(state, 'opstelling');
   if (locked) return locked;
   state.tactics.manualXI = [];
-  return ok('De beste elf wordt automatisch gekozen.');
+  state.tactics.benched = [];
+  state.tactics.gaps = {};
+  return ok('Alles losgelaten: je trainer kiest weer de beste elf.');
 }
 
 // ---------- Delegeren ----------
@@ -593,9 +722,10 @@ export function youthPriceFactor(fee: number): number {
 export function youthTarget(state: GameState, fee = state.youthFee): number {
   const c = state.community;
   const base = 150 + c.reputation * 2 + staffSkill(state, 'jeugdcoordinator') * 1.5 + state.infrastructure.academyLevel * 40;
-  // ouders schrijven hun kinderen liever in bij een club die goed draait
+  // ouders schrijven hun kinderen liever in bij een club die goed draait,
+  // maar niet bij een club zonder begeleiding of zonder plaats op het veld
   const success = popularity(state).factor;
-  return Math.round(base * youthPriceFactor(fee) * success);
+  return Math.round(base * youthPriceFactor(fee) * success * youthCapacityFactor(state));
 }
 
 /** Verwacht aantal inschrijvingen bij het volgende inschrijvingsmoment. */
@@ -678,32 +808,32 @@ export function loanIn(state: GameState, playerId: string): ActionResult {
   return ok(`${p.name} gehuurd. Jij betaalt €${p.wage}/week, ${p.loan.club} de rest.`);
 }
 
-// ---------- Fanshop (merchandising) ----------
+// ---------- Clubwinkel (merchandising) ----------
 
-/** Fanshop opstarten: rekken, kassa, webshop en een basisvoorraad sjaals. */
+/** Clubwinkel opstarten: rekken, kassa, webwinkel en een basisvoorraad sjaals. */
 export function startMerch(state: GameState): ActionResult {
   const g = guard(state);
   if (g) return g;
-  if (state.merch.active) return fail('Je fanshop draait al.');
-  if (state.cash < MERCH_START_COST) return fail(`Je hebt €${MERCH_START_COST.toLocaleString('nl-BE')} nodig om de shop in te richten.`);
-  book(state, 'infrastructuur', -MERCH_START_COST, 'Fanshop inrichten (rekken, kassa, webshop)');
+  if (state.merch.active) return fail('Je clubwinkel draait al.');
+  if (state.cash < MERCH_START_COST) return fail(`Je hebt €${MERCH_START_COST.toLocaleString('nl-BE')} nodig om de winkel in te richten.`);
+  book(state, 'infrastructuur', -MERCH_START_COST, 'Clubwinkel inrichten (rekken, kassa, webwinkel)');
   state.merch.active = true;
-  addNews(state, 'goed', 'De fanshop is open. Supporters kunnen nu clubartikelen kopen.');
+  addNews(state, 'goed', 'De clubwinkel is open. Supporters kunnen nu clubartikelen kopen.');
   const first = addMerchItem(state, 'sjaal');
-  return ok(`Fanshop geopend.${first.ok ? ' De sjaals liggen al in de rekken.' : ''}`);
+  return ok(`Clubwinkel geopend.${first.ok ? ' De sjaals liggen al in de rekken.' : ''}`);
 }
 
 /** Een artikel in het assortiment nemen. Je betaalt eenmalig drukwerk en de eerste voorraad. */
 export function addMerchItem(state: GameState, id: MerchItemId): ActionResult {
   const g = guard(state);
   if (g) return g;
-  if (!state.merch.active) return fail('Start eerst de fanshop op.');
-  if (state.merch.items.some((i) => i.id === id)) return fail('Dit artikel ligt al in de shop.');
+  if (!state.merch.active) return fail('Start eerst de clubwinkel op.');
+  if (state.merch.items.some((i) => i.id === id)) return fail('Dit artikel ligt al in de winkel.');
   const def = merchDef(id);
   if (state.cash < def.setup) return fail(`Eerste voorraad en drukwerk kosten €${def.setup.toLocaleString('nl-BE')}.`);
-  book(state, 'werking shop', -def.setup, `Eerste voorraad en drukwerk ${def.label.toLowerCase()}`);
+  book(state, 'werking winkel', -def.setup, `Eerste voorraad en drukwerk ${def.label.toLowerCase()}`);
   state.merch.items.push({ id, price: bestPrice(state, id), addedSeason: state.season, soldTotal: 0 });
-  return ok(`${def.label} ligt vanaf nu in de shop, aan €${state.merch.items.find((i) => i.id === id)!.price}.`);
+  return ok(`${def.label} ligt vanaf nu in de winkel, aan €${state.merch.items.find((i) => i.id === id)!.price}.`);
 }
 
 /** Een artikel uit het assortiment halen. De restvoorraad verkoop je met verlies. */
@@ -711,19 +841,19 @@ export function removeMerchItem(state: GameState, id: MerchItemId): ActionResult
   const g = guard(state);
   if (g) return g;
   const item = state.merch.items.find((i) => i.id === id);
-  if (!item) return fail('Dit artikel ligt niet in de shop.');
+  if (!item) return fail('Dit artikel ligt niet in de winkel.');
   const def = merchDef(id);
   state.merch.items = state.merch.items.filter((i) => i.id !== id);
-  book(state, 'merchandising', round(def.setup * 0.25, 10), `Restvoorraad ${def.label.toLowerCase()} uitverkocht`);
-  return ok(`${def.label} verdwijnt uit de shop. De restvoorraad bracht nog €${round(def.setup * 0.25, 10).toLocaleString('nl-BE')} op.`);
+  book(state, 'clubartikelen', round(def.setup * 0.25, 10), `Restvoorraad ${def.label.toLowerCase()} uitverkocht`);
+  return ok(`${def.label} verdwijnt uit de winkel. De restvoorraad bracht nog €${round(def.setup * 0.25, 10).toLocaleString('nl-BE')} op.`);
 }
 
 export function setMerchPrice(state: GameState, id: MerchItemId, price: number): ActionResult {
   const g = guard(state);
   if (g) return g;
-  if (state.delegation.merchandising) return fail('De fanshop is gedelegeerd: je staflid bepaalt de prijzen.');
+  if (state.delegation.merchandising) return fail('De clubwinkel is gedelegeerd: je personeelslid bepaalt de prijzen.');
   const item = state.merch.items.find((i) => i.id === id);
-  if (!item) return fail('Dit artikel ligt niet in de shop.');
+  if (!item) return fail('Dit artikel ligt niet in de winkel.');
   const def = merchDef(id);
   if (!Number.isFinite(price) || price < 1 || price > def.ref * 4) return fail(`Kies een prijs tussen €1 en €${Math.round(def.ref * 4)}.`);
   item.price = Math.round(price);
@@ -847,16 +977,9 @@ export function greenEnergyCost(state: GameState): number {
   return round(weeklySaving * GREEN_ENERGY_PAYBACK_WEEKS, 500);
 }
 
+/** Zonnepanelen zijn een bouwproject als een ander: eerst werken, daarna besparen. */
 export function investGreenEnergy(state: GameState): ActionResult {
-  const g = guard(state);
-  if (g) return g;
-  if (state.infrastructure.greenEnergy) return fail('De zonnepanelen liggen er al.');
-  const cost = greenEnergyCost(state);
-  if (state.cash < cost) return fail(`Je hebt €${cost.toLocaleString('nl-BE')} nodig.`);
-  book(state, 'infrastructuur', -cost, 'Zonnepanelen en ledverlichting');
-  state.infrastructure.greenEnergy = true;
-  addNews(state, 'goed', `De zonnepanelen liggen op het dak: je energiefactuur daalt met ${Math.round(GREEN_ENERGY_SAVING * 100)}%.`);
-  return ok(`Zonnepanelen en led geplaatst: ${Math.round(GREEN_ENERGY_SAVING * 100)}% minder vaste kosten, ongeveer drie seizoenen terugverdientijd.`);
+  return startUpgrade(state, 'zonnepanelen');
 }
 
 /** Waarom deze speler deze week niet weg mag (of null). Voor de knoppen in de UI. */

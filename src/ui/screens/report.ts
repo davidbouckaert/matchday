@@ -103,6 +103,18 @@ function seasonReport(
       <div><span class="label">Mijlpalen</span><strong>${seasonMilestones}</strong><span class="small">totaal behaald</span></div>
       <div><span class="label">Meeste basisplaatsen</span><strong>${top ? esc(top.name) : '–'}</strong><span class="small">${top ? `${top.starts} wedstrijden` : ''}</span></div>
     </div>
+    ${
+      s.lastSeasonSettlement
+        ? `<div class="settlement">
+            ${s.lastSeasonSettlement.ambition ? `<p class="promise-line ${s.lastSeasonSettlement.kept ? 'ok' : 'off'}">🎙️ ${esc(s.lastSeasonSettlement.ambition)}</p>` : ''}
+            ${
+              s.lastSeasonSettlement.goals.length
+                ? `<h4>Doelen van het bestuur</h4><ul class="small plain">${s.lastSeasonSettlement.goals.map((g) => `<li>${esc(g)}</li>`).join('')}</ul>`
+                : ''
+            }
+          </div>`
+        : ''
+    }
   </section>`;
 }
 
@@ -130,7 +142,8 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
     const ag = m.home ? m.goalsAgainst : m.goalsFor;
     const res = m.goalsFor > m.goalsAgainst ? 'win' : m.goalsFor < m.goalsAgainst ? 'loss' : 'draw';
     const played = s.league.table.find((r) => r.teamId === OWN_TEAM_ID)?.played ?? 0;
-    matchHtml = `<p class="center small">${venue(m.home)} tegen ${esc(m.opponent)}</p>
+    const isDerby = s.league.teams.some((t) => t.isRival && t.name === m.opponent);
+    matchHtml = `<p class="center small">${venue(m.home)} tegen ${esc(m.opponent)}${isDerby ? ' <span class="tag derby">🔥 DERBY</span>' : ''}</p>
       <div class="scoreboard reveal ${res}">
         <span class="team">${esc(homeName)}</span><span class="score">${hg} - ${ag}</span><span class="team">${esc(awayName)}</span>
       </div>
@@ -138,6 +151,24 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
       <p class="small center">${m.forfeit ? '<strong class="neg">Forfait: te weinig spelers beschikbaar</strong>' : `${m.home ? `${m.attendance} toeschouwers · ` : ''}${m.weather}${m.ourPlan && m.theirPlan ? ` · ${PLAN_INFO[m.ourPlan].label} tegen ${PLAN_INFO[m.theirPlan].label.toLowerCase()} (${MU[m.matchup ?? 0]})` : ''}`}</p>
       ${streakHtml}
       ${m.cards ? `<p class="small center">${esc(m.cards)}</p>` : ''}
+      ${
+        m.scorers?.length
+          ? `<p class="scorers small center">⚽ ${m.scorers.map((g) => `<strong>${esc(g.name)}</strong> ${g.minute}'`).join(' · ')}</p>`
+          : m.goalsFor === 0 && !m.forfeit
+            ? '<p class="small center muted">Niet gescoord.</p>'
+            : ''
+      }
+      ${
+        m.lineup?.length
+          ? `<details class="lineup-details"><summary class="small">De elf die begon (${m.lineup.length})</summary>
+              <ul class="small plain lineup-list">${m.lineup
+                .map((x) => {
+                  const scored = m.scorers?.filter((g) => g.name === x.name).length ?? 0;
+                  return `<li><span class="pos-tag">${x.zone}</span> ${esc(x.name)} <span class="muted">${x.rating}</span>${scored ? ` ${'⚽'.repeat(scored)}` : ''}</li>`;
+                })
+                .join('')}</ul></details>`
+          : ''
+      }
       ${played ? `<p class="small center">Stand: <strong>${ownPosition(s.league)}e</strong></p>` : ''}`;
   }
   const others = sameSeason
@@ -191,9 +222,9 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
     if (p) waiting.push(`Bod van ${esc(o.club)} op ${esc(p.name)}: ${euro(o.amount)}, nog ${weeks(o.expiresInWeeks)}`);
   }
   if (s.sponsorCampaignWeeks) waiting.push(`Sponsorbureau zoekt nog ${weeks(s.sponsorCampaignWeeks)}`);
-  if (s.infrastructure.construction) {
-    const u = UPGRADES.find((x) => x.id === s.infrastructure.construction!.upgrade)!;
-    waiting.push(`Bouwwerken ${esc(u.label)}: klaar over ${weeks(s.infrastructure.construction.weeksLeft)}`);
+  for (const c of s.infrastructure.constructions) {
+    const u = UPGRADES.find((x) => x.id === c.upgrade)!;
+    waiting.push(`Bouwwerken ${esc(u.label)}${c.seats ? ` (+${c.seats} plaatsen)` : ''}: klaar over ${weeks(c.weeksLeft)}`);
   }
   for (const st of s.staff.filter((x) => x.courseWeeksLeft > 0)) waiting.push(`${esc(st.name)} in opleiding: nog ${weeks(st.courseWeeksLeft)}`);
   const injured = s.players.filter((p) => p.injuryWeeks > 0);
@@ -213,11 +244,12 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
         ${records}
         <section><h3>Wedstrijd</h3>${matchHtml}${othersHtml}</section>
         <section><h3>Financiën</h3>${financeHtml}</section>
+        ${s.lastChoice ? `<section class="wide moment-result"><h3>📌 Weekmoment — ${esc(s.lastChoice.title)}</h3><p class="small">${esc(s.lastChoice.outcome)}</p></section>` : ''}
         <section class="wide"><h3>Nieuws en berichten</h3>${newsHtml}</section>
         <section class="wide"><h3>In afwachting</h3>${waiting.length ? `<ul class="small reveal-lines">${waiting.map((w) => `<li>${w}</li>`).join('')}</ul>` : '<p class="muted">Niets in afwachting.</p>'}</section>
       </div>
       <div class="actions">
-        <button class="primary" data-action="report-overview">Naar het dashboard</button>
+        <button class="primary" data-action="report-overview">Naar het overzicht</button>
       </div>
     </div>
   </div>`;

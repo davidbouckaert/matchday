@@ -2,11 +2,14 @@
 // zodat we later een online opslag (bv. een API met MongoDB erachter) kunnen toevoegen
 // zonder de game zelf aan te passen.
 
-import type { GameState } from '../engine/types';
+import type { GameState, LedgerCategory, UpgradeId } from '../engine/types';
 import { SAVE_VERSION } from '../engine/newGame';
 import { createRng } from '../engine/rng';
 import { CANTEEN_ITEMS } from '../engine/data/catalog';
 import { emptyStats } from '../engine/stats';
+import { createOpening } from '../engine/opening';
+import { teamsFor } from '../engine/youth';
+import { MATCH_WEEKS } from '../engine/calendar';
 import { companySector } from '../engine/sponsors';
 import { makeProspect } from '../engine/sponsors';
 import { PLANS } from '../engine/strategy';
@@ -76,6 +79,14 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 10) migrateV10toV11(state);
   if (state.version === 11) migrateV11toV12(state);
   if (state.version === 12) migrateV12toV13(state);
+  if (state.version === 13) migrateV13toV14(state);
+  if (state.version === 14) migrateV14toV15(state);
+  if (state.version === 15) migrateV15toV16(state);
+  if (state.version === 16) migrateV16toV17(state);
+  if (state.version === 17) migrateV17toV18(state);
+  if (state.version === 18) migrateV18toV19(state);
+  if (state.version === 19) migrateV19toV20(state);
+  if (state.version === 20) migrateV20toV21(state);
   repair(state);
   return state;
 }
@@ -245,6 +256,120 @@ function migrateV12toV13(state: GameState): void {
 }
 
 /**
+ * Versie 14: de seizoensopening (persconferentie, voorbeschouwing en de doelen van het bestuur).
+ * Ben je nog voor de eerste speeldag, dan krijg je ze alsnog; sta je al middenin het seizoen,
+ * dan begint het bij de volgende seizoenstart — een persconferentie in week 30 heeft weinig zin.
+ */
+function migrateV13toV14(state: GameState): void {
+  state.ambition ??= null;
+  state.seasonGoals ??= [];
+  state.lastSeasonSettlement ??= null;
+  state.opening ??= state.week < MATCH_WEEKS[0] ? createOpening(state, createRng(state), [], ['Nieuwe truitjes liggen klaar in de kantine']) : null;
+  state.version = 14;
+}
+
+/**
+ * Versie 15: de jeugdwerking bestaat nu uit ploegen. Elke ploeg bindt vrijwilligers,
+ * dus bestaande clubs krijgen het aantal ploegen dat bij hun ledenaantal hoort.
+ */
+function migrateV14toV15(state: GameState): void {
+  state.community.youthTeams ??= teamsFor(state);
+  state.version = 15;
+}
+
+/**
+ * Versie 16: één aartsrivaal per reeks (in plaats van twee derby's), het weekmoment
+ * en de onderlinge balans tegen die rivaal.
+ */
+function migrateV15toV16(state: GameState): void {
+  state.derbyRecord ??= { won: 0, drawn: 0, lost: 0 };
+  state.weekChoice ??= null;
+  state.lastChoice ??= null;
+  const rivals = state.league.teams.filter((t) => t.isRival);
+  if (rivals.length !== 1) {
+    for (const t of state.league.teams) t.isRival = false;
+    const pick = rivals[0] ?? state.league.teams[0];
+    if (pick) pick.isRival = true;
+  }
+  state.version = 16;
+}
+
+/**
+ * Versie 17: doelpunten per speler, en reekssterktes die niet meer overlappen.
+ */
+function migrateV16toV17(state: GameState): void {
+  for (const p of [...state.players, ...state.transferList, ...state.loanMarket]) {
+    p.goals ??= 0;
+    p.careerGoals ??= 0;
+  }
+  state.version = 17;
+}
+
+/**
+ * Versie 18: Nederlandse namen voor de boekingscategorieën. De bedragen verhuizen mee,
+ * zodat je cijfers per categorie en je weekgeschiedenis blijven kloppen.
+ */
+const RENAMED: [string, string][] = [
+  ['merchandising', 'clubartikelen'],
+  ['inkoop shop', 'inkoop winkel'],
+  ['werking shop', 'werking winkel'],
+  ['lonen staff', 'lonen personeel'],
+];
+
+function renameCategories(totals: Record<string, number | undefined> | undefined): void {
+  if (!totals) return;
+  for (const [from, to] of RENAMED) {
+    if (totals[from] === undefined) continue;
+    totals[to] = (totals[to] ?? 0) + (totals[from] ?? 0);
+    delete totals[from];
+  }
+}
+
+function migrateV17toV18(state: GameState): void {
+  const map = new Map(RENAMED);
+  for (const list of [state.lastWeek, state.thisWeek]) {
+    for (const e of list ?? []) {
+      const to = map.get(e.category as string);
+      if (to) e.category = to as LedgerCategory;
+    }
+  }
+  renameCategories(state.seasonTotals as Record<string, number | undefined>);
+  renameCategories(state.lastSeasonTotals as Record<string, number | undefined>);
+  for (const w of state.weekHistory ?? []) renameCategories(w.totals as Record<string, number | undefined>);
+  for (const w of state.statsWeeks ?? []) renameCategories(w.revenue as Record<string, number | undefined>);
+  for (const p of state.pending ?? []) {
+    const to = map.get(p.category as string);
+    if (to) p.category = to as LedgerCategory;
+  }
+  state.version = 18;
+}
+
+/**
+ * Versie 19: twee bouwwerven tegelijk, een tribune waarvan jij de grootte kiest,
+ * en zonnepanelen als bouwproject. Een lopend project verhuist naar de nieuwe lijst.
+ */
+function migrateV18toV19(state: GameState): void {
+  const i = state.infrastructure as typeof state.infrastructure & { construction?: { upgrade: string; weeksLeft: number } | null };
+  if (!i.constructions) {
+    i.constructions = i.construction ? [{ upgrade: i.construction.upgrade as UpgradeId, weeksLeft: i.construction.weeksLeft, seats: i.construction.upgrade === 'tribune' ? 300 : undefined }] : [];
+  }
+  delete i.construction;
+  state.version = 19;
+}
+
+/** Versie 20: je kunt spelers zelf op de bank houden. */
+function migrateV19toV20(state: GameState): void {
+  state.tactics.benched ??= [];
+  state.version = 20;
+}
+
+/** Versie 21: plaatsen die je bewust openlaat in je basiself. */
+function migrateV20toV21(state: GameState): void {
+  state.tactics.gaps ??= {};
+  state.version = 21;
+}
+
+/**
  * Vangnet: vult alles aan wat een opslagbestand nog niet kent. Zo blijft een oud bestand
  * werken, ook als er onderweg een veld bijkwam zonder eigen migratie.
  */
@@ -261,10 +386,27 @@ function repair(state: GameState): void {
     ['log', []],
     ['inflation', 1 + Math.max(0, (state.season ?? 1) - 1) * 0.07],
     ['crest', 'schild'],
+    ['seasonGoals', []],
+    ['opening', null],
+    ['ambition', null],
+    ['lastSeasonSettlement', null],
+    ['derbyRecord', { won: 0, drawn: 0, lost: 0 }],
+    ['weekChoice', null],
+    ['lastChoice', null],
   ];
   for (const [key, value] of fallback) if (s[key] === undefined || s[key] === null) (s as Record<string, unknown>)[key] = value;
+  if (state.community) state.community.youthTeams ??= teamsFor(state);
+  for (const p of [...(state.players ?? []), ...(state.transferList ?? []), ...(state.loanMarket ?? [])]) {
+    p.goals ??= 0;
+    p.careerGoals ??= 0;
+  }
+  if (state.tactics) {
+    state.tactics.benched ??= [];
+    state.tactics.gaps ??= {};
+  }
   const i = state.infrastructure;
   if (i) {
+    i.constructions ??= [];
     i.wifiLevel ??= 0;
     i.sanitairLevel ??= 0;
     i.parkingLevel ??= 0;
