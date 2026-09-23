@@ -19,7 +19,7 @@ export const INVESTORS: InvestorDef[] = [
     summary: 'Geduldige lokale ondernemer die zijn naam graag op het stadion ziet.',
     conditions: ['Het stadion heet voortaan "Stevens Arena"', 'Zijn firma voert alle bouwwerken uit'],
     perks: [
-      'De stadionnaam groeit mee met je reeks: €600/week in 3de nationale, €2.400 in de Challenger Pro Liga',
+      'De stadionnaam groeit mee met je club: €600/week in 3de nationale, €2.400 in de Challenger Pro Liga, en elk seizoen herbekeken',
       'Bouwwerken kosten 15% minder en zijn een kwart sneller klaar',
       'Je mag drie werven tegelijk open hebben in plaats van twee',
     ],

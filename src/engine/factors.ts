@@ -63,12 +63,30 @@ export function attendanceFactors(state: GameState): Factor[] {
 }
 
 /**
- * Hoe zwaar je vrijwilligers meetellen. Bij de supporterscoöperatie ligt het plafond hoger:
- * daar draait de hele club op mensen, en dat mag je merken.
+ * Hoe zwaar je vrijwilligers meetellen. Veertien is een normaal bemande club.
+ *
+ * Onder de veertien doet elke ontbrekende vrijwilliger meteen pijn: de toog is te traag,
+ * de kassa's zijn onderbemand. Daarboven is het een afvlakkende curve in plaats van een
+ * hard plafond. Dat plafond was het probleem: met achttien vrijwilligers zat een club er
+ * al tegenaan, en dan was élke vrijwilliger die daarna bijkwam — en dus ook de +40% van de
+ * coöperatie en de +30% van de lokale figuur — letterlijk niets meer waard. Nu blijft een
+ * extra paar handen altijd iets opleveren, alleen steeds minder dan het vorige.
+ *
+ * Bij de supporterscoöperatie loopt de curve naar een hoger punt: daar draait de hele club
+ * op mensen, en dat mag je merken.
  */
 export function volunteerFactor(state: GameState): number {
-  return clamp(state.community.volunteers / 14, 0.35, volunteerCap(state));
+  const ratio = state.community.volunteers / NORMAL_VOLUNTEERS;
+  if (ratio <= 1) return clamp(ratio, 0.35, 1);
+  // e-macht: nadert de grens zonder ze ooit te raken, dus er is geen punt waarop het stopt
+  return 1 + (volunteerCap(state) - 1) * (1 - Math.exp(-(ratio - 1) / VOLUNTEER_DECAY));
 }
+
+/** Een normaal bemande club van dit niveau. */
+export const NORMAL_VOLUNTEERS = 14;
+
+/** Hoe snel de meerwaarde van een extra vrijwilliger afvlakt. */
+const VOLUNTEER_DECAY = 0.75;
 
 export function spendFactors(state: GameState): Factor[] {
   const list = [

@@ -670,7 +670,7 @@ function seasonEnd(state: GameState): void {
 
   if (state.nextDivisionLevel !== level) {
     adjustWagesForDivision(state, level, state.nextDivisionLevel);
-    updateStadiumSponsor(state, state.nextDivisionLevel);
+    // de naamsponsor volgt in newSeason, zodra de nieuwe reeks en het nieuwe prijspeil vastliggen
   }
   sponsorsAfterSeason(state, createRng(state), result, state.nextDivisionLevel);
 
@@ -782,6 +782,9 @@ function newSeason(state: GameState, rng: Rng): void {
   const rivalFollows = rivalClub ? rivalClub.divisionLevel === state.nextDivisionLevel : rng.chance(0.35);
   const carry = oldRival && (sameDivision || rivalFollows) ? [oldRival] : [];
   state.league = createLeague(rng, state.nextDivisionLevel, carry, state.world);
+  // de naamsponsor van de aannemer wordt nooit heronderhandeld, dus herbekijken we hem zelf:
+  // nu de nieuwe reeks, de reputatie van vorig seizoen en het nieuwe prijspeil vastliggen
+  updateStadiumSponsor(state, sameDivision ? 'seizoen' : 'reeks');
   if (carry.length && !sameDivision) addNews(state, 'neutraal', `${oldRival} legde dezelfde weg af: de derby staat ook volgend seizoen op de kalender.`);
   state.ticketPrice = Math.max(state.ticketPrice, DIVISIONS[state.nextDivisionLevel].refTicketPrice - 2);
   state.lastMatch = null;

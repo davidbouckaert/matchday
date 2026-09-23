@@ -404,9 +404,9 @@ function migrateV26toV27(state: GameState): void {
     // wie al promoveerde, krijgt de klok vanaf dat seizoen; anders vanaf het begin
     lastPromotionSeason: (state.promotionsWithInvestor ?? 0) > 0 ? Math.max(0, (state.season ?? 1) - 1) : 0,
   };
-  // de stadionsponsor van de aannemer schaalt voortaan met de reeks
+  // de stadionsponsor van de aannemer schaalt voortaan met reeks, reputatie en prijspeil
   const stadion = state.sponsors?.find((d) => d.kind === 'stadion');
-  if (stadion) stadion.weekly = stadiumSponsorWeekly(state.league?.divisionLevel ?? 1);
+  if (stadion) stadion.weekly = stadiumSponsorWeekly(state);
   state.version = 27;
 }
 

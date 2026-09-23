@@ -17,6 +17,7 @@ import {
   seasonsLeft,
   stadiumSponsorWeekly,
   takePrizeShare,
+  updateStadiumSponsor,
   volunteerCap,
 } from '../src/engine/investors';
 import { volunteerFactor } from '../src/engine/factors';
@@ -31,32 +32,64 @@ const game = (investor: InvestorId, clubId = 'zuidrand', seed = 42) => readyGame
 
 describe('De aannemer: bouwen is zijn ding', () => {
   it('laat de stadionnaam meegroeien met je reeks', () => {
-    const provinciale = stadiumSponsorWeekly(0);
-    const derde = stadiumSponsorWeekly(1);
-    const eerste = stadiumSponsorWeekly(3);
-    expect(derde).to.equal(600); // 3de nationale is de ijkreeks
-    expect(provinciale).to.be.below(derde);
-    expect(eerste).to.be.above(derde * 2);
+    const basis = game('aannemer');
+    // een doorsnee club (reputatie 50) in jaar één: dat is de ijkwaarde van €600
+    const s = { ...basis, inflation: 1, community: { ...basis.community, reputation: 50 } };
+    const at = (level: number) => stadiumSponsorWeekly({ ...s, league: { ...s.league, divisionLevel: level } });
+    expect(at(1)).to.equal(600);
+    expect(at(0)).to.be.below(at(1));
+    expect(at(3)).to.be.above(at(1) * 2);
     for (let level = 1; level < DIVISIONS.length; level++) {
-      expect(stadiumSponsorWeekly(level), `reeks ${level}`).to.be.above(stadiumSponsorWeekly(level - 1));
+      expect(at(level), `reeks ${level}`).to.be.above(at(level - 1));
     }
+  });
+
+  it('laat de stadionnaam ook meegroeien met je reputatie en het prijspeil', () => {
+    const s = game('aannemer');
+    const basis = stadiumSponsorWeekly(s);
+    const beroemd = stadiumSponsorWeekly({ ...s, community: { ...s.community, reputation: s.community.reputation + 30 } });
+    expect(beroemd, 'een bekendere club is meer waard voor een naamsponsor').to.be.above(basis);
+    const later = stadiumSponsorWeekly({ ...s, inflation: s.inflation * 1.5 });
+    expect(later, 'het bedrag mag niet stilstaan terwijl alles duurder wordt').to.be.above(basis);
   });
 
   it('geeft hem bij de start een stadionsponsor op het niveau van zijn reeks', () => {
     const s = game('aannemer');
     const deal = s.sponsors.find((d) => d.kind === 'stadion');
     expect(deal, 'geen stadionsponsor').to.not.equal(undefined);
-    expect(deal!.weekly).to.equal(stadiumSponsorWeekly(s.league.divisionLevel));
+    expect(deal!.weekly).to.equal(stadiumSponsorWeekly(s));
   });
 
   it('trekt de stadionsponsor op na een promotie', () => {
     const s = game('aannemer');
     const deal = s.sponsors.find((d) => d.kind === 'stadion')!;
     const before = deal.weekly;
-    const { updateStadiumSponsor } = require('../src/engine/investors') as typeof import('../src/engine/investors');
-    updateStadiumSponsor(s, s.league.divisionLevel + 1);
+    s.league.divisionLevel++;
+    updateStadiumSponsor(s, 'reeks');
     expect(deal.weekly).to.be.above(before);
     expect(s.news.some((n) => /naamsponsor/.test(n.text))).to.equal(true);
+  });
+
+  it('laat de naamsponsor nooit achterop hinken op de rest van de club', () => {
+    // dit contract loopt zolang de aannemer blijft en wordt dus nooit heronderhandeld,
+    // terwijl elke andere sponsor om de één à drie seizoenen opnieuw tekent op het
+    // actuele niveau. Zonder jaarlijkse herziening verdampt het vanzelf.
+    const na = playWeeks(game('aannemer'), 52 * 3);
+    const deal = na.sponsors.find((d) => d.kind === 'stadion');
+    if (!deal) return; // de aannemer kan er tussenuit zijn; dan valt er niets te meten
+    // het bedrag wordt bij het begin van elk seizoen vastgelegd en ligt dan een jaar vast,
+    // dus het mag binnen het seizoen wat afwijken — maar het mag niet wegdrijven
+    const ratio = deal.weekly / stadiumSponsorWeekly(na);
+    expect(ratio, `naamsponsor €${deal.weekly} tegenover €${stadiumSponsorWeekly(na)} nu`).to.be.within(0.8, 1.25);
+  });
+
+  it('haalt de naamsponsor mee omhoog met de inflatie als de club in dezelfde reeks blijft', () => {
+    const s = game('aannemer');
+    const start = s.sponsors.find((d) => d.kind === 'stadion')!.weekly;
+    const na = playWeeks(s, 52 * 3);
+    const deal = na.sponsors.find((d) => d.kind === 'stadion');
+    if (!deal || na.league.divisionLevel !== s.league.divisionLevel) return; // andere reeks: dan meet dit iets anders
+    expect(deal.weekly, 'drie seizoenen inflatie en het bedrag stond stil').to.be.above(start);
   });
 
   it('maakt bouwen goedkoper en sneller', () => {
@@ -203,6 +236,57 @@ describe('De coöperatie: de gemeenschap is je kapitaal', () => {
     expect(volunteerFactor(coop)).to.be.above(volunteerFactor(ander));
   });
 
+  it('geeft de coöperatie de vrijwilligers waar ze recht op heeft', () => {
+    // de data belooft +40%; die belofte hoort ook in de cijfers te staan
+    for (const clubId of ['zuidrand', 'heidebeke']) {
+      const coop = game('cooperatie', clubId);
+      const ander = game('fonds', clubId);
+      expect(coop.community.volunteers / ander.community.volunteers, clubId).to.be.closeTo(1.4, 0.06);
+    }
+  });
+});
+
+describe('Vrijwilligers blijven altijd iets opleveren', () => {
+  // dit was kapot: de factor zat vast op een hard plafond, en clubs zaten daar vanaf week
+  // één al tegenaan. Elke vrijwilliger die daarna bijkwam — en dus ook de +40% van de
+  // coöperatie en de +30% van de lokale figuur — was letterlijk niets waard.
+  it('geeft elke extra vrijwilliger nog iets mee, hoeveel je er ook al hebt', () => {
+    for (const inv of ['fonds', 'cooperatie'] as InvestorId[]) {
+      const s = game(inv, 'heidebeke');
+      for (const n of [14, 18, 22, 30, 45, 70]) {
+        const hier = volunteerFactor({ ...s, community: { ...s.community, volunteers: n } });
+        const meer = volunteerFactor({ ...s, community: { ...s.community, volunteers: n + 2 } });
+        expect(meer, `${inv}: van ${n} naar ${n + 2} vrijwilligers levert niets op`).to.be.above(hier);
+      }
+    }
+  });
+
+  it('geeft geen enkele startcombinatie een factor die al vastzit', () => {
+    for (const clubId of ['zuidrand', 'heidebeke']) {
+      for (const inv of ['fonds', 'aannemer', 'cooperatie'] as InvestorId[]) {
+        const s = game(inv, clubId);
+        const nu = volunteerFactor(s);
+        const meer = volunteerFactor({ ...s, community: { ...s.community, volunteers: s.community.volunteers + 3 } });
+        expect(meer, `${clubId}/${inv} start al aan het plafond`).to.be.above(nu);
+      }
+    }
+  });
+
+  it('laat het wel afvlakken: de tiende vrijwilliger erbij doet minder dan de eerste', () => {
+    const s = game('fonds', 'heidebeke');
+    const f = (n: number) => volunteerFactor({ ...s, community: { ...s.community, volunteers: n } });
+    const eerste = f(16) - f(14);
+    const tiende = f(34) - f(32);
+    expect(tiende).to.be.below(eerste);
+    expect(tiende).to.be.above(0);
+  });
+
+  it('straft een onderbemande club nog altijd hard af', () => {
+    const s = game('fonds');
+    expect(volunteerFactor({ ...s, community: { ...s.community, volunteers: 7 } })).to.be.closeTo(0.5, 0.01);
+    expect(volunteerFactor({ ...s, community: { ...s.community, volunteers: 2 } })).to.equal(0.35);
+  });
+
   it('kan één ledenronde per seizoen houden, voor de competitie start', () => {
     const s = game('cooperatie');
     expect(canHoldRound(s).ok).to.equal(true);
@@ -339,7 +423,8 @@ describe('Opslag met de nieuwe investeerders', () => {
     const stadion = old.sponsors.find((d) => d.kind === 'stadion')!;
     stadion.weekly = 600; // het oude vaste bedrag
     const fixed = migrate(old);
-    expect(fixed.sponsors.find((d) => d.kind === 'stadion')!.weekly).to.equal(stadiumSponsorWeekly(3));
+    expect(fixed.sponsors.find((d) => d.kind === 'stadion')!.weekly).to.equal(stadiumSponsorWeekly(fixed));
+    expect(fixed.sponsors.find((d) => d.kind === 'stadion')!.weekly, 'in 1ste nationale hoort dat een pak meer te zijn').to.be.above(600);
   });
 
   it('geeft een club die al promoveerde een eerlijke klok', async () => {

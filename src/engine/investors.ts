@@ -18,32 +18,49 @@ import { remember } from './content';
 
 /* ------------------------------------------------------------------ aannemer */
 
+/** Wat de naam op het stadion waard is in 3de nationale, bij een doorsnee club, in jaar één. */
+const STADIUM_BASE = 600;
+
 /**
- * De stadionnaam van de aannemer groeit mee met je reeks. Vroeger stond dit vast op €600
- * per week, waardoor zijn belangrijkste voordeel met elke promotie minder waard werd —
- * terwijl de plek van de stadionsponsor wel bezet bleef.
+ * De stadionnaam van de aannemer schaalt mee met de club. Dit contract loopt zolang hij
+ * aan boord is en wordt dus nooit heronderhandeld, terwijl elke andere sponsor om de één
+ * à drie seizoenen op het actuele niveau opnieuw wordt getekend. Stond het bedrag vast,
+ * dan zakte zijn belangrijkste voordeel vanzelf weg — eerst bij elke promotie, en daarna
+ * nog eens door de inflatie — terwijl de plek van de stadionsponsor wel bezet bleef.
+ *
+ * Daarom volgt de naamsponsor dezelfde drie dingen als de rest van je sponsors: je reeks,
+ * je reputatie en het prijspeil.
  */
-export function stadiumSponsorWeekly(level: number): number {
-  const base = DIVISIONS[1].sponsorFactor; // 3de nationale is de ijkreeks
-  const here = DIVISIONS[clamp(level, 0, DIVISIONS.length - 1)].sponsorFactor;
-  return round(600 * (here / base), 5);
+export function stadiumSponsorWeekly(state: GameState): number {
+  const level = clamp(state.league.divisionLevel, 0, DIVISIONS.length - 1);
+  const reeks = DIVISIONS[level].sponsorFactor / DIVISIONS[1].sponsorFactor; // 3de nationale is de ijkreeks
+  const naam = clamp(0.75 + state.community.reputation / 200, 0.75, 1.25); // reputatie 50 = normaal
+  return round(STADIUM_BASE * reeks * naam * state.inflation, 5);
 }
 
-/** Werkt de stadionsponsor bij wanneer je van reeks verandert. */
-export function updateStadiumSponsor(state: GameState, level: number): void {
+/**
+ * Werkt de stadionsponsor bij. Draait bij elke reekswissel en één keer per seizoen, zodat
+ * het bedrag niet achterop hinkt op de rest van je sponsorinkomsten.
+ */
+export function updateStadiumSponsor(state: GameState, reason: 'reeks' | 'seizoen' = 'seizoen'): void {
   if (state.investor !== 'aannemer' || !state.investorActive) return;
   const deal = state.sponsors.find((d) => d.kind === 'stadion');
   if (!deal) return;
-  const next = stadiumSponsorWeekly(level);
+  const next = stadiumSponsorWeekly(state);
   if (next === deal.weekly) return;
   const before = deal.weekly;
   deal.weekly = next;
+  const up = next > before;
   addNews(
     state,
-    next > before ? 'goed' : 'neutraal',
-    next > before
-      ? `${deal.name}: de naamsponsor trekt zijn bijdrage op naar ${euro(next)}/week, nu je een reeks hoger speelt.`
-      : `${deal.name}: de naamsponsor zakt naar ${euro(next)}/week na de degradatie.`,
+    up ? 'goed' : 'neutraal',
+    reason === 'reeks'
+      ? up
+        ? `${deal.name}: de naamsponsor trekt zijn bijdrage op naar ${euro(next)}/week, nu je een reeks hoger speelt.`
+        : `${deal.name}: de naamsponsor zakt naar ${euro(next)}/week na de degradatie.`
+      : up
+        ? `${deal.name}: de naamsponsor herbekijkt zijn bijdrage en gaat naar ${euro(next)}/week.`
+        : `${deal.name}: de naamsponsor herbekijkt zijn bijdrage en zakt naar ${euro(next)}/week.`,
   );
 }
 
@@ -64,9 +81,13 @@ export function baseProjects(state: GameState): number {
 
 /* ---------------------------------------------------------------- cooperatie */
 
-/** Het plafond op de vrijwilligersfactor. Bij de coöperatie ligt dat hoger. */
+/**
+ * Waar de vrijwilligerscurve naartoe loopt. Bij de coöperatie ligt dat punt duidelijk
+ * hoger. Het wordt nooit helemaal bereikt (zie volunteerFactor), dus het is een richting,
+ * geen muur waar je tegenaan botst.
+ */
 export function volunteerCap(state: GameState): number {
-  return state.investor === 'cooperatie' ? 1.35 : 1.15;
+  return state.investor === 'cooperatie' ? 1.55 : 1.3;
 }
 
 /** De ledenronde kan alleen in de voorbereiding, één keer per seizoen. */
@@ -214,7 +235,7 @@ export function investorSummary(state: GameState): string {
   if (!state.investorActive) return 'Je investeerder is niet langer betrokken bij de club.';
   switch (state.investor) {
     case 'aannemer':
-      return `Bouwwerken kosten 15% minder en zijn een kwart sneller klaar, je mag drie werven tegelijk open hebben, en de stadionnaam brengt ${euro(stadiumSponsorWeekly(state.league.divisionLevel))}/week op.`;
+      return `Bouwwerken kosten 15% minder en zijn een kwart sneller klaar, je mag drie werven tegelijk open hebben, en de stadionnaam brengt ${euro(stadiumSponsorWeekly(state))}/week op — een bedrag dat elk seizoen met je club mee herbekeken wordt.`;
     case 'fonds':
       // de promotieklok staat als aparte, opvallende regel op de kaart — hier niet herhalen
       return `${Math.round(FUND_TRANSFER_SHARE * 100)}% van elke transferwinst en ${Math.round(FUND_PRIZE_SHARE * 100)}% van je prijzengeld gaan naar het fonds. Ze tekenen zelf voor stevige biedingen op je jonge spelers, en ze verwachten dat je promoveert.`;

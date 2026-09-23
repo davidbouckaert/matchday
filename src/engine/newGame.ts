@@ -202,21 +202,21 @@ export function createNewGame(opts: NewGameOptions): GameState {
   // effecten van je achtergrond
   if (opts.avatar.background === 'exspeler') state.players.forEach((p) => (p.morale = clamp(p.morale + 10, 0, 100)));
   if (opts.avatar.background === 'lokaal') {
-    state.community.volunteers = Math.round(state.community.volunteers * 1.25);
+    state.community.volunteers = Math.round(state.community.volunteers * 1.3);
     state.community.fanMood = clamp(state.community.fanMood + 5, 0, 100);
   }
 
   // effecten van de investeerder
   book(state, 'investeerder', investor.capital, `Kapitaalinjectie ${investor.name}`);
   if (opts.investor === 'aannemer') {
-    const deal = makeDeal(state, rng, 'stadion', stadiumSponsorWeekly(START_DIVISION));
+    const deal = makeDeal(state, rng, 'stadion', stadiumSponsorWeekly(state));
     deal.name = 'Stevens Arena';
     deal.sector = 'Bouw'; // de aannemer zelf: naamsponsor van het stadion
     deal.weeksLeft = 9999;
     state.sponsors.push(deal);
   }
   if (opts.investor === 'cooperatie') {
-    state.community.volunteers = Math.round(state.community.volunteers * 1.3);
+    state.community.volunteers = Math.round(state.community.volunteers * 1.4);
     state.community.fanBase = Math.round(state.community.fanBase * 1.15);
     state.community.fanMood = clamp(state.community.fanMood + 8, 0, 100);
   }

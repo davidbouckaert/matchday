@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.20.0';
+export const VERSION = '0.20.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,20 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.20.1',
+    date: '2026-09-23',
+    title: 'Twee voordelen die in de praktijk niets deden',
+    items: [
+      'De vrijwilligersfactor zat vast op een hard plafond waar clubs vanaf week één al tegenaan zaten',
+      'Daardoor was elke extra vrijwilliger — en dus ook de +40% van de coöperatie — letterlijk niets waard',
+      'Het plafond is nu een afvlakkende curve: een extra paar handen levert altijd iets op, alleen steeds minder',
+      'Een onderbemande club wordt nog even hard afgestraft als vroeger',
+      'De coöperatie geeft nu echt +40% vrijwilligers en de lokale figuur +30%, zoals de tekst al beloofde',
+      'De stadionnaam van de aannemer volgt nu ook je reputatie en het prijspeil, niet alleen je reeks',
+      'Dat contract wordt nooit heronderhandeld, dus het wordt elk seizoen automatisch herbekeken',
+    ],
+  },
   {
     version: '0.20.0',
     date: '2026-09-23',
