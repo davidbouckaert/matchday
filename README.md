@@ -171,6 +171,36 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.33.0 — Je zakte weg omdat alleen jouw ploeg moe werd
+
+**Er zat een duim op de weegschaal, en die drukte tegen jou.** Jouw ploeg wordt in detail gespeeld: spelers raken vermoeid, een blessure haalt je beste verdediger eruit, een schorsing kost je een basisspeler, vorm en moraal schommelen. Je tegenstanders waren één vast getal dat het hele seizoen nergens last van had.
+
+Gemeten met een club die elke week zijn beste elf opstelt:
+
+| moment | ploegsterkte tegenover het reeksgemiddelde |
+|---|---|
+| week 1 | −0,5 |
+| week 10 | −2,0 |
+| week 20 | −3,0 |
+| week 30 | −1,6 |
+
+Je ploeg werd niet slechter. Alleen zíj kreeg de tikken. Over een seizoen was dat zes à zeven punten in het klassement, en daarom kwam je met een kern op het reeksgemiddelde toch standaard rond de tiende plaats van zestien uit — precies wat je op speeldag 22 zag.
+
+De wedstrijdmotor zelf was wél eerlijk: twee even sterke ploegen komen over 20.000 duels uit op 37% winst, 26% gelijk, 37% verlies. Het probleem zat dus niet in de dobbelstenen maar in wat er in de motor ging.
+
+**Nu draagt elke ploeg hetzelfde seizoen.** De slijtage loopt op tot de winterstop, de rust haalt er een stuk uit, en in de terugronde loopt ze weer op. De ene club heeft meer pech dan de andere, maar gemiddeld even veel. Onderling verandert er voor hen niets — ze zakken allemaal evenveel — maar tegenover jou staan ze eindelijk in dezelfde eenheden.
+
+**En je werk weegt zwaarder.** Chemie, trainer, moraal, vorm, scherpte, spelersrollen en spelplan tellen nu voor 55% mee in plaats van 45%. Alles wat beheer kan opleveren — topstaf, vijf trainingen, frisse benen, hoge moraal — is daarmee goed voor ongeveer vijf punten ploegsterkte, en dat is in de eindstand te zien:
+
+| speelstijl | gemiddelde eindplaats | punten uit 30 wedstrijden |
+|---|---|---|
+| enkel de beste elf opstellen | 8,4 | 41 |
+| ploeg opvolgen: trainingen, staf, rollen, opstelling | 5,3 | 51 |
+
+Top vijf in de helft van de seizoenen, en af en toe een titel. Dat is wat een eerste seizoen met een gemiddelde kern hoort op te leveren als je ermee bezig bent.
+
+**De prijs staat er eerlijk bij.** Passief spelen wordt hier nóg milder van: Zuidrand met de aannemer gaat van 10 naar 7 faillissementen op 20, met de coöperatie van 17 naar 11, Heidebeke met de coöperatie van 3 naar 0. Samen met de sponsorwijziging van 0.32.0 is de financiële druk in twee versies fors gezakt — van 17 op 20 naar 7 op 20 voor de moeilijkste startcombinatie. Dat is de plek waar de moeilijkheidsinstellingen thuishoren.
+
 ### 0.32.0 — De sponsormarkt stond op zijn kop
 
 **Er waren meer banken dan bakkers.** Van de achtenveertig bedrijven in de streek konden er eenentwintig een shirt of de borst aan — samen twee plaatsen — en maar drie een reclamebord, waarvan er zestien zijn. Je contactenlijst stond dus vol brouwerijen en telecombedrijven die, omdat de grote plaatsen allang bezet waren, een bord van veertig euro kwamen tekenen. In het echt is het net omgekeerd: langs het veld hangen dertig borden van de bakker, de loodgieter en de frituur, en is er één bedrijf in de streek groot genoeg voor de borst.

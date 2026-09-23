@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.32.0';
+export const VERSION = '0.33.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,21 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.33.0',
+    date: '2026-09-23',
+    title: 'Je zakte weg omdat alleen jouw ploeg moe werd',
+    items: [
+      'Balansfout: alleen jouw ploeg had vermoeidheid, blessures, schorsingen, vorm en moraal — je tegenstanders waren het hele seizoen één vast getal',
+      'Gemeten: met een kern op het reeksgemiddelde stond je rond speeldag 20 drie punten onder dat gemiddelde, zonder dat je iets fout deed',
+      'Daardoor eindigde je met een gemiddelde ploeg standaard rond de tiende plaats van zestien',
+      'Alle ploegen dragen nu hetzelfde seizoen: het loopt op tot de winterstop, de rust haalt er een stuk uit, en in de terugronde loopt het weer op',
+      'De ene club heeft daarbij meer pech dan de andere, maar gemiddeld even veel',
+      'Beheer weegt zwaarder mee: chemie, trainer, moraal, vorm, scherpte, rollen en spelplan tellen voor 55% in plaats van 45%',
+      'Gemeten resultaat: wie zijn ploeg opvolgt eindigt nu gemiddeld 5e met 51 punten; wie niets doet blijft rond de 8e à 9e plaats staan',
+      'Let op: passief spelen is opnieuw milder geworden — samen met de sponsorwijziging van 0.32.0 is de financiële druk fors gezakt',
+    ],
+  },
   {
     version: '0.32.0',
     date: '2026-09-23',

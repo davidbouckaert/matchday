@@ -226,6 +226,39 @@ export function zoneAt(league: League, position: number, divisionLevel: number, 
   return 'behoud';
 }
 
+/**
+ * Wat een seizoen met de benen van een ploeg doet, in sterktepunten.
+ *
+ * Hier zat een scheeftrekking die je alleen als speler voelde. Jouw ploeg wordt in detail
+ * gespeeld: spelers raken vermoeid, blessures halen je besten eruit, schorsingen kosten je
+ * een basisspeler, vorm en moraal schommelen. Je tegenstanders waren één vast getal dat het
+ * hele seizoen nergens last van had.
+ *
+ * Gemeten: een club die elke week zijn beste elf opstelt, begint 0,5 punt onder het
+ * reeksgemiddelde en staat rond speeldag 20 drie punten eronder. Niet omdat de ploeg slechter
+ * werd, maar omdat alleen zíj beenbreuken en tikken kreeg. Over een seizoen was dat goed voor
+ * zes tot zeven punten in het klassement, en daarom kwam je met een gemiddelde kern toch
+ * standaard rond de tiende plaats uit.
+ *
+ * Nu dragen alle ploegen hetzelfde seizoen: het loopt op tot de winterstop, de rust haalt er
+ * een stuk uit, en in de terugronde loopt het weer op. Onderling verandert er voor hen niets —
+ * ze zakken allemaal evenveel — maar tegenover jou staan ze nu in dezelfde eenheden.
+ */
+export function seasonWear(week: number): number {
+  const w = clamp(week, 1, 52);
+  if (w <= 24) return (w - 1) * 0.115; // richting de winterstop loopt het op tot ~2,6
+  if (w <= 29) return 2.6 - (w - 24) * 0.3; // winterstop: de benen komen terug
+  return clamp(1.1 + (w - 29) * 0.045, 0, 2.2); // terugronde
+}
+
+/** Dezelfde curve, maar de ene club heeft meer pech dan de andere. */
+export function teamWear(teamId: string, season: number, week: number): number {
+  let h = season * 2654435761;
+  for (let i = 0; i < teamId.length; i++) h = (h * 31 + teamId.charCodeAt(i)) >>> 0;
+  const spread = 0.6 + ((h % 1000) / 1000) * 0.8; // gemiddeld 1, tussen 0,6 en 1,4
+  return seasonWear(week) * spread;
+}
+
 export interface Side {
   attack: number;
   defense: number;

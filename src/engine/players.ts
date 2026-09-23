@@ -136,7 +136,7 @@ export const FORMATION_MOD: Record<Formation, { att: number; def: number }> = {
 export const OUT_OF_POSITION_PENALTY = 8;
 
 /** Hoe zwaar staff, sfeer en vorm doorwegen tegenover de pure kwaliteit van je spelers. */
-export const BONUS_WEIGHT = 0.45;
+export const BONUS_WEIGHT = 0.55;
 
 export interface LineupSlot {
   player: Player;

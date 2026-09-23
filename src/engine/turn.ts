@@ -15,7 +15,7 @@ import {
   WEEKS_PER_YEAR,
   isWinter,
 } from './calendar';
-import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, zoneAt } from './league';
+import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt } from './league';
 import { developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
@@ -178,7 +178,8 @@ function playMatchWeek(state: GameState, rng: Rng): void {
     const bannedAway = banned(f.awayId);
     const sideOf = (id: string, plan: GamePlan | undefined, missing: number) => {
       const team = state.league.teams.find((x) => x.id === id);
-      return opponentSide(opponentStrength(state.league, id) - SUSPENSION_PENALTY * Math.min(3, missing) + rng.normal(0, 2), plan ?? team?.plan ?? 'balbezit');
+      const moe = teamWear(id, state.season, state.week);
+      return opponentSide(opponentStrength(state.league, id) - moe - SUSPENSION_PENALTY * Math.min(3, missing) + rng.normal(0, 2), plan ?? team?.plan ?? 'balbezit');
     };
     const [h, a] = simulateMatch(rng, sideOf(f.homeId, f.homePlan, bannedHome.size), sideOf(f.awayId, f.awayPlan, bannedAway.size));
     f.homeGoals = h;
@@ -242,7 +243,9 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
   const strength = teamStrength(state, { strength: opponent.strength, plan: theirPlan });
   const dayForm = rng.normal(0, 2);
   const ourSide = { attack: strength.attack + dayForm, defense: strength.defense + dayForm };
-  const theirs = opponent.strength - SUSPENSION_PENALTY * Math.min(3, theirBanned.size) + rng.normal(0, 2);
+  // ook zij hebben een seizoen in de benen: zonder dit speelde alleen jouw ploeg met
+  // vermoeidheid, blessures en schorsingen, en zakte je vanzelf richting de tiende plaats
+  const theirs = opponent.strength - teamWear(opponentId, state.season, state.week) - SUSPENSION_PENALTY * Math.min(3, theirBanned.size) + rng.normal(0, 2);
   const theirSide = opponentSide(theirs, theirPlan);
   const [hg, ag] = home ? simulateMatch(rng, ourSide, theirSide) : simulateMatch(rng, theirSide, ourSide);
   const ours = strength.total + dayForm;
