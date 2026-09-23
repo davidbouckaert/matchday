@@ -235,6 +235,7 @@ export interface SponsorDeal {
   weeksLeft: number;
   satisfaction: number; // 0-100: hoe tevreden de sponsor is
   extraAskedSeason: number; // seizoen waarin je al om een extra bijdrage vroeg (0 = nooit)
+  lockedSeasons?: number; // voor hoeveel seizoenen je tekende (2 of 3 = vast, ook bij promotie)
 }
 
 export interface SponsorProspect {
@@ -649,6 +650,7 @@ export interface GameState {
   lastMatch: MatchReport | null;
   history: SeasonRecord[];
 
+  seasonTickets: { season: number; price: number; sold: number; revenue: number } | null; // abonnementen van dit seizoen
   lastOrigins: WeekOrigin[]; // waar de grootste posten van de laatste week vandaan kwamen
   lastWeek: LedgerEntry[]; // boekingen van de laatst gespeelde week
   thisWeek: LedgerEntry[]; // boekingen van acties in de huidige week (voor je op volgende week klikt)

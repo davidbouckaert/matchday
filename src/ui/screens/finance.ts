@@ -8,6 +8,7 @@ import { spendPerHeadCanteen } from '../../engine/canteen';
 import { esc, euro, signedEuro } from '../format';
 import { forecast, topLines } from '../../engine/forecast';
 import { biggestFactors, factorEffect, sortedOrigins } from '../../engine/origins';
+import * as seasonTickets from '../../engine/seasontickets';
 import { hint } from '../tooltip';
 
 function groupByCategory(entries: LedgerEntry[]): [LedgerCategory, number][] {
@@ -180,6 +181,67 @@ function originsCard(s: GameState): string {
   </section>`;
 }
 
+
+/** De regel die live meerekent terwijl je aan de schuifregelaar sleept. */
+export function subscriptionInfo(s: GameState, price: number): string {
+  const st = seasonTickets;
+  const full = st.fullPrice(s);
+  const sold = st.expectedSales(s, price);
+  const revenue = st.expectedRevenue(s, price);
+  const gate = st.forgoneGate(s, price);
+  const net = revenue - gate;
+  const discount = Math.round((1 - price / Math.max(1, full)) * 100);
+  if (!sold) return `<strong>${euro(price)} per abonnement</strong> · ${discount > 0 ? `${discount}% korting` : 'geen korting'} — aan die prijs tekent niemand.`;
+  return `<strong>${euro(price)} per abonnement</strong> · ${discount}% korting · naar schatting <strong>${sold}</strong> verkocht
+    · <strong class="pos">${euro(revenue)}</strong> ineens in kas
+    <span class="muted">(die mensen waren aan de kassa ongeveer ${euro(gate)} waard geweest: ${net >= 0 ? 'dat is' : 'dat kost je'} <strong class="${net < 0 ? 'neg' : 'pos'}">${signedEuro(net)}</strong>)</span>`;
+}
+
+/**
+ * Abonnementen: de enige beslissing die je een heel seizoen vastzet. Geld nu, en die mensen
+ * betalen daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt.
+ */
+function subscriptionsCard(s: GameState): string {
+  const st = seasonTickets;
+  const current = s.seasonTickets && s.seasonTickets.season === s.season ? s.seasonTickets : null;
+  const check = st.canSell(s);
+  const full = st.fullPrice(s);
+
+  if (current) {
+    const out = st.outcome(s)!;
+    return `<section class="card">
+      <h2>Abonnementen ${hint('Eén keer per seizoen, voor de competitie start. Abonnees betalen vooraf en daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt. Het is de enige beslissing die je een heel jaar vastzet.')}</h2>
+      <p>Dit seizoen: <strong>${current.sold} abonnementen</strong> aan ${euro(current.price)}, samen <strong class="pos">${euro(current.revenue)}</strong>, meteen ontvangen.</p>
+      <p class="muted small">Aan de kassa zouden diezelfde mensen ongeveer ${euro(out.gate)} waard geweest zijn
+        (${out.diff >= 0 ? 'je staat er dus' : 'je geeft dus'} <strong class="${out.diff < 0 ? 'neg' : 'pos'}">${signedEuro(out.diff)}</strong> ${out.diff >= 0 ? 'beter voor' : 'op'} — maar je had het geld wel meteen,
+        en zij komen ook als het regent).</p>
+      <p class="muted small">Volgend seizoen kun je opnieuw een campagne voeren.</p>
+    </section>`;
+  }
+
+  if (!check.ok) {
+    return `<section class="card">
+      <h2>Abonnementen ${hint('Abonnementen verkoop je voor de competitie start. Abonnees betalen vooraf en daarna niet meer aan de kassa.')}</h2>
+      <p class="muted">${esc(check.reason)}</p>
+    </section>`;
+  }
+
+  const price = Math.round(st.suggestedPrice(s));
+  return `<section class="card subs">
+    <h2>Abonnementen ${hint('Eén keer per seizoen, voor de competitie start. Het geld komt meteen binnen, maar die mensen betalen daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt. Je legt dus je belangrijkste inkomstenbron vast voor een heel jaar.')}</h2>
+    <p class="muted small">Los betalen kost een supporter ${euro(full)} over ${st.HOME_MATCHES} thuiswedstrijden (${euro(s.ticketPrice)} per match),
+      maar niemand komt vijftien keer — reken op ongeveer ${Math.round(st.TYPICAL_ATTENDANCE_RATE * 100)}%. Zonder korting tekent er dus niemand.</p>
+    <p class="muted small">Het is vooral een keuze over tíming: je haalt geld naar voren dat je anders pas match na match zou krijgen.
+      Scherp geprijsd levert het het meeste cash op maar kost je op het jaar; een bescheiden korting brengt minder binnen maar is voordeliger.
+      En abonnees komen ook als het regent. Wat je hier beslist, ligt vast tot het einde van het seizoen.</p>
+    <div class="slider-row">
+      <input type="range" id="subs-price" min="${st.floorPrice(s)}" max="${Math.max(st.floorPrice(s) + 10, Math.round(full * 1.05))}" step="5" value="${price}" data-live="subs" aria-label="Prijs per abonnement"/>
+      <button class="primary" data-action="sell-subs">Campagne voeren</button>
+    </div>
+    <p id="subs-info" class="tribune-info">${subscriptionInfo(s, price)}</p>
+  </section>`;
+}
+
 export function financeScreen(s: GameState): string {
   const division = DIVISIONS[s.league.divisionLevel];
   const lastWeek = groupByCategory(s.lastWeek);
@@ -190,6 +252,7 @@ export function financeScreen(s: GameState): string {
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
   return `${forecastCard(s)}
+  ${subscriptionsCard(s)}
   ${originsCard(s)}
   <section class="card">
     <h2>Operationeel per week</h2>

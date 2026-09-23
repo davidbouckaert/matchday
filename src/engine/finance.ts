@@ -5,6 +5,7 @@ import { inWinterBreak, isWinter } from './calendar';
 import type { Factor } from './factors';
 import { attendanceFactors, priceFactor, product, spendFactors, volunteerFactor } from './factors';
 import { recordOrigin } from './origins';
+import { holders } from './seasontickets';
 import { payLoanWeek, sponsorWeekly } from './loans';
 import { book, addNews } from './util';
 import { bookMatchdayCatering } from './canteen';
@@ -58,10 +59,21 @@ export const WIN_BONUS_SHARE = 0.12; // extra premie voor de basiself na een zeg
 export const AWAY_SHARE = 0.08; // aandeel van de bezoekende club en de bond in de ticketopbrengst
 
 export function bookHomeMatch(state: GameState, input: AttendanceInput, opponentName: string): number {
-  const attendance = expectedAttendance(state, input);
-  const gross = attendance * state.ticketPrice;
-  book(state, 'tickets', gross, `Tickets vs ${opponentName} (${attendance} × €${state.ticketPrice})`);
-  recordOrigin(state, 'tickets', `Tickets vs ${opponentName}`, gross, attendanceOrigin(state, input), state.community.fanBase * state.ticketPrice);
+  // abonnees komen sowieso: hun plaats is betaald, weer of geen weer
+  const subscribers = holders(state);
+  const attendance = Math.min(state.infrastructure.capacity, Math.max(expectedAttendance(state, input), Math.round(subscribers * 0.85)));
+  // ze betalen alleen niet meer aan de kassa
+  const paying = Math.max(0, attendance - subscribers);
+  const gross = paying * state.ticketPrice;
+  book(
+    state,
+    'tickets',
+    gross,
+    subscribers
+      ? `Tickets vs ${opponentName} (${paying} × €${state.ticketPrice}; ${Math.min(subscribers, attendance)} abonnees betaalden vooraf)`
+      : `Tickets vs ${opponentName} (${attendance} × €${state.ticketPrice})`,
+  );
+  if (gross > 0) recordOrigin(state, 'tickets', `Tickets vs ${opponentName}`, gross, attendanceOrigin(state, input), state.community.fanBase * state.ticketPrice);
   book(state, 'wedstrijdkosten', -gross * AWAY_SHARE, `Aandeel bezoekers en bond (${Math.round(AWAY_SHARE * 100)}% van de ticketverkoop)`);
   bookMatchdayCatering(state, attendance, opponentName);
   book(state, 'wedstrijdkosten', -(250 + 120 + state.league.divisionLevel * 150), `Scheidsrechter en organisatie thuiswedstrijd vs ${opponentName}`);

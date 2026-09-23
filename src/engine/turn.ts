@@ -33,6 +33,7 @@ import { createOpening, settleSeason } from './opening';
 import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
 import { ageStorylines, news, openStoryline, remember } from './content';
 import { checkCareerGoal, creditMilestones, settleCareerSeason, subsidyFactor } from './career';
+import { settleSeasonTickets } from './seasontickets';
 import { NIEUWS } from '../content/news';
 import type { NieuwsSjabloon } from '../content/types';
 import { clubByName, runWorldSeason } from './world';
@@ -659,6 +660,7 @@ function seasonEnd(state: GameState): void {
   }
 
   // de afrekening: je belofte van de persconferentie en de doelen van het bestuur
+  settleSeasonTickets(state);
   state.lastSeasonSettlement = settleSeason(state, pos);
 
   if (state.nextDivisionLevel !== level) adjustWagesForDivision(state, level, state.nextDivisionLevel);

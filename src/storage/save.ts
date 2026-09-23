@@ -95,6 +95,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 22) migrateV22toV23(state);
   if (state.version === 23) migrateV23toV24(state);
   if (state.version === 24) migrateV24toV25(state);
+  if (state.version === 25) migrateV25toV26(state);
   repair(state);
   return state;
 }
@@ -393,6 +394,13 @@ function migrateV22toV23(state: GameState): void {
   state.version = 23;
 }
 
+/** Versie 26: abonnementen en meerjarige sponsorcontracten. */
+function migrateV25toV26(state: GameState): void {
+  state.seasonTickets ??= null;
+  for (const d of state.sponsors ?? []) d.lockedSeasons ??= 1;
+  state.version = 26;
+}
+
 /** Versie 25: waar de bedragen van de week vandaan kwamen. */
 function migrateV24toV25(state: GameState): void {
   state.lastOrigins ??= [];
@@ -473,6 +481,7 @@ function repair(state: GameState): void {
     ['lastWorldMoves', []],
     ['lastOrigins', []],
   ];
+  if (s.seasonTickets === undefined) (s as Record<string, unknown>).seasonTickets = null;
   if (!s.career || typeof s.career !== 'object') (s as Record<string, unknown>).career = emptyCareer();
   if (!s.owner || typeof s.owner !== 'object') (s as Record<string, unknown>).owner = emptyOwner();
   if (state.career) state.career.seasonsByLevel ??= {};

@@ -1,5 +1,5 @@
 import type { GameState, SponsorDeal } from '../../engine/types';
-import { CAMPAIGN, KIND_INFO, KIND_LABEL, KIND_MAX, NETWORK_EVENING, kindLock, kindRange, satisfactionParts } from '../../engine/sponsors';
+import { CAMPAIGN, KIND_INFO, KIND_LABEL, KIND_MAX, NETWORK_EVENING, SPONSOR_TERMS, kindLock, kindRange, satisfactionParts, termTotal } from '../../engine/sponsors';
 import { sponsorWeekly } from '../../engine/loans';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
@@ -22,9 +22,22 @@ export function sponsorsScreen(s: GameState): string {
   const offers = s.sponsorOffers
     .map((o) => {
       const old = o.renewalOf ? s.sponsors.find((d) => d.id === o.renewalOf) : undefined;
-      return `<li><strong>${esc(o.name)}</strong> · ${o.renewalOf ? 'verlenging' : KIND_LABEL[o.kind]} · <strong>${euro(o.weekly)}/week</strong>${old ? ` (nu ${euro(old.weekly)})` : ''} · ${o.weeksLeft} weken
+      if (o.renewalOf) {
+        return `<li><strong>${esc(o.name)}</strong> · verlenging · <strong>${euro(o.weekly)}/week</strong>${old ? ` (nu ${euro(old.weekly)})` : ''} · ${o.weeksLeft} weken
+          <span class="muted small">(vervalt over ${weeks(o.expiresInWeeks)})</span>
+          <span class="btns"><button class="sm primary" data-action="accept-sponsor" data-id="${o.id}">Tekenen</button><button class="sm" data-action="decline-sponsor" data-id="${o.id}">Weigeren</button></span></li>`;
+      }
+      // een nieuw contract leg je zelf vast: hoe langer, hoe meer per week — maar je zit eraan vast
+      return `<li class="offer"><strong>${esc(o.name)}</strong> · ${KIND_LABEL[o.kind]} · basisbedrag <strong>${euro(o.weekly)}/week</strong>
         <span class="muted small">(vervalt over ${weeks(o.expiresInWeeks)})</span>
-        <span class="btns"><button class="sm primary" data-action="accept-sponsor" data-id="${o.id}">Tekenen</button><button class="sm" data-action="decline-sponsor" data-id="${o.id}">Weigeren</button></span></li>`;
+        <div class="terms">${SPONSOR_TERMS.map(
+          (t) => `<button class="term ${t.seasons === 1 ? 'primary' : ''}" data-action="accept-sponsor" data-id="${o.id}:${t.seasons}" title="${esc(t.detail)}">
+            <strong>${esc(t.label)}</strong>
+            <span>${euro(Math.round(o.weekly * t.factor))}/week</span>
+            <span class="muted small">samen ${euro(termTotal(o.weekly, t.seasons))}</span>
+          </button>`,
+        ).join('')}
+        <button class="term decline" data-action="decline-sponsor" data-id="${o.id}">Weigeren</button></div></li>`;
     })
     .join('');
 

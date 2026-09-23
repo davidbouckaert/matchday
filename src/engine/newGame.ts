@@ -17,7 +17,7 @@ import { buildWorld } from './world';
 import { emptyCareer, emptyOwner } from './career';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 25;
+export const SAVE_VERSION = 26;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -139,6 +139,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
     nextDivisionLevel: START_DIVISION,
     lastMatch: null,
     history: [],
+    seasonTickets: null,
     lastOrigins: [],
     lastWeek: [],
     thisWeek: [],

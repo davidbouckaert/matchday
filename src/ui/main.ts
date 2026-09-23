@@ -38,7 +38,7 @@ import { OWN_TEAM_ID, ownPosition } from '../engine/league';
 import { mainSponsor } from '../engine/sponsors';
 import { clubRatings } from '../engine/ratings';
 import { strategyTask } from '../engine/delegation';
-import { financeScreen } from './screens/finance';
+import { financeScreen, subscriptionInfo } from './screens/finance';
 import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from './screens/club';
 import { type CrestShape, clubInitials, crestSvg } from './crest';
 import { START_CLUBS } from '../engine/data/setup';
@@ -437,8 +437,19 @@ root.addEventListener('toggle', (e) => {
   if (el?.tagName === 'DETAILS' && el.dataset.table) ui.openTables[el.dataset.table] = el.open;
 }, true);
 
+/** De abonnementenschuifregelaar rekent live mee terwijl je sleept. */
+function updateSubsInfo(): void {
+  const g = ui.game;
+  const slider = root.querySelector<HTMLInputElement>('#subs-price');
+  const info = root.querySelector<HTMLElement>('#subs-info');
+  if (!g || !slider || !info) return;
+  info.innerHTML = subscriptionInfo(g, Number(slider.value));
+}
+
 root.addEventListener('input', (e) => {
-  if ((e.target as HTMLElement).dataset?.live === 'tribune') updateTribuneInfo();
+  const live = (e.target as HTMLElement).dataset?.live;
+  if (live === 'tribune') updateTribuneInfo();
+  if (live === 'subs') updateSubsInfo();
 });
 
 // ---------- Een week spelen ----------
@@ -683,6 +694,10 @@ const handlers: Record<string, Handler> = {
     return actions.startUpgrade(g, id as Parameters<typeof actions.startUpgrade>[1], seats);
   }),
   event: gameAction(actions.organiseEvent),
+  'sell-subs': gameAction((g) => {
+    const slider = root.querySelector<HTMLInputElement>('#subs-price');
+    return actions.sellSubscriptions(g, slider ? slider.value : '0');
+  }),
 
   // opslaan
   export: () => {

@@ -575,6 +575,12 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .owner-block .bar > span { display: block; height: 100%; background: var(--accent, #4a7); }
 .owner-level { display: flex; flex-direction: column; gap: 1px; }
 
+/* sponsorcontracten: de looptijd kies je zelf */
+.offer .terms { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.offer .term { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: none; color: inherit; cursor: pointer; text-align: left; }
+.offer .term:hover { border-color: var(--accent, #666); }
+.offer .term.decline { justify-content: center; align-self: center; }
+
 /* herkomst: wat elke factor deze week uithaalde */
 .origin-list { display: grid; gap: 12px; }
 .origin { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }

@@ -85,6 +85,21 @@ function faq(): QA[] {
         (met de volledige opstelling eronder) en in de kolom Goals bij Ploeg › Selectie.`,
     },
     {
+      q: 'Wat zijn abonnementen en wanneer verkoop ik ze?',
+      a: `Voor de competitie start (tot en met week 6) kun je op Club › Financiën één keer een abonnementencampagne voeren. Je kiest de prijs,
+        het geld komt meteen binnen, en die mensen betalen de rest van het seizoen niet meer aan de kassa — ook niet als je je ticketprijs verhoogt,
+        en ook niet als ze door de regen thuisblijven. Het is de enige beslissing die je een heel jaar vastzet: geld nu tegenover inkomsten later.
+        Verkoop je er veel en loopt het seizoen goed, dan had je aan de kassa meer verdiend. Loopt het slecht of regent het vaak, dan was het
+        de juiste keuze. Volgend seizoen beslis je opnieuw.`,
+    },
+    {
+      q: 'Waarom kan ik bij een sponsor kiezen hoelang ik teken?',
+      a: `Omdat het een echte afweging is. Eén seizoen betaalt het basisbedrag en laat je volgend jaar opnieuw onderhandelen — handig als je
+        promoveert, want dan kun je meteen meer vragen. Twee seizoenen levert 8% meer per week op, drie seizoenen 15%, maar dan zit je eraan vast:
+        een contract van meerdere jaren schuift níét mee omhoog als je promoveert. Zekerheid tegenover opwaarts potentieel, en dat beslis je
+        op het moment dat je tekent.`,
+    },
+    {
       q: 'Waarom zakte mijn kantine-omzet deze week?',
       a: `Kijk op Club › Financiën bij "Waar kwam het vandaan". Voor de grootste posten van de laatste week staat daar per factor wat hij je
         opleverde of kostte. Een regel als "Sfeer ×0,81 −€1.562" betekent: zonder die lage sfeer had je €1.562 méér gehad. Zo zie je of het

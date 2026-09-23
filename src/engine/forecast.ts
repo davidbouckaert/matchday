@@ -14,6 +14,7 @@ import { sponsorWeekly } from './loans';
 import { trainingCost } from './strategy';
 import { volunteerFactor } from './factors';
 import { subsidyFactor } from './career';
+import { holders } from './seasontickets';
 import { YOUTH_FEE_WEEK, youthForecast } from './actions';
 
 export interface ForecastLine {
@@ -117,9 +118,11 @@ function weekLines(state: GameState, week: number, offset: number): { lines: For
 
   // --- wedstrijd van die week ---
   if (fixture && home) {
-    const attendance = expectedAttendance(state, { weather: TYPICAL_WEATHER, derby: !!opponentTeam?.isRival, positionFactor: 1 });
-    const gross = attendance * state.ticketPrice;
-    add('tickets', `Tickets vs ${opponent} (± ${attendance} toeschouwers)`, gross, true);
+    const subscribers = holders(state);
+    const attendance = Math.min(state.infrastructure.capacity, Math.max(expectedAttendance(state, { weather: TYPICAL_WEATHER, derby: !!opponentTeam?.isRival, positionFactor: 1 }), Math.round(subscribers * 0.85)));
+    const paying = Math.max(0, attendance - subscribers);
+    const gross = paying * state.ticketPrice;
+    add('tickets', subscribers ? `Tickets vs ${opponent} (± ${paying} betalend, ${Math.min(subscribers, attendance)} abonnees)` : `Tickets vs ${opponent} (± ${attendance} toeschouwers)`, gross, true);
     add('wedstrijdkosten', 'Aandeel bezoekers en bond', -gross * AWAY_SHARE, true);
     add('kantine', `Kantine op de wedstrijddag vs ${opponent}`, attendance * spendPerHead(state) * CATERING_MARGIN, true);
     add('wedstrijdkosten', `Scheidsrechter en organisatie vs ${opponent}`, -(250 + 120 + state.league.divisionLevel * 150));

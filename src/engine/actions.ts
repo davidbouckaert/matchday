@@ -16,6 +16,7 @@ import { FORMATIONS, currentBid, departureBlock, isCorePlayer, overall, selectLi
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
 import { emergencyOffer, loanOffers, sponsorWeekly } from './loans';
 import { acceptSponsorOffer } from './sponsors';
+export { SPONSOR_TERMS, sponsorTerm, termTotal } from './sponsors';
 import { hasDiploma, staffSkill } from './staff';
 import { taskCapacity, taskSkill, tasksOf } from './delegation';
 import { boundVolunteers, freeVolunteers, youthCapacityFactor } from './youth';
@@ -25,6 +26,8 @@ import { popularity } from './popularity';
 import { facilityCost } from './finance';
 import { addLog, addNews, book, euro, nextId, weeks } from './util';
 import { openStoryline, remember } from './content';
+import { MIN_PRICE as SEASON_TICKET_MIN, canSell as canSellTickets, sellSeasonTickets } from './seasontickets';
+export * as seasonTickets from './seasontickets';
 import { CARRIERE_DOELEN, maxProjects, setCareerGoal } from './career';
 
 export type { ActionResult };
@@ -362,9 +365,16 @@ export function setTicketPrice(state: GameState, price: number): ActionResult {
   return ok(`Ticketprijs is nu €${state.ticketPrice}.`);
 }
 
-export function acceptSponsor(state: GameState, offerId: string): ActionResult {
+/**
+ * Een sponsoraanbod tekenen. `id` is het aanbod, eventueel met de looptijd erachter:
+ * "sp12:3" tekent voor drie seizoenen. Zonder looptijd is het één seizoen.
+ */
+export function acceptSponsor(state: GameState, id: string): ActionResult {
   const g = guard(state);
-  return g ?? acceptSponsorOffer(state, offerId);
+  if (g) return g;
+  const [offerId, term] = id.split(':');
+  const seasons = (Number(term) === 2 ? 2 : Number(term) === 3 ? 3 : 1) as 1 | 2 | 3;
+  return acceptSponsorOffer(state, offerId, seasons);
 }
 
 export function declineSponsor(state: GameState, offerId: string): ActionResult {
@@ -1007,4 +1017,19 @@ export function chooseCareerGoal(state: GameState, goalId: string): ActionResult
   const goal = CARRIERE_DOELEN.find((x) => x.id === goalId)!;
   addLog(state, 'beslissing', `Langetermijndoel gekozen: ${goal.titel}`);
   return ok(`${goal.titel}. ${goal.beschrijving}`);
+}
+
+/** Abonnementen verkopen voor dit seizoen. Kan één keer, en alleen voor de competitie start. */
+export function sellSubscriptions(state: GameState, price: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const check = canSellTickets(state);
+  if (!check.ok) return fail(check.reason);
+  const asked = Math.max(SEASON_TICKET_MIN, Math.round(Number(price)));
+  if (!Number.isFinite(asked)) return fail('Geef een geldige prijs op.');
+  const result = sellSeasonTickets(state, asked, createRng(state));
+  addLog(state, 'beslissing', `Abonnementen verkocht: ${result.sold} × €${asked}`);
+  return result.sold > 0
+    ? ok(`${result.sold} abonnementen verkocht: ${euro(result.revenue)} ineens in kas.`)
+    : fail('Aan die prijs tekende niemand. Probeer het goedkoper.');
 }

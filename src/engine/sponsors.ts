@@ -6,6 +6,7 @@ import { staffSkill } from './staff';
 import { product, sponsorFactors } from './factors';
 import { ownPosition } from './league';
 import { addLog, addNews, book, nextId } from './util';
+import { remember } from './content';
 import { creditLimit } from './loans';
 import { grantLoan } from './actions';
 import { sponsorBonus } from './career';
@@ -379,7 +380,36 @@ export function renewSponsor(state: GameState, dealId: string): ActionResult {
   return ok(`${d.name} verlengt: €${d.weekly}/week, nog ${d.weeksLeft} weken.`);
 }
 
-export function acceptSponsorOffer(state: GameState, offerId: string): ActionResult {
+
+/**
+ * Hoelang je een sponsorcontract vastlegt. Langer tekenen levert meer per week op, maar je
+ * zit eraan vast: promoveer je, dan schuift dit contract niet mee omhoog, en een sponsor
+ * die ontevreden wordt, raak je niet zomaar kwijt.
+ */
+export interface SponsorTerm {
+  seasons: 1 | 2 | 3;
+  label: string;
+  /** Vermenigvuldiger op het weekbedrag. */
+  factor: number;
+  detail: string;
+}
+
+export const SPONSOR_TERMS: SponsorTerm[] = [
+  { seasons: 1, label: 'Eén seizoen', factor: 1, detail: 'Volgend jaar opnieuw onderhandelen. Promoveer je, dan kun je meteen meer vragen.' },
+  { seasons: 2, label: 'Twee seizoenen', factor: 1.08, detail: '8% meer per week, maar twee jaar vast. Een promotie levert je hier niets extra op.' },
+  { seasons: 3, label: 'Drie seizoenen', factor: 1.15, detail: '15% meer per week en drie jaar zekerheid — ook als het slechter gaat. Je zit er wel aan vast.' },
+];
+
+export function sponsorTerm(seasons: number): SponsorTerm {
+  return SPONSOR_TERMS.find((t) => t.seasons === seasons) ?? SPONSOR_TERMS[0];
+}
+
+/** Wat een contract van deze looptijd in totaal opbrengt. */
+export function termTotal(weekly: number, seasons: number): number {
+  return Math.round(weekly * sponsorTerm(seasons).factor * 52 * seasons);
+}
+
+export function acceptSponsorOffer(state: GameState, offerId: string, seasons: 1 | 2 | 3 = 1): ActionResult {
   const o = state.sponsorOffers.find((x) => x.id === offerId);
   if (!o) return fail('Aanbod verlopen.');
   if (o.renewalOf) {
@@ -394,10 +424,21 @@ export function acceptSponsorOffer(state: GameState, offerId: string): ActionRes
   const count = state.sponsors.filter((s) => s.kind === o.kind).length;
   if (count >= KIND_MAX[o.kind]) return fail(`Geen plaats meer voor een extra ${KIND_LABEL[o.kind].toLowerCase()}. Zet eerst een contract stop.`);
   state.sponsorOffers = state.sponsorOffers.filter((x) => x.id !== offerId);
+  const term = sponsorTerm(seasons);
   const { expiresInWeeks: _e, renewalOf: _r, ...deal } = o;
+  deal.weekly = round(deal.weekly * term.factor, 5);
+  deal.weeksLeft = 52 * term.seasons;
+  deal.lockedSeasons = term.seasons;
   state.sponsors.push(deal);
-  addNews(state, 'goed', `${o.name} is nieuwe sponsor: €${o.weekly}/week gedurende ${o.weeksLeft} weken.`);
-  return ok('Sponsorcontract getekend.');
+  addNews(
+    state,
+    'goed',
+    term.seasons === 1
+      ? `${o.name} is nieuwe sponsor: €${deal.weekly}/week voor één seizoen.`
+      : `${o.name} tekent voor ${term.seasons} seizoenen: €${deal.weekly}/week, samen €${termTotal(o.weekly, term.seasons).toLocaleString('nl-BE')}.`,
+  );
+  if (term.seasons > 1) remember(state, `${o.name} tekende een contract van ${term.seasons} seizoenen.`);
+  return ok(term.seasons === 1 ? 'Sponsorcontract getekend voor één seizoen.' : `Sponsorcontract getekend voor ${term.seasons} seizoenen.`);
 }
 
 /**
@@ -420,6 +461,8 @@ export function sponsorsAfterSeason(state: GameState, rng: Rng, result: 'kampioe
   for (const d of deals) {
     d.satisfaction = clamp(d.satisfaction + (result === 'kampioen' ? 14 : 10), 0, 100);
     if (state.sponsorOffers.some((o) => o.renewalOf === d.id)) continue; // er ligt al een voorstel
+    // wie voor meerdere seizoenen tekende, zit vast: geen beter voorstel bij een promotie
+    if ((d.lockedSeasons ?? 1) > 1 && d.weeksLeft > 52) continue;
     const [min, max] = kindRange(state, d.kind);
     const offerValue = round(Math.max(d.weekly * 1.15, rng.range(min, max) * 0.9), 5);
     if (offerValue <= d.weekly) continue;
