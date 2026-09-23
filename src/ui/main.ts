@@ -26,6 +26,8 @@ import { contractsScreen } from './screens/contracts';
 import { VERSION } from '../version';
 import { lineupGap } from '../engine/players';
 import { animationOverlay, reportOverlay, type WeekRef } from './screens/report';
+import { fastForwardOverlay } from './screens/fastforward';
+import { canFastForward, playAhead as playAheadEngine, type FastForwardResult } from '../engine/fastforward';
 import { openingOverlay } from './screens/opening';
 import { momentOverlay } from './screens/moment';
 import { museumScreen } from './screens/museum';
@@ -83,6 +85,7 @@ interface UiState {
   selectedStaff: string | null;
   sorts: Record<string, { col: number; dir: 1 | -1 }>;
   report: { phase: 'anim' | 'report'; prev: WeekRef } | null;
+  fastForward: FastForwardResult | null; // wat er gebeurde toen je meerdere weken doorspeelde
   animate: boolean;
   lastScreen: Record<string, Screen>; // laatst bezochte subtab per groep
   openTables: Record<string, boolean>; // welke inklapbare tabellen openstaan
@@ -103,6 +106,7 @@ const ui: UiState = {
   selectedStaff: null,
   sorts: {},
   report: null,
+  fastForward: null,
   animate: readPref('vcg-anim', true),
   lastScreen: {},
   openTables: { basis: true, bank: false, out: false },
@@ -208,6 +212,7 @@ function render(): void {
         ? `Je liet plaatsen open in je basiself (${openLines.join(', ')}). Duid bij Ploeg › Selectie zelf iemand aan met de ster, of klik op "Alles loslaten" om je trainer te laten aanvullen.`
         : '';
   const table = g.league.table.find((r) => r.teamId === OWN_TEAM_ID);
+  const fastWeeks = blocked ? 0 : canFastForward(g);
   root.innerHTML = `
     <header class="topbar">
       <div class="club">${crestSvg(g.crest as CrestShape, (START_CLUBS.find((c) => c.id === g.clubId)?.colors ?? ['#1f7a3c', '#ffffff']) as [string, string], clubInitials(g.clubName), 44)}
@@ -227,9 +232,20 @@ function render(): void {
       <button class="today link-stat" data-action="nav" data-id="kalender" title="Naar de kalender"><span class="muted small">Vandaag · seizoen ${g.season}, week ${g.week}</span><strong>${formatDateLong(g.startYear, g.season, g.week)}</strong><span class="small">${inWinterBreak(g.week) ? '<span class="tag big-tag">❄️ winterstop</span>' : seasonPhase(g.week)}${
         isTransferWindow(g.week) ? ' <span class="tag">transferperiode open</span>' : ''
       }</span></button>
-      <button class="primary next ${weekLabel.highlight ? 'season-end' : ''}" data-action="next-week" ${blocked || g.gameOver || ui.busy ? 'disabled' : ''} title="${
-        blocked ? esc(blocked) : esc(weekLabel.tip)
-      }">${weekLabel.text}</button>
+      <div class="next-group">
+        <button class="primary next ${weekLabel.highlight ? 'season-end' : ''}" data-action="next-week" ${blocked || g.gameOver || ui.busy ? 'disabled' : ''} title="${
+          blocked ? esc(blocked) : esc(weekLabel.tip)
+        }">${weekLabel.text}</button>
+        <button class="ghost fast" data-action="fast-forward" ${fastWeeks < 2 || ui.busy ? 'disabled' : ''} title="${esc(
+          fastWeeks >= 2
+            ? `Speelt ${fastWeeks} rustige weken achter elkaar en stopt vlak voor de volgende wedstrijd — of eerder, zodra er iets is dat jou nodig heeft.`
+            : blocked
+              ? blocked
+              : fastWeeks === 1
+                ? 'Volgende week wordt er al gespeeld. Gebruik gewoon "Volgende week".'
+                : 'Je speelt deze week een wedstrijd. Die week speel je zelf.',
+        )}">▶▶ Tot de volgende match${fastWeeks >= 2 ? ` <span class="small">(${fastWeeks} weken)</span>` : ''}</button>
+      </div>
       <div class="stats">
         <button class="stat link-stat" data-action="nav" data-id="ploeg" title="Naar je selectie"><span class="muted small">Teamsterkte</span><strong>${strength.total}</strong><span class="muted small">A ${strength.attack} · V ${strength.defense}</span></button>
         <button class="stat link-stat" data-action="nav" data-id="competitie" title="Naar de competitiestand"><span class="muted small">Klassement</span><strong>${played ? `${ownPosition(g.league)}e` : '–'}</strong><span class="muted small">${played ? `${table!.points} ptn uit ${played}` : `start ${formatWeek(g.startYear, g.season, MATCH_WEEKS[0])}`}</span></button>
@@ -261,9 +277,10 @@ function render(): void {
         : ''
     }${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${renderScreen(g)}</main>
     <footer class="app-footer"><span class="muted small">Clubeigenaar ${VERSION} · ${esc(g.clubName)} · seizoen ${g.season}, week ${g.week}</span></footer>
-    ${ui.report ? (ui.report.phase === 'anim' ? animationOverlay(g, ui.report.prev) : reportOverlay(g, ui.report.prev)) : ''}
-    ${!ui.report && g.opening && !g.opening.done ? openingOverlay(g) : ''}
-    ${!ui.report && !(g.opening && !g.opening.done) && ui.moment !== 'dicht' && g.weekChoice ? momentOverlay(g, ui.moment === 'gevolg' ? 'gevolg' : 'vraag') : ''}
+    ${ui.fastForward ? fastForwardOverlay(g, ui.fastForward) : ''}
+    ${!ui.fastForward && ui.report ? (ui.report.phase === 'anim' ? animationOverlay(g, ui.report.prev) : reportOverlay(g, ui.report.prev)) : ''}
+    ${!ui.report && !ui.fastForward && g.opening && !g.opening.done ? openingOverlay(g) : ''}
+    ${!ui.report && !ui.fastForward && !(g.opening && !g.opening.done) && ui.moment !== 'dicht' && g.weekChoice ? momentOverlay(g, ui.moment === 'gevolg' ? 'gevolg' : 'vraag') : ''}
     ${toast}`;
   applySorts();
   measureBars();
@@ -461,6 +478,30 @@ async function playWeek(): Promise<void> {
   }
 }
 
+/** Meerdere rustige weken achter elkaar. Stopt zodra er iets is dat jou nodig heeft. */
+async function playAhead(): Promise<void> {
+  if (!ui.game || ui.busy || ui.game.gameOver) return;
+  if (ui.game.opening && !ui.game.opening.done) return;
+  if (!canFastForward(ui.game)) return;
+  ui.busy = true;
+  const from = { week: ui.game.week, season: ui.game.season };
+  let result;
+  try {
+    result = playAheadEngine(ui.game);
+  } catch (err) {
+    ui.busy = false;
+    showToast({ ok: false, message: `Er ging iets mis bij het doorspelen vanaf week ${from.week}: ${(err as Error).message}. Maak een back-up bij Opslaan en stuur die door.` });
+    render();
+    return;
+  }
+  ui.game = result.state;
+  ui.busy = false;
+  await persist();
+  ui.moment = 'dicht';
+  ui.report = null;
+  ui.fastForward = result;
+}
+
 // ---------- Acties ----------
 
 type Handler = (id: string) => ActionResult | void | Promise<ActionResult | void>;
@@ -554,6 +595,14 @@ const handlers: Record<string, Handler> = {
   },
   'next-week': async () => {
     await playWeek();
+  },
+  'fast-forward': async () => {
+    await playAhead();
+  },
+  'ff-close': () => {
+    ui.fastForward = null;
+    // meteen na het doorspelen kan er een beslissing klaarliggen
+    if (ui.game?.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
   },
 
 
@@ -720,15 +769,23 @@ root.addEventListener('change', async (e) => {
 // Sneltoets: spatie = volgende week (behalve in invoervelden)
 document.addEventListener('keydown', (e) => {
   if (!ui.game || (e.target as HTMLElement).closest('input, textarea, select')) return;
-  if (e.key === 'Escape' && ui.report) {
+  if (e.key === 'Escape' && (ui.report || ui.fastForward)) {
     ui.report = null;
+    if (ui.fastForward) {
+      ui.fastForward = null;
+      if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+    }
     ui.screen = 'overzicht';
     render();
     return;
   }
   if (e.key !== ' ' || (e.target as HTMLElement).closest('button')) return;
   e.preventDefault();
-  if (ui.report?.phase === 'anim') ui.report.phase = 'report';
+  if (ui.fastForward) {
+    ui.fastForward = null;
+    if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+  }
+  else if (ui.report?.phase === 'anim') ui.report.phase = 'report';
   else if (ui.report) {
     ui.report = null;
     ui.screen = 'overzicht';
