@@ -3,7 +3,7 @@
 
 import type { GameState, GamePlan, Mentality, TrainingFocus } from './types';
 import { DIVISIONS } from './data/divisions';
-import { OWN_TEAM_ID } from './league';
+import { OWN_TEAM_ID, teamWear } from './league';
 
 export const PLANS: GamePlan[] = ['balbezit', 'lange bal', 'vleugelspel', 'counter', 'pressing'];
 
@@ -173,6 +173,10 @@ export interface ScoutingReport extends NextOpponent {
   attack: number;
   defense: number;
   analyst: boolean;
+  /** Hun sterkte op papier, zonder de tik van het seizoen. */
+  baseStrength: number;
+  /** Wat het seizoen hun op dit moment kost. */
+  wear: number;
 }
 
 export function scoutingReport(state: GameState): ScoutingReport | null {
@@ -195,9 +199,17 @@ export function scoutingReport(state: GameState): ScoutingReport | null {
   }) as ('W' | 'G' | 'V')[];
   const recentPlans = played.map((f) => (f.homeId === team.id ? f.homePlan : f.awayPlan) ?? team.plan);
   const analyst = state.staff.some((s) => s.role === 'analist');
-  const side = opponentSide(team.strength, opp.knownPlan);
+  // De sterkte waarmee ze zondag echt spelen: hun cijfer op papier min wat het seizoen
+  // hun kost. Dat moet hetzelfde getal zijn als de motor gebruikt, anders vergelijk jij op
+  // het scherm jouw ploeg mét vermoeidheid, blessures en moraal tegen hun ploeg zonder.
+  const wear = teamWear(team.id, state.season, state.week);
+  const effectief = team.strength - wear;
+  const side = opponentSide(effectief, opp.knownPlan);
   return {
     ...opp,
+    strength: effectief,
+    baseStrength: team.strength,
+    wear,
     position: table.indexOf(row) + 1,
     points: row.points,
     played: row.played,

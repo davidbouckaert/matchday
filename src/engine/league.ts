@@ -227,28 +227,39 @@ export function zoneAt(league: League, position: number, divisionLevel: number, 
 }
 
 /**
- * Wat een seizoen met de benen van een ploeg doet, in sterktepunten.
+ * Wat een seizoen met een ploeg doet, in sterktepunten.
  *
  * Hier zat een scheeftrekking die je alleen als speler voelde. Jouw ploeg wordt in detail
- * gespeeld: spelers raken vermoeid, blessures halen je besten eruit, schorsingen kosten je
- * een basisspeler, vorm en moraal schommelen. Je tegenstanders waren één vast getal dat het
- * hele seizoen nergens last van had.
+ * gespeeld: een blessure haalt je beste verdediger eruit, een schorsing kost je een
+ * basisspeler, moraal en vorm schommelen. Je tegenstanders waren één vast getal dat het hele
+ * seizoen nergens last van had.
  *
- * Gemeten: een club die elke week zijn beste elf opstelt, begint 0,5 punt onder het
- * reeksgemiddelde en staat rond speeldag 20 drie punten eronder. Niet omdat de ploeg slechter
- * werd, maar omdat alleen zíj beenbreuken en tikken kreeg. Over een seizoen was dat goed voor
- * zes tot zeven punten in het klassement, en daarom kwam je met een gemiddelde kern toch
- * standaard rond de tiende plaats uit.
+ * Gemeten met een club die elke week zijn beste elf opstelt: op papier start ze gelijk met het
+ * reeksgemiddelde, maar rond speeldag 10 staat ze er 1,6 onder en op speeldag 22 nog altijd
+ * 0,9. Niet door vermoeidheid — die factor blijft in de praktijk gewoon 1,00 — maar doordat
+ * blessures de besten uit de ploeg halen (kwaliteit −0,9) en de moraal wegzakt (−0,95). Hun
+ * gemiddelde blijft ondertussen op 56,3 staan, het hele seizoen door.
  *
- * Nu dragen alle ploegen hetzelfde seizoen: het loopt op tot de winterstop, de rust haalt er
- * een stuk uit, en in de terugronde loopt het weer op. Onderling verandert er voor hen niets —
- * ze zakken allemaal evenveel — maar tegenover jou staan ze nu in dezelfde eenheden.
+ * Nu dragen alle ploegen hetzelfde seizoen. Onderling verandert er voor hen niets — ze zakken
+ * allemaal evenveel — maar tegenover jou staan ze in dezelfde eenheden.
+ *
+ * WEAR_PEAK is bewust ruimer gezet dan de 1,5 die een strikte gelijkstand zou vragen: zo staat
+ * een eigenaar die zijn ploeg opvolgt er ongeveer een punt beter voor dan zijn tegenstanders.
+ * Dat is de knop waar een moeilijkheidsinstelling aan hoort te draaien — lager voor zwaarder,
+ * hoger voor makkelijker.
  */
-export function seasonWear(week: number): number {
+export const WEAR_PEAK = 2.6;
+
+/** De vorm van een seizoen: 0 als alles nog fris is, 1 vlak voor de winterstop. */
+function wearShape(week: number): number {
   const w = clamp(week, 1, 52);
-  if (w <= 24) return (w - 1) * 0.115; // richting de winterstop loopt het op tot ~2,6
-  if (w <= 29) return 2.6 - (w - 24) * 0.3; // winterstop: de benen komen terug
-  return clamp(1.1 + (w - 29) * 0.045, 0, 2.2); // terugronde
+  if (w <= 24) return (w - 1) / 23; // richting de winterstop loopt het op
+  if (w <= 29) return 1 - (w - 24) * 0.115; // de rust haalt er een stuk uit
+  return clamp(0.42 + (w - 29) * 0.017, 0, 0.85); // terugronde
+}
+
+export function seasonWear(week: number): number {
+  return wearShape(week) * WEAR_PEAK;
 }
 
 /** Dezelfde curve, maar de ene club heeft meer pech dan de andere. */

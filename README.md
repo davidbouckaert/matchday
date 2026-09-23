@@ -171,33 +171,38 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
-### 0.33.0 — Je zakte weg omdat alleen jouw ploeg moe werd
+### 0.33.1 — Nu vergelijk je appels met appels
 
-**Er zat een duim op de weegschaal, en die drukte tegen jou.** Jouw ploeg wordt in detail gespeeld: spelers raken vermoeid, een blessure haalt je beste verdediger eruit, een schorsing kost je een basisspeler, vorm en moraal schommelen. Je tegenstanders waren één vast getal dat het hele seizoen nergens last van had.
+**Het scherm liet je twee verschillende dingen vergelijken.** In het scoutingrapport stond hun sterkte op papier, en daarnaast jouw totaal — maar jouw totaal draagt al je blessures, je moraal, je vorm, je chemie en je spelplan in zich, en dat van hen niets. Keek je naar die twee cijfers en zag je "gelijkaardig of zelfs lager", dan klopte dat gevoel: je las een cijfer dat niets met het andere te maken had. Er staat nu hun échte sterkte van zondag — precies het getal waarmee de motor de wedstrijd berekent — met hun papieren cijfer en de tik van het seizoen erbij.
 
-Gemeten met een club die elke week zijn beste elf opstelt:
+**En een correctie op 0.33.0.** Daar stond dat vermoeidheid de oorzaak was. Dat klopt niet. Nagemeten over zes seizoenen, met elke week de beste elf:
 
-| moment | ploegsterkte tegenover het reeksgemiddelde |
-|---|---|
-| week 1 | −0,5 |
-| week 10 | −2,0 |
-| week 20 | −3,0 |
-| week 30 | −1,6 |
+| week | jouw totaal | kwaliteit elftal | vermoeidheidsfactor | moraal | geblesseerd | gemiddelde tegenstander |
+|---|---|---|---|---|---|---|
+| 1 | 56,25 | 54,25 | 1,000 | +1,05 | 0,0 | 56,27 |
+| 10 | 54,68 | 53,23 | 1,000 | +0,42 | 1,5 | 56,27 |
+| 22 | 55,35 | 53,37 | 1,000 | +0,10 | 1,2 | 56,25 |
 
-Je ploeg werd niet slechter. Alleen zíj kreeg de tikken. Over een seizoen was dat zes à zeven punten in het klassement, en daarom kwam je met een kern op het reeksgemiddelde toch standaard rond de tiende plaats van zestien uit — precies wat je op speeldag 22 zag.
+De vermoeidheidsfactor blijft gewoon 1,00 — die kost je niets, precies zoals het groene bolletje op je scherm zegt. Wat je wél kost: blessures halen je besten uit de ploeg (kwaliteit −0,9) en je moraal zakt weg (−0,95). Het gemiddelde van je tegenstanders staat ondertussen het hele seizoen stil. De achterstand was dus 1 à 1,6 punten en niet 3; de uitleg van vorige versie overdreef.
 
-De wedstrijdmotor zelf was wél eerlijk: twee even sterke ploegen komen over 20.000 duels uit op 37% winst, 26% gelijk, 37% verlies. Het probleem zat dus niet in de dobbelstenen maar in wat er in de motor ging.
+**De duim op de weegschaal staat nu expliciet.** De slijtage van je tegenstanders hangt aan één constante, `WEAR_PEAK`, en die staat op 2,6 terwijl een strikte gelijkstand om ongeveer 1,5 zou vragen. Dat verschil is bewust: het geeft je ongeveer een punt voorsprong. Dat is precies de knop waar de moeilijkheidsinstelling aan hoort te draaien — lager voor zwaarder, hoger voor makkelijker.
+
+### 0.33.0 — Je zakte weg omdat alleen jouw ploeg de tikken kreeg
+
+**Er zat een scheeftrekking in, en die werkte tegen jou.** Jouw ploeg wordt in detail gespeeld: een blessure haalt je beste verdediger eruit, een schorsing kost je een basisspeler, moraal en vorm schommelen. Je tegenstanders waren één vast getal dat het hele seizoen nergens last van had — hun gemiddelde staat van week 1 tot week 44 op 56,3.
+
+De wedstrijdmotor zelf was wél eerlijk: twee even sterke ploegen komen over 20.000 duels uit op 37% winst, 26% gelijk, 37% verlies. Het probleem zat niet in de dobbelstenen maar in wat er in de motor ging.
 
 **Nu draagt elke ploeg hetzelfde seizoen.** De slijtage loopt op tot de winterstop, de rust haalt er een stuk uit, en in de terugronde loopt ze weer op. De ene club heeft meer pech dan de andere, maar gemiddeld even veel. Onderling verandert er voor hen niets — ze zakken allemaal evenveel — maar tegenover jou staan ze eindelijk in dezelfde eenheden.
 
-**En je werk weegt zwaarder.** Chemie, trainer, moraal, vorm, scherpte, spelersrollen en spelplan tellen nu voor 55% mee in plaats van 45%. Alles wat beheer kan opleveren — topstaf, vijf trainingen, frisse benen, hoge moraal — is daarmee goed voor ongeveer vijf punten ploegsterkte, en dat is in de eindstand te zien:
+**En je werk weegt zwaarder.** Chemie, trainer, moraal, vorm, scherpte, spelersrollen en spelplan tellen nu voor 55% in plaats van 45% mee. Alles wat beheer kan opleveren — topstaf, vijf trainingen, frisse benen, hoge moraal — is daarmee goed voor ongeveer vijf punten ploegsterkte, en dat is in de eindstand te zien:
 
 | speelstijl | gemiddelde eindplaats | punten uit 30 wedstrijden |
 |---|---|---|
 | enkel de beste elf opstellen | 8,4 | 41 |
-| ploeg opvolgen: trainingen, staf, rollen, opstelling | 5,3 | 51 |
+| ploeg opvolgen: trainingen, staf, rollen, opstelling | 5,5 | 51 |
 
-Top vijf in de helft van de seizoenen, en af en toe een titel. Dat is wat een eerste seizoen met een gemiddelde kern hoort op te leveren als je ermee bezig bent.
+Top vijf in de helft van de seizoenen, en af en toe een titel.
 
 **De prijs staat er eerlijk bij.** Passief spelen wordt hier nóg milder van: Zuidrand met de aannemer gaat van 10 naar 7 faillissementen op 20, met de coöperatie van 17 naar 11, Heidebeke met de coöperatie van 3 naar 0. Samen met de sponsorwijziging van 0.32.0 is de financiële druk in twee versies fors gezakt — van 17 op 20 naar 7 op 20 voor de moeilijkste startcombinatie. Dat is de plek waar de moeilijkheidsinstellingen thuishoren.
 

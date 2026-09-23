@@ -79,8 +79,16 @@ export function strategyScreen(s: GameState): string {
         <h2>Scoutingrapport: ${rep.home ? 'thuis' : 'uit'} tegen ${esc(rep.name)}</h2>
         <p class="small muted">Week ${rep.week}${rep.week === s.week ? ' (deze week)' : ''} · ${rep.position}e in het klassement · ${rep.points} punten uit ${rep.played} wedstrijden · doelsaldo ${rep.goalsFor}-${rep.goalsAgainst}</p>
         <div class="tiles">
-          <div class="tile"><span class="label">Hun aanval / verdediging</span><strong>${rep.attack} / ${rep.defense}</strong><span class="muted small">sterkte ${rep.strength.toFixed(1)}</span></div>
-          <div class="tile"><span class="label">Jouw aanval / verdediging</span><strong>${vsOpp!.attack} / ${vsOpp!.defense}</strong><span class="small">totaal ${vsOpp!.total} (vermoeidheid ×${vsOpp!.fatigueFactor.toFixed(2)})</span></div>
+          <div class="tile" ${tipAttr(
+            `Hun kern is op papier ${rep.baseStrength.toFixed(1)} waard. Het seizoen kost hun deze week ${rep.wear.toFixed(1)}: blessures, schorsingen en benen die er al een half jaar op hebben zitten. Zondag spelen ze dus met ${rep.strength.toFixed(1)}. Dit is hetzelfde getal als waarmee het spel de wedstrijd berekent, zodat je het rechtstreeks naast je eigen totaal kunt leggen.`,
+            'Hun sterkte',
+          )}><span class="label">Hun aanval / verdediging</span><strong>${rep.attack} / ${rep.defense}</strong>
+            <span class="muted small">sterkte ${rep.strength.toFixed(1)}${rep.wear >= 0.2 ? ` · op papier ${rep.baseStrength.toFixed(1)}, ${rep.wear.toFixed(1)} eraf door het seizoen` : ''}</span></div>
+          <div class="tile" ${tipAttr(
+            'Jouw totaal draagt alles al in zich: de kwaliteit van wie je opstelt, chemie, je trainer, moraal, vorm, scherpte, je spelplan en wie geblesseerd of geschorst is. Leg het naast hun sterkte hiernaast — die twee staan in dezelfde eenheden.',
+            'Jouw sterkte',
+          )}><span class="label">Jouw aanval / verdediging</span><strong>${vsOpp!.attack} / ${vsOpp!.defense}</strong>
+            <span class="small">totaal ${vsOpp!.total}${vsOpp!.fatigueFactor < 0.995 ? ` (vermoeidheid ×${vsOpp!.fatigueFactor.toFixed(2)})` : ''}</span></div>
           <div class="tile"><span class="label">Vorm (laatste 5)</span>
             <div class="formrow">${rep.form.length ? rep.form.map((r) => `<span class="${r}">${r}</span>`).join('') : '<span class="muted small">nog niet gespeeld</span>'}</div>
             <span class="muted small">W = winst, G = gelijk, V = verlies</span></div>

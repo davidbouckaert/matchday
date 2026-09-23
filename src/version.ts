@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.33.0';
+export const VERSION = '0.33.1';
 
 export interface ChangeEntry {
   version: string;
@@ -12,12 +12,25 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.33.1',
+    date: '2026-09-23',
+    title: 'Nu vergelijk je appels met appels',
+    items: [
+      'Het scoutingrapport toonde hun sterkte op papier naast jouw totaal mét blessures, moraal en vorm erin — twee verschillende dingen naast elkaar',
+      'Er staat nu hun échte sterkte van zondag, hetzelfde getal als waarmee het spel de wedstrijd berekent, met hun papieren cijfer erbij',
+      'Correctie op 0.33.0: niet vermoeidheid was de oorzaak (die factor blijft in de praktijk 1,00), maar blessures die je besten eruit halen en moraal die wegzakt',
+      'De echte achterstand was 1 à 1,6 punten, niet 3 — de uitleg van vorige versie overdreef',
+      'De slijtage van je tegenstanders hangt nu aan één constante (WEAR_PEAK), bewust ruimer gezet dan een strikte gelijkstand: dat is jouw voordeel',
+      'Dat is meteen de knop waar de moeilijkheidsinstelling later aan hoort te draaien: lager voor zwaarder, hoger voor makkelijker',
+    ],
+  },
+  {
     version: '0.33.0',
     date: '2026-09-23',
     title: 'Je zakte weg omdat alleen jouw ploeg moe werd',
     items: [
-      'Balansfout: alleen jouw ploeg had vermoeidheid, blessures, schorsingen, vorm en moraal — je tegenstanders waren het hele seizoen één vast getal',
-      'Gemeten: met een kern op het reeksgemiddelde stond je rond speeldag 20 drie punten onder dat gemiddelde, zonder dat je iets fout deed',
+      'Balansfout: alleen jouw ploeg had blessures, schorsingen, vorm en moraal — je tegenstanders waren het hele seizoen één vast getal',
+      'Gemeten: met een kern op het reeksgemiddelde stond je rond speeldag 10 zo\'n 1,6 punt onder dat gemiddelde, zonder dat je iets fout deed',
       'Daardoor eindigde je met een gemiddelde ploeg standaard rond de tiende plaats van zestien',
       'Alle ploegen dragen nu hetzelfde seizoen: het loopt op tot de winterstop, de rust haalt er een stuk uit, en in de terugronde loopt het weer op',
       'De ene club heeft daarbij meer pech dan de andere, maar gemiddeld even veel',
