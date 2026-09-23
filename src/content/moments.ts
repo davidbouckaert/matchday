@@ -85,7 +85,8 @@ export const MOMENTS: MomentDef[] = [
   {
     id: 'blessure',
     categorie: 'kleedkamer',
-    wanneer: { alle: [{ vlag: 'match' }, { meting: 'hoogsteVermoeidheid', min: 70 }] },
+    // de drempel ligt op 30: een normale kern zit rond 20-33, dus dit is echt "op"
+    wanneer: { alle: [{ vlag: 'match' }, { meting: 'hoogsteVermoeidheid', min: 30 }] },
     focusSpeler: 'moeist',
     titel: 'Je beste man is op',
     tekst: '{speler} loopt al weken op zijn tandvlees (vermoeidheid {vermoeidheid}/100). De kinesist raadt rust aan, de trainer wil hem laten spelen.',
@@ -96,8 +97,8 @@ export const MOMENTS: MomentDef[] = [
         uitleg: 'Hij blijft thuis, komt fris terug. Je ploeg is deze week zwakker.',
         gevolgen: [
           {
-            tekst: '{speler} bleef aan de kant en kwam er een pak frisser uit (−25 vermoeidheid).',
-            effecten: [{ speler: 'focus', vermoeidheid: -25, moraal: -2, uitBasis: true }],
+            tekst: '{speler} bleef aan de kant en kwam er een pak frisser uit (−18 vermoeidheid).',
+            effecten: [{ speler: 'focus', vermoeidheid: -18, moraal: -2, uitBasis: true }],
           },
         ],
       },
@@ -674,3 +675,834 @@ export const CHAIN_MOMENTS: MomentDef[] = [
 ];
 
 MOMENTS.push(...CHAIN_MOMENTS);
+
+/* ------------------------------------------------------- meer van hetzelfde soort */
+//
+// Nog twintig situaties, verspreid over de kantine, de kleedkamer, het bestuur, de jeugd,
+// de sponsors en het complex. Puur data: er is geen regel logica voor nodig.
+//
+// Vuistregel bij het schrijven: de láátste keuze is wat er gebeurt als je niets beslist,
+// dus die mag nooit de meest catastrofale zijn.
+
+export const MORE_MOMENTS: MomentDef[] = [
+  {
+    id: 'frietketel',
+    categorie: 'kantine',
+    wanneer: { alle: [{ vlag: 'thuis' }, { meting: 'kantineniveau', min: 2 }] },
+    titel: 'De frietketel is te klein',
+    tekst: 'Bij elke thuismatch staat er een rij tot buiten aan de frietjes. De kantineploeg vraagt om een tweede ketel.',
+    keuzes: [
+      {
+        id: 'kopen',
+        label: 'Tweede ketel kopen ({kost})',
+        uitleg: 'Dubbel zo snel bedienen. Meer omzet bij elke thuiswedstrijd, en minder gemor in de rij.',
+        kost: { basis: 2200, inflatie: true, afronden: 50 },
+        gevolgen: [
+          {
+            tekst: 'De tweede ketel draait. De rij is weg en er gaan merkbaar meer frieten over de toog.',
+            effecten: [
+              { boek: 'tegenslagen', bedrag: { basis: -2200, inflatie: true, afronden: 50 }, reden: 'Tweede frietketel' },
+              { boek: 'kantine', bedrag: { basis: 900, inflatie: true, spreiding: [0.8, 1.4], afronden: 10 }, reden: 'Extra kantineomzet dankzij de tweede ketel' },
+              { sfeer: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'volk',
+        label: 'Een extra vrijwilliger vragen',
+        uitleg: 'Geen investering, maar je hangt wel af van wie er zin in heeft.',
+        gevolgen: [
+          { kans: 0.55, tekst: 'Twee ouders sprongen bij. De rij liep vlotter en het kostte je niets.', effecten: [{ sfeer: 1 }, { vrijwilligerstrouw: 3 }] },
+          { tekst: 'Niemand had tijd. Dezelfde rij, dezelfde klachten.', effecten: [{ sfeer: -2 }] },
+        ],
+      },
+      {
+        id: 'laten',
+        label: 'Laten zoals het is',
+        uitleg: 'Een rij aan de frietjes hoort erbij.',
+        gevolgen: [{ tekst: 'Je liet het zoals het was. Er werd gemopperd, zoals altijd.' }],
+      },
+    ],
+  },
+  {
+    id: 'sleutel',
+    categorie: 'bestuur',
+    wanneer: { alle: [{ vlag: 'match', is: false }, { meting: 'vrijwilligers', min: 6 }] },
+    titel: 'Wie heeft de sleutel van de kantine?',
+    tekst: 'Er lopen negen sleutels van het complex rond en niemand weet precies bij wie. De secretaris wil een nieuw slot met genummerde sleutels.',
+    keuzes: [
+      {
+        id: 'slot',
+        label: 'Nieuw slot en een sleutellijst ({kost})',
+        uitleg: 'Orde in de chaos. Kost geld, maar je weet weer wie binnen kan.',
+        kost: { basis: 700, inflatie: true, afronden: 10 },
+        gevolgen: [
+          {
+            tekst: 'Nieuw slot, negen genummerde sleutels en een lijst aan de muur. De secretaris slaapt weer.',
+            effecten: [{ boek: 'onderhoud & energie', bedrag: { basis: -700, inflatie: true, afronden: 10 }, reden: 'Nieuw slot en genummerde sleutels' }],
+          },
+        ],
+      },
+      {
+        id: 'vertrouwen',
+        label: 'Erop vertrouwen',
+        uitleg: 'Het zijn allemaal mensen van hier. Tot er iets verdwijnt.',
+        gevolgen: [
+          {
+            kans: 0.25,
+            tekst: 'Er verdween een krat bier en de kassa stond open. Niemand die iets gezien heeft.',
+            effecten: [{ boek: 'tegenslagen', bedrag: { basis: -450, inflatie: true, afronden: 10 }, reden: 'Verdwenen voorraad kantine' }],
+          },
+          { tekst: 'Niets aan de hand. Iedereen die binnen kon, hoorde er ook te zijn.' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'oudgediende',
+    categorie: 'kleedkamer',
+    wanneer: { alle: [{ vlag: 'match' }, { meting: 'spelers', min: 16 }] },
+    focusSpeler: 'beste',
+    titel: 'Een oudgediende wil afscheid nemen',
+    tekst: 'Een speler die hier al jaren rondloopt, vraagt of hij zondag nog één keer mag starten. Sportief is er iets voor te zeggen, en er is ook iets anders.',
+    keuzes: [
+      {
+        id: 'afscheid',
+        label: 'Een afscheidswedstrijd geven',
+        uitleg: 'De hele familie komt kijken, de kantine draait, en de kleedkamer ziet dat je mensen niet vergeet.',
+        gevolgen: [
+          {
+            tekst: 'Vol huis, bloemen bij de aftrap en een kantine die niet stilviel. Zo neem je afscheid.',
+            effecten: [
+              { boek: 'kantine', bedrag: { basis: 700, inflatie: true, spreiding: [0.8, 1.5], afronden: 10 }, reden: 'Afscheidsviering oudgediende' },
+              { sfeer: 4 },
+              { moraalIedereen: 3 },
+              { reputatie: 2 },
+              { geschiedenis: 'Een oudgediende kreeg zijn afscheidswedstrijd, met volle kantine.' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'sportief',
+        label: 'Sportief beslissen',
+        uitleg: 'De beste elf speelt. Hij begrijpt dat wel, denk je.',
+        gevolgen: [
+          {
+            tekst: 'Je koos sportief. Hij zei niets, maar hij zei het luid.',
+            effecten: [{ moraalIedereen: -2 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'grasmaaier',
+    categorie: 'infrastructuur',
+    wanneer: { alle: [{ vlag: 'natuurgras' }, { vlag: 'winter', is: false }] },
+    titel: 'De grasmaaier trekt niet meer',
+    tekst: 'De terreinverzorger staat al een uur met de motorkap open. Er is een tweedehandse te koop bij een club twee dorpen verder.',
+    keuzes: [
+      {
+        id: 'nieuwe',
+        label: 'De tweedehandse kopen ({kost})',
+        uitleg: 'Meteen opgelost, en een veld dat er de hele lente goed bij ligt.',
+        kost: { basis: 3200, inflatie: true, afronden: 50 },
+        gevolgen: [
+          {
+            tekst: 'De tweedehandse staat in de loods. Het veld ligt er weer strak bij.',
+            effecten: [
+              { boek: 'onderhoud & energie', bedrag: { basis: -3200, inflatie: true, afronden: 50 }, reden: 'Tweedehandse grasmaaier' },
+              { reputatie: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'lappen',
+        label: 'Laten herstellen',
+        uitleg: 'Goedkoper, maar je weet nooit hoelang het houdt.',
+        gevolgen: [
+          {
+            kans: 0.55,
+            tekst: 'Hersteld en weer aan het werk. Voor de prijs van een onderdeel.',
+            effecten: [{ boek: 'onderhoud & energie', bedrag: { basis: -600, inflatie: true, afronden: 10 }, reden: 'Herstelling grasmaaier' }],
+          },
+          {
+            tekst: 'Twee weken later stond hij er weer bij. Het veld ziet eruit als een weide.',
+            effecten: [
+              { boek: 'onderhoud & energie', bedrag: { basis: -600, inflatie: true, afronden: 10 }, reden: 'Herstelling grasmaaier' },
+              { sfeer: -2 },
+              { reputatie: -1 },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'kleedkamerruzie',
+    categorie: 'kleedkamer',
+    wanneer: { alle: [{ vlag: 'match' }, { meting: 'spelers', min: 14 }] },
+    focusSpeler: 'willekeurig',
+    titel: 'Slaande deuren in de kleedkamer',
+    tekst: 'Na de training ging het er stevig aan toe tussen twee spelers. {speler} stond middenin en wil er niet over praten.',
+    keuzes: [
+      {
+        id: 'uitpraten',
+        label: 'Ze samen laten uitpraten',
+        uitleg: 'Een half uur, jij erbij. Meestal is het daarna over.',
+        gevolgen: [
+          { kans: 0.7, tekst: 'Handen geschud en verder gegaan. De groep merkte dat het opgelost werd.', effecten: [{ moraalIedereen: 3 }] },
+          { tekst: 'Ze zaten er zwijgend bij. Opgelost is het niet, maar het is wel besproken.', effecten: [{ speler: 'focus', moraal: -4 }] },
+        ],
+      },
+      {
+        id: 'boete',
+        label: 'Allebei een boete geven',
+        uitleg: 'Duidelijk signaal, en het geld gaat naar de kas. Maar het lost niets op.',
+        gevolgen: [
+          {
+            tekst: 'Twee boetes in de clubkas. De rest van de groep hield zich opvallend gedeisd.',
+            effecten: [
+              { boek: 'meevallers', bedrag: { basis: 120, inflatie: true, afronden: 10 }, reden: 'Interne boetes na een ruzie' },
+              { speler: 'focus', moraal: -8 },
+              { moraalIedereen: -1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'trainer',
+        label: 'Aan de trainer overlaten',
+        uitleg: 'Daar is hij voor. Jij hebt andere dingen te doen.',
+        gevolgen: [
+          { kans: 0.5, tekst: 'De trainer regelde het op zijn manier. Gedaan ermee.', effecten: [{ moraalIedereen: 1 }] },
+          { tekst: 'De trainer liet het lopen. Het bleef sudderen in de kleedkamer.', effecten: [{ moraalIedereen: -2 }] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'lokalekrant',
+    categorie: 'bestuur',
+    wanneer: { alle: [{ meting: 'reputatie', min: 35 }, { vlag: 'match', is: false }] },
+    titel: 'De streekkrant wil een reportage',
+    tekst: 'Een journalist wil een dubbele pagina over de club maken. Hij vraagt een namiddag van je tijd en toegang tot het complex.',
+    keuzes: [
+      {
+        id: 'meewerken',
+        label: 'Volledig meewerken',
+        uitleg: 'Een namiddag rondleiden en praten. Zulke stukken blijven lang hangen in de streek.',
+        gevolgen: [
+          {
+            kans: 0.75,
+            tekst: 'Een warm stuk over een club die draait op vrijwilligers. Er belden mensen die wilden helpen.',
+            effecten: [
+              { reputatie: 5 },
+              { supporters: { heel: [20, 60] } },
+              { vrijwilligers: { heel: [1, 2] } },
+              { geschiedenis: 'De streekkrant wijdde een dubbele pagina aan de club.' },
+            ],
+          },
+          {
+            tekst: 'Het stuk ging vooral over de put in de parking en het gebrek aan geld. Bedankt, journalist.',
+            effecten: [{ reputatie: -2 }],
+          },
+        ],
+      },
+      {
+        id: 'kort',
+        label: 'Alleen een kort gesprek',
+        uitleg: 'Een half uur aan de telefoon. Minder risico, minder effect.',
+        gevolgen: [{ tekst: 'Een halve kolom met de juiste feiten erin. Niemand blij, niemand boos.', effecten: [{ reputatie: 1 }] }],
+      },
+    ],
+  },
+  {
+    id: 'jeugdtrainer-weg',
+    categorie: 'jeugd',
+    wanneer: { alle: [{ meting: 'jeugdploegen', min: 2 }, { vlag: 'match', is: false }] },
+    titel: 'Een jeugdtrainer stopt ermee',
+    tekst: 'De trainer van een van je jeugdploegen wil er na dit seizoen mee ophouden. Werk, gezin, en te weinig waardering, zegt hij.',
+    keuzes: [
+      {
+        id: 'vergoeding',
+        label: 'Een vrijwilligersvergoeding aanbieden ({kost})',
+        uitleg: 'Geen loon, wel een blijk van waardering. Werkt vaker dan je denkt.',
+        kost: { basis: 1200, inflatie: true, afronden: 10 },
+        gevolgen: [
+          {
+            kans: 0.7,
+            tekst: 'Hij blijft. "Het gaat niet om het geld", zei hij, en dat meende hij ook half.',
+            effecten: [
+              { boek: 'opleidingen', bedrag: { basis: -1200, inflatie: true, afronden: 10 }, reden: 'Vrijwilligersvergoeding jeugdtrainer' },
+              { vrijwilligerstrouw: 8 },
+            ],
+          },
+          {
+            tekst: 'Hij bedankte voor het aanbod en stopt toch. Je bent hem én het geld kwijt.',
+            effecten: [
+              { boek: 'opleidingen', bedrag: { basis: -1200, inflatie: true, afronden: 10 }, reden: 'Vrijwilligersvergoeding jeugdtrainer' },
+              { vrijwilligers: -1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'gesprek',
+        label: 'Gewoon eens gaan praten',
+        uitleg: 'Een avond bij hem thuis, koffie, luisteren. Kost alleen tijd.',
+        gevolgen: [
+          { kans: 0.5, tekst: 'Hij blijft toch nog een jaar. Soms is gehoord worden genoeg.', effecten: [{ vrijwilligerstrouw: 5 }] },
+          { tekst: 'Hij blijft bij zijn beslissing. Je verliest een goede kracht.', effecten: [{ vrijwilligers: -1 }, { sfeer: -1 }] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'scout',
+    categorie: 'reeks',
+    wanneer: { alle: [{ vlag: 'thuis' }, { meting: 'stand', max: 5 }] },
+    focusSpeler: 'beste',
+    titel: 'Er staat een scout achter het doel',
+    tekst: 'Een man met een blocnote kijkt al de hele match naar {speler}. Iemand herkende hem: hij scout voor een club twee reeksen hoger.',
+    keuzes: [
+      {
+        id: 'aanspreken',
+        label: 'Hem aanspreken en binnenhalen',
+        uitleg: 'Koffie, een plaats in de bestuurskamer, en een gesprek. Contacten in het voetbal zijn geld waard.',
+        gevolgen: [
+          {
+            kans: 0.6,
+            tekst: 'Een goed gesprek. Hij komt terug, en dat soort mensen kent nog meer mensen.',
+            effecten: [{ reputatie: 3 }, { geschiedenis: 'Een scout van hogerop kwam kijken naar onze spelers.' }],
+          },
+          {
+            tekst: 'Hij was beleefd en hield de boot af. "Ik kijk gewoon een beetje rond."',
+            effecten: [{ reputatie: 1 }],
+          },
+        ],
+      },
+      {
+        id: 'negeren',
+        label: 'Hem laten staan',
+        uitleg: 'Als hij iets wil, belt hij maar. Jij gaat niet achter een blocnote aanlopen.',
+        gevolgen: [{ tekst: 'Hij vertrok bij het laatste fluitsignaal zonder een woord te zeggen.' }],
+      },
+    ],
+  },
+  {
+    id: 'verwarmingsfactuur',
+    categorie: 'infrastructuur',
+    wanneer: { alle: [{ vlag: 'winter' }, { meting: 'kas', min: 1 }] },
+    titel: 'De energiefactuur is binnen',
+    tekst: 'De afrekening van de winter ligt op tafel en ze is fors hoger dan vorig jaar. De installateur zegt dat de leidingen slecht geïsoleerd zijn.',
+    keuzes: [
+      {
+        id: 'isoleren',
+        label: 'Laten isoleren ({kost})',
+        uitleg: 'Eenmalige kost, en daarna elke winter minder factuur.',
+        kost: { basis: 2600, inflatie: true, afronden: 50 },
+        gevolgen: [
+          {
+            tekst: 'De leidingen zitten in het isolatiemateriaal. Vanaf nu scheelt dat elke winter.',
+            effecten: [
+              { boek: 'infrastructuur', bedrag: { basis: -2600, inflatie: true, afronden: 50 }, reden: 'Isolatie van de leidingen' },
+              { verhaalOpenen: { naam: 'nieuwbouw', weken: 20 } },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'zuiniger',
+        label: 'De thermostaat lager zetten',
+        uitleg: 'Gratis, maar het wordt koud in de kleedkamers en dat merkt iedereen.',
+        gevolgen: [
+          {
+            tekst: 'Twee graden lager. De factuur zakt, en er wordt geklaagd over koude douches.',
+            effecten: [
+              { boek: 'onderhoud & energie', bedrag: { basis: 400, inflatie: true, afronden: 10 }, reden: 'Besparing op verwarming' },
+              { moraalIedereen: -2 },
+              { sfeer: -2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'betalen',
+        label: 'Gewoon betalen',
+        uitleg: 'Het is wat het is. Volgende winter zien we wel weer.',
+        gevolgen: [{ tekst: 'Je betaalde de factuur zonder er verder iets aan te doen.' }],
+      },
+    ],
+  },
+  {
+    id: 'bus-supporters',
+    categorie: 'wedstrijd',
+    wanneer: { alle: [{ vlag: 'uit' }, { meting: 'sfeer', min: 55 }] },
+    titel: 'De supporters willen een bus inleggen',
+    tekst: 'De supportersclub wil met een bus mee naar {tegenstander}. Ze vragen of de club de helft van de huur betaalt.',
+    keuzes: [
+      {
+        id: 'betalen',
+        label: 'De helft betalen ({kost})',
+        uitleg: 'Vijftig man van hier op een uitwedstrijd. Dat hoor je in de kleedkamer.',
+        kost: { basis: 400, inflatie: true, afronden: 10 },
+        gevolgen: [
+          {
+            tekst: 'De bus zat vol. Vijftig kelen aan de overkant, en een ploeg die dat voelde.',
+            effecten: [
+              { boek: 'wedstrijdkosten', bedrag: { basis: -400, inflatie: true, afronden: 10 }, reden: 'Bijdrage in de supportersbus' },
+              { sfeer: 5 },
+              { moraalIedereen: 3 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'zelf',
+        label: 'Ze het zelf laten regelen',
+        uitleg: 'Ze hebben een eigen kas. Als ze het echt willen, lukt het wel.',
+        gevolgen: [
+          { kans: 0.5, tekst: 'Ze legden zelf bij. De bus reed, maar half vol.', effecten: [{ sfeer: 1 }] },
+          { tekst: 'De bus ging niet door. "De club doet ook niks voor ons", klonk het aan de toog.', effecten: [{ sfeer: -3 }] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'trainingskamp',
+    categorie: 'kleedkamer',
+    wanneer: { alle: [{ vlag: 'match', is: false }, { meting: 'kas', min: 20000 }] },
+    titel: 'De trainer wil een trainingsweekend',
+    tekst: 'Twee dagen weg met de hele groep: trainen, samen eten, samen slapen. De trainer zegt dat het de kleedkamer aan elkaar lijmt.',
+    keuzes: [
+      {
+        id: 'gaan',
+        label: 'Op trainingsweekend ({kost})',
+        uitleg: 'Duur, maar een groep die samen iets meemaakt, speelt anders.',
+        kost: { basis: 3400, inflatie: true, klasse: true, afronden: 50 },
+        gevolgen: [
+          {
+            kans: 0.75,
+            tekst: 'Een geslaagd weekend. De groep kwam hechter terug en dat bleef weken hangen.',
+            effecten: [
+              { boek: 'trainingen', bedrag: { basis: -3400, inflatie: true, klasse: true, afronden: 50 }, reden: 'Trainingsweekend' },
+              { moraalIedereen: 9 },
+              { vermoeidheidIedereen: 5 },
+              { geschiedenis: 'De A-kern ging op trainingsweekend.' },
+            ],
+          },
+          {
+            tekst: 'Het regende twee dagen en er werd te veel gedronken. Duur en vermoeiend.',
+            effecten: [
+              { boek: 'trainingen', bedrag: { basis: -3400, inflatie: true, klasse: true, afronden: 50 }, reden: 'Trainingsweekend' },
+              { moraalIedereen: 2 },
+              { vermoeidheidIedereen: 12 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'eten',
+        label: 'Alleen samen eten ({kost})',
+        uitleg: 'Een avond in de kantine met een traiteur. Een tiende van de prijs, een deel van het effect.',
+        kost: { basis: 450, inflatie: true, afronden: 10 },
+        gevolgen: [
+          {
+            tekst: 'Een gezellige avond in de eigen kantine. Geen wonderen, wel een betere sfeer.',
+            effecten: [
+              { boek: 'trainingen', bedrag: { basis: -450, inflatie: true, afronden: 10 }, reden: 'Teametentje' },
+              { moraalIedereen: 4 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'niet',
+        label: 'Niet doen',
+        uitleg: 'Er wordt hier gevoetbald, niet op reis gegaan.',
+        gevolgen: [{ tekst: 'Geen weekend, geen etentje. De trainer haalde zijn schouders op.' }],
+      },
+    ],
+  },
+  {
+    id: 'sponsorbord',
+    categorie: 'sponsor',
+    wanneer: { alle: [{ meting: 'sponsors', min: 2 }, { vlag: 'match', is: false }] },
+    titel: 'Een bedrijf wil een bord langs het veld',
+    tekst: 'Een zelfstandige uit de gemeente belt: hij wil een reclamebord, maar vraagt of hij in natura mag betalen — in materiaal voor het complex.',
+    keuzes: [
+      {
+        id: 'natura',
+        label: 'In natura aanvaarden',
+        uitleg: 'Geen geld in de kas, wel spullen die je anders had moeten kopen.',
+        gevolgen: [
+          {
+            tekst: 'Er staan nu nieuwe doelnetten, ballen en een stel verplaatsbare dug-outs. Geen euro over de bank.',
+            effecten: [
+              { boek: 'onderhoud & energie', bedrag: { basis: 1400, inflatie: true, afronden: 10 }, reden: 'Materiaal van een sponsor in natura' },
+              { reputatie: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'geld',
+        label: 'Alleen in geld',
+        uitleg: 'Je hebt cash nodig, geen dozen. Misschien haakt hij af.',
+        gevolgen: [
+          {
+            kans: 0.5,
+            tekst: 'Hij ging akkoord en betaalde gewoon. Soms moet je het gewoon vragen.',
+            effecten: [{ boek: 'sponsors', bedrag: { basis: 1600, inflatie: true, klasse: true, afronden: 50 }, reden: 'Nieuw reclamebord' }],
+          },
+          { tekst: 'Hij haakte af. "Dan doe ik het bij de tennisclub."', effecten: [{ reputatie: -1 }] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'wachtlijst-jeugd',
+    categorie: 'jeugd',
+    wanneer: { alle: [{ meting: 'leden', min: 120 }, { vlag: 'match', is: false }] },
+    titel: 'Er staan kinderen op een wachtlijst',
+    tekst: 'Er hebben zich meer kinderen aangemeld dan je ploegen aankunnen. De jeugdcoördinator vraagt wat hij tegen de ouders moet zeggen.',
+    keuzes: [
+      {
+        id: 'extra',
+        label: 'Een extra reeks openen ({kost})',
+        uitleg: 'Meer leden, meer lidgeld — maar ook meer vrijwilligers en veldruimte nodig.',
+        kost: { basis: 1800, inflatie: true, afronden: 50 },
+        gevolgen: [
+          {
+            kans: 0.7,
+            tekst: 'De extra reeks draait. Blije ouders, meer lidgeld, en een complex dat vol staat.',
+            effecten: [
+              { boek: 'opleidingen', bedrag: { basis: -1800, inflatie: true, afronden: 50 }, reden: 'Extra jeugdreeks opstarten' },
+              { reputatie: 3 },
+              { vrijwilligers: 1 },
+              { geschiedenis: 'Er kwam een extra jeugdreeks om de wachtlijst weg te werken.' },
+            ],
+          },
+          {
+            tekst: 'Je kreeg de ploeg niet bemand. Het geld is uitgegeven en de wachtlijst staat er nog.',
+            effecten: [
+              { boek: 'opleidingen', bedrag: { basis: -1800, inflatie: true, afronden: 50 }, reden: 'Extra jeugdreeks opstarten' },
+              { sfeer: -2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'doorverwijzen',
+        label: 'Doorverwijzen naar de buurclub',
+        uitleg: 'Eerlijk tegen de ouders, maar je geeft wel talent weg aan de buren.',
+        gevolgen: [
+          {
+            tekst: 'Je verwees ze netjes door. De ouders waardeerden de eerlijkheid; de buurclub nog meer.',
+            effecten: [{ reputatie: 1 }],
+          },
+        ],
+      },
+      {
+        id: 'wachten',
+        label: 'Laten wachten',
+        uitleg: 'Ze staan op de lijst. Volgend seizoen zien we wel.',
+        gevolgen: [{ tekst: 'De lijst bleef staan. Een paar ouders schreven hun kind elders in.', effecten: [{ reputatie: -1 }] }],
+      },
+    ],
+  },
+  {
+    id: 'boete-bond',
+    categorie: 'bestuur',
+    wanneer: { alle: [{ vlag: 'match' }, { meting: 'week', min: 10 }] },
+    titel: 'Een brief van de bond',
+    tekst: 'De bond stelt vast dat een wedstrijdblad niet correct was ingevuld. Er volgt een boete, tenzij je binnen de week in beroep gaat.',
+    keuzes: [
+      {
+        id: 'beroep',
+        label: 'In beroep gaan',
+        uitleg: 'Papierwerk en een dossierkost, maar misschien verdwijnt de boete helemaal.',
+        gevolgen: [
+          {
+            kans: 0.45,
+            tekst: 'Het beroep werd aanvaard. De boete valt weg, alleen de dossierkost blijft.',
+            effecten: [{ boek: 'boetes', bedrag: { basis: -50, inflatie: true, afronden: 10 }, reden: 'Dossierkost beroep' }],
+          },
+          {
+            tekst: 'Het beroep werd afgewezen. Nu betaal je de boete én de dossierkost.',
+            effecten: [{ boek: 'boetes', bedrag: { basis: -400, inflatie: true, afronden: 10 }, reden: 'Boete bond en dossierkost' }],
+          },
+        ],
+      },
+      {
+        id: 'betalen',
+        label: 'Gewoon betalen',
+        uitleg: 'Geen gedoe. De afgevaardigde krijgt er wel van langs.',
+        gevolgen: [
+          {
+            tekst: 'Betaald en afgehandeld. De afgevaardigde vult voortaan alles twee keer na.',
+            effecten: [{ boek: 'boetes', bedrag: { basis: -350, inflatie: true, afronden: 10 }, reden: 'Boete bond (wedstrijdblad)' }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'oefenmatch',
+    categorie: 'wedstrijd',
+    wanneer: { alle: [{ vlag: 'match', is: false }, { vlag: 'winterstop', is: false }, { meting: 'week', max: 6 }] },
+    titel: 'Een oefenwedstrijd tegen een hogere ploeg',
+    tekst: 'Een club uit een hogere reeks zoekt nog een oefenpartij. Het levert volk op en een goede test, maar ook een vermoeide groep.',
+    keuzes: [
+      {
+        id: 'spelen',
+        label: 'De oefenmatch aannemen',
+        uitleg: 'Volle kantine, een goede test, en spelers die weten waar ze staan.',
+        gevolgen: [
+          {
+            tekst: 'Een nuttige partij voor een goed gevulde kantine. Verloren, maar met eer.',
+            effecten: [
+              { boek: 'kantine', bedrag: { basis: 1100, inflatie: true, klasse: true, spreiding: [0.8, 1.3], afronden: 10 }, reden: 'Kantine bij de oefenwedstrijd' },
+              { vermoeidheidIedereen: 6 },
+              { sfeer: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'bedanken',
+        label: 'Bedanken',
+        uitleg: 'De groep heeft rust nodig. Geen volk, geen risico.',
+        gevolgen: [{ tekst: 'Je bedankte vriendelijk. De spelers kregen een weekend vrij.', effecten: [{ vermoeidheidIedereen: -4 }] }],
+      },
+    ],
+  },
+  {
+    id: 'kassa-fout',
+    categorie: 'kantine',
+    wanneer: { alle: [{ vlag: 'match', is: false }, { meting: 'kantineniveau', min: 1 }] },
+    titel: 'De kassa klopt niet',
+    tekst: 'Al drie weken op rij zit er een verschil tussen de kassa en de voorraad. Niemand beschuldigt iemand, maar iedereen denkt hetzelfde.',
+    keuzes: [
+      {
+        id: 'systeem',
+        label: 'Een kassasysteem installeren ({kost})',
+        uitleg: 'Alles digitaal geregistreerd. Geen verdenkingen meer, en je ziet eindelijk wat er verkocht wordt.',
+        kost: { basis: 1900, inflatie: true, afronden: 50 },
+        gevolgen: [
+          {
+            tekst: 'Het kassasysteem draait. Het verschil verdween meteen, en niemand hoefde iets te zeggen.',
+            effecten: [
+              { boek: 'infrastructuur', bedrag: { basis: -1900, inflatie: true, afronden: 50 }, reden: 'Kassasysteem kantine' },
+              { boek: 'kantine', bedrag: { basis: 300, inflatie: true, afronden: 10 }, reden: 'Minder weglek aan de kassa' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'praten',
+        label: 'Met de kantineploeg praten',
+        uitleg: 'Eerlijk en rechtstreeks. Werkt, of het kost je een vrijwilliger.',
+        gevolgen: [
+          { kans: 0.6, tekst: 'Een ongemakkelijk gesprek, maar het verschil is weg. Niemand vertrokken.', effecten: [{ vrijwilligerstrouw: 2 }] },
+          { tekst: 'Een vrijwilliger voelde zich beschuldigd en stopte ermee.', effecten: [{ vrijwilligers: -1 }, { sfeer: -2 }] },
+        ],
+      },
+      {
+        id: 'laten',
+        label: 'Het laten rusten',
+        uitleg: 'Een paar euro per week. Daar ga je geen vrijwilliger voor verliezen.',
+        gevolgen: [
+          {
+            tekst: 'Je liet het rusten. Het verschil bleef, week na week.',
+            effecten: [{ boek: 'kantine', bedrag: { basis: -180, inflatie: true, afronden: 10 }, reden: 'Onverklaard verschil in de kassa' }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ereburger',
+    categorie: 'bestuur',
+    wanneer: { alle: [{ meting: 'seizoen', min: 2 }, { meting: 'reputatie', min: 55 }, { vlag: 'match', is: false }] },
+    titel: 'De gemeente nodigt je uit',
+    tekst: 'Het gemeentebestuur organiseert een receptie voor het verenigingsleven. De schepen van sport wil je graag spreken.',
+    keuzes: [
+      {
+        id: 'gaan',
+        label: 'Gaan, en goed voorbereid',
+        uitleg: 'Een avond handjes schudden met een dossier onder de arm. Zo werkt het in een gemeente.',
+        gevolgen: [
+          {
+            kans: 0.6,
+            tekst: 'De schepen beloofde te kijken naar een extra toelage. Beloftes zijn geen geld, maar het is een begin.',
+            effecten: [
+              { boek: 'subsidies', bedrag: { basis: 2500, inflatie: true, klasse: true, afronden: 50 }, reden: 'Extra toelage na het gesprek met de schepen' },
+              { reputatie: 3 },
+            ],
+          },
+          { tekst: "Veel handen geschud, weinig gezegd. Zo gaat dat op zo'n avond.", effecten: [{ reputatie: 1 }] },
+        ],
+      },
+      {
+        id: 'thuis',
+        label: 'Niet gaan',
+        uitleg: 'Je hebt een club te runnen, geen recepties af te lopen.',
+        gevolgen: [{ tekst: 'Je bleef thuis. De stoel met jouw naam erop bleef leeg, en dat viel op.', effecten: [{ reputatie: -2 }] }],
+      },
+    ],
+  },
+  {
+    id: 'tegenstander-vraagt',
+    categorie: 'reeks',
+    wanneer: { alle: [{ vlag: 'thuis' }, { meting: 'capaciteit', min: 300 }] },
+    titel: '{tegenstander} vraagt een gunst',
+    tekst: 'Bij {tegenstander} ligt het veld onder water. Ze vragen of ze hun volgende thuismatch op jouw complex mogen spelen.',
+    keuzes: [
+      {
+        id: 'helpen',
+        label: 'Ze helpen',
+        uitleg: 'Jouw kantine draait op hun wedstrijd, en zulke gunsten komen terug.',
+        gevolgen: [
+          {
+            tekst: 'Hun match werd bij jou gespeeld. Jouw kantine draaide, en {tegenstander} vergeet dat niet.',
+            effecten: [
+              { boek: 'kantine', bedrag: { basis: 850, inflatie: true, spreiding: [0.8, 1.3], afronden: 10 }, reden: 'Kantine bij een geleende thuiswedstrijd' },
+              { boek: 'verhuur', bedrag: { basis: 400, inflatie: true, afronden: 10 }, reden: 'Verhuur van het complex' },
+              { reputatie: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'slijtage',
+        label: 'Weigeren: je veld is geen verhuurbedrijf',
+        uitleg: 'Twee wedstrijden op één weekend sloopt je grasmat, zeker in de winter.',
+        gevolgen: [{ tekst: 'Je hield de poort dicht. Bij {tegenstander} zullen ze dat onthouden.', effecten: [{ reputatie: -1 }] }],
+      },
+    ],
+  },
+  {
+    id: 'doelman-twijfel',
+    categorie: 'kleedkamer',
+    wanneer: { alle: [{ vlag: 'match' }, { meting: 'spelers', min: 15 }] },
+    focusSpeler: 'jongste',
+    titel: 'De jonge doelman wil zijn kans',
+    tekst: '{speler} traint al maanden mee zonder ooit te spelen. Hij vraagt of hij zondag mag staan, en de keeperstrainer vindt dat hij er klaar voor is.',
+    keuzes: [
+      {
+        id: 'kans',
+        label: 'Hem laten spelen',
+        uitleg: 'Ervaring opdoen kan alleen op het veld. Het kan geweldig gaan of pijnlijk worden.',
+        gevolgen: [
+          {
+            kans: 0.55,
+            tekst: '{speler} speelde een sterke partij. De hele bank stond recht bij zijn eerste redding.',
+            effecten: [{ speler: 'focus', moraal: 15 }, { moraalIedereen: 2 }, { sfeer: 2 }],
+          },
+          {
+            tekst: 'Het werd een lastige middag voor {speler}. Hij groeide er niet van.',
+            effecten: [{ speler: 'focus', moraal: -8 }, { sfeer: -2 }],
+          },
+        ],
+      },
+      {
+        id: 'wachten',
+        label: 'Nog even laten wachten',
+        uitleg: 'Zijn tijd komt wel. Ondertussen blijft hij trainen.',
+        gevolgen: [{ tekst: 'Je liet hem nog even wachten. Hij knikte, maar de teleurstelling stond op zijn gezicht.', effecten: [{ speler: 'focus', moraal: -3 }] }],
+      },
+    ],
+  },
+  {
+    id: 'shirtsponsor-logo',
+    categorie: 'sponsor',
+    wanneer: { alle: [{ meting: 'sponsors', min: 3 }, { vlag: 'match', is: false }] },
+    focusSponsor: 'grootste',
+    titel: 'Het logo van {sponsor} moet groter',
+    tekst: '{sponsor} vindt zijn logo op het shirt te klein. Hij wil het dubbel zo groot, of hij overweegt zijn bijdrage te herbekijken.',
+    keuzes: [
+      {
+        id: 'nieuwe-shirts',
+        label: 'Nieuwe shirts laten maken ({kost})',
+        uitleg: 'Hij krijgt zijn zin en betaalt meer. De supporters vinden het lelijk.',
+        kost: { basis: 1500, inflatie: true, klasse: true, afronden: 50 },
+        gevolgen: [
+          {
+            tekst: 'Nieuwe shirts met een logo dat je van de overkant kunt lezen. {sponsor} betaalt meer, de supporters mopperen.',
+            effecten: [
+              { boek: 'clubartikelen', bedrag: { basis: -1500, inflatie: true, klasse: true, afronden: 50 }, reden: 'Nieuwe shirts met groter sponsorlogo' },
+              { boek: 'sponsors', bedrag: { basis: 2400, inflatie: true, klasse: true, afronden: 50 }, reden: 'Hogere bijdrage voor meer zichtbaarheid' },
+              { sponsor: 'grootste', tevredenheid: 14 },
+              { sfeer: -2 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'volgend',
+        label: 'Beloven dat het volgend seizoen gebeurt',
+        uitleg: 'Je wint tijd zonder nu te betalen. Maar hij onthoudt het.',
+        gevolgen: [
+          {
+            tekst: 'Hij ging akkoord, op voorwaarde dat het er volgend jaar écht staat.',
+            effecten: [{ sponsor: 'grootste', tevredenheid: 3 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'verloren-reeks',
+    categorie: 'kleedkamer',
+    wanneer: { alle: [{ vlag: 'match' }, { meting: 'stand', min: 11 }, { meting: 'week', min: 14 }] },
+    titel: 'De kop hangt naar beneden',
+    tekst: 'Je staat onderaan en dat is in alles te voelen. De trainer vraagt wat het bestuur van plan is.',
+    keuzes: [
+      {
+        id: 'steun',
+        label: 'Publiek achter de trainer gaan staan',
+        uitleg: 'Rust brengen. Dat werkt vaak, en het kost niets.',
+        gevolgen: [
+          { kans: 0.6, tekst: 'Je sprak je vertrouwen uit. De groep ademde zichtbaar uit.', effecten: [{ moraalIedereen: 6 }, { sfeer: 2 }] },
+          { tekst: 'Je steunbetuiging werd gelezen als een doodvonnis. Zo gaat dat in het voetbal.', effecten: [{ moraalIedereen: -2 }] },
+        ],
+      },
+      {
+        id: 'premie',
+        label: 'Een overwinningspremie uitloven ({kost})',
+        uitleg: 'Geld voor punten. Werkt soms als een zweep, soms helemaal niet.',
+        kost: { basis: 1100, inflatie: true, klasse: true, afronden: 50 },
+        gevolgen: [
+          {
+            kans: 0.5,
+            tekst: 'De premie deed iets. Er werd gelopen alsof het de laatste match was.',
+            effecten: [
+              { boek: 'lonen spelers', bedrag: { basis: -1100, inflatie: true, klasse: true, afronden: 50 }, reden: 'Overwinningspremie' },
+              { moraalIedereen: 8 },
+            ],
+          },
+          {
+            tekst: 'Het geld werd aangenomen en er veranderde niets. Een dure les.',
+            effecten: [
+              { boek: 'lonen spelers', bedrag: { basis: -1100, inflatie: true, klasse: true, afronden: 50 }, reden: 'Overwinningspremie' },
+              { moraalIedereen: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'zwijgen',
+        label: 'Er niets over zeggen',
+        uitleg: 'Het bestuur hoort zich niet met de kleedkamer te bemoeien.',
+        gevolgen: [{ tekst: 'Je zei niets. In de kleedkamer werd dat opgemerkt, en niet in je voordeel.', effecten: [{ moraalIedereen: -2 }] }],
+      },
+    ],
+  },
+];
+
+MOMENTS.push(...MORE_MOMENTS);

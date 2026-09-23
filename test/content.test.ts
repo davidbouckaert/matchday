@@ -7,6 +7,8 @@ import { eventChance, fireEvent } from '../src/engine/events';
 import { answerWeekChoice, makeWeekChoice, MOMENT_COOLDOWN, resolveWeekChoice } from '../src/engine/weekmoment';
 import { createRng } from '../src/engine/rng';
 import { newTestGame, playWeeks } from './helpers';
+import { chooseAmbition } from '../src/engine/opening';
+import { advanceWeek } from '../src/engine/turn';
 
 const ctxOf = worldContext;
 
@@ -234,7 +236,8 @@ describe('Weekmomenten als data', () => {
     let made = null;
     for (let i = 0; i < 60 && !made; i++) made = makeWeekChoice(s, createRng(s));
     expect(made, 'er kwam geen enkel moment').to.not.equal(null);
-    expect(s.eventCooldowns[`moment-${made!.id}`]).to.be.at.least(1).and.at.most(MOMENT_COOLDOWN);
+    const def = MOMENTS.find((m) => m.id === made!.id)!;
+    expect(s.eventCooldowns[`moment-${made!.id}`]).to.equal(def.cooldown ?? MOMENT_COOLDOWN);
   });
 
   it('voert de gekozen optie uit en zet het gevolg in hetzelfde moment', () => {
@@ -444,5 +447,70 @@ describe('Opslag met de contentlaag', () => {
     const fixed = migrate(old);
     expect(fixed.weekChoice!.vars).to.deep.equal({});
     expect(fixed.weekChoice!.focusPlayerId).to.equal(null);
+  });
+});
+
+describe('De voorraad weekmomenten', () => {
+  it('is groot genoeg om een carrière te vullen', () => {
+    expect(MOMENTS.length).to.be.at.least(30);
+  });
+
+  it('spreidt over alle soorten clubleven', () => {
+    const cats = new Set(MOMENTS.map((m) => m.categorie));
+    for (const needed of ['wedstrijd', 'kleedkamer', 'kantine', 'bestuur', 'jeugd', 'sponsor', 'infrastructuur', 'reeks']) {
+      expect(cats.has(needed as never), `geen enkel moment in de categorie "${needed}"`).to.equal(true);
+    }
+  });
+
+  it('gebruikt alleen plaatshouders die bestaan', () => {
+    // vangt typfouten op: {tegenstadner} zou anders gewoon in beeld blijven staan
+    const known = new Set([
+      'club', 'tegenstander', 'klasse', 'seizoen', 'jeugdploegen', 'kas',
+      'speler', 'vermoeidheid', 'moraal', 'sponsor',
+      'bedrag', 'aantal', 'weken', 'kost', 'oudeclub', 'wat',
+    ]);
+    const check = (text: string, where: string) => {
+      for (const match of text.matchAll(/\{(\w+)\}/g)) {
+        expect(known.has(match[1]), `onbekende plaatshouder {${match[1]}} in ${where}`).to.equal(true);
+      }
+    };
+    for (const m of MOMENTS) {
+      check(m.titel, `${m.id}.titel`);
+      check(m.tekst, `${m.id}.tekst`);
+      for (const k of m.keuzes) {
+        check(k.label, `${m.id}/${k.id}.label`);
+        check(k.uitleg, `${m.id}/${k.id}.uitleg`);
+        for (const g of k.gevolgen) check(g.tekst, `${m.id}/${k.id}.gevolg`);
+      }
+    }
+  });
+
+  it('gebruikt {speler} alleen waar er ook een speler bekend is', () => {
+    for (const m of MOMENTS) {
+      const usesPlayer = /\{(speler|vermoeidheid|moraal)\}/.test(m.titel + m.tekst);
+      if (usesPlayer) {
+        expect(m.focusSpeler ?? m.verhaal, `${m.id} noemt een speler zonder focusSpeler of verhaal`).to.not.equal(undefined);
+      }
+      const usesSponsor = /\{sponsor\}/.test(m.titel + m.tekst);
+      if (usesSponsor) {
+        expect(m.focusSponsor ?? m.verhaal, `${m.id} noemt een sponsor zonder focusSponsor of verhaal`).to.not.equal(undefined);
+      }
+    }
+  });
+
+  it('laat geen situatie schrijven die in de praktijk nooit kan gebeuren', () => {
+    // dit ving eerder een moment op dat vermoeidheid boven 70 vroeg, terwijl een normale
+    // kern nooit boven 33 komt: het stond in de data maar kwam nooit in beeld
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 3; seed++) {
+      let s = newTestGame('heidebeke', 'fonds', seed);
+      for (let w = 0; w < 52 * 3 && !s.gameOver; w++) {
+        s.cash = Math.max(s.cash, 2_000_000);
+        if (s.opening && !s.opening.done) chooseAmbition(s, 'bescheiden');
+        if (s.weekChoice) seen.add(s.weekChoice.id);
+        s = advanceWeek(s);
+      }
+    }
+    expect(seen.size, 'te weinig verschillende situaties kwamen echt in beeld').to.be.at.least(20);
   });
 });
