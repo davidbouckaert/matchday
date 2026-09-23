@@ -7,7 +7,7 @@ import type { ActionResult } from '../engine/actions';
 import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, inWinterBreak } from '../engine/calendar';
 import { indexedDbStore, exportToFile, importFromFile } from '../storage/save';
 import { defaultDraft, setupScreen, type SetupDraft } from './screens/setup';
-import { dashboardScreen } from './screens/dashboard';
+import { dashboardScreen, todos } from './screens/dashboard';
 import { goalsScreen } from './screens/goals';
 import { squadScreen, transfersScreen } from './screens/squad';
 import { staffScreen } from './screens/staff';
@@ -36,8 +36,10 @@ import { financeScreen, subscriptionInfo } from './screens/finance';
 import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from './screens/club';
 import { initTooltips } from './tooltip';
 import { initNumFields } from './numfield';
-import { header } from './header';
+import { header, playBar } from './header';
 import { applyTheme, schemeById } from './theme';
+import { impactChips } from './impact';
+import { upgradeImpact } from '../engine/impact';
 import { esc, euro } from './format';
 
 const SLOT = 'slot1';
@@ -220,7 +222,7 @@ function render(): void {
   // een prijs aan het intikken is mag daar niet uit geduwd worden
   const focused = grabFocus();
   root.innerHTML = `
-    ${header(g, { weekLabel, blocked, fastWeeks, busy: ui.busy })}
+    ${header(g)}
     <nav class="tabs">${GROUPS.filter((gr) => gr.id !== 'menu')
       .map((gr) => {
         const warn = gr.id === 'ploeg' && blocked ? '<span class="badge" data-tip="Er is een probleem met je selectie">!</span>' : '';
@@ -244,6 +246,7 @@ function render(): void {
         ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de clubwinkel te laten draaien.</p></section>`
         : ''
     }${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${renderScreen(g)}</main>
+    ${playBar(g, { weekLabel, blocked, fastWeeks, busy: ui.busy, open: todos(g).length + (g.weekChoice && !g.weekChoice.answer ? 1 : 0) })}
     <footer class="app-footer"><span class="muted small">Clubeigenaar ${VERSION} · ${esc(g.clubName)} · seizoen ${g.season}, week ${g.week}</span></footer>
     ${ui.fastForward ? fastForwardOverlay(g, ui.fastForward) : ''}
     ${!ui.fastForward && ui.report ? (ui.report.phase === 'anim' ? animationOverlay(g, ui.report.prev) : reportOverlay(g, ui.report.prev)) : ''}
@@ -419,6 +422,9 @@ function updateTribuneInfo(): void {
   const seats = Number(slider.value);
   info.innerHTML = `<strong>${seats} plaatsen</strong> · ${euro(actions.tribuneCost(g, seats))}
     <span class="muted">(€${actions.tribunePerSeat(g, seats)} per zitje)</span> · ${actions.tribuneWeeks(seats)} weken bouwtijd`;
+  // de gevolgen rekenen mee terwijl je sleept: meer plaatsen is ook meer onderhoud
+  const gevolgen = root.querySelector<HTMLElement>('#tribune-impact');
+  if (gevolgen) gevolgen.innerHTML = impactChips(upgradeImpact(g, 'tribune', seats), 5);
   const button = root.querySelector<HTMLButtonElement>('[data-action="upgrade"][data-id="tribune"]');
   if (button) button.disabled = g.cash < actions.tribuneCost(g, seats);
 }

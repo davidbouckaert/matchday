@@ -119,19 +119,11 @@ export interface HeaderOpts {
  * de clubnaam staat er in koptekst, en de clubkleuren lopen als band over de bovenrand.
  * Je weet in één oogopslag bij welke club je zit.
  */
-export function header(g: GameState, o: HeaderOpts): string {
+export function header(g: GameState): string {
   const division = DIVISIONS[g.league.divisionLevel];
   const colors = schemeById(g.scheme).colors;
   const match = weeksToMatch(g);
   const playedDays = MATCH_WEEKS.filter((w) => w < g.week).length;
-
-  const nextTip = o.blocked
-    ? o.blocked
-    : o.fastWeeks >= 2
-      ? `Speelt ${o.fastWeeks} rustige weken achter elkaar en stopt vlak voor de volgende wedstrijd — of eerder, zodra er iets is dat jou nodig heeft.`
-      : o.fastWeeks === 1
-        ? 'Volgende week wordt er al gespeeld. Gebruik gewoon "Volgende week".'
-        : 'Je speelt deze week een wedstrijd. Die week speel je zelf.';
 
   // wanneer het is, in drie korte stukken naast elkaar in plaats van een alinea
   const when = [
@@ -168,12 +160,46 @@ export function header(g: GameState, o: HeaderOpts): string {
       ${g.weeksNegative ? `<span class="small neg">${g.weeksNegative}/8 weken rood</span>` : ''}
     </div>
 
+  </header>`;
+}
+
+/**
+ * De speelbalk onderaan: altijd in beeld, waar je ook staat.
+ *
+ * De knoppen stonden in de kopbalk, en die scrolt weg. Halverwege een spelerslijst of een
+ * kalender moest je dus naar boven om verder te spelen — of om te zien hoeveel er nog in
+ * kas zat. Hier staan ze vast: links je saldo en wat er nog op je wacht, rechts de twee
+ * knoppen. Op een telefoon scheelt dat nog het meest, want daar is de kopbalk het duurst.
+ */
+export function playBar(g: GameState, o: HeaderOpts & { open: number }): string {
+  const nextTip = o.blocked
+    ? o.blocked
+    : o.fastWeeks >= 2
+      ? `Speelt ${o.fastWeeks} rustige weken achter elkaar en stopt vlak voor de volgende wedstrijd — of eerder, zodra er iets is dat jou nodig heeft.`
+      : o.fastWeeks === 1
+        ? 'Volgende week wordt er al gespeeld. Gebruik gewoon "Volgende week".'
+        : 'Je speelt deze week een wedstrijd. Die week speel je zelf.';
+
+  return `<div class="playbar">
+    <div class="pb-left">
+      <button class="pb-cash ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" ${tipAttr('Naar je financiën.')}>
+        <span class="cap">Saldo</span><strong>${euro(g.cash)}</strong>
+      </button>
+      ${
+        o.open
+          ? `<button class="pb-open" data-action="nav" data-id="overzicht" ${tipAttr('Naar je werklijst op het dashboard.')}>
+              <span class="dot"></span>${o.open} ${o.open === 1 ? 'ding wacht' : 'dingen wachten'} op jou
+            </button>`
+          : '<span class="pb-clear small">niets dat op jou wacht</span>'
+      }
+      ${o.blocked ? `<span class="pb-block small" ${tipAttr(o.blocked)}>⚠️ je ploeg is niet compleet</span>` : ''}
+    </div>
     <div class="next-group">
+      <button class="ghost fast" data-action="fast-forward" ${o.fastWeeks < 2 || o.busy ? 'disabled' : ''} ${tipAttr(nextTip)}>
+        ▶▶ Tot de match${o.fastWeeks >= 2 ? ` <span class="small">(${o.fastWeeks})</span>` : ''}
+      </button>
       <button class="primary next ${o.weekLabel.highlight ? 'season-end' : ''}" data-action="next-week"
         ${o.blocked || g.gameOver || o.busy ? 'disabled' : ''} ${tipAttr(o.blocked || o.weekLabel.tip)}>${o.weekLabel.text}</button>
-      <button class="ghost fast" data-action="fast-forward" ${o.fastWeeks < 2 || o.busy ? 'disabled' : ''} ${tipAttr(nextTip)}>
-        ▶▶ Tot de volgende match${o.fastWeeks >= 2 ? ` <span class="small">(${o.fastWeeks})</span>` : ''}
-      </button>
     </div>
-  </header>`;
+  </div>`;
 }

@@ -21,6 +21,8 @@ import { avatarSvg } from '../avatar';
 import { bar, esc, euro, signedEuro, stars } from '../format';
 import { hint, tip } from '../tooltip';
 import { numField } from '../numfield';
+import { impactChips } from '../impact';
+import { upgradeImpact } from '../../engine/impact';
 import { taskPicker } from '../taskpicker';
 
 /** De tribune: jij kiest hoeveel plaatsen erbij komen, en hoe groter je bestelt hoe goedkoper per zitje. */
@@ -48,7 +50,8 @@ function tribuneCard(s: GameState): string {
               <button class="primary" data-action="upgrade" data-id="tribune">Werken starten</button>
             </div>
             <p id="tribune-info" class="tribune-info"><strong>${seats} plaatsen</strong> · ${euro(tribuneCost(s, seats))}
-              <span class="muted">(€${tribunePerSeat(s, seats)} per zitje)</span> · ${tribuneWeeks(seats)} weken bouwtijd</p>`
+              <span class="muted">(€${tribunePerSeat(s, seats)} per zitje)</span> · ${tribuneWeeks(seats)} weken bouwtijd</p>
+            <div id="tribune-impact">${impactChips(upgradeImpact(s, 'tribune', seats), 5)}</div>`
     }
   </div>`;
 }
@@ -107,6 +110,7 @@ export function infraScreen(s: GameState): string {
             const reason = canUpgrade(s, u.id);
             const busy = s.infrastructure.constructions.find((c) => c.upgrade === u.id);
             return `<div class="choice static"><strong>${esc(u.label)}</strong><span>${esc(u.description)}</span>
+            ${impactChips(upgradeImpact(s, u.id), 5)}
             <span class="big">${euro(upgradeCost(s, u.id))}</span><span class="muted small">${upgradeWeeks(s, u.id)} weken bouwtijd</span>
             ${
               busy

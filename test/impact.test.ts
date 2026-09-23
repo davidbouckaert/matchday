@@ -1,6 +1,8 @@
 import { expect } from 'chai';
 import type { StaffRole } from '../src/engine/types';
-import { staffImpact } from '../src/engine/impact';
+import { playerImpact, staffImpact, upgradeImpact } from '../src/engine/impact';
+import { UPGRADES } from '../src/engine/data/catalog';
+import { overall } from '../src/engine/players';
 import { readyGame } from './helpers';
 import * as actions from '../src/engine/actions';
 
@@ -124,5 +126,93 @@ describe('Wisselen in de opstelling', () => {
     s.delegation.opstelling = coach.id;
     const r = actions.swapInLineup(s, s.players[0].id, s.players[1].id);
     expect(r.ok).to.equal(false);
+  });
+});
+
+describe('Wat levert dit bouwproject op', () => {
+  it('geeft een grotere tribune meer plaatsen maar ook meer vaste kosten', () => {
+    const s = game();
+    const gevolgen = upgradeImpact(s, 'tribune', 600);
+    const plaatsen = gevolgen.find((i) => i.label === 'Plaatsen')!;
+    expect(plaatsen.value).to.equal('+600');
+    const kosten = gevolgen.find((i) => i.label === 'Vaste kosten')!;
+    expect(kosten, 'een tribune kost ook onderhoud').to.not.equal(undefined);
+    expect(kosten.value.startsWith('+')).to.equal(true);
+    expect(kosten.tone).to.equal('bad');
+  });
+
+  it('laat een kantinerenovatie zien in de winst per bezoeker', () => {
+    const s = game();
+    const kantine = upgradeImpact(s, 'kantine').find((i) => i.label === 'Per bezoeker')!;
+    expect(kantine.value.startsWith('+')).to.equal(true);
+    expect(kantine.tone).to.equal('good');
+  });
+
+  it('meet toiletten en parking af aan het publiek', () => {
+    const s = game();
+    for (const id of ['sanitair', 'parking', 'wifi'] as const) {
+      const publiek = upgradeImpact(s, id).find((i) => i.label === 'Toeschouwers');
+      expect(publiek, `${id} trekt geen volk`).to.not.equal(undefined);
+      expect(publiek!.value.startsWith('+'), id).to.equal(true);
+    }
+  });
+
+  it('geeft elk bouwproject iets concreets te zeggen', () => {
+    const s = game();
+    for (const u of UPGRADES) {
+      const gevolgen = upgradeImpact(s, u.id, u.id === 'tribune' ? 400 : undefined);
+      expect(gevolgen.length, `${u.id} heeft niets te melden`).to.be.above(0);
+      for (const g of gevolgen) expect(g.label.split(' ').length, `${u.id}: "${g.label}"`).to.be.at.most(3);
+    }
+  });
+
+  it('laat de club die je meegeeft ongemoeid', () => {
+    const s = game();
+    const voor = s.infrastructure.capacity;
+    upgradeImpact(s, 'tribune', 1000);
+    expect(s.infrastructure.capacity).to.equal(voor);
+  });
+});
+
+describe('Wat doet deze speler met je ploeg', () => {
+  it('zegt dat een topspeler je ploeg sterker maakt', () => {
+    const s = game();
+    const beste = [...s.players].sort((a, b) => overall(b) - overall(a))[0];
+    const ster = { ...structuredClone(beste), id: 'proef', name: 'Proef Speler' };
+    ster.technique = 95;
+    ster.physical = 95;
+    const sterkte = playerImpact(s, ster).find((i) => i.label === 'Teamsterkte')!;
+    expect(sterkte.value.startsWith('+'), `stond er "${sterkte.value}"`).to.equal(true);
+  });
+
+  it('zegt eerlijk dat een zwakke speler niets toevoegt', () => {
+    const s = game();
+    const zwak = { ...structuredClone(s.players[0]), id: 'proef2', name: 'Zwak' };
+    zwak.technique = 5;
+    zwak.physical = 5;
+    const sterkte = playerImpact(s, zwak).find((i) => i.label === 'Teamsterkte')!;
+    expect(sterkte.value).to.equal('geen');
+    expect(sterkte.tone).to.equal('neutral');
+  });
+
+  it('noemt altijd het loon, want dat loopt elke week door', () => {
+    const s = game();
+    const loon = playerImpact(s, s.players[0]).find((i) => i.label === 'Loon')!;
+    expect(loon.value).to.contain(String(s.players[0].wage));
+    expect(loon.tone).to.equal('bad');
+  });
+
+  it('draait het loon om wanneer je hem zou verkopen', () => {
+    const s = game();
+    const loon = playerImpact(s, s.players[0], false).find((i) => i.label === 'Loon')!;
+    expect(loon.value.startsWith('+')).to.equal(true);
+    expect(loon.tone).to.equal('good');
+  });
+
+  it('laat je kern ongemoeid', () => {
+    const s = game();
+    const aantal = s.players.length;
+    playerImpact(s, { ...structuredClone(s.players[0]), id: 'proef3' });
+    expect(s.players.length).to.equal(aantal);
   });
 });

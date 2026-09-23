@@ -10,13 +10,14 @@
 // is wat je ziet. Zo kan het cijfer op het scherm nooit uit de pas lopen met het spel:
 // verandert de formule, dan verandert dit mee.
 
-import type { GameState, Staff, StaffRole } from './types';
+import type { GameState, Player, Staff, StaffRole, UpgradeId } from './types';
 import { roleDef } from './data/catalog';
 import { staffSkill } from './staff';
-import { expectedAttendance } from './finance';
+import { expectedAttendance, facilityCost } from './finance';
 import { spendPerHeadCanteen } from './canteen';
+import { applyUpgrade } from './infrastructure';
 import { buildUpFactor, injuryFactors, product, recovery, sponsorFactors } from './factors';
-import { teamStrength } from './players';
+import { overall, teamStrength } from './players';
 import { kindRange } from './sponsors';
 import { youthForecast } from './actions';
 
@@ -177,3 +178,161 @@ export function staffImpact(state: GameState, role: StaffRole, skill: number, ve
 export function roleLabel(role: StaffRole): string {
   return roleDef(role).label;
 }
+
+/* ---------------------------------------------------------- bouwprojecten */
+
+/** Een kopie van de club waarin dit bouwproject al klaar is. */
+function withUpgrade(state: GameState, id: UpgradeId, seats?: number): GameState {
+  const copy = structuredClone(state);
+  applyUpgrade(copy.infrastructure, id, seats);
+  return copy;
+}
+
+/**
+ * Wat een afgerond bouwproject je oplevert. Gemeten, niet beschreven: de proefkopie
+ * gebruikt dezelfde `applyUpgrade` die de weeklus gebruikt wanneer de werken echt klaar
+ * zijn, dus wat hier staat is wat er straks gebeurt.
+ */
+export function upgradeImpact(state: GameState, id: UpgradeId, seats?: number): Impact[] {
+  const after = withUpgrade(state, id, seats);
+  const out: Impact[] = [];
+  const add = (icon: string, label: string, value: string, tone: Impact['tone'], tip: string) => out.push({ icon, label, value, tone, tip });
+  const d = (fn: (s: GameState) => number) => ({ from: fn(state), to: fn(after) });
+
+  const pub = d(MEASURES.publiek);
+  if (Math.abs(pub.to - pub.from) >= 1) {
+    add('👥', 'Toeschouwers', sign(pub.to - pub.from), pub.to >= pub.from ? 'good' : 'bad',
+      `Bij een gewone thuiswedstrijd verwacht je nu ${Math.round(pub.from)} mensen; daarna ${Math.round(pub.to)}. Meer volk is meer tickets én meer kantine.`);
+  }
+
+  const kant = d(MEASURES.kantinePerHoofd);
+  if (Math.abs(kant.to - kant.from) >= 0.01) {
+    add('🍺', 'Per bezoeker', sign(kant.to - kant.from, 2), kant.to >= kant.from ? 'good' : 'bad',
+      `De winst per bezoeker aan de toog gaat van €${kant.from.toFixed(2)} naar €${kant.to.toFixed(2)}.`);
+  }
+
+  const spons = d(MEASURES.sponsorwaarde);
+  if (Math.abs(pct(spons.from, spons.to)) >= 0.5) {
+    add('🤝', 'Sponsors betalen', signPct(pct(spons.from, spons.to)), spons.to >= spons.from ? 'good' : 'bad',
+      `Wat bedrijven voor een plaats willen neerleggen gaat met ${signPct(pct(spons.from, spons.to))}.`);
+  }
+
+  const jeugd = d(MEASURES.jeugdleden);
+  if (Math.abs(jeugd.to - jeugd.from) >= 1) {
+    add('🧒', 'Jeugdleden', sign(jeugd.to - jeugd.from), jeugd.to >= jeugd.from ? 'good' : 'bad',
+      `Bij het huidige lidgeld schrijven zich ${Math.round(jeugd.from)} leden in; daarna ${Math.round(jeugd.to)}.`);
+  }
+
+  const herstel = d(MEASURES.herstel);
+  if (Math.abs(herstel.to - herstel.from) >= 0.1) {
+    add('💤', 'Herstel', `${sign(herstel.to - herstel.from, 1)}/week`, herstel.to >= herstel.from ? 'good' : 'bad',
+      `Je spelers verliezen ${herstel.from.toFixed(1)} vermoeidheidspunten per week extra; daarna ${herstel.to.toFixed(1)}.`);
+  }
+
+  // de vaste kosten: elke steen kost ook onderhoud en energie, en dat vergeet men graag
+  const kost = d(facilityCost);
+  if (Math.abs(kost.to - kost.from) >= 1) {
+    add('🧾', 'Vaste kosten', `${sign(kost.to - kost.from)}/week`, kost.to <= kost.from ? 'good' : 'bad',
+      `Onderhoud, energie en materiaal gaan van ${Math.round(kost.from)} naar ${Math.round(kost.to)} euro per week. Dat loopt door, ook in de winterstop.`);
+  }
+
+  const cap = after.infrastructure.capacity - state.infrastructure.capacity;
+  if (cap) {
+    add('🏟️', 'Plaatsen', sign(cap), 'good',
+      `Je tribune gaat van ${state.infrastructure.capacity} naar ${after.infrastructure.capacity} plaatsen. Zolang je die niet vol krijgt, levert een grotere tribune niets extra op.`);
+  }
+
+  // Wat niet in de bovenstaande maten zit, maar wel telt. Deze drie werken niet via een
+  // vermenigvuldiger op je publiek of je kantine, dus meten levert hier niets op.
+  if (id === 'kunstgras') {
+    add('🌧️', 'Afgelastingen', 'geen', 'good', 'Op kunstgras gaat elke wedstrijd door, ook na een week regen. Een afgelasting kost je de volledige kassa en kantine van die dag.');
+    add('🔑', 'Verhuur', 'mogelijk', 'good', 'Andere clubs en scholen huren je veld af. Dat levert elke week iets op, ook als je zelf niet speelt.');
+  }
+  if (id === 'ploegbus') {
+    add('🚌', 'Verplaatsingen', '−55%', 'good', 'Je betaalt alleen nog brandstof en een chauffeur in plaats van een bus te huren, voor elke uitwedstrijd van het seizoen.');
+    add('🤝', 'Sponsorplaats', '+1', 'good', 'Een bedrijf kan zijn naam op de bus zetten: dat is een extra sponsorplaats die je anders niet hebt.');
+  }
+  if (id === 'zonnepanelen') {
+    add('⚡', 'Energie', '−18%', 'good', 'Je energiekosten zakken met 18%, elke week, en dat loopt door zolang de club bestaat.');
+  }
+  if (id === 'opleidingscentrum') {
+    add('🧒', 'Jeugdopleiding', 'beter', 'good', 'Je eigen jongeren groeien sneller en er komen meer beloften uit je jeugdwerking naar de A-kern.');
+  }
+  if (id === 'verlichting') {
+    add('📋', 'Licentie', 'hogere reeks', 'neutral', 'Zonder voldoende verlichting krijg je geen licentie voor een hogere reeks. Promoveren zonder dit is dus niet mogelijk.');
+  }
+  if (id === 'recuperatie') {
+    add('🩺', 'Personeel', 'kinesist mogelijk', 'good', 'Pas met een recuperatieruimte kun je een kinesist of verzorger aanwerven. Zonder die ruimte zijn die functies vergrendeld.');
+  }
+
+  return out;
+}
+
+/* ---------------------------------------------------------------- spelers */
+
+/** Een kopie van de club met deze speler erbij of eruit. */
+function withPlayer(state: GameState, player: Player, erbij: boolean): GameState {
+  const copy = structuredClone(state);
+  copy.players = erbij ? [...copy.players, structuredClone(player)] : copy.players.filter((p) => p.id !== player.id);
+  // de trainer stelt opnieuw op, anders blijft je oude elftal staan en verandert er niets
+  copy.tactics.manualXI = [];
+  copy.tactics.benched = [];
+  copy.tactics.gaps = {};
+  return copy;
+}
+
+/**
+ * Wat deze speler met je ploeg doet. `erbij` is false wanneer je hem zou verkopen.
+ *
+ * Het antwoord is vaak "niets": een speler die je beste elf niet haalt, verandert je
+ * teamsterkte niet. Dat is precies wat je wil weten vóór je betaalt.
+ */
+export function playerImpact(state: GameState, player: Player, erbij = true): Impact[] {
+  const before = erbij ? state : withPlayer(state, player, false);
+  const after = erbij ? withPlayer(state, player, true) : state;
+  const out: Impact[] = [];
+
+  const sterkte = { from: teamStrength(before).total, to: teamStrength(after).total };
+  const verschil = erbij ? sterkte.to - sterkte.from : sterkte.from - sterkte.to;
+  if (Math.abs(verschil) >= 0.05) {
+    out.push({
+      icon: '⚽',
+      label: 'Teamsterkte',
+      value: sign(verschil, 1),
+      tone: verschil >= 0 ? 'good' : 'bad',
+      tip: erbij
+        ? `Met hem erbij gaat je ploeg van ${sterkte.from.toFixed(1)} naar ${sterkte.to.toFixed(1)}. Je trainer stelt dan opnieuw op, dus dit is wat hij écht toevoegt aan je beste elf.`
+        : `Zonder hem zakt je ploeg van ${sterkte.from.toFixed(1)} naar ${sterkte.to.toFixed(1)}.`,
+    });
+  } else if (erbij) {
+    out.push({
+      icon: '🪑',
+      label: 'Teamsterkte',
+      value: 'geen',
+      tone: 'neutral',
+      tip: `Hij haalt je beste elf niet, dus je teamsterkte verandert niet. Als reserve of voor later kan hij nog altijd nuttig zijn — maar je betaalt nu voor de bank.`,
+    });
+  }
+
+  out.push({
+    icon: '💶',
+    label: 'Loon',
+    value: `${erbij ? '−' : '+'}€${player.wage}/w`,
+    tone: erbij ? 'bad' : 'good',
+    tip: `${erbij ? 'Erbij' : 'Eraf'}: €${player.wage} per week, elke week, ook in de winterstop. Over een heel seizoen is dat ${euroRound(player.wage * 52)}.`,
+  });
+
+  if (erbij && player.age <= 21) {
+    out.push({
+      icon: '📈',
+      label: 'Potentieel',
+      value: `${player.potential}`,
+      tone: player.potential - overall(player) >= 10 ? 'good' : 'neutral',
+      tip: `Hij staat nu op ${overall(player)} en kan naar ${player.potential} groeien. Jonge spelers groeien het snelst met veel speeltijd en een goede hoofdtrainer.`,
+    });
+  }
+
+  return out;
+}
+
+const euroRound = (n: number) => `€${Math.round(n).toLocaleString('nl-BE')}`;

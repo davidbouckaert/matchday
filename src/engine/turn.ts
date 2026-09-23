@@ -32,6 +32,7 @@ import { checkRecords } from './records';
 import { createOpening, settleSeason } from './opening';
 import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
 import { ageStorylines, news, openStoryline, remember } from './content';
+import { applyUpgrade } from './infrastructure';
 import { checkCareerGoal, creditMilestones, settleCareerSeason, subsidyFactor } from './career';
 import { settleSeasonTickets } from './seasontickets';
 import { checkFundPatience, notePromotion, takePrizeShare, updateStadiumSponsor } from './investors';
@@ -463,18 +464,7 @@ function weeklyProgress(state: GameState): void {
     c.weeksLeft--;
     if (c.weeksLeft > 0) continue;
     const id = c.upgrade;
-    if (id === 'tribune') i.capacity += c.seats ?? 300;
-    if (id === 'kantine') i.kantineLevel = Math.min(5, i.kantineLevel + 1);
-    if (id === 'kunstgras') i.pitch = 'kunstgras';
-    if (id === 'verlichting') i.lightingLevel = Math.min(3, i.lightingLevel + 1);
-    if (id === 'opleidingscentrum') i.academyLevel = Math.min(3, i.academyLevel + 1);
-    if (id === 'recuperatie') i.recoveryLevel = Math.min(2, i.recoveryLevel + 1);
-    if (id === 'wifi') i.wifiLevel = Math.min(2, i.wifiLevel + 1);
-    if (id === 'sanitair') i.sanitairLevel = Math.min(2, i.sanitairLevel + 1);
-    if (id === 'parking') i.parkingLevel = Math.min(2, i.parkingLevel + 1);
-    if (id === 'scorebord') i.scoreboardLevel = Math.min(2, i.scoreboardLevel + 1);
-    if (id === 'ploegbus') i.teamBus = true;
-    if (id === 'zonnepanelen') i.greenEnergy = true;
+    applyUpgrade(i, id, c.seats);
     i.constructions = i.constructions.filter((x) => x !== c);
     const label = UPGRADES.find((u) => u.id === id)!.label;
     // een geslaagde investering levert later nog nieuws op (zie NIEUWBOUW in de events)

@@ -245,7 +245,7 @@ function meterCard(s: GameState): string {
  * Het weekmoment zit erin als eerste regel in plaats van in een eigen kaart ernaast; het
  * is de belangrijkste taak van de week, niet een apart onderwerp.
  */
-interface Todo {
+export interface Todo {
   text: string;
   detail?: string;
   screen: string;
@@ -253,7 +253,7 @@ interface Todo {
   level: 'urgent' | 'warn' | 'info';
 }
 
-function todos(s: GameState): Todo[] {
+export function todos(s: GameState): Todo[] {
   const list: Todo[] = [];
   const add = (level: Todo['level'], text: string, screen: string, where: string, detail?: string) =>
     list.push({ text, detail, screen, where, level });

@@ -9,6 +9,8 @@ import { DIVISIONS } from '../../engine/data/divisions';
 import { KIND_LABEL } from '../../engine/sponsors';
 import { weeks } from '../../engine/util';
 import { currentStreak } from '../../engine/records';
+import type { Impact } from '../../engine/impact';
+import { impactChips } from '../impact';
 import { esc, euro, resultIcon, venue } from '../format';
 
 export interface WeekRef {
@@ -232,12 +234,43 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   const suspended = s.players.filter((p) => p.suspended > 0);
   if (suspended.length) waiting.push(`Geschorst: ${suspended.map((p) => `${esc(p.name)} (${p.suspended})`).join(', ')}`);
 
+  // De week in kaartjes: het resultaat, de opkomst en de uitslag in één oogopslag,
+  // vóór je aan de tabellen begint. Wie alleen dit leest, weet genoeg.
+  const m2 = s.lastMatch;
+  const kaartjes: Impact[] = [];
+  kaartjes.push({
+    icon: '💶', label: 'Resultaat', value: `${net > 0 ? '+' : net < 0 ? '−' : ''}${euro(Math.abs(net))}`,
+    tone: net >= 0 ? 'good' : 'bad',
+    tip: `Alles bij elkaar hield je deze week ${euro(Math.abs(net))} ${net >= 0 ? 'over' : 'tekort'}. Je saldo staat nu op ${euro(s.cash)}.`,
+  });
+  if (m2 && m2.week === prev.week) {
+    const uit = m2.goalsFor - m2.goalsAgainst;
+    kaartjes.push({
+      icon: uit > 0 ? '🏆' : uit < 0 ? '🥀' : '🤝', label: 'Uitslag', value: `${m2.goalsFor}-${m2.goalsAgainst}`,
+      tone: uit > 0 ? 'good' : uit < 0 ? 'bad' : 'neutral',
+      tip: `${m2.home ? 'Thuis' : 'Uit'} tegen ${m2.opponent}. ${uit > 0 ? 'Gewonnen' : uit < 0 ? 'Verloren' : 'Gelijkgespeeld'}.`,
+    });
+    if (m2.home) {
+      kaartjes.push({
+        icon: '👥', label: 'Publiek', value: `${m2.attendance}`, tone: 'neutral',
+        tip: `${m2.attendance} toeschouwers bij ${m2.weather}. Zij betaalden tickets én consumpties.`,
+      });
+    }
+  }
+  if (s.lastRecords.length) {
+    kaartjes.push({ icon: '🏅', label: 'Clubrecords', value: `${s.lastRecords.length}`, tone: 'good', tip: s.lastRecords.join(' · ') });
+  }
+  if (s.lastMilestones.length) {
+    kaartjes.push({ icon: '🎉', label: 'Mijlpalen', value: `${s.lastMilestones.length}`, tone: 'good', tip: s.lastMilestones.join(' · ') });
+  }
+
   return `<div class="overlay">
     <div class="report-card" role="dialog" aria-label="Weekrapport">
       <div class="report-head">
         <div><h2>Weekrapport</h2><span class="muted small">Week ${prev.week} · ${formatDateLong(s.startYear, prev.season, prev.week)}</span></div>
         <button class="sm ghost" data-action="close-report">Sluiten ✕</button>
       </div>
+      <div class="report-chips">${impactChips(kaartjes, 6)}</div>
       <div class="report-grid">
         ${seasonReview}
         ${milestones}

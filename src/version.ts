@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.22.1';
+export const VERSION = '0.23.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,21 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.23.0',
+    date: '2026-09-23',
+    title: 'Overal zien wat iets oplevert',
+    items: [
+      'Elk bouwproject toont nu wat het je oplevert: toeschouwers, kantine, jeugdleden — én wat het aan vaste kosten kost',
+      'De tribuneschuif rekent live mee: sleep en je ziet meteen hoeveel plaatsen en hoeveel onderhoud erbij komt',
+      'Op de transfermarkt staat per speler wat hij aan je beste elf toevoegt; vaak is dat niets, en dan betaal je voor de bank',
+      'Het weekrapport opent met kaartjes: resultaat, uitslag, publiek, records en mijlpalen in één oogopslag',
+      'Spelers hebben één gekleurde stip voor hun toestand in plaats van vijf iconen door elkaar',
+      'De speelknoppen en je saldo staan nu in een vaste balk onderaan, altijd in beeld, met hoeveel er op je wacht',
+      'De tabelkop scrolde door de tabel heen; de menubalken blijven nu netjes bovenaan en de kopbalk schuift gewoon weg',
+      'Feitenlijstjes braken hun waarden over drie regels af; die hebben nu ruimte en een rustige lijn ertussen',
+    ],
+  },
   {
     version: '0.22.1',
     date: '2026-09-23',
