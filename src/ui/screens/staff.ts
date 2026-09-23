@@ -107,7 +107,7 @@ export function staffScreen(s: GameState, selected: string | null): string {
       <td data-v="${c.wage}">${euro(c.wage)}</td>
       <td>${
         staffLock(s, c.role)
-          ? `<span class="muted small" title="${esc(staffLock(s, c.role)!)}">🔒 nog niet mogelijk</span>`
+          ? `<span class="muted small" data-tip="${esc(staffLock(s, c.role)!)}">🔒 nog niet mogelijk</span>`
           : `<button class="sm primary" data-action="hire" data-id="${c.id}">Aanwerven (tekengeld ${euro(c.wage * 2)})</button>`
       }</td>
     </tr>`,

@@ -8,6 +8,8 @@ import { expectedAttendance } from '../../engine/finance';
 import { delegate } from '../../engine/delegation';
 import { esc, euro } from '../format';
 import { hint, tip } from '../tooltip';
+import { numField } from '../numfield';
+import { taskPicker } from '../taskpicker';
 
 const money = (n: number) => `€${n.toFixed(2)}`;
 
@@ -28,7 +30,7 @@ export function horecaScreen(s: GameState): string {
         <td class="num">${
           locked
             ? `<strong>${money(item.price)}</strong>`
-            : `<input class="price" type="number" min="${def.cost}" max="${def.ref * 4}" step="0.1" value="${item.price.toFixed(2)}" data-change="canteen-price" data-id="${item.id}" aria-label="Prijs ${esc(def.label)}"/>`
+            : numField({ value: item.price, min: def.cost, max: def.ref * 4, step: 0.1, decimals: 2, prefix: '€', change: 'canteen-price', rowId: item.id, label: `Prijs ${def.label}` })
         }</td>
         <td class="num">${money(marginEach)}</td>
         <td class="num" ${tip('100% = de verkoop die je aan een normale prijs haalt. Duurder verkoop je minder, goedkoper verkoop je meer maar met minder marge per stuk.')}>${Math.round(pf * 100)}%</td>
@@ -51,7 +53,7 @@ export function horecaScreen(s: GameState): string {
         <td class="num">${
           locked
             ? `<strong>${c.marginPct}%</strong>`
-            : `<input class="price" type="number" min="0" max="60" step="1" value="${c.marginPct}" data-change="concession-margin" data-id="${c.id}" aria-label="Marge ${esc(def.label)}"/>`
+            : numField({ value: c.marginPct, min: 0, max: 60, step: 1, suffix: '%', change: 'concession-margin', rowId: c.id, label: `Marge ${def.label}` })
         }<br/><span class="muted small">hij gaat tot ±${max}%</span></td>
         <td class="num">${euro(concessionForecast(s, c.id, c.marginPct, attendance))}</td>
         <td class="num">${sold ? `${sold.units} · ${euro(sold.revenue)} omzet` : '–'}</td>
@@ -63,7 +65,7 @@ export function horecaScreen(s: GameState): string {
   const free = CONCESSIONS.filter((d) => !s.canteen.concessions.some((c) => c.id === d.id));
   const space = CONCESSION_SPACE - usedConcessionSpace(s);
 
-  return `<div class="grid">
+  return `${taskPicker(s, ['horeca'])}<div class="grid">
     <section class="card span2">
       <h2>Kantine ${hint('De kantine draait op thuiswedstrijden. Je verdient het verschil tussen je prijs en de inkoopprijs; vrijwilligers, het kantineniveau en je populariteit bepalen hoeveel er besteld wordt.')}</h2>
       <p class="muted small">Prijzen passen zich meteen toe, je hoeft niets op te slaan. Verwachting bij een gewone thuiswedstrijd met ongeveer ${attendance} toeschouwers.</p>
@@ -99,7 +101,7 @@ export function horecaScreen(s: GameState): string {
                 locked
                   ? '<span class="muted small">je verantwoordelijke beslist dit</span>'
                   : fits
-                    ? `<span class="ask"><input id="margin-${d.id}" class="price" type="number" min="0" max="60" step="1" value="${max}" aria-label="Voorgestelde marge"/>
+                    ? `<span class="ask">${numField({ value: max, min: 0, max: 60, step: 1, suffix: '%', inputId: `margin-${d.id}`, label: 'Voorgestelde marge' })}
                        <button class="sm primary" data-action="open-concession" data-id="${d.id}">Onderhandelen</button></span>`
                     : '<span class="muted small">geen plaats meer op het complex</span>'
               }

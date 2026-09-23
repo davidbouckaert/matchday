@@ -6,6 +6,8 @@ import { askingWage, wageOfferEffect } from '../../engine/actions';
 import { delegate } from '../../engine/delegation';
 import { esc, euro } from '../format';
 import { tip } from '../tooltip';
+import { numField } from '../numfield';
+import { taskPicker } from '../taskpicker';
 
 function moodWord(n: number): string {
   return n >= 8 ? 'erg blij' : n > 0 ? 'tevreden' : n === 0 ? 'neutraal' : n > -10 ? 'ontgoocheld' : 'boos';
@@ -27,7 +29,7 @@ function row(s: GameState, p: Player, locked: boolean): string {
     <td>${
       locked
         ? '<span class="muted small">gedelegeerd</span>'
-        : `<span class="ask"><input id="wage-${p.id}" class="price" type="number" min="40" step="5" value="${suggestion}" aria-label="Loonvoorstel voor ${esc(p.name)}"/>
+        : `<span class="ask">${numField({ value: suggestion, min: 40, step: 5, prefix: '€', inputId: `wage-${p.id}`, label: `Loonvoorstel voor ${p.name}` })}
            <button class="sm primary" data-action="extend" data-id="${p.id}">Voorstellen</button></span>
            <br/><span class="muted small">bij ${euro(suggestion)}: ${Math.round(chance * 100)}% kans, hij is ${moodWord(morale)}</span>`
     }</td>
@@ -41,7 +43,7 @@ export function contractsScreen(s: GameState): string {
   const rest = squad.filter((p) => p.contractUntil > s.season);
   const wages = s.players.reduce((sum, p) => sum + p.wage, 0);
 
-  return `<div class="grid">
+  return `${taskPicker(s, ['contracten'])}<div class="grid">
     <section class="card span2">
       <h2>Contracten</h2>
       <p class="muted small">Een contract loopt af op het einde van een seizoen. Verleng je niet op tijd, dan vertrekt de speler gratis.

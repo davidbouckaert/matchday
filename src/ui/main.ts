@@ -10,7 +10,8 @@ import {
 } from '../engine/calendar';
 import { indexedDbStore, exportToFile, importFromFile } from '../storage/save';
 import { defaultDraft, setupScreen, type SetupDraft } from './screens/setup';
-import { overviewScreen, weekSummary } from './screens/overview';
+import { dashboardScreen, weekSummary } from './screens/dashboard';
+import { goalsScreen } from './screens/goals';
 import { squadScreen, transfersScreen } from './screens/squad';
 import { staffScreen } from './screens/staff';
 import { sponsorsScreen } from './screens/sponsors';
@@ -42,31 +43,40 @@ import { financeScreen, subscriptionInfo } from './screens/finance';
 import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from './screens/club';
 import { type CrestShape, clubInitials, crestSvg } from './crest';
 import { START_CLUBS } from '../engine/data/setup';
+import { initTooltips } from './tooltip';
+import { initNumFields } from './numfield';
 import { esc, euro } from './format';
 
 const SLOT = 'slot1';
 
 type Screen =
   | 'overzicht' | 'ploeg' | 'strategie' | 'transfers' | 'contracten' | 'staff' | 'opleiding'
-  | 'kalender' | 'financien' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club'
+  | 'kalender' | 'financien' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club' | 'doelen'
   | 'competitie' | 'invloeden' | 'opslaan' | 'handleiding' | 'museum';
 
-/** Navigatie in groepen: hoofdtabs met subtabs. */
+/**
+ * Navigatie in groepen: hoofdtabs met subtabs.
+ *
+ * De oude indeling had één groep "Club" met tien subtabs erin — van je kalender tot je
+ * museum. Alles wat niet bij je ploeg hoorde belandde daar, en dus vond je er niets meer
+ * terug. Nu groepeert elke tab dingen die je in dezelfde denkbui doet: je elftal, je
+ * mensen, je geld, je accommodatie, je competitie.
+ */
 const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
-  { id: 'overzicht', label: 'Overzicht', screens: [['overzicht', 'Overzicht']] },
+  { id: 'overzicht', label: 'Dashboard', screens: [['overzicht', 'Dashboard']] },
   { id: 'ploeg', label: 'Ploeg', screens: [['ploeg', 'Selectie'], ['strategie', 'Strategie'], ['transfers', 'Transfers'], ['contracten', 'Contracten']] },
-  { id: 'staff', label: 'Personeel', screens: [['staff', 'Personeel'], ['opleiding', 'Opleiding']] },
+  { id: 'staff', label: 'Personeel', screens: [['staff', 'Personeel en taken'], ['opleiding', 'Opleiding']] },
+  { id: 'geld', label: 'Geld', screens: [['financien', 'Financiën'], ['sponsors', 'Sponsors'], ['cijfers', 'Cijfers']] },
   {
     id: 'club',
     label: 'Club',
     screens: [
-      ['kalender', 'Kalender'], ['financien', 'Financiën'], ['cijfers', 'Cijfers'], ['sponsors', 'Sponsors'],
-      ['clubwinkel', 'Clubwinkel'], ['horeca', 'Horeca'], ['evenementen', 'Evenementen'], ['infrastructuur', 'Infrastructuur'], ['museum', 'Museum'], ['club', 'Clubinfo'],
+      ['infrastructuur', 'Infrastructuur'], ['horeca', 'Horeca'], ['clubwinkel', 'Clubwinkel'], ['evenementen', 'Evenementen'],
+      ['doelen', 'Doelen'], ['museum', 'Museum'], ['club', 'Clubinfo'],
     ],
   },
-  { id: 'competitie', label: 'Competitie', screens: [['competitie', 'Stand, kalender en tucht']] },
-  { id: 'invloeden', label: 'Invloeden', screens: [['invloeden', 'Invloeden']] },
-  { id: 'menu', label: 'Menu', screens: [['handleiding', 'Handleiding'], ['opslaan', 'Opslaan en instellingen']] },
+  { id: 'competitie', label: 'Competitie', screens: [['competitie', 'Stand en tucht'], ['kalender', 'Kalender']] },
+  { id: 'menu', label: 'Menu', screens: [['handleiding', 'Handleiding'], ['invloeden', 'Wat beïnvloedt wat'], ['opslaan', 'Opslaan en instellingen']] },
 ];
 
 const groupOf = (screen: Screen) => GROUPS.find((g) => g.screens.some(([id]) => id === screen))!;
@@ -90,6 +100,7 @@ interface UiState {
   lastScreen: Record<string, Screen>; // laatst bezochte subtab per groep
   openTables: Record<string, boolean>; // welke inklapbare tabellen openstaan
   moment: 'dicht' | 'vraag' | 'gevolg'; // popup van het weekmoment
+  onboardOpen: boolean; // staat de startlijst open?
 }
 
 const ui: UiState = {
@@ -111,6 +122,7 @@ const ui: UiState = {
   lastScreen: {},
   openTables: { basis: true, bank: false, out: false },
   moment: 'dicht',
+  onboardOpen: false,
 };
 
 /** Kleine voorkeur in de browser (fout = standaardwaarde). */
@@ -158,7 +170,8 @@ function showToast(result: ActionResult): void {
 
 function renderScreen(g: GameState): string {
   switch (ui.screen) {
-    case 'overzicht': return overviewScreen(g);
+    case 'overzicht': return dashboardScreen(g, ui.onboardOpen);
+    case 'doelen': return goalsScreen(g);
     case 'ploeg': return squadScreen(g, ui.openTables);
     case 'strategie': return strategyScreen(g);
     case 'opleiding': return trainingScreen(g);
@@ -213,6 +226,9 @@ function render(): void {
         : '';
   const table = g.league.table.find((r) => r.teamId === OWN_TEAM_ID);
   const fastWeeks = blocked ? 0 : canFastForward(g);
+  // onthouden waar de cursor stond: elke wijziging tekent het scherm opnieuw, en wie net
+  // een prijs aan het intikken is mag daar niet uit geduwd worden
+  const focused = grabFocus();
   root.innerHTML = `
     <header class="topbar">
       <div class="club">${crestSvg(g.crest as CrestShape, (START_CLUBS.find((c) => c.id === g.clubId)?.colors ?? ['#1f7a3c', '#ffffff']) as [string, string], clubInitials(g.clubName), 44)}
@@ -220,23 +236,23 @@ function render(): void {
           <strong>${esc(g.clubName)}</strong>
           <span class="muted small">${division.name} · ${seasonLabel(g.startYear, g.season)}</span>
         </div>
-        <button class="rating-chips" data-action="nav" data-id="club" title="Naar je clubinfo">${clubRatings(g)
+        <button class="rating-chips" data-action="nav" data-id="club" data-tip="Naar je clubinfo">${clubRatings(g)
           .map(
-            (r) => `<span class="chip" title="${esc(r.label)}: ${r.score}/100 — ${r.parts.map((p) => `${p.label} ${p.score}/100`).join(', ')}">
+            (r) => `<span class="chip" data-tip="${esc(r.label)}: ${r.score}/100 — ${r.parts.map((p) => `${p.label} ${p.score}/100`).join(', ')}">
               <span class="ic">${r.key === 'sportief' ? '⚽' : r.key === 'financieel' ? '💶' : '🤝'}</span>
               <span class="stars">${'★'.repeat(r.stars)}<span class="off">${'★'.repeat(5 - r.stars)}</span></span>
               <span class="score">${r.score}</span></span>`,
           )
           .join('')}</button>
       </div>
-      <button class="today link-stat" data-action="nav" data-id="kalender" title="Naar de kalender"><span class="muted small">Vandaag · seizoen ${g.season}, week ${g.week}</span><strong>${formatDateLong(g.startYear, g.season, g.week)}</strong><span class="small">${inWinterBreak(g.week) ? '<span class="tag big-tag">❄️ winterstop</span>' : seasonPhase(g.week)}${
+      <button class="today link-stat" data-action="nav" data-id="kalender" data-tip="Naar de kalender"><span class="muted small">Vandaag · seizoen ${g.season}, week ${g.week}</span><strong>${formatDateLong(g.startYear, g.season, g.week)}</strong><span class="small">${inWinterBreak(g.week) ? '<span class="tag big-tag">❄️ winterstop</span>' : seasonPhase(g.week)}${
         isTransferWindow(g.week) ? ' <span class="tag">transferperiode open</span>' : ''
       }</span></button>
       <div class="next-group">
-        <button class="primary next ${weekLabel.highlight ? 'season-end' : ''}" data-action="next-week" ${blocked || g.gameOver || ui.busy ? 'disabled' : ''} title="${
+        <button class="primary next ${weekLabel.highlight ? 'season-end' : ''}" data-action="next-week" ${blocked || g.gameOver || ui.busy ? 'disabled' : ''} data-tip="${
           blocked ? esc(blocked) : esc(weekLabel.tip)
         }">${weekLabel.text}</button>
-        <button class="ghost fast" data-action="fast-forward" ${fastWeeks < 2 || ui.busy ? 'disabled' : ''} title="${esc(
+        <button class="ghost fast" data-action="fast-forward" ${fastWeeks < 2 || ui.busy ? 'disabled' : ''} data-tip="${esc(
           fastWeeks >= 2
             ? `Speelt ${fastWeeks} rustige weken achter elkaar en stopt vlak voor de volgende wedstrijd — of eerder, zodra er iets is dat jou nodig heeft.`
             : blocked
@@ -247,25 +263,26 @@ function render(): void {
         )}">▶▶ Tot de volgende match${fastWeeks >= 2 ? ` <span class="small">(${fastWeeks} weken)</span>` : ''}</button>
       </div>
       <div class="stats">
-        <button class="stat link-stat" data-action="nav" data-id="ploeg" title="Naar je selectie"><span class="muted small">Teamsterkte</span><strong>${strength.total}</strong><span class="muted small">A ${strength.attack} · V ${strength.defense}</span></button>
-        <button class="stat link-stat" data-action="nav" data-id="competitie" title="Naar de competitiestand"><span class="muted small">Klassement</span><strong>${played ? `${ownPosition(g.league)}e` : '–'}</strong><span class="muted small">${played ? `${table!.points} ptn uit ${played}` : `start ${formatWeek(g.startYear, g.season, MATCH_WEEKS[0])}`}</span></button>
-        <button class="stat link-stat hide-sm" data-action="nav" data-id="sponsors" title="Naar je sponsors"><span class="muted small">Hoofdsponsor</span><strong class="ellipsis">${main ? esc(main.name) : 'geen'}</strong><span class="muted small">${main ? `${euro(main.weekly)}/week` : 'zoek er een'}</span></button>
-        <button class="stat link-stat" data-action="nav" data-id="financien" title="Naar je financiën"><span class="muted small">Vorige week</span><strong class="${net < 0 ? 'neg' : 'pos'}">${net > 0 ? '+' : ''}${euro(net)}</strong><span class="muted small">in ${euro(income)} · uit ${euro(-costs)}</span></button>
-        <button class="stat cash link-stat ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" title="Naar je financiën"><span class="muted small">Saldo</span><strong>${euro(g.cash)}</strong><span class="muted small">${g.weeksNegative ? `${g.weeksNegative}/8 weken rood` : '&nbsp;'}</span></button>
+        <button class="stat link-stat" data-action="nav" data-id="ploeg" data-tip="Naar je selectie"><span class="muted small">Teamsterkte</span><strong>${strength.total}</strong><span class="muted small">A ${strength.attack} · V ${strength.defense}</span></button>
+        <button class="stat link-stat" data-action="nav" data-id="competitie" data-tip="Naar de competitiestand"><span class="muted small">Klassement</span><strong>${played ? `${ownPosition(g.league)}e` : '–'}</strong><span class="muted small">${played ? `${table!.points} ptn uit ${played}` : `start ${formatWeek(g.startYear, g.season, MATCH_WEEKS[0])}`}</span></button>
+        <button class="stat link-stat hide-sm" data-action="nav" data-id="sponsors" data-tip="Naar je sponsors"><span class="muted small">Hoofdsponsor</span><strong class="ellipsis">${main ? esc(main.name) : 'geen'}</strong><span class="muted small">${main ? `${euro(main.weekly)}/week` : 'zoek er een'}</span></button>
+        <button class="stat link-stat" data-action="nav" data-id="financien" data-tip="Naar je financiën"><span class="muted small">Vorige week</span><strong class="${net < 0 ? 'neg' : 'pos'}">${net > 0 ? '+' : ''}${euro(net)}</strong><span class="muted small">in ${euro(income)} · uit ${euro(-costs)}</span></button>
+        <button class="stat cash link-stat ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" data-tip="Naar je financiën"><span class="muted small">Saldo</span><strong>${euro(g.cash)}</strong><span class="muted small">${g.weeksNegative ? `${g.weeksNegative}/8 weken rood` : '&nbsp;'}</span></button>
       </div>
     </header>
     <nav class="tabs">${GROUPS.filter((gr) => gr.id !== 'menu')
       .map((gr) => {
-        const warn = gr.id === 'ploeg' && blocked ? '<span class="badge" title="Er is een probleem met je selectie">!</span>' : '';
+        const warn = gr.id === 'ploeg' && blocked ? '<span class="badge" data-tip="Er is een probleem met je selectie">!</span>' : '';
         return `<button class="${gr.id === group.id ? 'on' : ''}" data-action="nav-group" data-id="${gr.id}">${gr.label}${warn}</button>`;
       })
       .join('')}
-      <button class="hamburger ${group.id === 'menu' ? 'on' : ''}" data-action="toggle-menu" title="Menu: handleiding en opslaan" aria-label="Menu">☰</button>
+      <button class="hamburger ${group.id === 'menu' ? 'on' : ''}" data-action="toggle-menu" data-tip="Menu: handleiding en opslaan" aria-label="Menu">☰</button>
     </nav>
     ${
       ui.menuOpen
         ? `<div class="menu-pop">
             <button data-action="nav" data-id="handleiding">📖 Handleiding en veelgestelde vragen</button>
+            <button data-action="nav" data-id="invloeden">🔗 Wat beïnvloedt wat</button>
             <button data-action="nav" data-id="opslaan">💾 Opslaan en instellingen</button>
           </div>`
         : ''
@@ -282,6 +299,7 @@ function render(): void {
     ${!ui.report && !ui.fastForward && g.opening && !g.opening.done ? openingOverlay(g) : ''}
     ${!ui.report && !ui.fastForward && !(g.opening && !g.opening.done) && ui.moment !== 'dicht' && g.weekChoice ? momentOverlay(g, ui.moment === 'gevolg' ? 'gevolg' : 'vraag') : ''}
     ${toast}`;
+  restoreFocus(focused);
   applySorts();
   measureBars();
   rollNumbers();
@@ -291,6 +309,29 @@ function render(): void {
     if (btn) {
       btn.textContent = 'Zeker? Klik nogmaals om te bevestigen';
       btn.dataset.action = 'new-game-confirmed';
+    }
+  }
+}
+
+/** Welk invoerveld had de cursor, en waar stond die in de tekst? */
+function grabFocus(): { id: string; start: number | null; end: number | null } | null {
+  const el = document.activeElement as HTMLInputElement | null;
+  if (!el || !el.id || !el.matches?.('input, select')) return null;
+  const text = el.type === 'text' || el.type === 'number';
+  return { id: el.id, start: text ? el.selectionStart : null, end: text ? el.selectionEnd : null };
+}
+
+/** Na de hertekening de cursor terugzetten waar hij stond. */
+function restoreFocus(saved: { id: string; start: number | null; end: number | null } | null): void {
+  if (!saved) return;
+  const el = document.getElementById(saved.id) as HTMLInputElement | null;
+  if (!el) return;
+  el.focus({ preventScroll: true });
+  if (saved.start !== null && saved.end !== null) {
+    try {
+      el.setSelectionRange(saved.start, saved.end);
+    } catch {
+      /* niet elk veldtype laat dat toe */
     }
   }
 }
@@ -626,6 +667,7 @@ const handlers: Record<string, Handler> = {
   'staff-open': (id) => void (ui.selectedStaff = ui.selectedStaff === id ? null : id),
   'stats-view': (id) => void (ui.statsView = id as 'seizoen' | 'week'),
   'toggle-menu': () => void (ui.menuOpen = !ui.menuOpen),
+  'toggle-onboard': () => void (ui.onboardOpen = !ui.onboardOpen),
 
   // spel
   buy: gameAction(actions.buyPlayer),
@@ -816,6 +858,9 @@ document.addEventListener('keydown', (e) => {
 // ---------- Start ----------
 
 (async () => {
+  // eenmalig: tooltips en getalvelden werken met delegatie, dus ze overleven elke hertekening
+  initTooltips();
+  initNumFields();
   try {
     ui.game = await indexedDbStore.load(SLOT);
   } catch {

@@ -20,6 +20,8 @@ import { CHANGELOG, VERSION } from '../../version';
 import { avatarSvg } from '../avatar';
 import { bar, esc, euro, signedEuro, stars } from '../format';
 import { hint, tip } from '../tooltip';
+import { numField } from '../numfield';
+import { taskPicker } from '../taskpicker';
 
 /** De tribune: jij kiest hoeveel plaatsen erbij komen, en hoe groter je bestelt hoe goedkoper per zitje. */
 function tribuneCard(s: GameState): string {
@@ -56,7 +58,7 @@ export function infraScreen(s: GameState): string {
   const division = DIVISIONS[s.league.divisionLevel];
   const next = DIVISIONS[Math.min(DIVISIONS.length - 1, s.league.divisionLevel + 1)];
 
-  return `<div class="grid">
+  return `${taskPicker(s, ['infrastructuur'])}<div class="grid">
     <section class="card">
       <h2>Accommodatie</h2>
       <dl class="facts">
@@ -160,7 +162,7 @@ export function eventsScreen(s: GameState): string {
   const pending = s.pending
     .map((p) => `<li>${esc(p.label)}: ${p.volunteers !== undefined ? 'nieuwe vrijwilligers' : euro(p.amount)} <span class="muted small">over ${weeks(p.weeksLeft)}</span></li>`)
     .join('');
-  return `
+  return `${taskPicker(s, ['evenementen', 'vrijwilligers'])}
   <section class="card">
     <h2>Vrijwilligers: ${c.volunteers} ${hint('Vrijwilligers dragen de kantine, de jeugdploegen en elk evenement. Elke jeugdploeg bindt er twee (een jeugdtrainer en een ploegafgevaardigde); alleen de rest kun je voor evenementen inzetten. Hun tevredenheid hangt af van de sfeer, je reputatie, je kantineverantwoordelijke, je jeugdcoördinator en hoeveel evenementen je kort na elkaar organiseert.')}</h2>
     <p class="small"><span class="tag">${boundVolunteers(s)} bij de jeugd</span> <span class="tag">${freeVolunteers(s)} vrij voor evenementen</span>
@@ -271,7 +273,7 @@ function disciplineCard(s: GameState): string {
     .sort((a, b) => b.susp - a.susp || b.r - a.r || b.y - a.y)
     .map(
       (r) => `<tr class="${r.own ? 'own' : ''}"><td>${esc(r.name)}</td><td>${esc(r.team)}</td>
-        <td class="num" data-v="${r.y}">${r.y ? `🟨 ${r.y}` : ''}${r.y && r.y % YELLOW_LIMIT === YELLOW_LIMIT - 1 ? ' <span class="tag bad" title="volgende gele kaart = schorsing">!</span>' : ''}</td>
+        <td class="num" data-v="${r.y}">${r.y ? `🟨 ${r.y}` : ''}${r.y && r.y % YELLOW_LIMIT === YELLOW_LIMIT - 1 ? ' <span class="tag bad" data-tip="volgende gele kaart = schorsing">!</span>' : ''}</td>
         <td class="num" data-v="${r.r}">${r.r ? `🟥 ${r.r}` : ''}</td>
         <td class="num" data-v="${r.susp}">${r.susp ? `<span class="tag bad">${r.susp} wedstr.</span>` : ''}</td></tr>`,
     )
@@ -292,7 +294,7 @@ export function clubScreen(s: GameState): string {
   const investor = INVESTORS.find((i) => i.id === s.investor)!;
   const background = BACKGROUNDS.find((b) => b.id === s.avatar.background)!;
   const c = s.community;
-  return `<div class="grid">
+  return `${taskPicker(s, ['jeugd', 'medisch'])}<div class="grid">
     <section class="card">
       <h2>Eigenaar</h2>
       <div class="owner">${avatarSvg(s.avatar, 80)}<div><strong>${esc(s.avatar.name)}</strong><br/>${esc(background.name)}<br/><span class="muted small">${esc(background.perk)}</span></div></div>
@@ -313,7 +315,9 @@ export function clubScreen(s: GameState): string {
     <section class="card">
       <h2>Clubbeleid: lidgeld jeugd</h2>
       <div class="inline-form">
-        <label>Lidgeld per seizoen (€)<input id="youth-fee" type="number" min="0" max="800" step="10" value="${s.youthFee}" data-change="youth-fee"/></label>
+        <label>Lidgeld per seizoen
+          ${numField({ value: s.youthFee, min: 0, max: 800, step: 10, prefix: '€', change: 'youth-fee', inputId: 'youth-fee', label: 'Lidgeld jeugd', slider: true, extra: 'narrow' })}
+        </label>
         <span class="muted small">wordt meteen toegepast</span>
       </div>
       <p class="small">Inschrijvingen in week ${YOUTH_FEE_WEEK}. Verwacht bij €${s.youthFee}: <strong>~${youthForecast(s)} leden</strong> → ${euro(youthForecast(s) * s.youthFee)}.</p>

@@ -169,7 +169,27 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 13 (deze versie)
+## Laag 14 (deze versie)
+
+### 0.21.0 — Een dashboard in plaats van een spreadsheet
+
+**Het probleem.** Alle informatie en alle keuzes voor een leuk spel zaten er al in, maar de manier waarop je ermee omging was chaotisch. Het overzicht was een stapel kaarten in de volgorde waarin ze ooit geschreven waren: clubscore, weekmoment, carrièredoel, seizoensdoelen, volgende wedstrijd, vorige week, aandachtspunten, saldo, logboek, nieuws. Wat je élke week nodig had stond onder wat je één keer per jaar bekeek. Daarbij kwam een groep "Club" met tien subtabs waarin alles belandde dat nergens anders paste.
+
+**Het dashboard is opnieuw gebouwd, vanuit één vraag:** wat moet een eigenaar deze week weten en doen? Links de operationele kolom — je saldo, het resultaat van de week en de prognose over acht weken naast elkaar in grote cijfers; daaronder waar het geld heen ging als een liggende staafgrafiek in plaats van een tabel; daaronder je volgende wedstrijd. Rechts een smalle kolom met wat nu jouw handtekening vraagt, en hoe je ervoor staat bij de drie groepen die je club dragen. Nieuws staat onderaan: dat vertelt wat er gebeurd is, niet wat je moet doen.
+
+**Cijfers met hun gevolg erbij.** Een score van 58 op publiek zegt niets. Er staat nu bij wat dat cijfer doet: `−23% aan de kassa en in de kantine`, met de exacte vermenigvuldiger in de uitleg. Bij sponsors staat wat er per week binnenkomt en hoeveel contracten wankelen; bij je clubscores de deelscores waaruit ze bestaan.
+
+**Weg met de kaderlijnen.** De hele app draait op een nieuwe set tokens: kaarten zonder rand op een rustige ondergrond, met een schaduw in plaats van een lijn; kaarttitels als klein kapitaal zodat het cijfer eronder het beeld draagt; tabellen zonder verticale lijnen, met kopjes in klein kapitaal en cijfers rechts uitgelijnd in tabulaire cijfers. Eén accentkleur, en kleur verder alleen waar ze betekenis heeft.
+
+**Het menu is opnieuw ingedeeld.** Geld kreeg een eigen tab (Financiën, Sponsors, Cijfers). De kalender hoort bij Competitie. Je langetermijndoel, de seizoensdoelen en het logboek staan nu samen bij Club › Doelen — die veranderen niet van week tot week en hoorden niet op het dashboard. "Wat beïnvloedt wat" verhuisde naar het menu, bij de handleiding.
+
+**Tooltips die je kunt lezen.** De browsertooltip is klein, traag, staat waar je muis toevallig is en verdwijnt terwijl je leest. Er is nu één paneel rechtsonder in beeld, groot en rustig, altijd op dezelfde plek — dus je ogen weten waar te kijken, en de uitleg dekt nooit af waar je net naar wees. Werkt op hover, op tab en op aanraking.
+
+**Getalvelden met knoppen die je kunt raken.** De pijltjes van `<input type="number">` zijn een paar pixels groot en staan op elke browser ergens anders. Elk getalveld in het spel heeft nu twee knoppen van volle hoogte met het tekstveld ertussen — intikken blijft dus de snelste weg als je precies weet wat je wil. Ingedrukt houden laat het getal doorlopen en versnelt, shift maakt de stap tien keer zo groot, en waar een duidelijk bereik bestaat staat er een schuifbalk onder. De cursor blijft staan waar hij stond, ook al tekent elke wijziging het scherm opnieuw.
+
+**Kiezen waar je bezig bent.** "Wie doet wat" stond alleen op Personeel: wilde je vanuit de kantine je kantineverantwoordelijke de prijzen laten zetten, dan waren dat vier schermwissels voor één keuze. Bovenaan elk taakscherm staat nu dezelfde keuze voor de taken die daar thuishoren — kantine, clubwinkel, tactiek, opstelling, transfers, sponsors, ticketprijs, evenementen, infrastructuur, jeugd. Het is letterlijk dezelfde besturing, dus Personeel blijft de plek waar je alles naast elkaar ziet.
+
+## Laag 13
 
 ### 0.20.0 — Drie investeerders, drie verschillende spellen
 

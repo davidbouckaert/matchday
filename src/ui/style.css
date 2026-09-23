@@ -1,36 +1,70 @@
+/* ==========================================================================
+   Tokens. Licht en sportief: veel wit, zware cijfers, één accentkleur.
+   Geen kaderlijnen rond alles — rust komt van ruimte, niet van randen.
+   ========================================================================== */
 :root {
-  --bg: #f3f5f2;
-  --card: #ffffff;
-  --text: #1c2420;
-  --muted: #66716b;
-  --line: #dde3de;
-  --accent: #1f7a4a;
+  /* oppervlakken */
+  --bg: #f1f3f1;          /* de ondergrond waar de kaarten op liggen */
+  --card: #ffffff;        /* een kaart */
+  --sunken: #f6f8f6;      /* een vlak bínnen een kaart (tegel, invoerveld) */
+
+  /* inkt */
+  --text: #16201b;
+  --muted: #6b7772;
+  --faint: #9aa5a0;       /* labels in klein kapitaal */
+  --line: #e4e9e5;        /* alleen nog voor scheidingslijnen in tabellen */
+
+  /* betekenis */
+  --accent: #14663d;
   --accent-ink: #ffffff;
-  --accent-soft: #e3f1e8;
-  --good: #1f8a4c;
-  --mid: #c98a12;
-  --bad: #c0392b;
-  --attention: #fff6e0;
-  --avatar-bg: #dfe7e2;
-  --radius: 10px;
+  --accent-soft: #e7f2ec;
+  --good: #14804a;
+  --good-soft: #e6f4ec;
+  --mid: #b0770a;
+  --mid-soft: #fdf3e0;
+  --bad: #b3372a;
+  --bad-soft: #fdecea;
+  --attention: #fff8ea;
+  --avatar-bg: #e2e9e5;
+
+  /* ruimte: één reeks, overal gebruikt */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+
+  /* vorm en diepte */
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 2px rgba(16, 32, 24, .05), 0 6px 20px -8px rgba(16, 32, 24, .10);
+  --shadow-lift: 0 2px 6px rgba(16, 32, 24, .07), 0 14px 32px -12px rgba(16, 32, 24, .18);
+
+  --tip-bg: #16201b;
+  --tip-ink: #f2f6f3;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #131815;
-    --card: #1c2320;
-    --text: #e6ece8;
-    --muted: #93a098;
-    --line: #2d3732;
-    --accent: #3fae70;
-    --accent-ink: #0d1510;
-    --accent-soft: #1f3328;
+    --bg: #101512;
+    --card: #19201c;
+    --sunken: #141a17;
+    --text: #e8eeea;
+    --muted: #96a29b;
+    --faint: #76837c;
+    --line: #28312c;
+    --accent: #43b377;
+    --accent-ink: #0b120e;
+    --accent-soft: #1b2e23;
     --good: #4cc27d;
+    --good-soft: #172b20;
     --mid: #e0a936;
-    --bad: #e86a5c;
-    --attention: #2e2818;
-    --avatar-bg: #2a3530;
+    --mid-soft: #2c2415;
+    --bad: #e87063;
+    --bad-soft: #2e1c19;
+    --attention: #2a2417;
+    --avatar-bg: #26302b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px -8px rgba(0, 0, 0, .5);
+    --shadow-lift: 0 2px 6px rgba(0, 0, 0, .35), 0 14px 32px -12px rgba(0, 0, 0, .6);
+    --tip-bg: #e8eeea;
+    --tip-ink: #10150f;
     color-scheme: dark;
   }
 }
@@ -40,46 +74,85 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-h1 { font-size: 1.6rem; margin: 0 0 12px; }
-h2 { font-size: 1.05rem; margin: 0 0 10px; }
-h3 { font-size: 0.95rem; margin: 16px 0 8px; }
-p { margin: 0 0 8px; }
+h1 { font-size: 1.55rem; letter-spacing: -.02em; margin: 0 0 var(--s3); }
+
+/* Kaarttitels zijn labels, geen koppen: klein, rustig, in kapitaal. Het cijfer eronder
+   mag het beeld dragen — niet het woord erboven. */
+h2 {
+  font-size: .76rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--faint); margin: 0 0 var(--s3); display: flex; align-items: center; gap: var(--s2);
+}
+h3 { font-size: .92rem; font-weight: 700; margin: var(--s5) 0 var(--s2); }
+p { margin: 0 0 var(--s2); }
 ul { margin: 0; padding-left: 18px; }
 .muted { color: var(--muted); }
-.small { font-size: 0.82rem; }
+.small { font-size: .82rem; }
+.tiny { font-size: .74rem; }
 .pos { color: var(--good); }
 .neg { color: var(--bad); }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
+.num, .tnum { text-align: right; font-variant-numeric: tabular-nums; }
+.tnum { text-align: inherit; }
+
+/* het cijfer dat een kaart draagt */
+.big-num {
+  font-size: 2rem; line-height: 1.05; font-weight: 700; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums; display: block;
+}
+.big-num.sm { font-size: 1.4rem; }
+.big-num.lg { font-size: 2.6rem; }
+
+/* een klein label boven of onder een cijfer */
+.cap { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
 
 button, .button {
   font: inherit;
-  border: 1px solid var(--line);
-  background: var(--card);
+  border: 1px solid transparent;
+  background: var(--sunken);
   color: var(--text);
-  border-radius: 8px;
-  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
   cursor: pointer;
   display: inline-block;
+  font-weight: 500;
+  transition: background .12s ease, box-shadow .12s ease, color .12s ease;
 }
-button:hover, .button:hover { border-color: var(--accent); }
-button:disabled { opacity: 0.5; cursor: default; }
-button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-button.danger { background: var(--bad); color: #fff; border-color: var(--bad); }
-button.ghost { background: transparent; color: var(--muted); }
-button.sm { padding: 4px 9px; font-size: 0.82rem; }
-input[type='text'], input[type='number'] {
-  font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line);
-  background: var(--bg); color: var(--text); width: 100%;
+button:hover, .button:hover { background: var(--accent-soft); }
+button:focus-visible, .button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
 }
-label { display: block; font-size: 0.85rem; color: var(--muted); }
+button:disabled { opacity: .45; cursor: default; }
+button:disabled:hover { background: var(--sunken); }
+button.primary { background: var(--accent); color: var(--accent-ink); font-weight: 650; box-shadow: var(--shadow); }
+button.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
+button.danger { background: var(--bad); color: #fff; }
+button.ghost { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+button.ghost:hover:not(:disabled) { background: var(--sunken); color: var(--text); }
+button.sm { padding: 5px 10px; font-size: .82rem; }
+
+input[type='text'], input[type='number'], select {
+  font: inherit; padding: 9px 11px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--card); color: var(--text); width: 100%;
+}
+input[type='text']:focus, input[type='number']:focus { border-color: var(--accent); }
+label { display: block; font-size: .8rem; color: var(--muted); }
+
+/* het vraagteken naast een titel */
+.hint {
+  display: inline-grid; place-items: center; width: 17px; height: 17px; padding: 0;
+  border-radius: 50%; background: var(--sunken); color: var(--muted);
+  font-size: .7rem; font-weight: 700; line-height: 1; flex: none;
+}
+.hint:hover { background: var(--accent); color: var(--accent-ink); }
+.has-tip { text-decoration: underline dotted var(--faint); text-underline-offset: 3px; cursor: help; }
 
 /* ---------- layout ---------- */
 .topbar {
   position: sticky; top: 0; z-index: 5;
-  display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
-  padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--line);
+  display: flex; gap: var(--s4); align-items: center; flex-wrap: wrap;
+  padding: var(--s3) var(--s4); background: var(--card); border-bottom: 1px solid var(--line);
 }
 .topbar > div { display: flex; flex-direction: column; }
 .topbar .club { flex-direction: row; gap: 10px; align-items: center; flex: 1 1 220px; }
@@ -91,33 +164,66 @@ label { display: block; font-size: 0.85rem; color: var(--muted); }
 .topbar .ellipsis { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 .topbar .next { margin-left: auto; padding: 10px 18px; }
 @media (max-width: 700px) { .topbar { gap: 8px 14px; } .topbar .stat strong { font-size: 0.95rem; } }
+/* Hoofdnavigatie: een onderstreping in plaats van een pil. Rustiger, en je ziet meteen
+   waar je bent zonder dat er een gekleurd blok in je ooghoek staat. */
 .tabs {
-  display: flex; gap: 4px; overflow-x: auto; padding: 8px 16px;
+  display: flex; gap: var(--s1); overflow-x: auto; padding: 0 var(--s4);
+  background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 4;
+}
+.tabs button {
+  border: none; background: transparent; white-space: nowrap; color: var(--muted);
+  padding: var(--s3) var(--s3) calc(var(--s3) - 2px); border-radius: 0; font-weight: 550;
+  border-bottom: 2px solid transparent;
+}
+.tabs button:hover { background: transparent; color: var(--text); }
+.tabs button.on { color: var(--accent); font-weight: 700; border-bottom-color: var(--accent); background: transparent; }
+.subtabs {
+  display: flex; gap: var(--s1); overflow-x: auto; padding: var(--s2) var(--s4);
   background: var(--card); border-bottom: 1px solid var(--line);
 }
-.tabs button { border: none; background: transparent; white-space: nowrap; color: var(--muted); }
-.tabs button.on { background: var(--accent-soft); color: var(--text); font-weight: 600; }
-.content { padding: 16px; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.subtabs button {
+  border: none; background: transparent; white-space: nowrap; color: var(--muted);
+  padding: 5px var(--s3); border-radius: 99px; font-size: .88rem;
+}
+.subtabs button.on { background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+.content { padding: var(--s5) var(--s4) var(--s7); max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s4); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--s4); align-items: start; }
 .span2 { grid-column: span 2; }
 .full { grid-column: 1 / -1; }
 @media (max-width: 700px) { .span2 { grid-column: span 1; } .topbar .next { width: 100%; } }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; min-width: 0; }
-.card.attention, .attention-inline { background: var(--attention); }
-.attention-inline { padding: 8px 10px; border-radius: 8px; }
-.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+
+/* Een kaart is wit op de ondergrond, zonder rand. De schaduw doet het werk dat een
+   kaderlijn vroeger deed, maar zonder het ruitjespapiereffect van randen op randen. */
+.card {
+  background: var(--card); border: none; border-radius: var(--radius);
+  padding: var(--s4) var(--s5) var(--s5); min-width: 0; box-shadow: var(--shadow);
+}
+.card.attention, .attention-inline { background: var(--attention); box-shadow: var(--shadow), inset 3px 0 0 var(--mid); }
+.attention-inline { padding: var(--s2) var(--s3); border-radius: var(--radius-sm); }
+.card.flat { box-shadow: none; background: transparent; padding: 0; }
+.actions { display: flex; gap: var(--s2); justify-content: flex-end; margin-top: var(--s4); flex-wrap: wrap; }
 .actions.left { justify-content: flex-start; }
 .btns { white-space: nowrap; }
 .btns button { margin: 2px; }
-.tag { display: inline-block; font-size: 0.72rem; padding: 1px 7px; border-radius: 99px; background: var(--accent-soft); color: var(--text); }
+.tag {
+  display: inline-block; font-size: .7rem; font-weight: 600; padding: 2px 8px; border-radius: 99px;
+  background: var(--accent-soft); color: var(--accent); letter-spacing: .02em;
+}
 .tag.bad { background: var(--bad); color: #fff; }
 
-/* ---------- tabellen ---------- */
-.table-wrap { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; }
-th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
-th { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
-table.compact td, table.compact th { padding: 4px 6px; }
+/* ---------- tabellen ----------
+   Minder Excel: geen verticale lijnen, hele lichte horizontale, kopjes in klein kapitaal,
+   cijfers rechts en tabulair zodat de kolommen echt uitlijnen. */
+.table-wrap { overflow-x: auto; margin: 0 calc(var(--s5) * -1); padding: 0 var(--s5); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 10px var(--s3); border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+thead th {
+  font-size: .7rem; color: var(--faint); font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  border-bottom: 1px solid var(--line); white-space: nowrap; padding-top: 0;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--sunken); }
+table.compact td, table.compact th { padding: 6px var(--s2); }
 tr.starter td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 tr.total td { font-weight: 700; border-top: 2px solid var(--line); }
 tr.own td { background: var(--accent-soft); font-weight: 600; }
@@ -185,11 +291,14 @@ dl dd { margin: 0; }
 /* ---------- laag 2 ---------- */
 .grid.two-one { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
 @media (max-width: 900px) { .grid.two-one { grid-template-columns: 1fr; } }
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s3); }
 .tiles.four { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-.tile { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; background: var(--bg); }
-.tile .label { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
-.tile strong { font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile {
+  border: none; border-radius: var(--radius-sm); padding: var(--s3) var(--s4);
+  display: flex; flex-direction: column; gap: var(--s1); background: var(--sunken);
+}
+.tile .label { font-size: .72rem; color: var(--faint); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.tile strong { font-size: 1.7rem; line-height: 1.05; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .tile .bar { width: 100%; }
 .mods { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.88rem; margin-bottom: 8px; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
@@ -266,15 +375,10 @@ td.mu-1 { color: var(--bad); font-weight: 600; }
 @media (max-width: 760px) {
   .topbar { grid-template-columns: 1fr auto; gap: 10px 14px; padding: 10px 14px; }
   .topbar .today { grid-column: 1 / -1; grid-row: 2; text-align: left; }
-  .topbar .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 8px; }
   .topbar .stats .stat { padding: 2px 8px; }
   .topbar .stats .stat:nth-child(odd) { border-left: none; padding-left: 0; }
-  .topbar .stats .stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .topbar .next { width: auto; }
 }
-.subtabs { display: flex; gap: 4px; overflow-x: auto; padding: 6px 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
-.subtabs button { border: none; background: transparent; white-space: nowrap; color: var(--muted); font-size: 0.9rem; padding: 6px 12px; }
-.subtabs button.on { color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); border-radius: 0; }
 
 .overlay { position: fixed; inset: 0; background: rgba(10, 16, 12, 0.55); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .anim-card, .report-card { background: var(--card); border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.35); width: min(760px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
@@ -409,11 +513,29 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .rating-chips .score { color: var(--muted); font-weight: 600; min-width: 20px; text-align: right; }
 .tag.big-tag { font-size: 0.8rem; font-weight: 700; background: #d8e9ff; color: #14406e; }
 .card.winter { border-left: 4px solid #4a86c8; background: #f2f8ff; }
+/* Op een telefoon nam de kopbalk het halve scherm in: de clubscores stonden onder elkaar,
+   de vijf kerncijfers eronder, en het dashboard begon pas na een halve scroll. Hier wordt
+   het één compacte strook. */
 @media (max-width: 760px) {
-  .rating-chips { flex-direction: row; flex-wrap: wrap; gap: 10px; border-left: none; padding-left: 0; width: 100%; }
-  .topbar .club { gap: 8px; }
-  .topbar .today strong { font-size: 1rem; }
+  .topbar { padding: var(--s2) var(--s3); gap: var(--s2) var(--s3); }
+  .topbar .club { gap: var(--s2); flex: 1 1 100%; }
+  .topbar .today strong { font-size: .95rem; }
   .topbar .club-name strong { font-size: 1rem; }
+  .rating-chips {
+    flex-direction: row; flex-wrap: nowrap; gap: var(--s3); border-left: none;
+    padding: 0; width: auto; margin-left: auto;
+  }
+  .rating-chips .chip { gap: 3px; font-size: .7rem; }
+  .rating-chips .stars { display: none; } /* op deze breedte tellen de cijfers, niet de sterren */
+  .rating-chips .chip .score { font-size: .85rem; color: var(--text); }
+  .topbar .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s1); width: 100%; }
+  .topbar .stat { padding: 2px var(--s2); }
+  .topbar .stat strong { font-size: .95rem; }
+  .topbar .stat.hide-sm { display: none; }
+  .topbar .today { flex: 1 1 auto; text-align: left; }
+  .topbar .today.link-stat { text-align: left; }
+  .next-group { flex: 1 1 100%; display: flex; gap: var(--s2); }
+  .next-group button { flex: 1 1 0; }
 }
 /* hamburgermenu */
 .tabs { position: sticky; }
@@ -700,3 +822,168 @@ tr.benched td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
 .moment-outcome .outcome-text { margin: 0; font-size: 1.05rem; }
 .center { text-align: center; }
 .card.moment.open { border: 2px solid var(--accent); }
+
+/* ==========================================================================
+   Tooltip. Altijd rechtsonder, altijd even groot, altijd leesbaar.
+   Niet bij de muis: daar dekt hij af waar je net naar wees, en je ogen moeten
+   hem elke keer opnieuw zoeken.
+   ========================================================================== */
+.tip-panel {
+  position: fixed; right: var(--s4); bottom: var(--s4); z-index: 40;
+  width: min(420px, calc(100vw - var(--s5)));
+  background: var(--tip-bg); color: var(--tip-ink);
+  padding: var(--s4) var(--s5); border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+  font-size: .95rem; line-height: 1.5;
+  display: flex; flex-direction: column; gap: var(--s1);
+  opacity: 0; transform: translateY(6px); pointer-events: none;
+  transition: opacity .13s ease, transform .13s ease;
+}
+.tip-panel.on { opacity: 1; transform: none; }
+.tip-panel .tip-title { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; opacity: .65; }
+@media (prefers-reduced-motion: reduce) { .tip-panel { transition: none; } }
+@media (max-width: 700px) { .tip-panel { left: var(--s3); right: var(--s3); width: auto; bottom: var(--s3); } }
+
+/* ==========================================================================
+   Getalinvoer: tekstveld met twee echte knoppen ernaast.
+   ========================================================================== */
+.numfield { display: flex; flex-direction: column; gap: 6px; min-width: 128px; }
+.numrow { display: flex; align-items: stretch; gap: 0; }
+.numbtn {
+  flex: none; width: 38px; padding: 0; border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--sunken); box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 1.25rem; font-weight: 600; line-height: 1; color: var(--muted);
+  display: grid; place-items: center; user-select: none; touch-action: manipulation;
+}
+.numbtn.plus { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.numbtn:hover { background: var(--accent-soft); color: var(--accent); }
+.numbtn:active { background: var(--accent); color: var(--accent-ink); }
+.numbox {
+  flex: 1 1 auto; min-width: 0; position: relative; display: flex; align-items: center;
+  background: var(--card); box-shadow: inset 0 0 0 1px var(--line); margin: 0 -1px;
+}
+.numbox:focus-within { box-shadow: inset 0 0 0 2px var(--accent); z-index: 1; }
+.numinput {
+  border: none !important; background: transparent; text-align: center; width: 100%; min-width: 40px;
+  font-variant-numeric: tabular-nums; font-weight: 650; font-size: 1rem; padding: 9px 2px;
+}
+.numinput:focus { outline: none; }
+.numbox .affix { color: var(--faint); font-size: .9rem; padding: 0 var(--s2); flex: none; }
+.numslider { width: 100%; margin: 0; accent-color: var(--accent); }
+.numfield.narrow { max-width: 200px; }
+/* in een tabelcel mag het compacter: daar staan er vaak zes onder elkaar */
+td .numfield { min-width: 112px; }
+td .numbtn { width: 30px; font-size: 1.1rem; }
+td .numinput { font-size: .95rem; padding: 7px 2px; }
+td .numbox .affix { padding: 0 4px; font-size: .82rem; }
+
+/* ==========================================================================
+   Dashboard: links de operationele kolom, rechts de zijkolom.
+   ========================================================================== */
+.dash { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--s4); align-items: start; }
+.dash-main, .dash-side { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
+@media (max-width: 980px) { .dash { grid-template-columns: 1fr; } }
+
+/* de geldkaart bovenaan */
+.money-head { display: flex; flex-wrap: wrap; gap: var(--s5) var(--s7); align-items: flex-start; }
+.money-fig { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.money-fig .big-num.neg { color: var(--bad); }
+.money-fig .sub { font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.money-chart { margin-top: var(--s4); }
+.money-chart .spark { height: 64px; }
+
+/* de posten van deze week: een staafje per post, geen tabel */
+.posts { display: flex; flex-direction: column; gap: 2px; }
+.post {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--s3);
+  padding: 7px var(--s2); border-radius: var(--radius-sm); position: relative;
+}
+.post:hover { background: var(--sunken); }
+.post .pname { display: flex; align-items: center; gap: var(--s2); min-width: 0; position: relative; z-index: 1; }
+.post .pname span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post .pval { font-variant-numeric: tabular-nums; font-weight: 650; white-space: nowrap; position: relative; z-index: 1; }
+/* het staafje is de achtergrond van de rij zelf: een liggende staafgrafiek die je leest
+   zonder te beseffen dat het er een is */
+.post .pbar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: var(--radius-sm); z-index: 0; }
+.post.in .pbar { background: var(--good-soft); }
+.post.out .pbar { background: var(--bad-soft); }
+
+/* de tevredenheden in de zijkolom */
+.meters { display: flex; flex-direction: column; gap: var(--s4); }
+.meter { display: flex; flex-direction: column; gap: 5px; }
+.meter .top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
+.meter .mname { font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.meter .mval { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.meter .track { height: 6px; border-radius: 99px; background: var(--sunken); overflow: hidden; }
+.meter .track span { display: block; height: 100%; border-radius: 99px; background: var(--accent); }
+.meter.good .track span { background: var(--good); }
+.meter.mid .track span { background: var(--mid); }
+.meter.bad .track span { background: var(--bad); }
+.meter .impact { font-size: .82rem; color: var(--muted); }
+.meter .impact strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* aandachtspunten */
+.todo { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--s1); }
+.todo li {
+  display: flex; gap: var(--s2); align-items: flex-start; padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm); background: var(--sunken); font-size: .88rem; line-height: 1.4;
+}
+.todo li.urgent { background: var(--bad-soft); }
+.todo li.warn { background: var(--mid-soft); }
+.todo li .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-top: 6px; }
+.todo li.urgent .dot { background: var(--bad); }
+.todo li.warn .dot { background: var(--mid); }
+.todo li .go { margin-left: auto; }
+.todo button.link-btn {
+  background: none; box-shadow: none; padding: 0; color: var(--accent); font-weight: 650;
+  font-size: .82rem; white-space: nowrap;
+}
+.todo button.link-btn:hover { text-decoration: underline; background: none; }
+
+/* de wedstrijdkaart */
+.match-card { display: flex; flex-direction: column; gap: var(--s3); }
+.match-line { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.match-line .vs { font-size: 1.15rem; font-weight: 700; }
+.match-strength { display: flex; gap: var(--s5); flex-wrap: wrap; }
+
+/* nieuws onderaan, ingetogen */
+.news-feed { list-style: none; padding: 0; display: flex; flex-direction: column; }
+.news-feed li {
+  display: grid; grid-template-columns: 54px 1fr; gap: var(--s3); align-items: baseline;
+  padding: 7px 0; border-bottom: 1px solid var(--line); font-size: .89rem; line-height: 1.45;
+}
+.news-feed li:last-child { border-bottom: none; }
+.news-feed .when { font-size: .72rem; color: var(--faint); font-variant-numeric: tabular-nums; }
+.news-feed li.goed .what::before { content: '▲'; color: var(--good); font-size: .7em; margin-right: 6px; }
+.news-feed li.slecht .what::before { content: '▼'; color: var(--bad); font-size: .7em; margin-right: 6px; }
+
+/* de startlijst: een strook, niet een scherm */
+.card.onboard { padding: var(--s3) var(--s4); }
+.onboard-head {
+  display: flex; align-items: center; gap: var(--s3); width: 100%; text-align: left;
+  background: none; padding: 0; border-radius: 0;
+}
+.onboard-head:hover { background: none; }
+.onboard-head .cap { flex: none; }
+.onboard-bar { flex: none; width: 90px; height: 5px; border-radius: 99px; background: var(--sunken); overflow: hidden; }
+.onboard-bar span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.onboard-next { flex: 1 1 auto; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.onboard-head .chev { flex: none; color: var(--faint); }
+.todo-list { list-style: none; padding: 0; margin-top: var(--s3); display: flex; flex-direction: column; gap: var(--s1); }
+.todo-list li { display: flex; gap: var(--s3); align-items: flex-start; padding: var(--s2) var(--s3); border-radius: var(--radius-sm); background: var(--sunken); }
+.todo-list li.done { opacity: .5; }
+.todo-list .box {
+  flex: none; width: 18px; height: 18px; border-radius: 5px; background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line); display: grid; place-items: center; font-size: .75rem; color: var(--good); margin-top: 2px;
+}
+.link-btn { background: none; box-shadow: none; padding: 0; color: var(--accent); font-weight: 650; }
+.link-btn:hover { background: none; text-decoration: underline; }
+
+/* de lokale taakkiezer bovenaan een taakscherm */
+.card.picker { padding: var(--s3) var(--s4); display: flex; flex-direction: column; gap: var(--s2); }
+.card.picker h2 { margin-bottom: var(--s1); }
+.picker-row { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.picker-label { font-weight: 600; min-width: 210px; flex: 0 1 auto; }
+.picker-row select { width: auto; min-width: 240px; flex: 0 1 320px; }
+.warn-note { color: var(--mid); }
+@media (max-width: 700px) { .picker-label { min-width: 0; } .picker-row select { min-width: 0; flex: 1 1 100%; } }

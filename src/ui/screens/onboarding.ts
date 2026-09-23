@@ -48,7 +48,7 @@ export function onboardingSteps(s: GameState): Step[] {
     {
       done: s.prospects.some((p) => p.approached) || s.sponsorCampaignWeeks > 0 || s.sponsorOffers.length > 0 || !!delegate(s, 'sponsoring'),
       text: 'Ga op zoek naar een extra sponsor: klop aan bij een bedrijf',
-      where: 'Club › Sponsors',
+      where: 'Geld › Sponsors',
       screen: 'sponsors',
     },
     {
@@ -78,25 +78,43 @@ export function onboardingSteps(s: GameState): Step[] {
   ];
 }
 
-/** Toont de eerste stappen zolang er nog iets open staat en het eerste seizoen loopt. */
-export function onboardingCard(s: GameState): string {
+/**
+ * De eerste stappen, zolang er nog iets open staat en het eerste seizoen loopt.
+ *
+ * Dit stond uitgeklapt bovenaan het dashboard en duwde daarmee precies de cijfers weg
+ * waarvoor het dashboard bestaat. Het is nu een dichtgeklapte strook met de voortgang en
+ * de eerstvolgende stap; wie de hele lijst wil, klapt ze open.
+ */
+export function onboardingCard(s: GameState, open = false): string {
   if (s.season > 1 || s.week > 20) return '';
   const steps = onboardingSteps(s);
-  const open = steps.filter((x) => !x.done);
-  if (!open.length) return '';
-  const done = steps.length - open.length;
-  return `<section class="card full todo">
-    <h2>Eerste stappen <span class="muted small">${done}/${steps.length} klaar</span></h2>
-    <p class="muted small">Een lijstje om op gang te komen. Het vinkt zichzelf af en verdwijnt vanzelf.</p>
-    <ul class="todo-list">
-      ${steps
-        .map(
-          (x) => `<li class="${x.done ? 'done' : ''}">
-            <span class="box">${x.done ? '✓' : ''}</span>
-            <span>${esc(x.text)}<br/><button class="link-btn small" data-action="nav" data-id="${x.screen}">${esc(x.where)} →</button></span>
-          </li>`,
-        )
-        .join('')}
-    </ul>
+  const todo = steps.filter((x) => !x.done);
+  if (!todo.length) return '';
+  const done = steps.length - todo.length;
+  const next = todo[0];
+
+  return `<section class="card onboard">
+    <button class="onboard-head" data-action="toggle-onboard" aria-expanded="${open}">
+      <span class="cap">Eerste stappen</span>
+      <span class="onboard-bar"><span style="width:${Math.round((done / steps.length) * 100)}%"></span></span>
+      <span class="small muted">${done}/${steps.length}</span>
+      <span class="onboard-next small">${open ? '' : `Nu: ${esc(next.text)}`}</span>
+      <span class="chev">${open ? '▴' : '▾'}</span>
+    </button>
+    ${
+      open
+        ? `<ul class="todo-list">
+            ${steps
+              .map(
+                (x) => `<li class="${x.done ? 'done' : ''}">
+                  <span class="box">${x.done ? '✓' : ''}</span>
+                  <span>${esc(x.text)}<br/><button class="link-btn small" data-action="nav" data-id="${x.screen}">${esc(x.where)} →</button></span>
+                </li>`,
+              )
+              .join('')}
+          </ul>
+          <p class="tiny muted">Het vinkt zichzelf af en verdwijnt vanzelf.</p>`
+        : `<p class="actions left"><button class="ghost sm" data-action="nav" data-id="${next.screen}">${esc(next.where)} →</button></p>`
+    }
   </section>`;
 }

@@ -5,6 +5,7 @@ import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
 import { bar, esc, euro } from '../format';
 import { tip } from '../tooltip';
+import { taskPicker } from '../taskpicker';
 
 const KINDS: SponsorDeal['kind'][] = ['hoofdsponsor', 'shirt', 'mouw', 'bus', 'evenement', 'scherm', 'jeugd', 'bal', 'bord'];
 
@@ -31,7 +32,7 @@ export function sponsorsScreen(s: GameState): string {
       return `<li class="offer"><strong>${esc(o.name)}</strong> · ${KIND_LABEL[o.kind]} · basisbedrag <strong>${euro(o.weekly)}/week</strong>
         <span class="muted small">(vervalt over ${weeks(o.expiresInWeeks)})</span>
         <div class="terms">${SPONSOR_TERMS.map(
-          (t) => `<button class="term ${t.seasons === 1 ? 'primary' : ''}" data-action="accept-sponsor" data-id="${o.id}:${t.seasons}" title="${esc(t.detail)}">
+          (t) => `<button class="term ${t.seasons === 1 ? 'primary' : ''}" data-action="accept-sponsor" data-id="${o.id}:${t.seasons}" data-tip="${esc(t.detail)}">
             <strong>${esc(t.label)}</strong>
             <span>${euro(Math.round(o.weekly * t.factor))}/week</span>
             <span class="muted small">samen ${euro(termTotal(o.weekly, t.seasons))}</span>
@@ -58,7 +59,7 @@ export function sponsorsScreen(s: GameState): string {
         <td class="btns">${
           d.kind === 'stadion'
             ? '<span class="muted small">hoort bij je investeerder</span>'
-            : `<button class="sm" data-action="sponsor-extra" data-id="${d.id}" ${askedNow ? 'disabled title="Dit seizoen al gevraagd"' : 'title="Hij denkt erover na: je hoort het antwoord volgende week in het weekrapport. De kans hangt af van zijn tevredenheid."'}>Extra bijdrage vragen</button>
+            : `<button class="sm" data-action="sponsor-extra" data-id="${d.id}" ${askedNow ? 'disabled data-tip="Dit seizoen al gevraagd"' : 'data-tip="Hij denkt erover na: je hoort het antwoord volgende week in het weekrapport. De kans hangt af van zijn tevredenheid."'}>Extra bijdrage vragen</button>
                ${d.weeksLeft <= 26 ? `<button class="sm" data-action="sponsor-renew" data-id="${d.id}">Verlengen</button>` : ''}
                <button class="sm ghost" data-action="sponsor-cancel" data-id="${d.id}">Stopzetten</button>`
         }</td>
@@ -82,7 +83,7 @@ export function sponsorsScreen(s: GameState): string {
     .join('');
 
   const netWait = s.eventCooldowns['netwerk'] ?? 0;
-  return `
+  return `${taskPicker(s, ['sponsoring'])}
   <section class="card">
     <h2>Sponsoring: ${euro(sponsorWeekly(s))}/week</h2>
     ${who ? `<p class="attention-inline small">${esc(who.name)} regelt de sponsorwerving: hij benadert om de twee weken het meest geïnteresseerde bedrijf, tekent aanbiedingen en verlengt tevreden sponsors. Je kunt zelf nog altijd ingrijpen.</p>` : ''}

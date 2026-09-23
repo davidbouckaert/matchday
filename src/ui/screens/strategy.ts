@@ -18,6 +18,7 @@ import { opponentSuspensions } from '../../engine/discipline';
 import { delegate } from '../../engine/delegation';
 import { roleDef } from '../../engine/data/catalog';
 import { esc, euro } from '../format';
+import { taskPicker } from '../taskpicker';
 
 function signed(n: number): string {
   return `<span class="${n < 0 ? 'neg' : n > 0 ? 'pos' : 'muted'}">${n > 0 ? '+' : ''}${n}</span>`;
@@ -27,12 +28,12 @@ const MU_LABEL: Record<number, string> = { 1: 'voordeel', 0: 'neutraal', [-1]: '
 
 /** Pokémon-achtige tabel: wie wint van wie. */
 function matrix(): string {
-  const head = PLANS.map((p) => `<th title="${esc(PLAN_INFO[p].text)}">${PLAN_INFO[p].label}</th>`).join('');
+  const head = PLANS.map((p) => `<th data-tip="${esc(PLAN_INFO[p].text)}">${PLAN_INFO[p].label}</th>`).join('');
   const rows = PLANS.map((ours) => {
     const cells = PLANS.map((theirs) => {
       const m = matchup(ours, theirs);
       const why = m === 1 ? PLAN_INFO[ours].why[theirs] : m === -1 ? PLAN_INFO[theirs].why[ours] : 'geen voor- of nadeel';
-      return `<td class="mu mu${m}" title="${esc(`${PLAN_INFO[ours].label} tegen ${PLAN_INFO[theirs].label}: ${why}`)}">${m === 1 ? '▲ sterk' : m === -1 ? '▼ zwak' : '–'}</td>`;
+      return `<td class="mu mu${m}" data-tip="${esc(`${PLAN_INFO[ours].label} tegen ${PLAN_INFO[theirs].label}: ${why}`)}">${m === 1 ? '▲ sterk' : m === -1 ? '▼ zwak' : '–'}</td>`;
     }).join('');
     return `<tr><th>${PLAN_INFO[ours].label}</th>${cells}</tr>`;
   }).join('');
@@ -46,7 +47,7 @@ export function strategyScreen(s: GameState): string {
     ? `Uitbesteed aan ${coach.name} (${roleDef(coach.role).label}). Neem de taak "Strategie" terug bij Personeel om hier zelf te beslissen.`
     : '';
   const fs = (inner: string) =>
-    coach ? `<fieldset class="locked" disabled title="${esc(lockTip)}">${inner}</fieldset>` : `<fieldset>${inner}</fieldset>`;
+    coach ? `<fieldset class="locked" disabled data-tip="${esc(lockTip)}">${inner}</fieldset>` : `<fieldset>${inner}</fieldset>`;
 
   const opp = nextOpponent(s);
   const base = teamStrength(s);
@@ -121,7 +122,7 @@ export function strategyScreen(s: GameState): string {
     ${fs(`
       <div class="btn-row"><span class="muted small">Mentaliteit</span>
         ${(Object.keys(MENTALITY_INFO) as Mentality[])
-          .map((m) => `<button class="sm ${t.mentality === m ? 'primary' : ''}" data-action="mentality" data-id="${m}" title="${esc(MENTALITY_INFO[m].text)}">${m}</button>`)
+          .map((m) => `<button class="sm ${t.mentality === m ? 'primary' : ''}" data-action="mentality" data-id="${m}" data-tip="${esc(MENTALITY_INFO[m].text)}">${m}</button>`)
           .join('')}
       </div>
       <p class="muted small">${esc(MENTALITY_INFO[t.mentality].text)}</p>
@@ -143,7 +144,7 @@ export function strategyScreen(s: GameState): string {
     `)}
   </section>`;
 
-  return `
+  return `${taskPicker(s, ['training', 'tactiek'])}
   ${coach ? `<p class="attention-inline">🔒 ${esc(lockTip)}</p>` : ''}
   ${oppCard}
   <div class="grid">

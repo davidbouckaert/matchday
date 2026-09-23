@@ -10,6 +10,8 @@ import { available } from '../../engine/discipline';
 import { OPPONENT_STAFF_BONUS } from '../../engine/league';
 import { esc, euro, bar } from '../format';
 import { hint, tip } from '../tooltip';
+import { numField } from '../numfield';
+import { taskPicker } from '../taskpicker';
 
 const ZONE_LABEL: Record<Position, string> = { DOEL: 'Doel', VERD: 'Verdediging', MIDD: 'Middenveld', AANV: 'Aanval' };
 
@@ -82,7 +84,7 @@ const ROLE_ICON: Record<string, string> = { kapitein: '🅒', strafschop: '⚽',
 function roleTag(s: GameState, playerId: string): string {
   return (Object.keys(ROLE_LABEL) as (keyof typeof s.tactics.roles)[])
     .filter((r) => s.tactics.roles[r] === playerId)
-    .map((r) => ` <span class="tag" title="${ROLE_LABEL[r]}">${ROLE_ICON[r]} ${ROLE_LABEL[r]}</span>`)
+    .map((r) => ` <span class="tag" data-tip="${ROLE_LABEL[r]}">${ROLE_ICON[r]} ${ROLE_LABEL[r]}</span>`)
     .join('');
 }
 
@@ -138,9 +140,9 @@ export function lineupCard(s: GameState): string {
         ${filled
           .sort((a, b) => b.rating - a.rating)
           .map(
-            (x) => `<li>${s.tactics.manualXI.includes(x.player.id) ? '<span class="pin" title="door jou vastgezet">★</span>' : '<span class="auto" title="gekozen door je trainer">✓</span>'}
+            (x) => `<li>${s.tactics.manualXI.includes(x.player.id) ? '<span class="pin" data-tip="door jou vastgezet">★</span>' : '<span class="auto" data-tip="gekozen door je trainer">✓</span>'}
               ${esc(x.player.name)} <span class="muted">${overall(x.player)}</span>${
-                x.player.position !== pos ? ` <span class="tag bad" title="eigenlijk ${x.player.position}">${x.player.position}</span>` : ''
+                x.player.position !== pos ? ` <span class="tag bad" data-tip="eigenlijk ${x.player.position}">${x.player.position}</span>` : ''
               }${roleTag(s, x.player.id)}</li>`,
           )
           .join('') || (openHere ? '' : '<li class="neg">niemand</li>')}
@@ -172,25 +174,25 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
   const benched = s.tactics.benched.includes(p.id);
   const unavailable = p.injuryWeeks > 0 || p.suspended > 0 || p.loan?.type === 'uit';
   const pick = coach
-    ? `<span class="locked-cell" title="${esc(lockTip)}"><button class="star" disabled>${zone ? '✓' : '☆'}</button></span>`
+    ? `<span class="locked-cell" data-tip="${esc(lockTip)}"><button class="star" disabled>${zone ? '✓' : '☆'}</button></span>`
     : unavailable
       ? '<span class="muted">–</span>'
-      : `<button class="star ${pinned ? 'on' : ''}" data-action="starter" data-id="${p.id}" title="${
+      : `<button class="star ${pinned ? 'on' : ''}" data-action="starter" data-id="${p.id}" data-tip="${
           pinned ? 'Niet meer vastzetten: je trainer kiest weer' : 'Vast in de basis zetten'
         }">${pinned ? '★' : zone ? '✓' : '☆'}</button>
-        <button class="bench ${benched ? 'on' : ''}" data-action="bench" data-id="${p.id}" title="${
+        <button class="bench ${benched ? 'on' : ''}" data-action="bench" data-id="${p.id}" data-tip="${
           benched ? 'Weer beschikbaar maken' : 'Deze week niet opstellen'
         }">${benched ? '⛔' : '🪑'}</button>`;
   return `<tr class="${zone ? 'starter' : benched ? 'benched' : ''}">
-    <td data-v="${zone ? 0 : benched ? 2 : 1}" class="pick-cell">${pick}${zone && zone !== p.position ? ` <span class="tag bad" title="speelt buiten zijn positie">${zone}</span>` : ''}</td>
+    <td data-v="${zone ? 0 : benched ? 2 : 1}" class="pick-cell">${pick}${zone && zone !== p.position ? ` <span class="tag bad" data-tip="speelt buiten zijn positie">${zone}</span>` : ''}</td>
     <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" title="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">🩹 ${p.injuryWeeks}w</span>` : ''}${p.suspended ? ` <span class="tag bad" title="geschorst">⛔ ${p.suspended} wedstr.</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
+    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">🩹 ${p.injuryWeeks}w</span>` : ''}${p.suspended ? ` <span class="tag bad" data-tip="geschorst">⛔ ${p.suspended} wedstr.</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
     <td>${p.age}</td>
     <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
-    <td data-v="${p.trend}" class="small ${p.trend > 0 ? 'pos' : p.trend < 0 ? 'neg' : 'muted'}" title="Verandering bij de laatste evolutie (om de 4 weken)">${p.trend > 0 ? `▲ +${p.trend}` : p.trend < 0 ? `▼ ${p.trend}` : '–'}</td>
+    <td data-v="${p.trend}" class="small ${p.trend > 0 ? 'pos' : p.trend < 0 ? 'neg' : 'muted'}" data-tip="Verandering bij de laatste evolutie (om de 4 weken)">${p.trend > 0 ? `▲ +${p.trend}` : p.trend < 0 ? `▼ ${p.trend}` : '–'}</td>
     <td class="small" data-v="${p.technique}">T ${Math.round(p.technique)} · F ${Math.round(p.physical)}</td>
-    <td data-v="${p.starts}" title="Basisplaatsen dit seizoen (deze periode: ${p.periodStarts})">${p.starts}</td>
-    <td data-v="${p.goals}" title="Doelpunten dit seizoen">${p.goals ? `⚽ ${p.goals}` : '–'}</td>
+    <td data-v="${p.starts}" data-tip="Basisplaatsen dit seizoen (deze periode: ${p.periodStarts})">${p.starts}</td>
+    <td data-v="${p.goals}" data-tip="Doelpunten dit seizoen">${p.goals ? `⚽ ${p.goals}` : '–'}</td>
     <td data-v="${p.morale}">${bar(p.morale)}</td>
     <td data-v="${p.form}">${signed(Math.round(p.form))}</td>
     <td data-v="${p.fatigue}" class="${p.fatigue > 35 ? 'fatigue-hi' : ''}">${Math.round(p.fatigue)}</td>
@@ -199,14 +201,14 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
     <td data-v="${p.contractUntil}" class="${expiring ? 'neg' : ''}">S${p.contractUntil}</td>
     <td data-v="${marketValue(p, s.marketIndex)}">${euro(marketValue(p, s.marketIndex))}</td>
     <td class="btns">
-      <button class="sm" data-action="goto-contracts" data-id="${p.id}" title="Onderhandelen over een nieuw contract (tab Contracten)">Contract</button>
-      ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" title="Verkoop tegen het bod van deze week">Verkoop ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
-      <button class="sm ghost" data-action="release" data-id="${p.id}" title="Contract ontbinden">Ontbind</button>
+      <button class="sm" data-action="goto-contracts" data-id="${p.id}" data-tip="Onderhandelen over een nieuw contract (tab Contracten)">Contract</button>
+      ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" data-tip="Verkoop tegen het bod van deze week">Verkoop ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
+      <button class="sm ghost" data-action="release" data-id="${p.id}" data-tip="Contract ontbinden">Ontbind</button>
     </td>
   </tr>`;
 }
 
-const TABLE_HEAD = `<thead><tr><th>Basis</th><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th title="Evolutie om de 4 weken">Trend</th><th>Techn/Fys</th><th title="Basisplaatsen dit seizoen">Basis</th><th title="Doelpunten dit seizoen">Goals</th><th>Moraal</th><th>Vorm</th><th title="Vermoeidheid 0-100">Moe</th><th>Kaarten</th><th>Loon/w</th><th>Contract</th><th>Waarde</th><th data-nosort></th></tr></thead>`;
+const TABLE_HEAD = `<thead><tr><th>Basis</th><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th data-tip="Evolutie om de 4 weken">Trend</th><th>Techn/Fys</th><th data-tip="Basisplaatsen dit seizoen">Basis</th><th data-tip="Doelpunten dit seizoen">Goals</th><th>Moraal</th><th>Vorm</th><th data-tip="Vermoeidheid 0-100">Moe</th><th>Kaarten</th><th>Loon/w</th><th>Contract</th><th>Waarde</th><th data-nosort></th></tr></thead>`;
 
 export function squadScreen(s: GameState, open: Record<string, boolean> = { basis: true, bank: false, out: false }): string {
   const { slots } = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps);
@@ -244,7 +246,7 @@ export function squadScreen(s: GameState, open: Record<string, boolean> = { basi
     </details>
   </section>`;
 
-  return `
+  return `${taskPicker(s, ['opstelling', 'spelersrollen'])}
   ${offers ? `<section class="card attention"><h2>Biedingen op je spelers (${s.playerOffers.length})</h2><ul class="offers">${offers}</ul></section>` : ''}
   ${squadStats(s)}
   ${lineupCard(s)}
@@ -328,20 +330,20 @@ export function transfersScreen(s: GameState): string {
       } else {
         const block = actions.departureBlockReason(s, p);
         status = p.listed ? `<span class="tag">te koop: ${euro(p.askingPrice)}</span>` : '';
-        if (block) status += `<br/><span class="muted small" title="${esc(block)}">🔒 onmisbaar deze week</span>`;
+        if (block) status += `<br/><span class="muted small" data-tip="${esc(block)}">🔒 onmisbaar deze week</span>`;
         const share = Math.round(actions.loanWageShare(s, p) * 100);
         actionsHtml = `
-          ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" ${block ? `disabled title="${esc(block)}"` : 'title="Verkoop meteen tegen het bod van deze week"'}>Nu verkopen ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
+          ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" ${block ? `disabled data-tip="${esc(block)}"` : 'data-tip="Verkoop meteen tegen het bod van deze week"'}>Nu verkopen ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
           ${
             p.listed
               ? `<button class="sm" data-action="unlist" data-id="${p.id}">Van de lijst</button>`
-              : `<span class="ask"><input id="ask-${p.id}" type="number" min="0" step="500" value="${Math.round(value / 500) * 500}" aria-label="Vraagprijs"/><button class="sm" data-action="list" data-id="${p.id}">Te koop zetten</button></span>`
+              : `<span class="ask">${numField({ value: Math.round(value / 500) * 500, min: 0, step: 500, prefix: '€', inputId: `ask-${p.id}`, label: `Vraagprijs voor ${p.name}` })}<button class="sm" data-action="list" data-id="${p.id}">Te koop zetten</button></span>`
           }
-          ${window ? `<button class="sm" data-action="loan-out" data-id="${p.id}" ${block ? `disabled title="${esc(block)}"` : `title="De andere club betaalt ${share}% van zijn loon; hij speelt daar en ontwikkelt zich"`}>Uitlenen (${share}% loon betaald)</button>` : ''}`;
+          ${window ? `<button class="sm" data-action="loan-out" data-id="${p.id}" ${block ? `disabled data-tip="${esc(block)}"` : `data-tip="De andere club betaalt ${share}% van zijn loon; hij speelt daar en ontwikkelt zich"`}>Uitlenen (${share}% loon betaald)</button>` : ''}`;
       }
       return `<tr>
         <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-        <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" title="Kernspeler: hij hoort bij je beste elf of is een groot talent. Verkoop je hem, dan verzwak je meteen.">★</span>` : ''}<br/><span class="muted small">${p.age} jaar · ${p.starts} basisplaatsen</span></td>
+        <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: hij hoort bij je beste elf of is een groot talent. Verkoop je hem, dan verzwak je meteen.">★</span>` : ''}<br/><span class="muted small">${p.age} jaar · ${p.starts} basisplaatsen</span></td>
         <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
         <td data-v="${value}">${euro(value)}</td>
         <td data-v="${p.wage}">${euro(p.wage)}</td>
@@ -351,7 +353,7 @@ export function transfersScreen(s: GameState): string {
     })
     .join('');
 
-  return `
+  return `${taskPicker(s, ['transfers'])}
   <section class="card window-banner ${window ? 'open' : 'shut'}">
     <h2>${window ? '🟢 Transferperiode open' : '🔴 Transferperiode gesloten'}</h2>
     <p class="muted small">${
@@ -367,7 +369,7 @@ export function transfersScreen(s: GameState): string {
     Een scout zorgt voor meer en betere spelers en lagere prijzen, een analist helpt hem.</p>
     ${
       scout
-        ? `<div class="inline-form"><label>Transferbudget voor ${esc(scout.name)} (€)<input id="transfer-budget" type="number" min="0" step="1000" value="${s.transferBudget}" data-change="transfer-budget"/></label><span class="muted small">wordt meteen toegepast</span></div>
+        ? `<div class="inline-form"><label>Transferbudget voor ${esc(scout.name)}${numField({ value: s.transferBudget, min: 0, step: 1000, prefix: '€', change: 'transfer-budget', inputId: 'transfer-budget', label: 'Transferbudget', extra: 'narrow' })}</label><span class="muted small">wordt meteen toegepast</span></div>
            <p class="muted small">De scout vult zelf tekorten per linie aan (minstens 2 doelmannen, 6 verdedigers, 6 middenvelders, 4 aanvallers), zolang het budget het toelaat.</p>`
         : ''
     }

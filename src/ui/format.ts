@@ -43,9 +43,9 @@ export function sparkline(values: number[], width = 320, height = 70): string {
 
 /** Icoon bij een uitslag: winst, gelijkspel of verlies. */
 export function resultIcon(goalsFor: number, goalsAgainst: number): string {
-  if (goalsFor > goalsAgainst) return '<span class="result win" title="Gewonnen">🏆</span>';
-  if (goalsFor < goalsAgainst) return '<span class="result loss" title="Verloren">🥀</span>';
-  return '<span class="result draw" title="Gelijkspel">🤝</span>';
+  if (goalsFor > goalsAgainst) return '<span class="result win" data-tip="Gewonnen">🏆</span>';
+  if (goalsFor < goalsAgainst) return '<span class="result loss" data-tip="Verloren">🥀</span>';
+  return '<span class="result draw" data-tip="Gelijkspel">🤝</span>';
 }
 
 /** "Thuis" of "Uit" met een icoon. */

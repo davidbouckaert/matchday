@@ -12,6 +12,8 @@ import * as seasonTickets from '../../engine/seasontickets';
 import * as inv from '../../engine/investors';
 import { INVESTORS } from '../../engine/data/setup';
 import { hint } from '../tooltip';
+import { numField } from '../numfield';
+import { taskPicker } from '../taskpicker';
 
 function groupByCategory(entries: LedgerEntry[]): [LedgerCategory, number][] {
   const map = new Map<LedgerCategory, number>();
@@ -294,7 +296,8 @@ export function financeScreen(s: GameState): string {
   const offers = loanOffers(s);
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
-  return `${investorCard(s)}
+  return `${taskPicker(s, ['ticketing'])}
+  ${investorCard(s)}
   ${forecastCard(s)}
   ${subscriptionsCard(s)}
   ${originsCard(s)}
@@ -311,7 +314,9 @@ export function financeScreen(s: GameState): string {
         ticketer
           ? `<p class="attention-inline small">${esc(ticketer.name)} bepaalt de ticketprijs: nu €${s.ticketPrice}.</p>`
           : `<div class="inline-form">
-        <label>Prijs (€)<input id="ticket-price" type="number" min="0" max="100" step="1" value="${s.ticketPrice}" data-change="ticket-price"/></label>
+        <label>Prijs per ticket
+          ${numField({ value: s.ticketPrice, min: 0, max: 100, step: 1, prefix: '€', change: 'ticket-price', inputId: 'ticket-price', label: 'Ticketprijs', slider: true, extra: 'narrow' })}
+        </label>
         <span class="muted small">wordt meteen toegepast</span>
       </div>`
       }

@@ -99,7 +99,7 @@ export function setupScreen(d: SetupDraft): string {
       <p class="muted small">Het logo van ${esc(d.clubName.trim() || club.name)} staat in de kopbalk en op je rapporten.</p>
       <div class="crest-row">
         ${CREST_SHAPES.map(
-          (shape) => `<button class="crest-pick ${d.crest === shape ? 'sel' : ''}" data-action="draft-crest" data-id="${shape}" title="${CREST_LABEL[shape]}">
+          (shape) => `<button class="crest-pick ${d.crest === shape ? 'sel' : ''}" data-action="draft-crest" data-id="${shape}" data-tip="${CREST_LABEL[shape]}">
             ${crestSvg(shape, club.colors as [string, string], clubInitials(d.clubName.trim() || club.name), 56)}
             <span class="muted small">${CREST_LABEL[shape]}</span>
           </button>`,

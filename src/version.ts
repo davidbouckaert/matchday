@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.20.1';
+export const VERSION = '0.21.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,23 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.21.0',
+    date: '2026-09-23',
+    title: 'Een dashboard in plaats van een spreadsheet',
+    items: [
+      'Het dashboard is van nul herbouwd vanuit het oogpunt van een eigenaar: links geld, posten en wedstrijd, rechts wat je aandacht vraagt',
+      'Saldo, resultaat van de week en de prognose over acht weken staan nu groot bovenaan',
+      'Publiek, sponsors en je clubscores tonen niet alleen een cijfer maar ook wat dat cijfer concreet doet',
+      'Nieuws is naar onderaan verhuisd; je langetermijndoel en de seizoensdoelen staan nu bij Club › Doelen',
+      'Nieuwe look in de hele app: geen kaderlijnen meer, meer ruimte, zwaardere cijfers en rustiger tabellen',
+      'Het menu is opnieuw ingedeeld: Geld kreeg een eigen tab, en Club heeft geen tien subtabs meer',
+      'Tooltips verschijnen voortaan groot en leesbaar rechtsonder in beeld in plaats van als browsertekstje bij je muis',
+      'Getalvelden hebben echte min- en plusknoppen die je kunt raken, met doorlopen bij ingedrukt houden en shift voor stappen van tien',
+      'Op elk taakscherm (kantine, clubwinkel, tactiek, sponsors, …) kies je nu ter plekke wie de taak doet',
+      'De startlijst voor nieuwe eigenaars is een strook geworden in plaats van een half scherm',
+    ],
+  },
   {
     version: '0.20.1',
     date: '2026-09-23',

@@ -7,6 +7,8 @@ import { delegate } from '../../engine/delegation';
 import { staffSkill } from '../../engine/staff';
 import { esc, euro } from '../format';
 import { tip } from '../tooltip';
+import { numField } from '../numfield';
+import { taskPicker } from '../taskpicker';
 
 export function merchScreen(s: GameState): string {
   const m = s.merch;
@@ -47,7 +49,7 @@ export function merchScreen(s: GameState): string {
       const best = bestPrice(s, item.id);
       return `<tr>
         <td><strong>${esc(def.label)}</strong><br/><span class="muted small">richtprijs €${refPrice(s, item.id)} · inkoop ${euro(Math.round(buyPrice(s, item.id)))}</span></td>
-        <td class="num">${locked ? `<strong>€${item.price}</strong>` : `<input class="price" type="number" min="1" max="${Math.round(def.ref * 4)}" value="${item.price}" data-change="merch-price" data-id="${item.id}" aria-label="Prijs ${esc(def.label)}"/>`}</td>
+        <td class="num">${locked ? `<strong>€${item.price}</strong>` : `${numField({ value: item.price, min: 1, max: Math.round(def.ref * 4), step: 1, prefix: '€', change: 'merch-price', rowId: item.id, label: `Prijs ${def.label}` })}`}</td>
         <td class="num">${euro(Math.round(margin(s, item)))}</td>
         <td class="num" ${tip('100% = normale verkoop aan de richtprijs. De richtprijs stijgt mee met je populariteit: bij een populaire club betalen mensen meer voor hetzelfde shirt.')}>${Math.round(pf * 100)}%<br/><span class="muted small">${item.price > best ? 'duurder dan ideaal' : item.price < best ? 'goedkoper dan ideaal' : 'ideaal'} (€${best})</span></td>
         <td class="num">${units.toFixed(1)}</td>
@@ -60,7 +62,7 @@ export function merchScreen(s: GameState): string {
 
   const missing = MERCH_ITEMS.filter((d) => !m.items.some((i) => i.id === d.id));
 
-  return `<div class="grid">
+  return `${taskPicker(s, ['merchandising'])}<div class="grid">
     <section class="card span2">
       <h2>Clubwinkel</h2>
       <p class="muted small">
