@@ -31,6 +31,10 @@ src/
     content.ts     ← voert de data uit src/content uit: voorwaarden toetsen, effecten toepassen
     world.ts       ← de andere clubs: budget, ambitie, momentum en hun beslissing per seizoen
     career.ts      ← je langetermijndoel, je eigenaarsniveau en wat elk niveau opent
+    fastforward.ts ← meerdere rustige weken achter elkaar, met de redenen om te stoppen
+    forecast.ts    ← kasprognose: wat er de komende acht weken vastligt
+    origins.ts     ← waar de bedragen van de week vandaan kwamen, per factor
+    seasontickets.ts ← abonnementen: geld vooraf, een seizoen lang vast
     actions.ts     ← alles wat de speler kan doen (kopen, verkopen, lenen, bouwen, ...)
     newGame.ts     ← nieuw spel opzetten (club, investeerder, avatar)
     players.ts     ← kwaliteit, marktwaarde, opstelling, teamsterkte, ontwikkeling
@@ -164,7 +168,21 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 11 (deze versie)
+## Laag 12 (deze versie)
+
+### 0.19.0 — Twee snelheden, vooruitkijken en beslissingen die blijven hangen
+
+**De lus draait nu op twee snelheden.** Naast "Volgende week" staat "Tot de volgende match". Die speelt de rustige stukken achter elkaar — de voorbereiding, de winterstop, de weken na de laatste speeldag — en stopt vlak voor de volgende wedstrijd. Er wordt nooit iets voor je beslist: hij stopt ook bij een weekmoment, een onvolledige basiself, een saldo onder nul of een nieuw seizoen. Daarna volgt één venster met wat er ondertussen gebeurde en waarom er gestopt werd. De knop blijft altijd staan, ook als hij niets te doen heeft — dan uitgeschakeld, met de reden in de tooltip. Hoeveel stappen je per keer zet, blijft dus volledig aan jou.
+
+**Financieel beleid kijkt vooruit in plaats van terug.** Bovenaan Financiën staat een prognose van maximaal acht weken: lonen, onderhoud, jeugdwerking, sponsorcontracten, trainingen, aflossingen, de vaste momenten van het jaar, opbrengsten die al onderweg zijn, en per wedstrijd een raming van de kassa en de kantine (met een ± erbij). Onderaan elke week staat wat er daarna in kas zit, en zou je ergens onder nul duiken, dan staat dat als waarschuwing bovenaan.
+
+**De formules leggen zichzelf uit.** "Waar kwam het vandaan" splitst de grootste posten van de laatste week uit naar factoren, met per factor wat hij opleverde of kostte. Een regel als `Sfeer ×0,81 −€1.562` betekent: zonder die lage sfeer had je €1.562 méér gehad. Het zijn dezelfde factorlijsten waarmee de engine rekent, vastgelegd op het moment van boeken, dus de uitsplitsing kan niets anders zeggen dan wat er echt gebeurde.
+
+**Zesendertig weekmomenten.** Vijftien was te weinig voor een spel van honderden weken. Er zijn er twintig bijgeschreven, van de frietketel die te klein is tot de scout achter het doel. Gemeten over acht partijen van vijf seizoenen komen 33 van de 36 situaties voorbij; de drie andere vragen om iets wat een passieve eigenaar nooit doet. Daarbij kwam een oude bug aan het licht: het moment "Je beste man is op" vroeg vermoeidheid boven 70, terwijl een normale kern nooit boven 33 komt — het stond in de data maar kon nooit gebeuren. Er is nu een test die meet hoeveel situaties er in drie seizoenen echt in beeld komen.
+
+**Twee beslissingen met een lange staart.** Abonnementen verkoop je één keer per seizoen, voor de competitie start: het geld komt ineens binnen, maar die mensen betalen daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt, ook niet als het regent. En bij een nieuw sponsorcontract kies je zelf de looptijd: één seizoen tegen het basisbedrag, twee seizoenen voor 8% meer, drie voor 15% meer. Wie lang tekent heeft zekerheid, maar zijn contract schuift niet mee omhoog bij een promotie.
+
+## Laag 11
 
 ### 0.18.0 — Een levende reeks en een carrière met een boog
 

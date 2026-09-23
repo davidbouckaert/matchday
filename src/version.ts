@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.18.0';
+export const VERSION = '0.19.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,21 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.19.0',
+    date: '2026-09-23',
+    title: 'Twee snelheden, vooruitkijken en beslissingen die blijven hangen',
+    items: [
+      'Nieuwe knop "Tot de volgende match": speelt de rustige weken achter elkaar en stopt zodra er iets is dat jou nodig heeft',
+      'Na het doorspelen krijg je één venster met het saldo, de records, de mijlpalen en het nieuws van die weken',
+      'Kasprognose op Financiën: tot acht weken vooruit, met een waarschuwing als je onder nul zou duiken',
+      '"Waar kwam het vandaan": per post wat het weer, de opkomst, je prijzen en je vrijwilligers deze week uithaalden',
+      'Twintig nieuwe weekmomenten, van de frietketel tot de scout achter het doel — 36 situaties in totaal',
+      'Het moment "Je beste man is op" kon nooit gebeuren (het vroeg vermoeidheid boven 70); dat is rechtgezet',
+      'Abonnementen: één keer per seizoen, geld ineens in kas, en daarna betalen die mensen niet meer aan de kassa',
+      'Bij een nieuw sponsorcontract kies je zelf de looptijd: langer tekenen betaalt beter, maar schuift niet mee bij promotie',
+    ],
+  },
   {
     version: '0.18.0',
     date: '2026-09-23',
