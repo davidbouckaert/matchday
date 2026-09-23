@@ -120,7 +120,7 @@ export function answerWeekChoice(state: GameState, optionId: string): string | n
   const rng = createRng(state);
   choice.answer = optionId;
   choice.outcome = run(state, rng, choice, optionId);
-  addNews(state, 'neutraal', `Weekmoment — ${choice.title}: ${choice.outcome}`);
+  addNews(state, 'neutraal', `Weekmoment — ${choice.title}: ${choice.outcome}`, 'moment');
   return choice.outcome;
 }
 

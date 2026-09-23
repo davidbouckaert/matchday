@@ -171,6 +171,18 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.29.0 — Je ploegsterkte beweegt mee terwijl je wisselt
+
+**De cijfers stonden er wel, maar niet waar je ze nodig had.** Ploegsterkte, aanval, verdediging en de kwaliteit per linie stonden onder het veld en onder je kern — dus precies buiten beeld op het moment dat je iemand wisselt. En dat is nu net wanneer je ze wil zien. Ze staan nu boven het veld en naast elke linie, en terwijl je wisselt toont elke kandidaat in je kern wat híj met je ploegsterkte zou doen: `+0,4`, `−1,3`. Dat cijfer is gemeten en niet geschat — het doet precies wat de wissel zou doen en laat dezelfde functie het opnieuw uitrekenen die het spel er zondag mee speelt.
+
+**Wat een abonnement doet, deed het niet.** Er stond "abonnees komen ook als het regent", en de code probeerde dat met een ondergrens: de opkomst zakte nooit onder 85% van je abonnees. Die grens sloeg nooit aan — zelfs bij storm en driehonderd abonnees lag de gewone opkomst nog hoger. En de rest klopte ook niet: alle abonnees werden verondersteld aanwezig te zijn, wat op een volle tribune betekende dat ze de betalende supporters verdrongen.
+
+Nu staat er wat er echt gebeurt. Een abonnee heeft betaald, dus de drempel om toch te gaan is lager en het weer weegt half zo zwaar als bij iemand die aan de kassa moet beslissen. Vierhonderd abonnees maken van een stormwedstrijd 289 toeschouwers er 378 — en die negenentachtig extra mensen drinken en eten allemaal iets. Dat is waar je een abonnement voor koopt, en het is nu ook zo. Omgekeerd: wie niet komt opdagen laat zijn plaats vrij, en als er meer volk wil dan er plaatsen zijn gaat die plaats naar iemand aan de kassa. Op een tribune van driehonderd met honderdvijftig abonnees leverde dat 182 betalende bezoekers op in plaats van 150.
+
+**Het weekrapport zei dingen drie keer.** De uitslag stond als kaartje bovenaan, als scorebord in het midden, en nog eens als nieuwsregel met dezelfde toeschouwers en dezelfde kaarten erin. Het weekmoment stond twee keer, de opkomst twee keer. Nieuwsberichten dragen nu een merkje dat zegt waar ze over gaan, zodat het rapport kan overslaan wat het zelf al toont — in de nieuwsstroom op je bureau blijven ze gewoon staan, want daar is geen scorebord.
+
+En de knop "Sluiten ✕" deed exact hetzelfde als "Naar je bureau": allebei het rapport weg en naar het overzicht. Dan heeft een tweede knop geen bestaansreden. Sluiten laat je nu staan waar je was, want wie midden in zijn selectie zat wil daarheen terug.
+
 ### 0.28.0 — Het lidgeld had een vluchtstrook
 
 **Je kon het lidgeld blijven verhogen en het bleef beter worden.** De prijsgevoeligheid was `(gangbaar / jouw prijs)^1,5`, vastgezet tussen 0,3 en 1,8. Die ondergrens was de fout: vanaf ongeveer €510 zakte het ledenaantal niet meer, en vanaf dat punt leverde élke verhoging gewoon lineair meer op. De opbrengst steeg tot €156, daalde tot €513, en steeg daarna oneindig door — een dal met een vluchtstrook erachter. Het beste wat je kon doen, was het uiterste van de schuifbalk: honderd leden aan het maximum, de hoogste opbrengst van de hele reeks bij het minste werk. Dat is geen keuze.

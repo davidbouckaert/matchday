@@ -150,7 +150,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
         <span class="team">${esc(homeName)}</span><span class="score">${hg} - ${ag}</span><span class="team">${esc(awayName)}</span>
       </div>
       <p class="center result-line ${res}">${resultIcon(m.goalsFor, m.goalsAgainst)} <strong>${res === 'win' ? 'Gewonnen' : res === 'loss' ? 'Verloren' : 'Gelijkspel'}</strong></p>
-      <p class="small center">${m.forfeit ? '<strong class="neg">Forfait: te weinig spelers beschikbaar</strong>' : `${m.home ? `${m.attendance} toeschouwers · ` : ''}${m.weather}${m.ourPlan && m.theirPlan ? ` · ${PLAN_INFO[m.ourPlan].label} tegen ${PLAN_INFO[m.theirPlan].label.toLowerCase()} (${MU[m.matchup ?? 0]})` : ''}`}</p>
+      <p class="small center">${m.forfeit ? '<strong class="neg">Forfait: te weinig spelers beschikbaar</strong>' : `${m.weather}${m.ourPlan && m.theirPlan ? ` · ${PLAN_INFO[m.ourPlan].label} tegen ${PLAN_INFO[m.theirPlan].label.toLowerCase()} (${MU[m.matchup ?? 0]})` : ''}`}</p>
       ${streakHtml}
       ${m.cards ? `<p class="small center">${esc(m.cards)}</p>` : ''}
       ${
@@ -232,8 +232,13 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
         <ul class="small">${s.lastMilestones.map((m) => `<li><strong>${esc(m)}</strong></li>`).join('')}</ul></section>`
     : '';
 
-  // nieuws van deze week
-  const news = s.news.filter((n) => n.week === prev.week && n.season === prev.season);
+  // Nieuws van deze week, minus wat hierboven al in een eigen blok staat.
+  //
+  // De uitslag stond drie keer op één scherm: als kaartje bovenaan, als scorebord, en nog
+  // eens als nieuwsregel met dezelfde toeschouwers en dezelfde kaarten erin. Het weekmoment
+  // stond twee keer. In de nieuwsstroom op je bureau horen ze wél thuis — daar is geen
+  // scorebord — dus ze worden hier alleen overgeslagen.
+  const news = s.news.filter((n) => n.week === prev.week && n.season === prev.season && n.kind !== 'wedstrijd' && n.kind !== 'moment');
   const newsHtml = news.length
     ? `<ul class="news reveal-lines">${news.map((n) => `<li class="${n.tone}">${esc(n.text)}</li>`).join('')}</ul>`
     : '<p class="muted">Rustige week.</p>';
@@ -311,7 +316,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
     <div class="report-card" role="dialog" aria-label="Weekrapport">
       <div class="report-head">
         <div><h2>Weekrapport</h2><span class="muted small">Week ${prev.week} · ${formatDateLong(s.startYear, prev.season, prev.week)}</span></div>
-        <button class="sm ghost" data-action="close-report" data-tip="Sluit het rapport en blijf waar je was">Sluiten ✕</button>
+        <button class="sm ghost" data-action="close-report" data-tip="Sluit het rapport en ga terug naar het scherm waar je was.">Sluiten ✕</button>
       </div>
       <div class="report-body">
         <div class="report-chips">${impactChips(kaartjes, 6)}</div>

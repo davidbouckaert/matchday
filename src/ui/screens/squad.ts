@@ -14,10 +14,10 @@ import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
 import { lineupBoard } from './lineup';
 import { contractLabel, playerCards } from './playercard';
+import { ZONE_LABEL } from './lineup';
 import { impactChips } from '../impact';
 import { playerImpact } from '../../engine/impact';
 
-const ZONE_LABEL: Record<Position, string> = { DOEL: 'Doel', VERD: 'Verdediging', MIDD: 'Middenveld', AANV: 'Aanval' };
 
 function friendsOf(s: GameState, p: Player): string {
   const names = p.friends.map((id) => s.players.find((x) => x.id === id)?.name.split(' ')[0]).filter(Boolean);

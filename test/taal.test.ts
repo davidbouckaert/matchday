@@ -69,6 +69,11 @@ describe('De taal blijft te volgen vanaf een jaar of tien', () => {
     expect(hits(/\b(wedstr|incl|excl|t\.o\.v|b\.v|o\.a)\./).join('\n')).to.equal('');
   });
 
+  it('schrijft "tegen" in plaats van "vs"', () => {
+    // met tekst eromheen, zodat een klassenaam als class="vs" niet meetelt
+    expect(hits(/\S\s+vs\s+\S/).join('\n')).to.equal('');
+  });
+
   it('zegt bij een te dure aankoop hoeveel het kost en wat je kunt doen', () => {
     // de kale melding mag niet terugkomen
     expect(hits(/'Niet genoeg geld\.'/).join('\n')).to.equal('');

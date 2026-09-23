@@ -10,10 +10,15 @@
 // blijft bestaan, maar ingeklapt, voor als je wil sorteren op loon of contract.
 
 import type { Formation, GameState, Player, Position } from '../../engine/types';
-import { FORMATIONS, POSITIONS, isCorePlayer, marketValue, overall, selectLineup } from '../../engine/players';
+import { FORMATIONS, POSITIONS, isCorePlayer, marketValue, overall, selectLineup, teamStrength } from '../../engine/players';
+import { DIVISIONS } from '../../engine/data/divisions';
+import { OPPONENT_STAFF_BONUS } from '../../engine/league';
 import { delegate } from '../../engine/delegation';
 import { count, esc, euro } from '../format';
 import { hint, tipAttr } from '../tooltip';
+
+/** De volle naam van een linie, voor waar de afkorting te kort is. */
+export const ZONE_LABEL: Record<Position, string> = { DOEL: 'Doel', VERD: 'Verdediging', MIDD: 'Middenveld', AANV: 'Aanval' };
 
 /* --------------------------------------------------------------- hulpstukken */
 
@@ -97,6 +102,19 @@ function pitch(s: GameState, selected: string | null): string {
   const counts = FORMATIONS[s.tactics.formation];
   const gaps = s.tactics.gaps ?? {};
 
+  // Wat je elf op dit moment waard is, hier op het veld en niet drie kaarten lager.
+  //
+  // Deze cijfers stonden er wel, maar onder het veld en onder je kern — dus precies buiten
+  // beeld op het moment dat je iemand wisselt. En dat is nu net wanneer je ze wil zien:
+  // zet je een mindere verdediger neer, dan hoor je die verdediging te zien zakken.
+  const st = teamStrength(s);
+  const ref = DIVISIONS[s.league.divisionLevel].opponentStrength + OPPONENT_STAFF_BONUS;
+  const kommagetal = (n: number) => n.toFixed(1).replace('.', ',');
+  const verschil = (n: number) => {
+    const d = Math.round((n - ref) * 10) / 10;
+    return `<span class="${d < 0 ? 'neg' : d > 0 ? 'pos' : 'muted'}">${d > 0 ? '+' : ''}${d.toFixed(1).replace('.', ',')}</span>`;
+  };
+
   // van aanval naar doel, zoals je naar een veld kijkt
   const rows = ([...POSITIONS].reverse() as Position[]).map((zone) => {
     const here = slots.filter((x) => x.zone === zone);
@@ -106,7 +124,13 @@ function pitch(s: GameState, selected: string | null): string {
       ...Array.from({ length: open }, () => emptySlot(zone, locked)),
     ].join('');
     return `<div class="pitch-row" data-zone="${zone}">
-      <span class="row-label" ${tipAttr(`${counts[zone]} ${counts[zone] === 1 ? 'plaats' : 'plaatsen'} in ${s.tactics.formation}${(gaps[zone] ?? 0) ? `, waarvan ${gaps[zone]} open` : ''}.`)}>${zone}</span>
+      <span class="row-label" ${tipAttr(
+        `${counts[zone]} ${counts[zone] === 1 ? 'plaats' : 'plaatsen'} in ${s.tactics.formation}${(gaps[zone] ?? 0) ? `, waarvan ${gaps[zone]} open` : ''}. De ${kommagetal(st.zones[zone])} is de gemiddelde kwaliteit van wie je hier neerzet; wissel iemand en dit cijfer beweegt mee.`,
+        ZONE_LABEL[zone],
+      )}>
+        <span class="rl-zone">${zone}</span>
+        <span class="rl-rating">${kommagetal(st.zones[zone])}</span>
+      </span>
       <div class="row-chips">${chips}</div>
     </div>`;
   });
@@ -127,6 +151,15 @@ function pitch(s: GameState, selected: string | null): string {
       </label>
       ${locked ? '' : '<button class="ghost sm" data-action="auto-lineup" ' + tipAttr('Laat alles los: je trainer stelt weer volledig zelf op.') + '>Trainer laten kiezen</button>'}
     </div>
+    <div class="strength-strip" ${tipAttr(
+      `Wat je huidige elf waard is, vergeleken met een gemiddelde tegenstander in ${DIVISIONS[s.league.divisionLevel].name} (${kommagetal(ref)}). Alles wat je hieronder wisselt, verandert deze cijfers meteen.`,
+      'Ploegsterkte',
+    )}>
+      <span class="ss-item"><span class="cap">Totaal</span><strong>${kommagetal(st.total)}</strong>${verschil(st.total)}</span>
+      <span class="ss-item"><span class="cap">Aanval</span><strong>${kommagetal(st.attack)}</strong>${verschil(st.attack)}</span>
+      <span class="ss-item"><span class="cap">Verdediging</span><strong>${kommagetal(st.defense)}</strong>${verschil(st.defense)}</span>
+      <span class="ss-note tiny muted">tegenover een gemiddelde tegenstander</span>
+    </div>
     <div class="pitch">${rows.join('')}</div>
     <p class="pitch-legend tiny muted">
       <span>★ door jou vastgezet</span><span>▰ frisheid</span><span>Ⓒ kapitein</span><span class="chip-wrong-demo">VERD</span><span>speelt buiten zijn positie</span>
@@ -135,6 +168,26 @@ function pitch(s: GameState, selected: string | null): string {
 }
 
 /* ------------------------------------------------------------------- de kern */
+
+/**
+ * Wat er met je ploegsterkte gebeurt als deze speler die ander vervangt.
+ *
+ * Gemeten, niet geschat: we doen precies wat de wissel zou doen — de ene naar de bank, de
+ * andere vast in de basis — en laten dezelfde functie de sterkte opnieuw uitrekenen die
+ * het spel er zondag mee speelt. Verandert die formule ooit, dan verandert dit cijfer mee.
+ */
+function swapDelta(s: GameState, outId: string, inc: Player): number {
+  const t = s.tactics;
+  const na: GameState = {
+    ...s,
+    tactics: {
+      ...t,
+      manualXI: [...t.manualXI.filter((id) => id !== outId && id !== inc.id), inc.id],
+      benched: outId.startsWith('leeg:') ? t.benched.filter((id) => id !== inc.id) : [...t.benched.filter((id) => id !== inc.id), outId],
+    },
+  };
+  return teamStrength(na).total - teamStrength(s).total;
+}
 
 /** Eén speler in de kernlijst. */
 function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | null, selZone: Position | null, locked: boolean): string {
@@ -173,6 +226,20 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
     <span class="sr-rating"><strong>${overall(p)}</strong><span class="muted">/${Math.round(p.potential)}</span></span>
     <span class="sr-trend">${trend(p)}</span>
     <span class="sr-fit">${blocked ? `<span class="tag bad">${blocked}</span>` : fitness(p)}</span>
+    ${
+      swapping && selected
+        ? (() => {
+            const d = swapDelta(s, selected, p);
+            const afgerond = Math.round(d * 10) / 10;
+            return `<span class="sr-delta ${afgerond > 0 ? 'pos' : afgerond < 0 ? 'neg' : 'muted'}" ${tipAttr(
+              afgerond === 0
+                ? 'Met hem erin blijft je ploeg even sterk.'
+                : `Met hem erin ${afgerond > 0 ? 'stijgt' : 'zakt'} je ploegsterkte van ${teamStrength(s).total.toFixed(1).replace('.', ',')} naar ${(teamStrength(s).total + d).toFixed(1).replace('.', ',')}.`,
+              'Wat deze wissel doet',
+            )}>${afgerond > 0 ? '+' : afgerond < 0 ? '−' : ''}${Math.abs(afgerond).toFixed(1).replace('.', ',')}</span>`;
+          })()
+        : ''
+    }
     ${locked || blocked ? '<span class="sr-btn"></span>' : `<button class="sr-btn bench-btn ${benched ? 'on' : ''}" data-action="bench" data-id="${p.id}"
       ${tipAttr(benched ? `${p.name} staat op de bank. Klik om hem weer beschikbaar te maken.` : `${p.name} deze week niet opstellen. Zijn plaats blijft dan open.`, 'Bank')}>${benched ? '⛔' : '🪑'}</button>`}
   </div>`;

@@ -1303,7 +1303,26 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
   box-shadow: inset 0 0 0 2px var(--accent-soft);
 }
 .pitch-row { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: var(--s2); }
-.pitch-row .row-label { font-size: .64rem; font-weight: 700; letter-spacing: .06em; color: var(--faint); cursor: help; }
+/* De naam van de linie met zijn huidige kwaliteit eronder: wissel je iemand, dan beweegt
+   dit cijfer mee terwijl je ernaar kijkt. */
+.pitch-row .row-label { display: flex; flex-direction: column; line-height: 1.15; cursor: help; }
+.pitch-row .rl-zone { font-size: .64rem; font-weight: 700; letter-spacing: .06em; color: var(--faint); }
+.pitch-row .rl-rating { font-size: .95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Wat je elf nu waard is, boven het veld in plaats van drie kaarten lager. */
+.strength-strip {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s5);
+  padding: var(--s2) 0 var(--s3); margin-bottom: var(--s2);
+  border-bottom: 1px solid var(--line); cursor: help;
+}
+.strength-strip .ss-item { display: flex; align-items: baseline; gap: 5px; }
+.strength-strip .cap { font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
+.strength-strip strong { font-size: 1.15rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.strength-strip .ss-note { margin-left: auto; }
+
+/* Terwijl je wisselt: wat deze speler met je ploegsterkte doet. */
+.sr-delta { font-size: .82rem; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; cursor: help; }
+.squad-row.swappable { grid-template-columns: 14px minmax(0, 1fr) auto 44px 62px 34px 44px; }
 .pitch-row .row-chips { display: flex; gap: var(--s2); justify-content: center; flex-wrap: wrap; }
 
 .chip-player {
@@ -1339,6 +1358,7 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 
 .squad-row {
   display: grid; grid-template-columns: 14px minmax(0, 1fr) auto 44px 62px 34px;
+  /* tijdens een wissel komt er een kolom bij met wat de wissel oplevert */
   align-items: center; gap: var(--s2); padding: 6px var(--s2); border-radius: var(--radius-sm);
 }
 .squad-row[role='button'] { cursor: pointer; }
@@ -1367,6 +1387,7 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .core { color: var(--mid); }
 @media (max-width: 520px) {
   .squad-row { grid-template-columns: 14px minmax(0, 1fr) auto 62px 34px; }
+  .squad-row.swappable { grid-template-columns: 14px minmax(0, 1fr) auto 62px 34px 44px; }
   .sr-trend { display: none; }
 }
 

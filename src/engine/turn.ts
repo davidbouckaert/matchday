@@ -317,6 +317,7 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     state,
     result > 0 ? 'goed' : result < 0 ? 'slecht' : 'neutraal',
     `${label}: ${home ? state.clubName : opponent.name} ${hg}-${ag} ${home ? opponent.name : state.clubName}${home ? ` (${attendance} toeschouwers, ${weather})` : ''}.${cards ? ` Kaarten: ${cards}.` : ''}`,
+    'wedstrijd',
   );
   const load = matchLoad(state);
   for (const p of state.players) if (lineupIds.has(p.id)) p.fatigue = clamp(p.fatigue + load * fatigueAgeFactor(p.age), 0, 100);

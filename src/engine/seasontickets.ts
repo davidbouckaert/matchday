@@ -106,6 +106,21 @@ export function sellSeasonTickets(state: GameState, price: number, rng: Rng): { 
   return { sold, revenue };
 }
 
+/**
+ * Hoe trouw een abonnee komt, tegenover iemand die aan de kassa moet beslissen.
+ *
+ * `rate` is welk deel van je supporters deze week sowieso zou komen — dat cijfer heeft het
+ * weer, je vorm en je klassement al in zich. Een abonnee zit daar tussenin en het altijd:
+ * hij heeft betaald, dus de drempel om toch te gaan is lager, en regen weegt half zo zwaar.
+ * Vandaar het midden tussen de gewone opkomst en altijd komen.
+ *
+ * Je haalt er dus geen volle tribune mee, maar wel een tribune die minder leegloopt als het
+ * giet — en dat is precies waar je hem voor koopt.
+ */
+export function loyaltyRate(rate: number): number {
+  return Math.min(0.95, rate + (1 - rate) * 0.5);
+}
+
 /** Hoeveel abonnees er dit seizoen rondlopen. */
 export function holders(state: GameState): number {
   return state.seasonTickets && state.seasonTickets.season === state.season ? state.seasonTickets.sold : 0;

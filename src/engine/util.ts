@@ -14,8 +14,8 @@ export function book(state: GameState, category: LedgerCategory, amount: number,
   state.seasonTotals[category] = (state.seasonTotals[category] ?? 0) + rounded;
 }
 
-export function addNews(state: GameState, tone: NewsItem['tone'], text: string): void {
-  state.news.unshift({ week: state.week, season: state.season, tone, text });
+export function addNews(state: GameState, tone: NewsItem['tone'], text: string, kind?: NewsItem['kind']): void {
+  state.news.unshift({ week: state.week, season: state.season, tone, text, ...(kind ? { kind } : {}) });
   if (state.news.length > 60) state.news.length = 60;
 }
 

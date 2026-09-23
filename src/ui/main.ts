@@ -591,10 +591,11 @@ const handlers: Record<string, Handler> = {
   'skip-anim': () => {
     if (ui.report) ui.report.phase = 'report';
   },
+  // Sluiten laat je staan waar je was; de knop rechtsonder brengt je naar je bureau. Ze
+  // deden allebei precies hetzelfde — rapport weg en naar het overzicht — en dan heeft een
+  // tweede knop geen bestaansreden. Wie midden in zijn selectie zat, wil daar terug.
   'close-report': () => {
     ui.report = null;
-    ui.screen = 'overzicht';
-    ui.lastScreen.overzicht = 'overzicht';
     if (ui.game?.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
   },
   'report-overview': () => {

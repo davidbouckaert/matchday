@@ -73,8 +73,8 @@ export function bookMatchdayCatering(state: GameState, attendance: number, oppon
   }
   state.canteen.lastCanteen = canteen;
   const drinks = canteen.reduce((s, c) => s + c.units, 0);
-  book(state, 'kantine', revenue - cost, `Kantine vs ${opponent} (${drinks} consumpties)`);
-  recordOrigin(state, 'kantine', `Kantine op de wedstrijddag vs ${opponent}`, revenue - cost, [
+  book(state, 'kantine', revenue - cost, `Kantine tegen ${opponent} (${drinks} consumpties)`);
+  recordOrigin(state, 'kantine', `Kantine op de wedstrijddag tegen ${opponent}`, revenue - cost, [
     { label: 'Toeschouwers', value: attendance / Math.max(1, state.community.fanBase), kind: 'x', source: `${attendance} mensen op het complex` },
     ...spendFactors(state),
   ]);
@@ -91,7 +91,7 @@ export function bookMatchdayCatering(state: GameState, attendance: number, oppon
     state.stats.concessions[c.id] = (state.stats.concessions[c.id] ?? 0) + units;
   }
   state.canteen.lastConcessions = stands;
-  if (ownShare > 0) book(state, 'horeca concessies', ownShare, `Concessies vs ${opponent} (${stands.reduce((s, c) => s + c.units, 0)} porties)`);
+  if (ownShare > 0) book(state, 'horeca concessies', ownShare, `Kraampjes tegen ${opponent} (${stands.reduce((s, c) => s + c.units, 0)} porties)`);
   return { canteen: revenue - cost, concessions: ownShare };
 }
 

@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.28.0';
+export const VERSION = '0.29.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,23 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.29.0',
+    date: '2026-09-23',
+    title: 'Je ploegsterkte beweegt mee terwijl je wisselt',
+    items: [
+      'Op het veld staat nu per linie wat die waard is, plus je totaal, aanval en verdediging erboven',
+      'Wissel je iemand, dan zie je die cijfers meteen bewegen — daar hoef je niet meer voor naar beneden te scrollen',
+      'Terwijl je wisselt, toont elke kandidaat wat hij met je ploegsterkte doet: +0,4 of −1,3',
+      'Abonnementen: abonnees komen nu echt trouwer bij slecht weer. De oude regel beloofde dat maar sloeg nooit aan',
+      'Vierhonderd abonnees maken van een stormwedstrijd 289 toeschouwers er 378 — en die drinken allemaal iets',
+      'Komt een abonnee niet opdagen en zit de tribune vol, dan gaat zijn plaats naar iemand aan de kassa',
+      'Weekrapport: de uitslag stond er drie keer en het weekmoment twee keer. Wat een eigen blok heeft, staat niet meer in het nieuws eronder',
+      'Het aantal toeschouwers stond bovenaan als kaartje en nog eens bij de wedstrijd',
+      'De knop "Sluiten" deed exact hetzelfde als "Naar je bureau". Sluiten laat je nu staan waar je was',
+      'Overal "tegen" in plaats van "vs", en de taaltest bewaakt dat voortaan',
+    ],
+  },
   {
     version: '0.28.0',
     date: '2026-09-23',

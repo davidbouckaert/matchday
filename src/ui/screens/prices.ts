@@ -99,9 +99,13 @@ function subscriptionsCard(s: GameState): string {
     <h2>Abonnementen ${hint('Eén keer per seizoen, voor de competitie start. Het geld komt meteen binnen, maar die mensen betalen daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt.')}</h2>
     <p class="muted small">Los betalen kost een supporter ${euro(full)} over ${st.HOME_MATCHES} thuiswedstrijden (${euro(s.ticketPrice)} per match),
       maar niemand komt vijftien keer — reken op ongeveer ${Math.round(st.TYPICAL_ATTENDANCE_RATE * 100)}%. Zonder korting tekent er dus niemand.</p>
-    <p class="muted small">Het is vooral een keuze over tíming: je haalt geld naar voren dat je anders pas match na match zou krijgen.
-      Scherp geprijsd levert het het meeste cash op maar kost je op het jaar; een bescheiden korting brengt minder binnen maar is voordeliger.
-      En abonnees komen ook als het regent. Wat je hier beslist, ligt vast tot het einde van het seizoen.</p>
+    <p class="muted small">Een abonnement doet drie dingen. <strong>Je krijgt het geld nu</strong>, in plaats van match na match.
+      <strong>Die mensen betalen daarna niet meer aan de kassa</strong> — ook niet als je in week 20 je ticketprijs verhoogt.
+      En <strong>ze komen trouwer</strong>: ze hebben al betaald, dus regen houdt ze minder tegen. Dat laatste is meer waard dan het lijkt,
+      want elke supporter op de tribune drinkt en eet ook iets.</p>
+    <p class="muted small">De prijs bepaalt welke van die drie je het zwaarst laat wegen. Scherp geprijsd tekenen er veel meer mensen en
+      haal je het meeste cash op, maar per abonnee hou je minder over dan wat hij aan de kassa waard was. Een bescheiden korting brengt
+      minder binnen maar is over het jaar voordeliger. Wat je hier beslist, ligt vast tot het einde van het seizoen.</p>
     <div class="slider-row">
       <input type="range" id="subs-price" min="${st.floorPrice(s)}" max="${Math.max(st.floorPrice(s) + 10, Math.round(full * 1.05))}" step="5" value="${price}" data-live="subs" aria-label="Prijs per abonnement"/>
       <button class="primary" data-action="sell-subs">Campagne voeren</button>

@@ -446,6 +446,15 @@ export interface NewsItem {
   season: number;
   tone: 'goed' | 'slecht' | 'neutraal';
   text: string;
+  /**
+   * Waar dit bericht over gaat, als het ergens anders ook al staat.
+   *
+   * Het weekrapport toont de wedstrijd en het weekmoment elk in een eigen blok, en zette
+   * daarnaast het nieuws van die week eronder — met dezelfde uitslag en hetzelfde
+   * weekmoment er nog eens in. Met dit merkje kan het rapport die twee overslaan, terwijl
+   * ze in de nieuwsstroom op je bureau gewoon blijven staan.
+   */
+  kind?: 'wedstrijd' | 'moment';
 }
 
 export interface WeekRecord {

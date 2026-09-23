@@ -154,7 +154,7 @@ describe('Abonnementen', () => {
       let cur = s;
       for (let i = 0; i < 20; i++) {
         cur = advanceWeek(cur);
-        const tickets = cur.lastWeek.filter((e) => e.category === 'tickets' && /Tickets vs/.test(e.label));
+        const tickets = cur.lastWeek.filter((e) => e.category === 'tickets' && /Tickets tegen/.test(e.label));
         if (tickets.length) return tickets.reduce((sum, e) => sum + e.amount, 0);
       }
       return null;
@@ -170,7 +170,7 @@ describe('Abonnementen', () => {
     actions.sellSubscriptions(s, String(st.suggestedPrice(s)));
     for (let i = 0; i < 20; i++) {
       s = advanceWeek(s);
-      const line = s.lastWeek.find((e) => e.category === 'tickets' && /Tickets vs/.test(e.label));
+      const line = s.lastWeek.find((e) => e.category === 'tickets' && /Tickets tegen/.test(e.label));
       if (line) {
         expect(line.label).to.contain('abonnees');
         return;

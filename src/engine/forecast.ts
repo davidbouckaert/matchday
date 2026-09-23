@@ -14,7 +14,7 @@ import { sponsorWeekly } from './loans';
 import { trainingCost } from './strategy';
 import { volunteerFactor } from './factors';
 import { subsidyFactor } from './career';
-import { holders } from './seasontickets';
+import { holders, loyaltyRate } from './seasontickets';
 import { YOUTH_FEE_WEEK, youthForecast } from './actions';
 
 export interface ForecastLine {
@@ -119,10 +119,17 @@ function weekLines(state: GameState, week: number, offset: number): { lines: For
   // --- wedstrijd van die week ---
   if (fixture && home) {
     const subscribers = holders(state);
-    const attendance = Math.min(state.infrastructure.capacity, Math.max(expectedAttendance(state, { weather: TYPICAL_WEATHER, derby: !!opponentTeam?.isRival, positionFactor: 1 }), Math.round(subscribers * 0.85)));
-    const paying = Math.max(0, attendance - subscribers);
+    const input = { weather: TYPICAL_WEATHER, derby: !!opponentTeam?.isRival, positionFactor: 1 } as const;
+    const capacity = state.infrastructure.capacity;
+    // dezelfde splitsing als in bookHomeMatch, anders belooft de prognose iets anders
+    const base = expectedAttendance(state, input);
+    const rate = subscribers ? Math.min(1, base / Math.max(1, state.community.fanBase)) : 0;
+    const present = subscribers ? Math.min(capacity, Math.round(subscribers * loyaltyRate(rate))) : 0;
+    const others = subscribers ? Math.max(0, base - Math.round(subscribers * rate)) : base;
+    const paying = Math.max(0, Math.min(others, capacity - present));
+    const attendance = present + paying;
     const gross = paying * state.ticketPrice;
-    add('tickets', subscribers ? `Tickets tegen ${opponent} (ongeveer ${paying} betalend, ${Math.min(subscribers, attendance)} abonnees)` : `Tickets tegen ${opponent} (ongeveer ${attendance} toeschouwers)`, gross, true);
+    add('tickets', subscribers ? `Tickets tegen ${opponent} (ongeveer ${paying} aan de kassa, ${present} abonnees)` : `Tickets tegen ${opponent} (ongeveer ${attendance} toeschouwers)`, gross, true);
     add('wedstrijdkosten', 'Aandeel bezoekers en bond', -gross * AWAY_SHARE, true);
     add('kantine', `Kantine op de wedstrijddag tegen ${opponent}`, attendance * spendPerHead(state) * CATERING_MARGIN, true);
     add('wedstrijdkosten', `Scheidsrechter en organisatie tegen ${opponent}`, -(250 + 120 + state.league.divisionLevel * 150));
