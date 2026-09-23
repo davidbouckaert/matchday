@@ -3,6 +3,7 @@ import { FORECAST_WEEKS, forecast, topLines } from '../src/engine/forecast';
 import { BOND_FEE_WEEK, SUBSIDY_WEEK, MATCH_WEEKS } from '../src/engine/calendar';
 import { YOUTH_FEE_WEEK } from '../src/engine/actions';
 import { advanceWeek } from '../src/engine/turn';
+import type { LedgerCategory } from '../src/engine/types';
 import { newTestGame, readyGame } from './helpers';
 
 describe('De kasprognose', () => {
@@ -145,13 +146,18 @@ describe('De kasprognose', () => {
   });
 
   it('komt in de buurt van wat er daarna echt gebeurt', () => {
-    // een prognose hoeft niet exact te zijn, maar wel bruikbaar: we laten een rustige week
-    // echt spelen en vergelijken met wat er voorspeld was
+    // Een prognose hoeft niet exact te zijn, maar wel bruikbaar. We vergelijken alleen wat
+    // ze ook belooft: de gewone werking. Een transfer die toevallig die week doorgaat, een
+    // meevaller of een aflossing zegt ze zelf niet te voorspellen — en dan mag een test
+    // haar daar ook niet op afrekenen.
+    const BUITEN_DE_WERKING: LedgerCategory[] = ['leningen', 'investeerder', 'aflossingen', 'transfers', 'infrastructuur', 'meevallers', 'tegenslagen'];
     const s = readyGame('heidebeke', 'fonds', 8);
-    s.week = 2; // vrije week, geen wedstrijd, geen vast moment
-    const predicted = forecast(s).weeks[0].net;
+    s.week = 2; // vrije week, geen wedstrijd
+    const predicted = forecast(s)
+      .weeks[0].lines.filter((l) => !BUITEN_DE_WERKING.includes(l.category))
+      .reduce((sum, l) => sum + l.amount, 0);
     const after = advanceWeek(s);
-    const actual = after.cash - s.cash;
+    const actual = after.lastWeek.filter((e) => !BUITEN_DE_WERKING.includes(e.category)).reduce((sum, e) => sum + e.amount, 0);
     const margin = Math.max(2_000, Math.abs(predicted) * 0.35);
     expect(Math.abs(actual - predicted), `voorspeld ${predicted}, werd ${actual}`).to.be.below(margin);
   });

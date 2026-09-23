@@ -651,6 +651,13 @@ export interface GameState {
   youthFee: number; // lidgeld per jeugdspeler per seizoen
   prospects: SponsorProspect[];
   sponsorCampaignWeeks: number; // > 0 = een bureau zoekt nieuwe sponsors
+  /**
+   * Wat jij per soort sponsorplaats vraagt, per week.
+   *
+   * Leeg betekent: wat de markt voor jouw club normaal vindt. Zet je er zelf een bedrag in,
+   * dan is dát je vraagprijs — en bepaalt de markt of er iemand op ingaat.
+   */
+  sponsorAsk: Partial<Record<SponsorKind, number>>;
   emergencyLoanOffered: boolean;
   promotionsWithInvestor: number;
   investorActive: boolean;

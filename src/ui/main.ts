@@ -719,6 +719,7 @@ const handlers: Record<string, Handler> = {
   'sponsor-cancel': gameAction(actions.cancelSponsor),
   'sponsor-extra': gameAction(actions.askExtra),
   'sponsor-renew': gameAction(actions.renewSponsor),
+  'sponsor-ask-reset': gameAction((g, id) => actions.resetSponsorAsk(g, id as Parameters<typeof actions.resetSponsorAsk>[1])),
   volunteer: gameAction(actions.volunteerAction),
   list: gameAction((g, id) => {
     const input = document.getElementById(`ask-${id}`) as HTMLInputElement | null;
@@ -804,6 +805,7 @@ const changeHandlers: Record<string, (g: GameState, value: string, id: string) =
     return result;
   },
   'asking-price': (g, v, id) => actions.listPlayer(g, id, Number(v)),
+  'sponsor-ask': (g, v, id) => actions.setSponsorAsk(g, id as Parameters<typeof actions.setSponsorAsk>[1], Number(v)),
 };
 
 root.addEventListener('change', async (e) => {

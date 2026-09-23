@@ -102,6 +102,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 25) migrateV25toV26(state);
   if (state.version === 26) migrateV26toV27(state);
   if (state.version === 27) migrateV27toV28(state);
+  if (state.version === 28) migrateV28toV29(state);
   repair(state);
   return state;
 }
@@ -434,6 +435,17 @@ function migrateV26toV27(state: GameState): void {
 }
 
 /** Versie 26: abonnementen en meerjarige sponsorcontracten. */
+/**
+ * Laag 17: je zet zelf wat een sponsorplaats kost.
+ *
+ * Een bestaand spel begint met een lege prijskaart, en dat betekent "volg de gangbare
+ * prijs" — precies wat er tot nu toe gebeurde. Wie niets aanraakt, merkt dus niets.
+ */
+function migrateV28toV29(state: GameState): void {
+  state.sponsorAsk ??= {};
+  state.version = 29;
+}
+
 function migrateV25toV26(state: GameState): void {
   state.seasonTickets ??= null;
   for (const d of state.sponsors ?? []) d.lockedSeasons ??= 1;
@@ -531,6 +543,7 @@ function repair(state: GameState): void {
   }
   for (const [key, value] of fallback) if (s[key] === undefined || s[key] === null) (s as Record<string, unknown>)[key] = value;
   if (state.community) state.community.youthTeams ??= teamsFor(state);
+  state.sponsorAsk ??= {};
   // Het lidgeld had vroeger een vaste bovengrens van €800; die klimt nu mee met je reeks.
   // Een bestaand spel waarin je boven de nieuwe grens zat, zakt terug naar het maximum.
   if (typeof state.youthFee === 'number') state.youthFee = Math.max(0, Math.min(state.youthFee, maxYouthFee(state)));

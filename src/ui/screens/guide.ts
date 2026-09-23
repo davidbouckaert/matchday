@@ -53,6 +53,14 @@ function faq(): QA[] {
       a: 'Sommige functies hebben eerst infrastructuur of een werking nodig: een kinesist een recuperatieruimte, een data-analist wifi, een kantineverantwoordelijke een kantine van niveau 2, een jeugdcoördinator minstens 3 jeugdploegen. Je ziet de reden bij de kandidaat.',
     },
     {
+      q: 'Hoeveel mag ik voor een sponsorplaats vragen?',
+      a: `Dat beslis jij, op je prijskaart bij Geld › Sponsors. Bij elke plaats staat wat gangbaar is bij een club als de jouwe, en zet je er een ander bedrag in,
+        dan zie je meteen wat bedrijven ervan vinden. Vraag je minder, dan tekenen er meer maar brengt elk contract minder op; vraag je meer, dan is het net omgekeerd.
+        Ergens daartussen ligt je beste prijs, en hoe hoger die ligt hangt af van hoe graag bedrijven bij je club willen horen: je reputatie, de sfeer, je populariteit,
+        je reeks en je commercieel medewerker. Een club zonder naam kan niets extra vragen; een club met een naam ongeveer driekwart meer. In de contactenlijst staat per
+        bedrijf hoe groot de kans is dat het ja zegt op jouw prijs. Doe je niets, dan volgt elke plaats gewoon het gangbare bedrag.`,
+    },
+    {
       q: 'Waarom krijg ik geen sponsor van een bepaald type?',
       a: 'Elke plaats bestaat maar een beperkt aantal keer, en sommige moet je eerst verdienen: schermen vragen een goede kantine, de ploegbussponsor een eigen bus, de evenementensponsor een georganiseerd evenement. Bij Sponsors staat per plaats hoeveel er vrij zijn en waarom ze eventueel op slot staan.',
     },
@@ -235,7 +243,7 @@ export function guideScreen(s: GameState): string {
         <li><strong>Bureau</strong><span>Wat deze week op je wacht, je saldo en prognose, waar het geld heen ging, je volgende wedstrijd, en hoe je ervoor staat bij publiek en sponsors. Daarnaast de Agenda: alle 52 weken met transferperiodes, uitbetalingen en vaste momenten.</span></li>
         <li><strong>Ploeg</strong><span>Selectie (het veld en je kern), Strategie (training, tactiek, spelplannen), Transfers en Contracten.</span></li>
         <li><strong>Personeel</strong><span>Aanwerven en opleiden, en in één tabel per taak kiezen wie ze doet. Datzelfde keuzevak staat ook bovenaan elk taakscherm.</span></li>
-        <li><strong>Geld</strong><span>Financiën (prognose, posten, herkomst, leningen), <strong>Tickets en lidgeld</strong> (de drie prijzen die je zelf zet: je ticketprijs, je abonnementen en het lidgeld van de jeugd), Sponsors en Cijfers.</span></li>
+        <li><strong>Geld</strong><span>Financiën (prognose, posten, herkomst, leningen), <strong>Tickets en lidgeld</strong> (de drie prijzen die je zelf zet: je ticketprijs, je abonnementen en het lidgeld van de jeugd), Sponsors (je prijskaart per plaats, wie er tekent en welke bedrijven je kunt benaderen) en Cijfers.</span></li>
         <li><strong>Club</strong><span>Infrastructuur, Horeca (de prijzen aan de toog), Clubwinkel, Evenementen, Doelen (je langetermijndoel en het logboek), Museum en Clubinfo.</span></li>
         <li><strong>Competitie</strong><span>De stand, jouw wedstrijden met hun uitslag, de clubs in je reeks en de tuchtzaken.</span></li>
         <li><strong>Menu ☰</strong><span>Deze handleiding, "Wat beïnvloedt wat" met elke vermenigvuldiger die nu meespeelt, en opslaan en instellingen.</span></li>

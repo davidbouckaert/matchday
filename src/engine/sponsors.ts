@@ -5,6 +5,7 @@ import { SECTORS, SPONSOR_COMPANIES, sectorKind } from './data/names';
 import { staffSkill } from './staff';
 import { product, sponsorFactors } from './factors';
 import { ownPosition } from './league';
+import { popularity } from './popularity';
 import { addLog, addNews, book, nextId } from './util';
 import { remember } from './content';
 import { creditLimit } from './loans';
@@ -36,6 +37,26 @@ export const KIND_LABEL: Record<Kind, string> = {
   mouw: 'Mouwsponsor',
   shirt: 'Shirtsponsor rug',
   hoofdsponsor: 'Hoofdsponsor borst',
+  stadion: 'Stadionnaam',
+};
+
+/**
+ * Korte naam voor op een tegel.
+ *
+ * "Evenementensponsor" is achttien tekens zonder één plaats om af te breken: in een tegel van
+ * honderdtachtig pixels brak de browser er middenin een lettergreep doorheen. De volle naam
+ * staat in de tooltip, dus je verliest niets.
+ */
+export const KIND_SHORT: Record<Kind, string> = {
+  bord: 'Reclamebord',
+  bal: 'Wedstrijdbal',
+  jeugd: 'Jeugd',
+  scherm: 'Schermen',
+  evenement: 'Evenementen',
+  bus: 'Ploegbus',
+  mouw: 'Mouw',
+  shirt: 'Shirt rug',
+  hoofdsponsor: 'Hoofdsponsor',
   stadion: 'Stadionnaam',
 };
 
@@ -86,6 +107,101 @@ export function kindRange(state: GameState, kind: Kind): [number, number] {
   const events = kind === 'evenement' ? clamp(0.7 + state.eventLog.filter((e) => e.season === state.season).length * 0.15, 0.7, 1.6) : 1;
   const m = sponsorMultiplier(state) * saturation * events;
   return [round(min * m, 5), round(max * m, 5)];
+}
+
+/**
+ * De prijs die de markt op dit moment normaal vindt voor zo'n plaats bij jouw club.
+ *
+ * Dit is het midden van de bandbreedte: sommige bedrijven hebben er meer voor over, andere
+ * minder. Het is de lat waar jouw vraagprijs tegen wordt afgemeten.
+ */
+export function fairPrice(state: GameState, kind: Kind): number {
+  const [min, max] = kindRange(state, kind);
+  return round((min + max) / 2, 5);
+}
+
+/** Wat jij vraagt voor zo'n plaats. Niets ingevuld = de gangbare prijs. */
+export function askPrice(state: GameState, kind: Kind): number {
+  const eigen = state.sponsorAsk?.[kind];
+  return eigen !== undefined && eigen > 0 ? Math.round(eigen) : fairPrice(state, kind);
+}
+
+const ASK_DECAY = 0.9;
+const ASK_CHEAP_GAIN = 0.6;
+
+/**
+ * Hoe graag bedrijven bij jóuw club willen hangen.
+ *
+ * Dit is voor sponsors wat `youthPull` voor de jeugd is: niet hoeveel ze normaal betalen —
+ * dat zit al in de gangbare prijs — maar hoe hard ze je een prijsverhoging kwalijk nemen.
+ * Bij een club waar niemand over praat is een bord een bord, en dan telt alleen het bedrag.
+ * Bij een club met een naam, een volle tribune en een ploeg die bovenaan staat, willen
+ * bedrijven erbij horen en slikken ze een hogere prijs.
+ */
+export function sponsorPull(state: GameState): number {
+  const c = state.community;
+  const sales = staffSkill(state, 'commercieel');
+  const score =
+    (c.reputation - 50) / 200 +
+    (c.fanMood - 50) / 330 +
+    (popularity(state).factor - 1) * 0.6 +
+    state.league.divisionLevel * 0.045 +
+    (sales ? (sales - 40) / 300 : 0) +
+    (state.avatar.background === 'ondernemer' ? 0.06 : 0);
+  return clamp(1 + score, 0.7, 1.6);
+}
+
+/**
+ * Hoeveel je vraagprijs je kansen helpt of schaadt.
+ *
+ * Vroeger noemde het bedrijf zelf een bedrag en zei jij ja of nee. Nu hangt jouw prijskaart
+ * aan de muur en beslissen zij. Vraag je wat gangbaar is, dan verandert er niets aan je
+ * kansen: één. Vraag je minder, dan hebben meer bedrijven er oren naar. Vraag je meer, dan
+ * haken er af — en hoe verder je gaat, hoe sneller dat gaat.
+ *
+ * De eerste versie was een rechte lijn: elke procent erbij kostte een procent kans. Gemeten
+ * bleek dat de keuze zinloos te maken. De opbrengst van een plaats is kans maal prijs, en bij
+ * een rechte lijn is dat product precies op de gangbare prijs het hoogst, voor élke club. Je
+ * kon dus aan de knoppen draaien wat je wilde: over een heel seizoen scheelde het minder dan
+ * een procent. Nu buigt de curve, en waar ze haar top heeft, hangt af van je trekkracht:
+ * een dorpsclub kan niets extra vragen, een club met een naam ongeveer de helft meer.
+ */
+export function askFactor(state: GameState, kind: Kind): number {
+  const fair = fairPrice(state, kind);
+  if (fair <= 0) return 1;
+  const ratio = Math.max(0, askPrice(state, kind) / fair);
+  if (ratio <= 1) return clamp(1 + (1 - ratio) * ASK_CHEAP_GAIN, 1, 1.6);
+  return clamp(Math.exp(-(ratio - 1) * (ASK_DECAY / sponsorPull(state))), 0.02, 1);
+}
+
+/**
+ * Hoeveel keer het gangbare bedrag jouw club op termijn het meest opbrengt.
+ *
+ * Kans maal prijs is het hoogst bij trekkracht gedeeld door de helling. Bij een club zonder
+ * naam komt daar minder dan één uit, en dan is het gangbare bedrag gewoon het beste: onder de
+ * markt gaan zitten levert wel meer contracten op, maar samen minder geld.
+ */
+export function bestAskRatio(state: GameState): number {
+  return Math.max(1, sponsorPull(state) / ASK_DECAY);
+}
+
+/**
+ * In woorden: hoe goed zit je vraagprijs?
+ *
+ * Gemeten tegen wat jóuw club aankan, niet tegen een vaste lat. Dezelfde €90 voor een bord is
+ * bij een topclub scherp geprijsd en bij een dorpsclub onbetaalbaar, en precies dát verschil
+ * moet je kunnen zien.
+ */
+export function askVerdict(state: GameState, kind: Kind): { woord: string; toon: 'good' | 'neutral' | 'bad' } {
+  const fair = fairPrice(state, kind);
+  if (fair <= 0) return { woord: 'gangbaar', toon: 'neutral' };
+  const q = askPrice(state, kind) / fair / bestAskRatio(state);
+  if (q <= 0.55) return { woord: 'te goedkoop', toon: 'neutral' };
+  if (q <= 0.9) return { woord: 'scherp', toon: 'good' };
+  if (q <= 1.15) return { woord: 'goed gemikt', toon: 'good' };
+  if (q <= 1.5) return { woord: 'stevig', toon: 'neutral' };
+  if (q <= 2.2) return { woord: 'duur', toon: 'bad' };
+  return { woord: 'onbetaalbaar', toon: 'bad' };
 }
 
 function usedNames(state: GameState): Set<string> {
@@ -183,17 +299,30 @@ export function weeklySponsors(state: GameState, rng: Rng): void {
   // 1. antwoorden op gesprekken van vorige week
   for (const p of state.prospects.filter((x) => x.approached)) {
     p.approached = false;
-    const chance = (p.interest / 100) * (0.55 + staffSkill(state, 'commercieel') / 300 + (state.avatar.background === 'ondernemer' ? 0.1 : 0));
+    const basis = (p.interest / 100) * (0.55 + staffSkill(state, 'commercieel') / 300 + (state.avatar.background === 'ondernemer' ? 0.1 : 0));
     const kind = freeKind(state, p.maxKind);
+    // jouw vraagprijs beslist mee: het bedrijf krijgt geen bedrag meer voorgesteld, het
+    // ziet wat jij vraagt en zegt daar ja of nee op
+    const prijs = kind ? askPrice(state, kind) : 0;
+    const chance = kind ? basis * askFactor(state, kind) : 0;
     if (kind && rng.chance(chance)) {
-      const deal = makeDeal(state, rng, kind, undefined, p.name, p.sector);
+      const deal = makeDeal(state, rng, kind, prijs, p.name, p.sector);
       state.sponsorOffers.push({ ...deal, expiresInWeeks: 3 });
       state.prospects = state.prospects.filter((x) => x.id !== p.id);
-      addNews(state, 'goed', `${p.name} (${p.sector.toLowerCase()}) doet een voorstel: ${KIND_LABEL[kind].toLowerCase()}, €${deal.weekly}/week. Zie Sponsors.`);
+      addNews(state, 'goed', `${p.name} (${p.sector.toLowerCase()}) gaat akkoord met je prijs: ${KIND_LABEL[kind].toLowerCase()} voor €${deal.weekly} per week. Zie Sponsors.`);
     } else {
       p.interest = Math.max(5, p.interest - 15);
       p.cooldown = 8;
-      addNews(state, 'neutraal', `${p.name} past${kind ? '' : ' (je hebt geen vrije plaats in hun budgetklasse)'}. Probeer het later opnieuw.`);
+      const teDuur = kind && askFactor(state, kind) < 0.75;
+      addNews(
+        state,
+        'neutraal',
+        !kind
+          ? `${p.name} past: je hebt geen vrije plaats in hun budgetklasse.`
+          : teDuur
+            ? `${p.name} vindt €${prijs} per week te veel voor ${KIND_LABEL[kind].toLowerCase()}. Zakken met je prijs helpt.`
+            : `${p.name} past voorlopig. Probeer het later opnieuw.`,
+      );
     }
   }
 
@@ -204,9 +333,22 @@ export function weeklySponsors(state: GameState, rng: Rng): void {
     if (deal.kind === 'stadion') continue;
     deal.weeksLeft--;
     if (deal.weeksLeft === 8 && deal.satisfaction >= 55 && !state.sponsorOffers.some((o) => o.renewalOf === deal.id)) {
-      const weekly = round(deal.weekly * (0.9 + deal.satisfaction / 400) * rng.range(0.95, 1.1), 5);
-      state.sponsorOffers.push({ ...makeDeal(state, rng, deal.kind, weekly, deal.name), expiresInWeeks: 8, renewalOf: deal.id });
-      addNews(state, 'goed', `${deal.name} wil verlengen aan €${weekly}/week. Zie Sponsors.`);
+      // Een verlenging gaat tegen je huidige prijskaart. Wie tevreden is neemt een verhoging
+      // er nog bij; wie je prijs intussen fors optrok, haakt af en komt terug op je lijst.
+      const weekly = askPrice(state, deal.kind);
+      const rek = 1.15 + deal.satisfaction / 250; // hoeveel meer dan nu hij wil betalen
+      if (weekly <= deal.weekly * rek || rng.chance(askFactor(state, deal.kind) * 0.5)) {
+        state.sponsorOffers.push({ ...makeDeal(state, rng, deal.kind, weekly, deal.name), expiresInWeeks: 8, renewalOf: deal.id });
+        addNews(
+          state,
+          'goed',
+          weekly > deal.weekly
+            ? `${deal.name} wil verlengen, en gaat mee met je nieuwe prijs van €${weekly} per week. Zie Sponsors.`
+            : `${deal.name} wil verlengen aan €${weekly} per week. Zie Sponsors.`,
+        );
+      } else {
+        addNews(state, 'slecht', `${deal.name} verlengt niet: €${weekly} per week vindt hij te veel geworden voor ${KIND_LABEL[deal.kind].toLowerCase()}.`);
+      }
     }
     if (deal.weeksLeft <= 0) addNews(state, 'neutraal', `Het contract met ${deal.name} (${KIND_LABEL[deal.kind].toLowerCase()}) is afgelopen.`);
   }
@@ -223,13 +365,11 @@ export function weeklySponsors(state: GameState, rng: Rng): void {
 
   // 4. af en toe een spontaan aanbod
   const chance = 0.06 + staffSkill(state, 'commercieel') / 600 + state.community.reputation / 1000;
-  if (state.sponsorOffers.length < 4 && rng.chance(chance)) {
-    const kind = freeKind(state, rng.chance(0.8) ? 'bord' : 'shirt');
-    if (kind) {
-      const deal = makeDeal(state, rng, kind);
-      state.sponsorOffers.push({ ...deal, expiresInWeeks: 3 });
-      addNews(state, 'goed', `${deal.name} meldt zich spontaan (${KIND_LABEL[kind].toLowerCase()}). Zie Sponsors.`);
-    }
+  const spontaanKind = freeKind(state, rng.chance(0.8) ? 'bord' : 'shirt');
+  if (state.sponsorOffers.length < 4 && spontaanKind && rng.chance(chance * askFactor(state, spontaanKind))) {
+    const deal = makeDeal(state, rng, spontaanKind, askPrice(state, spontaanKind));
+    state.sponsorOffers.push({ ...deal, expiresInWeeks: 3 });
+    addNews(state, 'goed', `${deal.name} meldt zich spontaan voor ${KIND_LABEL[spontaanKind].toLowerCase()} aan €${deal.weekly} per week. Zie Sponsors.`);
   }
 
   // 5. zoekcampagne van een bureau
@@ -259,6 +399,19 @@ export function weeklySponsors(state: GameState, rng: Rng): void {
 const fail = (message: string): ActionResult => ({ ok: false, message });
 const ok = (message: string): ActionResult => ({ ok: true, message });
 
+/**
+ * Hoe groot de kans is dat dit bedrijf ja zegt als je het deze week benadert.
+ *
+ * Exact dezelfde rekensom als in `weeklySponsors`, zodat het scherm niet iets anders kan
+ * beweren dan er gebeurt. Verandert de formule, dan verandert het percentage mee.
+ */
+export function prospectChance(state: GameState, p: SponsorProspect): { kans: number; kind: Kind | null } {
+  const kind = freeKind(state, p.maxKind);
+  if (!kind) return { kans: 0, kind: null };
+  const basis = (p.interest / 100) * (0.55 + staffSkill(state, 'commercieel') / 300 + (state.avatar.background === 'ondernemer' ? 0.1 : 0));
+  return { kans: clamp(basis * askFactor(state, kind), 0, 1), kind };
+}
+
 export function approachProspect(state: GameState, prospectId: string): ActionResult {
   const p = state.prospects.find((x) => x.id === prospectId);
   if (!p) return fail('Bedrijf niet gevonden.');
@@ -266,6 +419,33 @@ export function approachProspect(state: GameState, prospectId: string): ActionRe
   if (p.cooldown > 0) return fail(`${p.name} wil nog ${p.cooldown} weken niet gestoord worden.`);
   p.approached = true;
   return ok(`Afspraak met ${p.name}. Je krijgt volgende week antwoord.`);
+}
+
+/**
+ * Je vraagprijs voor een soort sponsorplaats zetten.
+ *
+ * Er is geen bovengrens die je tegenhoudt: je mag €5.000 vragen voor een reclamebord. Je
+ * zult er alleen nooit één verkopen, en dat mag je zelf ontdekken — het scherm zegt bij
+ * elk bedrag wat de bedrijven in de streek ervan zullen vinden.
+ */
+export function setSponsorAsk(state: GameState, kind: Kind, weekly: number): ActionResult {
+  if (state.gameOver) return fail('Het spel is afgelopen.');
+  if (kind === 'stadion') return fail('De stadionnaam hoort bij de afspraak met je investeerder; die prijs zet jij niet.');
+  if (!Number.isFinite(weekly) || weekly < 0) return fail('Vul een bedrag per week in.');
+  state.sponsorAsk = { ...state.sponsorAsk, [kind]: Math.round(weekly) };
+  const oordeel = askVerdict(state, kind);
+  return ok(
+    `${KIND_LABEL[kind]}: je vraagt nu €${Math.round(weekly)} per week. Bedrijven in de streek vinden dat ${oordeel.woord} (gangbaar is €${fairPrice(state, kind)}).`,
+  );
+}
+
+/** Terug naar wat de markt normaal vindt. */
+export function resetSponsorAsk(state: GameState, kind: Kind): ActionResult {
+  if (state.gameOver) return fail('Het spel is afgelopen.');
+  const rest = { ...state.sponsorAsk };
+  delete rest[kind];
+  state.sponsorAsk = rest;
+  return ok(`${KIND_LABEL[kind]}: je volgt weer de gangbare prijs van €${fairPrice(state, kind)} per week.`);
 }
 
 export function networkEvening(state: GameState): ActionResult {
@@ -372,12 +552,19 @@ export function renewSponsor(state: GameState, dealId: string): ActionResult {
     d.satisfaction = clamp(d.satisfaction - 5, 0, 100);
     return fail(`${d.name} is niet tevreden genoeg om te verlengen.`);
   }
+  // Verlengen gaat tegen je prijskaart, net als een nieuw contract. Wie tevreden is neemt een
+  // verhoging erbij; wie je prijs intussen fors optrok, zegt nee en je houdt het oude contract.
+  const weekly = askPrice(state, d.kind);
+  const rek = 1.15 + d.satisfaction / 250;
+  if (weekly > d.weekly * rek) {
+    d.satisfaction = clamp(d.satisfaction - 3, 0, 100);
+    return fail(`${d.name} wil niet verlengen aan €${weekly} per week. Dat is te veel meer dan de €${d.weekly} die hij nu betaalt.`);
+  }
   const rng = createRng(state);
-  const [, max] = kindRange(state, d.kind);
-  d.weekly = round(Math.min(max * 1.1, d.weekly * (0.85 + d.satisfaction / 250)), 5);
+  d.weekly = weekly;
   d.weeksLeft += rng.int(52, 104);
   state.sponsorOffers = state.sponsorOffers.filter((o) => o.renewalOf !== d.id);
-  return ok(`${d.name} verlengt: €${d.weekly}/week, nog ${d.weeksLeft} weken.`);
+  return ok(`${d.name} verlengt aan jouw prijs: €${d.weekly} per week, nog ${d.weeksLeft} weken.`);
 }
 
 
@@ -463,9 +650,11 @@ export function sponsorsAfterSeason(state: GameState, rng: Rng, result: 'kampioe
     if (state.sponsorOffers.some((o) => o.renewalOf === d.id)) continue; // er ligt al een voorstel
     // wie voor meerdere seizoenen tekende, zit vast: geen beter voorstel bij een promotie
     if ((d.lockedSeasons ?? 1) > 1 && d.weeksLeft > 52) continue;
-    const [min, max] = kindRange(state, d.kind);
-    const offerValue = round(Math.max(d.weekly * 1.15, rng.range(min, max) * 0.9), 5);
+    // wat hij wil bijleggen, staat op jouw prijskaart: die is intussen meegegroeid met de
+    // nieuwe reeks. Heb je zelf een lager bedrag gezet, dan betaalt hij dat lagere bedrag.
+    const offerValue = askPrice(state, d.kind);
     if (offerValue <= d.weekly) continue;
+    if (offerValue > d.weekly * (1.3 + d.satisfaction / 200)) continue; // te grote sprong ineens
     // hoe tevredener, hoe groter de kans dat hij zelf met een beter voorstel komt
     if (!rng.chance(0.35 + d.satisfaction / 200)) continue;
     state.sponsorOffers.push({ ...makeDeal(state, rng, d.kind, offerValue, d.name, d.sector), expiresInWeeks: 6, renewalOf: d.id });

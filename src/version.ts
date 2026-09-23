@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.30.0';
+export const VERSION = '0.31.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,22 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.31.0',
+    date: '2026-09-23',
+    title: 'Jij hangt de prijskaart aan de muur',
+    items: [
+      'Je zet nu zelf wat elke sponsorplaats per week kost: €80 voor een bord als je dat wil',
+      'Bedrijven bieden geen bedrag meer aan, ze zeggen ja of nee op jouw prijs',
+      'Bij elk bedrag staat meteen wat de bedrijven in de streek ervan vinden, van scherp tot onbetaalbaar',
+      'In de contactenlijst staat per bedrijf de echte kans dat het ja zegt op jouw prijs, en welke plaats het zou krijgen',
+      'Hoe liever bedrijven bij je club horen, hoe minder ze afhaken als je meer vraagt: reputatie, sfeer, populariteit, reeks en je commercieel medewerker bepalen hoeveel ruimte je hebt',
+      'Een dorpsclub kan niets boven het gangbare bedrag vragen; een club met een naam ongeveer 75% meer',
+      'Bovenaan je prijskaart staat in één zin hoeveel ruimte jouw club heeft',
+      'Verlengingen en de voorstellen na een promotie gaan ook tegen jouw prijskaart, niet meer tegen een eigen bedrag',
+      'Doe je niets, dan volgt elke plaats gewoon de gangbare prijs en verandert er niets aan je spel',
+    ],
+  },
   {
     version: '0.30.0',
     date: '2026-09-23',

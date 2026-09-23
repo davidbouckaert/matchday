@@ -1265,13 +1265,33 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 }
 .onboard-head:hover .chev { background: var(--accent-soft); color: var(--accent); }
 
-/* sponsorplaatsen: tien tegels die de volle breedte gebruiken in plaats van drie
-   uitgerekte blokken met een rijtje kleintjes eronder */
-.tiles.slots { grid-template-columns: repeat(auto-fit, minmax(142px, 1fr)); gap: var(--s2); }
-.tiles.slots .tile { padding: var(--s2) var(--s3); gap: 0; }
-.tiles.slots .tile strong { font-size: 1.35rem; }
-.tiles.slots .tile .label { font-size: .66rem; line-height: 1.25; }
-.tiles.slots .tile .small { font-size: .72rem; }
+/* Je prijskaart: per soort plaats een tegel met het bedrag dat jij vraagt.
+   Elke tegel draagt een invoerveld, dus ze mogen niet zo smal worden als de gewone
+   cijfertegels — vandaar 168px in plaats van 142px. */
+.tiles.slots { grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: var(--s2); align-items: stretch; }
+.tiles.slots .tile { padding: var(--s2) var(--s3); gap: 4px; }
+.tiles.slots .tile .label { font-size: .66rem; line-height: 1.25; min-height: 2.2em; }
+/* Het veld moet zich naar de tegel voegen, niet omgekeerd: het attribuut `size` vraagt
+   ruimte voor het grootst mogelijke bedrag, en bij de hoofdsponsor viel de plusknop dan
+   buiten de tegel. Hier mag het tekstvak dus krimpen tot wat er overblijft. */
+.tiles.slots .numfield { width: 100%; }
+.tiles.slots .numrow { justify-content: center; max-width: 100%; }
+.tiles.slots .numbox { flex: 1 1 auto; min-width: 0; }
+.tiles.slots input.numinput { width: 100%; min-width: 0; }
+.tiles.slots .numbtn { flex: 0 0 auto; }
+
+/* het oordeel in één woord: de enige plek waar de kleur iets betekent */
+.slot-verdict { font-weight: 700; font-size: .82rem; }
+.slot-verdict.good { color: var(--good); }
+.slot-verdict.neutral { color: var(--muted); }
+.slot-verdict.bad { color: var(--bad); }
+
+.slot-note, .slot-count { font-size: .72rem; color: var(--faint); }
+.slot-note .link-btn { font-size: .72rem; }
+/* het aantal bezette plaatsen hoort onderaan, ook als de tegel erboven korter is */
+.tiles.slots .tile .slot-count { margin-top: auto; padding-top: 4px; }
+.slot-lock { font-size: .72rem; color: var(--muted); }
+.tile.filled .slot-count { color: var(--good); font-weight: 650; }
 
 /* knoppen die onder elkaar horen in een smalle kolom */
 .stack-btns { display: flex; flex-direction: column; gap: var(--s2); align-items: stretch; }

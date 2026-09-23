@@ -394,7 +394,7 @@ export function declineSponsor(state: GameState, offerId: string): ActionResult 
   return ok('Aanbod geweigerd.');
 }
 
-export { approachProspect, networkEvening, startCampaign, cancelSponsor, askExtra, renewSponsor } from './sponsors';
+export { approachProspect, networkEvening, startCampaign, cancelSponsor, askExtra, renewSponsor, setSponsorAsk, resetSponsorAsk } from './sponsors';
 
 // ---------- Infrastructuur ----------
 

@@ -100,7 +100,7 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Opstelling en tactiek:** 5 formaties, 5 speelstijlen, zelf basisspelers vastzetten of alles automatisch
 - **Nieuwe staff:** assistent-trainer (T2), conditietrainer (T3), keepertrainer, data-analist; bijscholing voor iedereen
 - **Delegeren:** klik een staflid aan en vink taken aan (opstelling, contracten, transfers, sponsorwerving, ticketprijs, evenementen, vrijwilligers)
-- **Sponsors:** eigen tab met bedrijven om te benaderen, netwerkavond, sponsorbureau, tevredenheid, extra bijdrage vragen, verlengen, stopzetten
+- **Sponsors:** eigen tab met je prijskaart (jij zet per plaats wat ze per week kost), bedrijven om te benaderen met de kans dat ze ja zeggen, netwerkavond, sponsorbureau, tevredenheid, extra bijdrage vragen, verlengen, stopzetten
 - **Evenementen:** kost, prognose van de opbrengst, vereist aantal vrijwilligers, uitbetaling na enkele weken
 - **Vrijwilligers werven:** oproep, infoavond, vrijwilligersfeest
 - **Jeugdopleidingscentrum** (3 niveaus) als infrastructuur
@@ -170,6 +170,38 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
 ## Laag 16 (deze versie)
+
+### 0.31.0 — Jij hangt de prijskaart aan de muur
+
+**Tot nu noemde het bedrijf een bedrag en zei jij ja of nee.** Dat is de omgekeerde wereld voor iemand die de club runt: in het echt bepaalt de club wat een bord langs het veld kost, en beslist de bakker om de hoek of hij dat wil betalen. Nu hangt er een prijskaart onder Geld › Sponsors, met per soort plaats één bedrag dat jij zet. Een reclamebord aan €80? Dat mag. Of je er dan één verkoopt, is een andere vraag.
+
+Wat er met je prijs gebeurt, staat er meteen bij: een woord onder elk veld (`scherp`, `goed gemikt`, `stevig`, `duur`, `onbetaalbaar`), en in de contactenlijst per bedrijf het echte percentage dat het ja zegt — dezelfde rekensom die het spel zondag zelf gebruikt, dus het scherm kan niet iets anders beweren dan er gebeurt. Ook de plaats die zo'n bedrijf écht zou krijgen staat erbij: is je hoofdsponsorplaats bezet, dan zakt het een trapje, en dan geldt die prijs.
+
+**De eerste versie was een rechte lijn, en die bleek de keuze zinloos te maken.** Elke procent boven het gangbare bedrag kostte een procent kans. Klinkt eerlijk, maar de opbrengst van een plaats is kans maal prijs, en dat product is bij een rechte lijn altijd precies op het gangbare bedrag het hoogst — voor élke club. Gemeten over een heel seizoen van benaderen en tekenen: €200.988 als je de markt volgt, €202.412 als je 20% meer vraagt. Nog geen procent verschil. Je kon dus aan de knoppen draaien zonder dat het iets deed.
+
+Daarom buigt de curve nu, en hangt de bocht af van hoe graag bedrijven bij jóuw club willen horen — reputatie, sfeer, populariteit, je reeks, je commercieel medewerker. Hetzelfde onderscheid als bij het lidgeld: niet het niveau, maar de helling.
+
+| club | trekkracht | beste prijs | kans bij 1,5× | kans bij 2× |
+|---|---|---|---|---|
+| dorpsclub, slechte naam | 0,80 | 1,00× het gangbare bedrag | 56% | 32% |
+| zoals je begint | 1,12 | 1,26× | 67% | 45% |
+| topclub met naam en commercieel medewerker | 1,60 | 1,76× | 75% | 57% |
+
+En over een volledig seizoen, met elke week het meest geïnteresseerde bedrijf benaderen en elk voorstel tekenen:
+
+| vraagprijs | sponsors na 52 weken | inkomsten per week | totaal seizoen |
+|---|---|---|---|
+| 60% van gangbaar | 24,2 | €3.476 | €184.016 |
+| gangbaar | 22,8 | €4.168 | €200.988 |
+| 150% | 20,8 | €4.524 | €214.817 |
+| 200% | 17,3 | €4.249 | €205.990 |
+| 300% | 12,0 | €3.508 | €181.271 |
+
+Een echte top dus, met een helling aan beide kanten: te goedkoop vult je plaatsen met kleine contracten, te duur laat ze leeg staan. En het uiterste is nooit het beste — dat is precies de fout die in 0.28.0 bij het lidgeld boven kwam, en er staat nu een test op die het voor een zwakke, een gewone en een topclub nameet.
+
+**Jouw prijs geldt overal.** Een verlenging gaat tegen je prijskaart, en een sponsor die je bedrag intussen zag verdubbelen, zegt nee en je houdt gewoon het oude contract. Ook de voorstellen die na een promotie vanzelf binnenkomen, staan op jouw prijs in plaats van op een bedrag dat het spel zelf verzon.
+
+**Wie er niets mee doet, merkt er niets van.** Zonder eigen bedrag volgt elke plaats de gangbare prijs, en dan is de kansfactor precies één. De balans nagemeten: zes van de zes startcombinaties exact gelijk aan voor deze laag.
 
 ### 0.30.0 — Een sterkere club mag meer vragen voor haar jeugd
 
