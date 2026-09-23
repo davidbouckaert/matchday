@@ -1330,15 +1330,22 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .pitch-row .rl-rating { font-size: .95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* Wat je elf nu waard is, boven het veld in plaats van drie kaarten lager. */
-.strength-strip {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s5);
-  padding: var(--s2) 0 var(--s3); margin-bottom: var(--s2);
-  border-bottom: 1px solid var(--line); cursor: help;
+/* Ploegsterkte: het cijfer waar het hele scherm om draait, dus een eigen kader.
+   Als dunne regel tussen de formatiekiezer en het veld las het als een bijschrift. */
+.strength-card {
+  background: var(--sunken); border-radius: var(--radius-sm); border-left: 3px solid var(--accent);
+  padding: var(--s3) var(--s4); margin-bottom: var(--s3); cursor: help;
 }
-.strength-strip .ss-item { display: flex; align-items: baseline; gap: 5px; }
-.strength-strip .cap { font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
-.strength-strip strong { font-size: 1.15rem; font-weight: 750; font-variant-numeric: tabular-nums; }
-.strength-strip .ss-note { margin-left: auto; }
+.strength-card .sc-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s3); margin-bottom: var(--s2); }
+.strength-card .sc-title { font-size: .68rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.strength-card .sc-note { margin-left: auto; }
+.strength-card .sc-items { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s5); }
+.strength-card .sc-item { display: flex; align-items: baseline; gap: 6px; }
+.strength-card .cap { font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
+.strength-card strong { font-size: 1.4rem; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+/* het totaal is de kop van het scherm en mag dat laten zien */
+.strength-card .sc-item.big strong { font-size: 2rem; }
+.strength-card .sc-item.big .cap { color: var(--muted); }
 
 /* Terwijl je wisselt: wat deze speler met je ploegsterkte doet. */
 .sr-delta { font-size: .82rem; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; cursor: help; }

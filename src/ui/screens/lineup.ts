@@ -151,14 +151,19 @@ function pitch(s: GameState, selected: string | null): string {
       </label>
       ${locked ? '' : '<button class="ghost sm" data-action="auto-lineup" ' + tipAttr('Laat alles los: je trainer stelt weer volledig zelf op.') + '>Trainer laten kiezen</button>'}
     </div>
-    <div class="strength-strip" ${tipAttr(
+    <div class="strength-card" ${tipAttr(
       `Wat je huidige elf waard is, vergeleken met een gemiddelde tegenstander in ${DIVISIONS[s.league.divisionLevel].name} (${kommagetal(ref)}). Alles wat je hieronder wisselt, verandert deze cijfers meteen.`,
       'Ploegsterkte',
     )}>
-      <span class="ss-item"><span class="cap">Totaal</span><strong>${kommagetal(st.total)}</strong>${verschil(st.total)}</span>
-      <span class="ss-item"><span class="cap">Aanval</span><strong>${kommagetal(st.attack)}</strong>${verschil(st.attack)}</span>
-      <span class="ss-item"><span class="cap">Verdediging</span><strong>${kommagetal(st.defense)}</strong>${verschil(st.defense)}</span>
-      <span class="ss-note tiny muted">tegenover een gemiddelde tegenstander</span>
+      <div class="sc-head">
+        <span class="sc-title">Ploegsterkte</span>
+        <span class="sc-note tiny muted">tegenover een gemiddelde tegenstander in ${DIVISIONS[s.league.divisionLevel].name}: ${kommagetal(ref)}</span>
+      </div>
+      <div class="sc-items">
+        <span class="sc-item big"><span class="cap">Totaal</span><strong>${kommagetal(st.total)}</strong>${verschil(st.total)}</span>
+        <span class="sc-item"><span class="cap">Aanval</span><strong>${kommagetal(st.attack)}</strong>${verschil(st.attack)}</span>
+        <span class="sc-item"><span class="cap">Verdediging</span><strong>${kommagetal(st.defense)}</strong>${verschil(st.defense)}</span>
+      </div>
     </div>
     <div class="pitch">${rows.join('')}</div>
     <p class="pitch-legend tiny muted">

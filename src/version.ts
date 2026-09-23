@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.31.0';
+export const VERSION = '0.31.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.31.1',
+    date: '2026-09-23',
+    title: 'Je ploegsterkte staat in een eigen kader',
+    items: [
+      'Ploegsterkte, aanval en verdediging stonden als een dunne regel tussen de formatiekiezer en het veld, en lazen als een bijschrift',
+      'Ze staan nu in een eigen kader met een titel, en het totaal is het grootste cijfer van het scherm',
+      'De sterkte van een gemiddelde tegenstander in je reeks staat er meteen bij, in plaats van alleen in de uitleg',
+    ],
+  },
   {
     version: '0.31.0',
     date: '2026-09-23',
