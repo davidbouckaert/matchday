@@ -10,6 +10,7 @@ npm run dev        # speel op http://localhost:5173
 npm test           # unit tests (Mocha + Chai)
 npm run typecheck  # TypeScript-controle
 npm run balance    # simuleert passief spel voor elke club/investeerder
+npm run investors  # rekent door wat elke investeerder over zes seizoenen waard is
 npm run build      # productieversie in dist/
 ```
 
@@ -168,7 +169,23 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 12 (deze versie)
+## Laag 13 (deze versie)
+
+### 0.20.0 — Drie investeerders, drie verschillende spellen
+
+**Het probleem.** Er waren drie investeerders met drie bedragen: €600.000, €150.000 en €60.000. De voorwaarden verschilden op papier, maar in de praktijk was er weinig reden om níét voor het fonds te kiezen. Het grootste bedrag kocht het meeste, en de nadelen (een promotie-eis die zelden beet, 30% van je transferwinst) waren te zacht om daar tegenop te wegen. De bedoeling is niet dat alle drie evenveel opleveren, wel dat ze een ander spel zijn.
+
+**Het fonds: veel geld nu, en een klok die blijft lopen.** Naast 30% van elke transferwinst nemen ze nu ook 20% van je prijzengeld, en daar valt niet aan te ontkomen — je kunt geen transfers laten om ze te ontwijken. De promotie-eis werkt weer: promoveer je drie seizoenen niet, dan trekken ze €300.000 terug en stappen ze op. De klok begint opnieuw bij elke promotie, dus de druk verdwijnt niet nadat je één keer geleverd hebt; het seizoen vóór de deadline krijg je een waarschuwing. En ligt er een stevig bod op een speler van 24 of jonger, dan tekenen zij zelf en hoor jij het achteraf. Het geld komt wel binnen — min hun aandeel, en min wat het met je kleedkamer en je tribune doet.
+
+**De aannemer: matig geld, maar bouwen is zijn vak.** Zijn firma voert je werken uit, dus die kosten 15% minder en zijn een kwart sneller klaar, en je mag drie werven tegelijk open hebben in plaats van twee. Zijn naam op het stadion stond vroeger vast op €600 per week, waardoor zijn belangrijkste voordeel met elke promotie mínder waard werd terwijl de plek van de stadionsponsor wel bezet bleef. Die bijdrage schaalt nu mee met je reeks, en je krijgt er een bericht van als je stijgt of zakt.
+
+**De coöperatie: bijna geen geld, maar een club die van de buurt is.** €60.000 om mee te beginnen, en daarna elk seizoen één ledenronde in de voorbereiding. Wat die opbrengt hangt af van je achterban, je reputatie en de sfeer — honderden kleine aandeelhouders uit de streek, dezelfde mensen die zondag aan de kassa staan. Elke ronde vraagt wat meer van dezelfde mensen (8% minder per keer) en kost een beetje sfeer. Daarbovenop tellen je vrijwilligers zwaarder door: het plafond op de vrijwilligersfactor ligt bij de coöperatie op 1,35 in plaats van 1,15. Wie zijn club echt laat groeien, haalt hier op termijn meer uit dan het fonds ooit gaf.
+
+**Gemeten over zes seizoenen aan dezelfde club.** Een club die groeit en om de twee seizoenen promoveert: aannemer +€695.000, fonds +€594.000, coöperatie +€499.000. Dezelfde club die stilstaat en niet promoveert: aannemer +€489.000, fonds +€300.000 (de terugtrekking meegerekend), coöperatie +€167.000. Het fonds is dus nog steeds het meeste geld op dag één, maar het is het enige van de drie waar je slechter uitkomt door níéts te doen. De aannemer betaalt zich terug in steen, de coöperatie in mensen — en beide alleen als je er iets mee doet. Op de balanscontrole (40 partijen van drie seizoenen, passief gespeeld) verandert er niets aan de hardheid: Zuidrand 35/9/38 failliet, Heidebeke 3/0/32.
+
+**In de schermen.** Bovenaan Financiën staat een investeerderskaart die in één zin zegt wat jouw investeerder voor je club betekent, met de actuele cijfers erin: bij het fonds hoeveel seizoenen je nog hebt, bij de aannemer wat de stadionnaam nu opbrengt, bij de coöperatie wat een ledenronde ongeveer zou opleveren en de knop om ze te houden. De handleiding heeft een item "Welke investeerder kies ik het best?" dat de drie naast elkaar zet.
+
+## Laag 12
 
 ### 0.19.0 — Twee snelheden, vooruitkijken en beslissingen die blijven hangen
 

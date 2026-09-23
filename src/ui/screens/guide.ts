@@ -85,6 +85,18 @@ function faq(): QA[] {
         (met de volledige opstelling eronder) en in de kolom Goals bij Ploeg › Selectie.`,
     },
     {
+      q: 'Welke investeerder kies ik het best?',
+      a: `Dat hangt af van hoe je wilt spelen, niet van wie het meeste geeft. Het fonds zet €600.000 op tafel in week één — veruit het meeste,
+        en meteen bruikbaar voor spelers of een tribune. Maar er hangt een klok aan: promoveer je niet om de drie seizoenen, dan trekt het
+        €300.000 terug en stapt het op. Bovendien gaat 30% van elke transferwinst en 20% van je prijzengeld naar hen, en bij een stevig bod
+        op een jonge speler tekenen zij zonder het je te vragen. De aannemer geeft €150.000, maar zijn stadionnaam groeit mee met je reeks
+        (€600/week in 3de nationale, €2.400 in de Challenger Pro Liga), bouwwerken kosten 15% minder en zijn een kwart sneller klaar, en je
+        mag drie werven tegelijk open hebben. Wie bouwt en klimt, haalt daar over zes seizoenen meer uit dan het fonds geeft. De coöperatie
+        geeft maar €60.000, maar je kunt elk seizoen een ledenronde houden die groeit met je supporters, je reputatie en de sfeer: bij een
+        club die goed draait loopt dat op tot boven de €400.000 over zes seizoenen, bij een club die stilstaat blijft het onder de €110.000.
+        Ruw samengevat: het fonds geeft je nú geld en een deadline, de aannemer beloont bouwen, de coöperatie beloont goed besturen.`,
+    },
+    {
       q: 'Wat zijn abonnementen en wanneer verkoop ik ze?',
       a: `Voor de competitie start (tot en met week 6) kun je op Club › Financiën één keer een abonnementencampagne voeren. Je kiest de prijs,
         het geld komt meteen binnen, en die mensen betalen de rest van het seizoen niet meer aan de kassa — ook niet als je je ticketprijs verhoogt,

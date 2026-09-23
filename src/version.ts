@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.19.0';
+export const VERSION = '0.20.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,21 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.20.0',
+    date: '2026-09-23',
+    title: 'Drie investeerders, drie verschillende spellen',
+    items: [
+      'De stadionnaam van de aannemer groeit mee met je reeks in plaats van vast te staan op €600/week',
+      'Bij de aannemer zijn bouwwerken ook een kwart sneller klaar, en mag je drie werven tegelijk open hebben',
+      'Het fonds neemt voortaan ook 20% van je prijzengeld, en daar valt niet aan te ontkomen',
+      'Het fonds tekent zelf voor een stevig bod op een jonge speler; jij hoort het achteraf',
+      'De promotie-eis van het fonds keert terug: de klok begint opnieuw bij elke promotie',
+      'De coöperatie kan elk seizoen een ledenronde houden, die groeit met je supporters, reputatie en sfeer',
+      'Bij de coöperatie tellen vrijwilligers zwaarder door: het plafond ligt daar op 1,35 in plaats van 1,15',
+      'Je financiënscherm vertelt nu altijd wat jouw investeerder voor je club betekent',
+    ],
+  },
   {
     version: '0.19.0',
     date: '2026-09-23',
