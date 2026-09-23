@@ -40,6 +40,7 @@ import { initNumFields } from './numfield';
 import { header, playBar } from './header';
 import { applyTheme, schemeById } from './theme';
 import { impactChips } from './impact';
+import { sortRows } from './tablesort';
 import { upgradeImpact } from '../engine/impact';
 import { esc, euro } from './format';
 
@@ -260,6 +261,9 @@ function render(): void {
     ${!ui.report && !ui.fastForward && !(g.opening && !g.opening.done) && ui.moment !== 'dicht' && g.weekChoice ? momentOverlay(g, ui.moment === 'gevolg' ? 'gevolg' : 'vraag') : ''}
     ${toast}`;
   restoreFocus(focused);
+  // Staat er een venster open, dan zit de tooltip rechtsonder precies voor de knop van dat
+  // venster. Hij wijkt dan uit naar links; de stylesheet regelt de rest.
+  document.documentElement.classList.toggle('overlay-open', !!root.querySelector('.overlay, .moment-overlay'));
   applySorts();
   measureBars();
   rollNumbers();
@@ -428,21 +432,8 @@ function applySorts(): void {
     headers[sort.col]?.classList.add(sort.dir === 1 ? 'asc' : 'desc');
     const body = table.tBodies[0];
     if (!body) return;
-    const rows = [...body.rows];
-    const value = (row: HTMLTableRowElement) => {
-      const cell = row.cells[sort.col];
-      if (!cell) return '';
-      const raw = cell.dataset.v ?? cell.textContent?.trim() ?? '';
-      const num = Number(raw.replace(/[€\s]/g, '').replace(/\./g, '').replace(',', '.').match(/^[+-]?\d+(\.\d+)?/)?.[0]);
-      return Number.isFinite(num) && /^[+\-€\d]/.test(raw.trim()) ? num : raw.toLowerCase();
-    };
-    rows.sort((a, b) => {
-      const va = value(a);
-      const vb = value(b);
-      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * sort.dir;
-      return String(va).localeCompare(String(vb), 'nl') * sort.dir;
-    });
-    rows.forEach((r) => body.appendChild(r));
+    // het eigenlijke sorteren staat in tablesort.ts, zodat het te testen is zonder browser
+    for (const row of sortRows([...body.rows], sort.col, sort.dir)) body.appendChild(row);
   });
 }
 

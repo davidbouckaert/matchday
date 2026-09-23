@@ -410,7 +410,7 @@ td.mu-1 { color: var(--bad); font-weight: 600; }
 }
 
 .overlay { position: fixed; inset: 0; background: rgba(10, 16, 12, 0.55); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; }
-.anim-card, .report-card { background: var(--card); border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.35); width: min(760px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
+.anim-card, .report-card { background: var(--card); border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.35); width: min(920px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
 .anim-card { padding: 24px; text-align: center; width: min(420px, 100%); cursor: pointer; }
 .anim-card h2 { margin: 4px 0 12px; }
 .pitch { width: 100%; height: auto; }
@@ -430,9 +430,36 @@ td.mu-1 { color: var(--bad); font-weight: 600; }
 .anim-text { font-weight: 600; margin-top: 10px; animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .ball-move, .anim-text, .pitch .goal { animation: none; } }
-.report-card { padding: 20px; }
-.report-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+/* Het kader scrollt niet zelf meer: de kop en de knoppenbalk blijven staan en alleen het
+   middenstuk schuift. Zo staat "Naar je bureau" er ook na een drukke week nog, in plaats
+   van onder duizend pixels nieuws. */
+.report-card { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+.report-head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  padding: 18px 20px 12px; border-bottom: 1px solid var(--line); flex: none;
+}
 .report-head h2 { margin: 0; }
+.report-body { flex: 1 1 auto; overflow-y: auto; padding: 0 20px 4px; overscroll-behavior: contain; }
+.report-foot {
+  flex: none; display: flex; justify-content: flex-end; gap: var(--s2);
+  padding: 12px 20px 16px; border-top: 1px solid var(--line); background: var(--card);
+}
+.report-foot .primary { padding: 11px 24px; font-size: 1rem; }
+
+/* Binnen en buiten naast elkaar, elk met zijn eigen som. */
+.money-split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+.money-side h4 {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); flex-wrap: nowrap;
+  margin: 0 0 6px; font-size: .72rem; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--faint);
+  padding-bottom: 4px; border-bottom: 1px solid var(--line);
+}
+.money-side h4 .num { font-size: .95rem; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
+.money-side table td { padding: 5px var(--s2); font-size: .88rem; }
+.money-bottom { margin-top: var(--s3); border-top: 2px solid var(--line); }
+.money-bottom td { padding-top: 8px; }
+@media (max-width: 680px) { .money-split { grid-template-columns: 1fr; } }
+
 .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
 .report-grid .wide { grid-column: 1 / -1; }
 .report-grid h3 { margin-top: 0; }
@@ -900,6 +927,9 @@ tr.benched td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
 .tip-panel.on { opacity: 1; transform: none; }
 .tip-panel .tip-title { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; opacity: .65; }
 @media (prefers-reduced-motion: reduce) { .tip-panel { transition: none; } }
+/* Met een venster open staat de speelbalk er niet toe: de tooltip zakt naar de onderrand,
+   en wijkt naar links zodat hij de knop van dat venster niet afdekt. */
+:root.overlay-open .tip-panel { right: auto; left: var(--s4); bottom: var(--s4); z-index: 41; }
 @media (max-width: 700px) { .tip-panel { left: var(--s3); right: var(--s3); width: auto; bottom: calc(var(--playbar-h, 0px) + var(--s2)); } }
 
 /* ==========================================================================
@@ -1465,7 +1495,7 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .pick-cell { white-space: nowrap; }
 
 /* de kaartjesrij bovenaan het weekrapport */
-.report-chips { padding: 0 var(--s5) var(--s3); }
+.report-chips { padding: var(--s3) 0; }
 .report-chips .effect { font-size: .88rem; padding: 5px 12px; }
 
 /* ==========================================================================

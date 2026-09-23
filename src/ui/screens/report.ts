@@ -177,7 +177,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
     ? s.league.fixtures.filter((f) => f.week === prev.week && f.homeGoals !== undefined && f.homeId !== OWN_TEAM_ID && f.awayId !== OWN_TEAM_ID)
     : [];
   const othersHtml = others.length
-    ? `<details><summary class="small">Andere uitslagen (${others.length})</summary><ul class="small plain">${others
+    ? `<details><summary class="small">De andere ${others.length} wedstrijden van deze speeldag</summary><ul class="small plain">${others
         .map((f) => `<li>${esc(teamName(s, f.homeId))} ${f.homeGoals}-${f.awayGoals} ${esc(teamName(s, f.awayId))}</li>`)
         .join('')}</ul></details>`
     : '';
@@ -188,10 +188,34 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   const sorted = [...byCat.entries()].sort((a, b) => b[1] - a[1]);
   const net = sorted.reduce((sum, [, v]) => sum + v, 0);
   const roll = (value: number, signed = true) => `<span class="roll" data-to="${Math.round(value)}" data-signed="${signed ? 1 : 0}">${euro(0)}</span>`;
+  // Binnen en buiten uit elkaar, met een subtotaal per kant.
+  //
+  // Het was één lijst van twaalf categorieën door elkaar, van +€26.000 tot −€42.000, waarin
+  // je zelf moest optellen wat er eigenlijk binnenkwam. Twee kolommen met elk hun eigen
+  // som beantwoorden de twee vragen die je hebt: wat bracht het op, en waar ging het heen.
+  const inkomsten = sorted.filter(([, v]) => v > 0);
+  const uitgaven = sorted.filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]);
+  const totaalIn = inkomsten.reduce((sum, [, v]) => sum + v, 0);
+  const totaalUit = uitgaven.reduce((sum, [, v]) => sum + v, 0);
+  const kant = (titel: string, rijen: [LedgerCategory, number][], totaal: number, klasse: string) =>
+    `<div class="money-side">
+      <h4>${titel}<span class="num ${klasse}">${roll(totaal)}</span></h4>
+      ${
+        rijen.length
+          ? `<table class="compact"><tbody>${rijen.map(([k, v]) => `<tr><td>${k}</td><td class="num ${klasse}">${roll(v)}</td></tr>`).join('')}</tbody></table>`
+          : '<p class="muted small">Niets deze week.</p>'
+      }
+    </div>`;
+
   const financeHtml = sorted.length
-    ? `<table class="compact"><tbody>${sorted.map(([k, v]) => `<tr><td>${k}</td><td class="num ${v < 0 ? 'neg' : 'pos'}">${roll(v)}</td></tr>`).join('')}
-        <tr class="total"><td>Saldo van de week</td><td class="num ${net < 0 ? 'neg' : 'pos'}">${roll(net)}</td></tr>
-        <tr><td>Nieuw saldo</td><td class="num"><strong>${roll(s.cash, false)}</strong></td></tr></tbody></table>`
+    ? `<div class="money-split">
+        ${kant('Binnengekomen', inkomsten, totaalIn, 'pos')}
+        ${kant('Uitgegeven', uitgaven, totaalUit, 'neg')}
+      </div>
+      <table class="compact money-bottom"><tbody>
+        <tr class="total"><td>Overgehouden deze week</td><td class="num ${net < 0 ? 'neg' : 'pos'}">${roll(net)}</td></tr>
+        <tr><td>Op de rekening</td><td class="num"><strong>${roll(s.cash, false)}</strong></td></tr>
+      </tbody></table>`
     : '<p class="muted">Geen boekingen.</p>';
 
   // jaaroverzicht op het einde van het seizoen: zie je groei in één oogopslag
@@ -264,25 +288,46 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
     kaartjes.push({ icon: '🎉', label: 'Mijlpalen', value: `${s.lastMilestones.length}`, tone: 'good', tip: s.lastMilestones.join(' · ') });
   }
 
+  /**
+   * De kop en de knop blijven staan, de rest scrollt ertussen.
+   *
+   * Een drukke week maakt dit rapport lang, en dan stond "Naar je bureau" onderaan buiten
+   * beeld: je moest langs alles scrollen om verder te kunnen. Nu plakken de kop en de
+   * knoppenbalk aan het kader, zodat je op elk moment weg kunt.
+   *
+   * De volgorde volgt wat je wil weten, van dringend naar naslag: eerst de kaartjes met de
+   * uitslag en het resultaat, dan de wedstrijd, dan het geld, en pas daarna wat er verder
+   * gebeurde. De twee lijsten die het langst worden — de andere uitslagen en wat er in
+   * afwachting staat — zijn ingeklapt zodra ze meer dan een handvol regels tellen.
+   */
+  const afwachtingHtml = !waiting.length
+    ? '<p class="muted">Niets in afwachting.</p>'
+    : waiting.length <= 5
+      ? `<ul class="small reveal-lines">${waiting.map((w) => `<li>${w}</li>`).join('')}</ul>`
+      : `<details><summary class="small">${waiting.length} dingen lopen nog</summary>
+          <ul class="small">${waiting.map((w) => `<li>${w}</li>`).join('')}</ul></details>`;
+
   return `<div class="overlay">
     <div class="report-card" role="dialog" aria-label="Weekrapport">
       <div class="report-head">
         <div><h2>Weekrapport</h2><span class="muted small">Week ${prev.week} · ${formatDateLong(s.startYear, prev.season, prev.week)}</span></div>
-        <button class="sm ghost" data-action="close-report">Sluiten ✕</button>
+        <button class="sm ghost" data-action="close-report" data-tip="Sluit het rapport en blijf waar je was">Sluiten ✕</button>
       </div>
-      <div class="report-chips">${impactChips(kaartjes, 6)}</div>
-      <div class="report-grid">
-        ${seasonReview}
-        ${milestones}
-        ${records}
-        <section><h3>Wedstrijd</h3>${matchHtml}${othersHtml}</section>
-        <section><h3>Financiën</h3>${financeHtml}</section>
-        ${s.lastChoice ? `<section class="wide moment-result"><h3>📌 Weekmoment — ${esc(s.lastChoice.title)}</h3><p class="small">${esc(s.lastChoice.outcome)}</p></section>` : ''}
-        <section class="wide"><h3>Nieuws en berichten</h3>${newsHtml}</section>
-        <section class="wide"><h3>In afwachting</h3>${waiting.length ? `<ul class="small reveal-lines">${waiting.map((w) => `<li>${w}</li>`).join('')}</ul>` : '<p class="muted">Niets in afwachting.</p>'}</section>
+      <div class="report-body">
+        <div class="report-chips">${impactChips(kaartjes, 6)}</div>
+        <div class="report-grid">
+          ${seasonReview}
+          ${milestones}
+          ${records}
+          <section class="wide"><h3>De wedstrijd</h3>${matchHtml}${othersHtml}</section>
+          <section class="wide"><h3>Geld</h3>${financeHtml}</section>
+          ${s.lastChoice ? `<section class="wide moment-result"><h3>📌 Weekmoment — ${esc(s.lastChoice.title)}</h3><p class="small">${esc(s.lastChoice.outcome)}</p></section>` : ''}
+          <section class="wide"><h3>Nieuws${news.length ? ` <span class="tag">${news.length}</span>` : ''}</h3>${newsHtml}</section>
+          <section class="wide"><h3>Loopt nog${waiting.length ? ` <span class="tag">${waiting.length}</span>` : ''}</h3>${afwachtingHtml}</section>
+        </div>
       </div>
-      <div class="actions">
-        <button class="primary" data-action="report-overview">Naar het overzicht</button>
+      <div class="report-foot">
+        <button class="primary" data-action="report-overview">Naar je bureau ▸</button>
       </div>
     </div>
   </div>`;

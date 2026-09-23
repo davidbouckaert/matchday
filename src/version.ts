@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.26.0';
+export const VERSION = '0.27.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,23 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.27.0',
+    date: '2026-09-23',
+    title: 'Sorteren werkt weer, en het weekrapport heeft een volgorde',
+    items: [
+      'Bug: sorteren op tevredenheid gaf een willekeurige volgorde — een kommagetal als 60,34 werd gelezen als 6.034.210.371',
+      'Bug: een kolom met getallen én een streepje wisselde halverwege van vergelijkingsmethode, waardoor de volgorde onvoorspelbaar werd',
+      'Bug: sorteren op naam nam ook de kaartjes achter de naam mee, dus A–Z liep door elkaar',
+      'Lege cellen staan nu altijd onderaan, en gelijke waarden houden hun oorspronkelijke volgorde',
+      'Elke sorteerbare kolom in twaalf tabellen is nagelopen',
+      'Het weekrapport heeft een leesvolgorde gekregen: eerst de uitslag, dan de wedstrijd, dan het geld, dan de rest',
+      'Het geldoverzicht splitst nu in wat binnenkwam en wat uitging, elk met een eigen subtotaal',
+      'De knop "Naar je bureau" en de kop blijven staan: na een drukke week stond die knop buiten beeld',
+      'Lange lijsten in het rapport klappen dicht zodra ze meer dan vijf regels tellen',
+      'De tooltip wijkt uit naar links als er een venster openstaat, zodat hij de knop niet meer afdekt',
+    ],
+  },
   {
     version: '0.26.0',
     date: '2026-09-23',

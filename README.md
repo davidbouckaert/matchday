@@ -171,6 +171,24 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.27.0 — Sorteren werkt weer, en het weekrapport heeft een volgorde
+
+**Sorteren was op drie manieren stuk,** en ze versterkten elkaar.
+
+De eerste is de zichtbaarste. De sorteerfunctie haalde de duizendpunten uit elk getal — nodig voor "€1.234" — maar deed dat ook met een `data-v` die rechtstreeks uit een JavaScript-getal komt. De tevredenheid van een sponsor is een kommagetal, dus `data-v="60.34210371"` werd 6.034.210.371. Elke sponsor kreeg een willekeurig getal van tien cijfers, en de kolom stond volledig door elkaar.
+
+De tweede verklaart waarom het ook elders misging. De functie besliste *per cel* of die een getal was. Een kolom met één streepje ertussen leverde dus deels getallen en deels tekst op, en de vergelijking viel dan terug op tekst — maar alleen voor dát paar. Een sorteervergelijking die niet voor alle paren hetzelfde doet is niet transitief, en dan mag de browser er elke volgorde uit laten komen. Dat deed hij ook, en niet twee keer dezelfde.
+
+De derde is de A–Z-klacht. Bij tekst nam de functie de volledige inhoud van de cel, en in de spelerstabel staat daar naast de naam ook ★, "eigen jeugd", "2 wedstrijden geschorst" en zijn karakter in.
+
+Het sorteren staat nu in `src/ui/tablesort.ts`. Dat bepaalt het soort van de héle kolom in één keer — pas als elke gevulde cel een getal oplevert is het een getallenkolom — laat `data-v` ongemoeid omdat wij dat zelf schrijven, en neemt bij tekst alleen de kop van de cel. Lege cellen staan altijd onderaan, ook omgekeerd, want "geen waarde" is geen kleine waarde. Gelijke waarden houden hun oorspronkelijke volgorde. Zestien tests leggen dit vast, en een doorloop klikt elke sorteerbare kolom in twaalf tabellen twee keer aan en controleert de uitkomst.
+
+**Het weekrapport had veel data en weinig volgorde.** Nu leest het van dringend naar naslag: de kaartjes met je resultaat en de uitslag, dan de wedstrijd over de volle breedte, dan het geld, en pas daarna het nieuws en wat er nog loopt. Het geldoverzicht was één lijst van twaalf categorieën door elkaar, van +€26.000 tot −€42.000, waarin je zelf moest optellen wat er binnenkwam. Het staat nu in twee kolommen — binnengekomen en uitgegeven — elk met een eigen subtotaal, met daaronder wat je overhield.
+
+En de knop stond buiten beeld. Een drukke week maakt dit rapport twaalfhonderd pixels lang, en dan moest je langs alles scrollen om verder te kunnen. De kop en de knoppenbalk plakken nu aan het kader en alleen het middenstuk schuift; de knop heet voortaan "Naar je bureau". De twee lijsten die het langst worden — de andere uitslagen en wat er in afwachting staat — klappen dicht zodra ze meer dan vijf regels tellen.
+
+Daarbij viel nog iets op: de tooltip rechtsonder dekte precies de knop van het rapport af. Staat er een venster open, dan wijkt hij nu uit naar links.
+
 ### 0.26.0 — Taal die je begrijpt zonder voorkennis
 
 **Waar zet ik mijn ticketprijs?** Dat bleek niet te beantwoorden zonder te zoeken. De ticketprijs stond halverwege Financiën tussen tien andere kaarten, de abonnementen bovenaan datzelfde scherm, en het jeugdlidgeld onder Clubinfo tussen de clubgeschiedenis en de kerncijfers. Drie beslissingen van dezelfde soort — jij zet een prijs, iemand anders beslist of hij die betaalt — op drie plekken. Ze staan nu samen onder **Geld › Tickets en lidgeld**, met bij elk hetzelfde: wat het nu opbrengt, wat gangbaar is, en wat er gebeurt als je schuift. Op de oude plekken staat een regel met de huidige waarde en een knop ernaartoe.
