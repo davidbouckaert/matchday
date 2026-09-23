@@ -44,7 +44,7 @@ import { runDelegatedTasks, strategyTask } from './delegation';
 import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
 import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from './factors';
 import { available, cardsForOpponent, cardsForOwnTeam, serveOpponentSuspensions, serveOwnSuspensions } from './discipline';
-import { YOUTH_FEE_REF, YOUTH_FEE_WEEK, youthForecast } from './actions';
+import { YOUTH_FEE_WEEK, youthFeeGrumble, youthFeeRef, youthForecast } from './actions';
 import { BIJSCHOLING } from './data/catalog';
 
 export function advanceWeek(previous: GameState): GameState {
@@ -60,7 +60,7 @@ export function advanceWeek(previous: GameState): GameState {
   book(state, 'trainingen', -trainingCost(state), `${state.tactics.trainings} trainingen (velden, licht, materiaal)`);
   payPending(state);
   playMatchWeek(state, rng);
-  scheduledPayments(state);
+  scheduledPayments(state, rng);
   weeklyMerch(state, rng);
   resolveRequests(state, rng);
   weeklyCommunity(state);
@@ -342,7 +342,7 @@ function payPending(state: GameState): void {
 
 // ---------- Vaste momenten in het jaar ----------
 
-function scheduledPayments(state: GameState): void {
+function scheduledPayments(state: GameState, rng: Rng): void {
   const c = state.community;
   if (state.week === BOND_FEE_WEEK) {
     const fee = (5000 + state.players.length * 150 + c.youthMembers * 22 + c.youthTeams * 400) * (1 + state.league.divisionLevel * 0.35) * state.inflation;
@@ -350,12 +350,15 @@ function scheduledPayments(state: GameState): void {
   }
   if (state.week === YOUTH_FEE_WEEK) {
     const before = c.youthMembers;
-    c.youthMembers = youthForecast(state);
+    // De inschrijvingen zijn een schatting, geen afspraak. Het scherm toont wat je mág
+    // verwachten; wat er die week binnenkomt hangt ook af van hoeveel kinderen er dit jaar
+    // toevallig in de juiste leeftijd zitten en wat de club in het dorp ernaast doet.
+    c.youthMembers = Math.max(0, Math.round(youthForecast(state) * rng.range(0.88, 1.12)));
     book(state, 'lidgelden', c.youthMembers * state.youthFee, `Lidgelden jeugd (${c.youthMembers} × €${state.youthFee})`);
     const diff = c.youthMembers - before;
     addNews(state, diff >= 0 ? 'goed' : 'slecht', `Inschrijvingen jeugd: ${c.youthMembers} leden (${diff >= 0 ? '+' : ''}${diff} tegenover vorig seizoen) aan €${state.youthFee}.`);
-    if (state.youthFee > YOUTH_FEE_REF * 1.5) c.fanMood = clamp(c.fanMood - 3, 0, 100);
-    if (state.youthFee < YOUTH_FEE_REF * 0.7) c.reputation = clamp(c.reputation + 1, 0, 100);
+    if (state.youthFee > youthFeeGrumble(state)) c.fanMood = clamp(c.fanMood - 3, 0, 100);
+    if (state.youthFee < youthFeeRef(state) * 0.7) c.reputation = clamp(c.reputation + 1, 0, 100);
     // ploegen volgen de leden, maar één stap per seizoen: een nieuwe reeks moet je ook kunnen bemannen
     const change = updateYouthTeams(state);
     if (change > 0) {

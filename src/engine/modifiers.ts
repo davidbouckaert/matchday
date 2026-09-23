@@ -25,7 +25,7 @@ import { devComponents, teamStrength } from './players';
 import { boardSaturation } from './sponsors';
 import { staffSkill } from './staff';
 import { scoutingReport } from './strategy';
-import { YOUTH_FEE_REF, upgradeCost, youthPriceFactor, youthTarget } from './actions';
+import { upgradeCost, youthFeeRef, youthPriceFactor, youthTarget } from './actions';
 
 export interface ModifierGroup {
   title: string;
@@ -147,7 +147,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
 
   // ---------- Jeugd ----------
   const coord = staffSkill(state, 'jeugdcoordinator');
-  const priceF = youthPriceFactor(state.youthFee);
+  const priceF = youthPriceFactor(state.youthFee, youthFeeRef(state));
   groups.push({
     title: 'Jeugdleden',
     explain: 'Het aantal leden schuift elk seizoen (inschrijvingen in week 10) half op naar dit niveau.',
@@ -156,7 +156,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
       plus('Reputatie', Math.round(c.reputation * 2), `reputatie ${Math.round(c.reputation)}`),
       plus('Jeugdcoördinator', Math.round(coord * 1.5), coord ? `vaardigheid ${Math.round(coord)}` : 'geen'),
       plus('Opleidingscentrum', state.infrastructure.academyLevel * 40, `niveau ${state.infrastructure.academyLevel}`),
-      x('Lidgeld', priceF, `€${state.youthFee} (gangbaar €${YOUTH_FEE_REF})`),
+      x('Lidgeld', priceF, `jij vraagt €${state.youthFee}, gangbaar op dit niveau is €${youthFeeRef(state)}`),
     ],
     result: `Op termijn ~${youthTarget(state)} leden (nu ${c.youthMembers})`,
   });

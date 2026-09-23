@@ -346,8 +346,9 @@ describe('Lidgeld jeugd', () => {
     const expected = actions.youthForecast(s);
     s = playWeeks(s, 10);
     const entry = s.lastWeek.find((e) => e.category === 'lidgelden')!;
-    // de prognose beweegt lichtjes mee met populariteit en sfeer in die tien weken
-    expect(s.community.youthMembers).to.be.within(expected * 0.9, expected * 1.1);
+    // de prognose beweegt mee met populariteit en sfeer in die tien weken, en de
+    // inschrijvingen zelf hebben sinds 0.28.0 een toevalsmarge van ongeveer 12%
+    expect(s.community.youthMembers).to.be.within(expected * 0.8, expected * 1.25);
     expect(entry.amount).to.equal(s.community.youthMembers * 300);
   });
 });
@@ -853,8 +854,12 @@ describe('Delegeren, sponsors en tickets', () => {
     actions.hireStaff(s, coach.id);
     actions.delegateTask(s, 'jeugd', coach.id);
     runDelegatedTasks(s, createRng(s));
-    expect(s.youthFee).to.be.within(100, 500);
-    expect(actions.youthForecast(s) * s.youthFee).to.be.above(actions.youthForecast(s, 500) * 500 * 0.9);
+    const ref = actions.youthFeeRef(s);
+    expect(s.youthFee, 'hij blijft binnen een redelijke band rond het gangbare bedrag').to.be.within(Math.round(ref * 0.5), Math.round(ref * 2.2));
+    // en hij kiest beter dan allebei de uitersten van die band
+    const opbrengst = (fee: number) => actions.youthTarget(s, fee) * fee;
+    expect(opbrengst(s.youthFee)).to.be.above(opbrengst(Math.round(ref * 0.5)));
+    expect(opbrengst(s.youthFee)).to.be.above(opbrengst(Math.round(ref * 2.2)));
   });
 
   it('de kinesist schroeft de belasting terug bij een vermoeide groep', () => {

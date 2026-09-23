@@ -10,6 +10,7 @@ import { CANTEEN_ITEMS } from '../engine/data/catalog';
 import { emptyStats } from '../engine/stats';
 import { createOpening } from '../engine/opening';
 import { teamsFor } from '../engine/youth';
+import { maxYouthFee } from '../engine/actions';
 import { buildWorld } from '../engine/world';
 import { emptyCareer, emptyOwner, levelFor } from '../engine/career';
 import { emptyInvestorState, stadiumSponsorWeekly } from '../engine/investors';
@@ -530,6 +531,9 @@ function repair(state: GameState): void {
   }
   for (const [key, value] of fallback) if (s[key] === undefined || s[key] === null) (s as Record<string, unknown>)[key] = value;
   if (state.community) state.community.youthTeams ??= teamsFor(state);
+  // Het lidgeld had vroeger een vaste bovengrens van €800; die klimt nu mee met je reeks.
+  // Een bestaand spel waarin je boven de nieuwe grens zat, zakt terug naar het maximum.
+  if (typeof state.youthFee === 'number') state.youthFee = Math.max(0, Math.min(state.youthFee, maxYouthFee(state)));
   for (const p of [...(state.players ?? []), ...(state.transferList ?? []), ...(state.loanMarket ?? [])]) {
     p.goals ??= 0;
     p.careerGoals ??= 0;

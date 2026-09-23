@@ -778,12 +778,53 @@ export function setTransferBudget(state: GameState, amount: number): ActionResul
 
 // ---------- Clubbeleid ----------
 
-export const YOUTH_FEE_REF = 230; // gangbaar lidgeld per seizoen in de regio
+export const YOUTH_FEE_REF = 230; // gangbaar lidgeld per seizoen bij een dorpsclub
 export const YOUTH_FEE_WEEK = 10; // inschrijvingen
 
-/** Prijsgevoeligheid: ouders vergelijken met andere clubs. */
-export function youthPriceFactor(fee: number): number {
-  return clamp(Math.pow(YOUTH_FEE_REF / Math.max(20, fee), 1.5), 0.3, 1.8);
+/**
+ * Wat een lidgeld normaal is voor een club op dit niveau.
+ *
+ * Een dorpsclub in 1ste provinciale vraagt niet wat een club met een opleidingscentrum in
+ * de Pro Liga vraagt: daar krijg je betere trainers, meer trainingen en een echt complex.
+ * Het gangbare bedrag klimt dus mee met je reeks, en met de inflatie, net als al je andere
+ * kosten en prijzen.
+ */
+export function youthFeeRef(state: GameState): number {
+  return Math.round(YOUTH_FEE_REF * (1 + state.league.divisionLevel * 0.18) * state.inflation);
+}
+
+/** Het hoogste lidgeld dat je mag vragen. Vier keer het gangbare bedrag is al absurd. */
+export function maxYouthFee(state: GameState): number {
+  return Math.round((youthFeeRef(state) * 4) / 10) * 10;
+}
+
+/** Boven dit bedrag vinden de supporters je een graaier. */
+export function youthFeeGrumble(state: GameState): number {
+  return Math.round(youthFeeRef(state) * 1.5);
+}
+
+/**
+ * Hoeveel ouders hun kind bij jou inschrijven, tegenover een club die het gangbare vraagt.
+ *
+ * Dit was `(gangbaar / jouw prijs)^1,5`, vastgezet tussen 0,3 en 1,8. Die ondergrens was de
+ * fout: vanaf ongeveer €510 zakte het ledenaantal niet meer, en vanaf dat punt leverde élke
+ * verhoging gewoon meer op. Je kon dus doorschuiven tot honderd leden aan het maximum —
+ * de opbrengst daalde van €156 tot €513 en steeg daarna lineair door, met een dal ertussen.
+ * Het beste wat je kon doen, was het uiterste van de schuifbalk. Dat is geen keuze.
+ *
+ * Nu vallen de inschrijvingen boven het gangbare bedrag exponentieel weg: ouders die het te
+ * duur vinden, gaan naar de club in het dorp ernaast, en hoe verder je erboven zit hoe
+ * sneller dat gaat. Daardoor heeft de opbrengst één top — iets boven het gangbare bedrag —
+ * en zakt ze daarna echt weg. Onder het gangbare bedrag stijgt het ledenaantal nog, maar
+ * niet eindeloos: er wonen maar zoveel kinderen in de gemeente.
+ */
+const YOUTH_DECAY = 0.8; // hoe snel ouders afhaken boven het gangbare bedrag
+const YOUTH_CHEAP_GAIN = 0.8; // hoeveel meer leden je haalt door goedkoop te zijn
+
+export function youthPriceFactor(fee: number, ref: number = YOUTH_FEE_REF): number {
+  const ratio = Math.max(0, fee) / Math.max(1, ref);
+  if (ratio <= 1) return 1 + (1 - ratio) * YOUTH_CHEAP_GAIN; // maximaal 1,8 bij gratis
+  return Math.exp(-(ratio - 1) * YOUTH_DECAY);
 }
 
 /** Hoeveel jeugdleden je bij dit lidgeld mag verwachten. */
@@ -793,19 +834,37 @@ export function youthTarget(state: GameState, fee = state.youthFee): number {
   // ouders schrijven hun kinderen liever in bij een club die goed draait,
   // maar niet bij een club zonder begeleiding of zonder plaats op het veld
   const success = popularity(state).factor;
-  return Math.round(base * youthPriceFactor(fee) * success * youthCapacityFactor(state));
+  return Math.round(base * youthPriceFactor(fee, youthFeeRef(state)) * success * youthCapacityFactor(state));
 }
 
-/** Verwacht aantal inschrijvingen bij het volgende inschrijvingsmoment. */
+/**
+ * Verwacht aantal inschrijvingen bij het volgende inschrijvingsmoment.
+ *
+ * Een ledenaantal beweegt traag: wie vorig jaar kwam, komt meestal terug, en nieuwe leden
+ * komen binnen via broers, zussen en de speelplaats. Daarom schuift het maar half op naar
+ * waar de prijs het uiteindelijk brengt.
+ *
+ * Maar dat mocht niet betekenen dat je bestaande leden élke prijs slikken. Zolang de helft
+ * van je huidige ledenaantal bleef zitten wat je ook vroeg, bleef élke verhoging op die
+ * helft meer opbrengen — precies dezelfde oneindige arm als in de prijsfactor, één laag
+ * dieper. Daarom is er een bovengrens op wat je kunt vasthouden: je houdt nooit meer dan
+ * een derde meer leden dan de prijs draagt. Wie het écht te duur vindt, schrijft gewoon
+ * niet meer in, en dat gebeurt meteen.
+ */
 export function youthForecast(state: GameState, fee = state.youthFee): number {
   const c = state.community;
-  return Math.round(c.youthMembers + (youthTarget(state, fee) - c.youthMembers) * 0.5);
+  const target = youthTarget(state, fee);
+  if (target >= c.youthMembers) return Math.round(c.youthMembers + (target - c.youthMembers) * 0.5);
+  return Math.round(Math.max(0, Math.min(c.youthMembers - (c.youthMembers - target) * 0.5, target * 1.35)));
 }
 
 export function setYouthFee(state: GameState, fee: number): ActionResult {
   const g = guard(state);
   if (g) return g;
-  if (!Number.isFinite(fee) || fee < 0 || fee > 800) return fail('Kies een lidgeld tussen €0 en €800.');
+  const max = maxYouthFee(state);
+  if (!Number.isFinite(fee) || fee < 0 || fee > max) {
+    return fail(`Kies een lidgeld tussen €0 en €${max.toLocaleString('nl-BE')}. Meer vragen dan vier keer het gangbare bedrag heeft geen zin: dan schrijft niemand zijn kind nog in.`);
+  }
   state.youthFee = Math.round(fee);
   addLog(state, 'beslissing', `Lidgeld jeugd op €${state.youthFee} per seizoen gezet.`);
   return ok(`Lidgeld jeugd: €${state.youthFee} per seizoen. Het geldt vanaf de inschrijvingen in week ${YOUTH_FEE_WEEK}.`);

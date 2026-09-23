@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.27.0';
+export const VERSION = '0.28.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,23 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.28.0',
+    date: '2026-09-23',
+    title: 'Het lidgeld had een vluchtstrook',
+    items: [
+      'Balansfout: boven ongeveer €510 zakte het ledenaantal niet meer, dus elke verhoging leverde daarboven gewoon meer op',
+      'Je kon doorschuiven tot honderd leden aan het maximum — de hoogste opbrengst van de hele reeks bij het minste werk',
+      'Ouders die het te duur vinden, haken nu exponentieel af: de opbrengst heeft één top en zakt daarna echt weg',
+      'Tweede laag van dezelfde fout: je bestaande leden bleven élke prijs betalen. Je houdt er nu nooit meer dan een derde meer dan de prijs draagt',
+      'De inschrijvingen hebben een toevalsmarge van ongeveer 12%: de tabel is een prognose, geen afspraak',
+      'Het gangbare lidgeld groeit mee met je reeks en met de inflatie — een profclub vraagt meer dan een dorpsclub',
+      'Daardoor ligt het maximum niet meer vast op €800 maar op vier keer het gangbare bedrag: tot €1.750 in de Pro Liga',
+      'De tabel duidt nu twee toppen aan: de prijs die volgend seizoen het meeste opbrengt, en die op termijn',
+      'Je jeugdcoördinator mikt voortaan op de lange termijn in plaats van op één goed jaar',
+      'De schuifbalk liep dwars door de tekst "wordt meteen toegepast" heen',
+    ],
+  },
   {
     version: '0.27.0',
     date: '2026-09-23',

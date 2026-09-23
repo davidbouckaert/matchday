@@ -13,7 +13,7 @@ import type { GameState } from '../../engine/types';
 import { DIVISIONS } from '../../engine/data/divisions';
 import { AWAY_SHARE, expectedAttendance } from '../../engine/finance';
 import { spendPerHeadCanteen } from '../../engine/canteen';
-import { YOUTH_FEE_REF, YOUTH_FEE_WEEK, youthForecast, youthTarget } from '../../engine/actions';
+import { YOUTH_FEE_WEEK, maxYouthFee, youthFeeGrumble, youthFeeRef, youthForecast, youthTarget } from '../../engine/actions';
 import * as seasonTickets from '../../engine/seasontickets';
 import { delegate } from '../../engine/delegation';
 import { esc, euro, signedEuro } from '../format';
@@ -113,6 +113,20 @@ function subscriptionsCard(s: GameState): string {
 /** Wat ouders per seizoen betalen om hun kind bij jou te laten voetballen. */
 function youthFeeCard(s: GameState): string {
   const jeugd = delegate(s, 'jeugd');
+  const ref = youthFeeRef(s);
+  const max = maxYouthFee(s);
+
+  // Een handvol prijzen rond het gangbare bedrag, plus die van jezelf. De stappen volgen de
+  // reeks waar je in speelt: in de Pro Liga hebben stappen van €40 geen zin meer.
+  const stap = Math.round((ref * 0.35) / 10) * 10;
+  const keuzes = [...new Set([ref - stap * 2, ref - stap, ref, ref + stap, ref + stap * 2, ref + stap * 3, s.youthFee])]
+    .filter((f) => f >= 0 && f <= max)
+    .sort((a, b) => a - b);
+  // Twee toppen, en dat is precies de les: de prijs die volgend seizoen het meeste opbrengt
+  // ligt hoger dan de prijs die op termijn het meeste opbrengt. Wie de eerste kiest, cashet
+  // één jaar en zakt daarna door. Allebei aanduiden, maar alleen als ze verschillen.
+  const besteLang = keuzes.reduce((a, f) => (youthTarget(s, f) * f > youthTarget(s, a) * a ? f : a), keuzes[0]);
+  const besteKort = keuzes.reduce((a, f) => (youthForecast(s, f) * f > youthForecast(s, a) * a ? f : a), keuzes[0]);
 
   return `<section class="card">
     <h2>Lidgeld jeugd ${hint('Wat ouders per seizoen betalen om hun kind bij jou te laten voetballen. Meer leden betekent meer lidgeld, meer subsidie, meer volk in de kantine en meer talent — maar ook meer werkingskosten en meer vrijwilligers.')}</h2>
@@ -121,29 +135,43 @@ function youthFeeCard(s: GameState): string {
         ? `<p class="lock-note small">🔒 ${esc(jeugd.name)} bepaalt het lidgeld: nu €${s.youthFee} per seizoen.</p>`
         : `<div class="inline-form">
       <label>Lidgeld per seizoen
-        ${numField({ value: s.youthFee, min: 0, max: 800, step: 10, prefix: '€', change: 'youth-fee', inputId: 'youth-fee', label: 'Lidgeld jeugd', slider: true, extra: 'narrow' })}
+        ${numField({ value: s.youthFee, min: 0, max, step: 10, prefix: '€', change: 'youth-fee', inputId: 'youth-fee', label: 'Lidgeld jeugd', slider: true, extra: 'narrow' })}
       </label>
       <span class="muted small">wordt meteen toegepast</span>
     </div>`
     }
     <div class="price-facts">
-      <span class="pc-fact"><span class="cap">Gewoon in de streek</span><strong>€${YOUTH_FEE_REF}</strong></span>
+      <span class="pc-fact"><span class="cap">Gewoon op dit niveau</span><strong>€${ref}</strong></span>
       <span class="pc-fact"><span class="cap">Verwacht aantal leden</span><strong>~${youthForecast(s)}</strong></span>
       <span class="pc-fact"><span class="cap">Brengt op</span><strong>${euro(youthForecast(s) * s.youthFee)}</strong></span>
       <span class="pc-fact"><span class="cap">Inschrijvingen in</span><strong>week ${YOUTH_FEE_WEEK}</strong></span>
     </div>
     <div class="table-wrap"><table class="compact">
-      <thead><tr><th>Lidgeld</th><th class="num">Leden dit seizoen</th><th class="num">Opbrengst</th><th class="num">Leden op termijn</th><th class="num">Opbrengst op termijn</th></tr></thead>
-      <tbody>${[...new Set([150, 190, 230, 280, 340, s.youthFee])]
-        .sort((a, b) => a - b)
+      <thead><tr>
+        <th>Lidgeld</th>
+        <th class="num" data-tip="Wat je volgend jaar aan inschrijvingen mag verwachten. Het echte aantal wijkt daar altijd wat van af.">Leden volgend seizoen</th>
+        <th class="num">Brengt op</th>
+        <th class="num" data-tip="Waar het ledenaantal na een paar seizoenen uitkomt als je deze prijs aanhoudt">Leden op termijn</th>
+        <th class="num">Brengt dan op</th>
+      </tr></thead>
+      <tbody>${keuzes
         .map(
-          (fee) => `<tr${fee === s.youthFee ? ' class="own"' : ''}><td>€${fee}</td><td class="num">${youthForecast(s, fee)}</td><td class="num">${euro(youthForecast(s, fee) * fee)}</td><td class="num">${youthTarget(s, fee)}</td><td class="num">${euro(youthTarget(s, fee) * fee)}</td></tr>`,
+          (fee) => `<tr class="${fee === s.youthFee ? 'own' : ''}"><td>€${fee}${
+            fee === besteLang ? ' <span class="tag" data-tip="Bij deze prijs brengt je jeugdwerking op lange termijn het meeste op.">beste op termijn</span>' : ''
+          }${
+            fee === besteKort && besteKort !== besteLang
+              ? ' <span class="tag" data-tip="Volgend seizoen levert dit het meeste op, omdat de helft van je huidige leden nog blijft. Het jaar daarna zak je door.">meeste volgend seizoen</span>'
+              : ''
+          }</td>
+            <td class="num">${youthForecast(s, fee)}</td><td class="num">${euro(youthForecast(s, fee) * fee)}</td>
+            <td class="num">${youthTarget(s, fee)}</td><td class="num">${euro(youthTarget(s, fee) * fee)}</td></tr>`,
         )
         .join('')}</tbody>
     </table></div>
-    <p class="muted small">Het aantal leden schuift elk seizoen maar half op naar het niveau "op termijn": een prijsverhoging lijkt eerst voordelig, maar ouders haken geleidelijk af.</p>
-    <p class="muted small">Duurder betekent minder leden, en boven €${Math.round(YOUTH_FEE_REF * 1.5)} morren de supporters. Goedkoper betekent meer leden en wat reputatie.
-    Meer leden geeft ook meer subsidie, meer kantine-omzet en meer talent, maar kost je €3 per lid per week aan werking. Hoeveel ploegen je kwijt kunt, staat bij Club › Clubinfo.</p>
+    <p class="muted small">Het aantal leden schuift elk seizoen maar half op naar waar het uiteindelijk uitkomt: een prijsverhoging lijkt het eerste jaar voordeliger dan ze is, want de ouders haken pas geleidelijk af.</p>
+    <p class="muted small">Er zit een top in die tabel, en die ligt iets boven het gangbare bedrag. Vraag je minder, dan komen er meer kinderen maar houd je per kind te weinig over.
+    Vraag je veel meer, dan gaan ze naar de club in het dorp ernaast — en hoe verder je erboven zit, hoe sneller dat gaat. Boven €${youthFeeGrumble(s)} morren je supporters er ook over.</p>
+    <p class="muted small">Meer leden is niet alleen opbrengst: het geeft ook meer subsidie, meer volk in de kantine en meer talent voor je eigen ploeg — maar het kost je €3 per lid per week aan werking, en elke jeugdploeg houdt twee vrijwilligers bezig. Hoeveel ploegen je kwijt kunt, staat bij Club › Clubinfo.</p>
   </section>`;
 }
 

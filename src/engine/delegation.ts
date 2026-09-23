@@ -15,7 +15,7 @@ import { staffSkill } from './staff';
 import { acceptSponsorOffer, approachProspect, renewSponsor } from './sponsors';
 import {
   YOUTH_FEE_WEEK, addMerchItem, buyPlayer, canOrganise, canUpgrade, eventForecast, extendContract, openConcession, organiseEvent,
-  sellPlayer, setMaintenance, setYouthFee, startUpgrade, upgradeCost, volunteerAction, youthForecast,
+  sellPlayer, setMaintenance, setYouthFee, startUpgrade, upgradeCost, volunteerAction, youthFeeRef, youthTarget,
 } from './actions';
 import { bestPrice } from './merch';
 import { acceptedMargin } from './canteen';
@@ -277,18 +277,26 @@ function eventTask(state: GameState): void {
 function youthTask(state: GameState): void {
   const s = delegate(state, 'jeugd');
   if (!s || state.week > YOUTH_FEE_WEEK) return;
+  // Hij zoekt binnen een band rond wat op dit niveau gangbaar is. Die band schuift dus mee
+  // met je reeks: een coördinator in de Pro Liga vraagt niet wat een dorpsclub vraagt.
+  const ref = youthFeeRef(state);
+  const laag = Math.round(ref * 0.5);
+  const hoog = Math.round(ref * 2.2);
+  // Hij kijkt naar waar het ledenaantal op termijn uitkomt, niet naar wat volgend seizoen
+  // het meeste opbrengt. Eén jaar flink verhogen levert meer op — de helft van je leden
+  // blijft nog even zitten — maar daarna zak je door. Een jeugdcoördinator doet dat niet.
   let best = state.youthFee;
   let bestRevenue = -Infinity;
-  for (let fee = 120; fee <= 420; fee += 10) {
-    const revenue = youthForecast(state, fee) * fee;
+  for (let fee = laag; fee <= hoog; fee += 10) {
+    const revenue = youthTarget(state, fee) * fee;
     if (revenue > bestRevenue) {
       bestRevenue = revenue;
       best = fee;
     }
   }
   // een zwakker personeelslid mikt ernaast
-  const off = Math.round(errorChance(taskSkill(state, 'jeugd', s)) * 120);
-  setYouthFee(state, clamp(best - off, 100, 500));
+  const off = Math.round(errorChance(taskSkill(state, 'jeugd', s)) * ref * 0.5);
+  setYouthFee(state, clamp(best - off, laag, hoog));
 }
 
 /** Kinesist of verzorger grijpt in als de groep te zwaar belast raakt. */

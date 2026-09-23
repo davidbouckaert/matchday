@@ -280,8 +280,13 @@ dl dd { margin: 0; font-variant-numeric: tabular-nums; }
 /* een rij lijnen erbij maakt het scanbaar zonder dat het een tabel wordt */
 dl.facts dt, dl.facts dd { padding: 3px 0; border-bottom: 1px solid var(--line); }
 dl.facts dt:last-of-type, dl.facts dd:last-of-type { border-bottom: none; }
-.inline-form { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; }
-.inline-form label { max-width: 140px; }
+.inline-form { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; flex-wrap: wrap; }
+/* max-content in plaats van 140px: een getalveld maakt zich zo breed als zijn grootste
+   waarde, en werd daardoor afgeknepen door het label eromheen. */
+.inline-form label { max-width: max-content; }
+/* Staat er een schuifbalk onder het veld, dan liep de hint ernaast dwars over die balk.
+   Hij zakt dan naar een eigen regel. */
+.inline-form:has(.with-slider) > .muted { flex-basis: 100%; margin-top: 2px; }
 .owner { display: flex; gap: 12px; align-items: center; }
 .toast {
   /* boven de speelbalk, net als de tooltip: hij lag er half achter en was dus half leesbaar */

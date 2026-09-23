@@ -171,6 +171,22 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.28.0 — Het lidgeld had een vluchtstrook
+
+**Je kon het lidgeld blijven verhogen en het bleef beter worden.** De prijsgevoeligheid was `(gangbaar / jouw prijs)^1,5`, vastgezet tussen 0,3 en 1,8. Die ondergrens was de fout: vanaf ongeveer €510 zakte het ledenaantal niet meer, en vanaf dat punt leverde élke verhoging gewoon lineair meer op. De opbrengst steeg tot €156, daalde tot €513, en steeg daarna oneindig door — een dal met een vluchtstrook erachter. Het beste wat je kon doen, was het uiterste van de schuifbalk: honderd leden aan het maximum, de hoogste opbrengst van de hele reeks bij het minste werk. Dat is geen keuze.
+
+Boven het gangbare bedrag vallen de inschrijvingen nu exponentieel weg: ouders die het te duur vinden gaan naar de club in het dorp ernaast, en hoe verder je erboven zit hoe sneller dat gaat. De opbrengst heeft daardoor één top, iets boven het gangbare bedrag, en zakt daarna echt weg — aan het maximum van de schuifbalk hou je nog een derde van wat de top oplevert.
+
+**Er zat een tweede laag onder.** `youthForecast` schoof het ledenaantal maar half op naar waar de prijs het brengt, om trage groei te modelleren. Maar daardoor bleef de helft van je huidige leden élke prijs betalen, en dat halve stuk bleef bij elke verhoging meer opleveren — dezelfde oneindige arm, één niveau dieper. Nu geldt een bovengrens op wat je kunt vasthouden: je houdt nooit meer dan een derde meer leden dan de prijs draagt. Wie het écht te duur vindt, schrijft gewoon niet meer in, en dat gebeurt meteen.
+
+**En het was volledig voorspelbaar.** De inschrijvingen waren letterlijk de prognose, zonder enige marge, dus je kon de tabel aflezen en perfect optimaliseren. Er zit nu ongeveer 12% toeval op: het scherm toont wat je mág verwachten, niet wat je krijgt.
+
+**Het maximum lag vast op €800,** wat te laag is voor een club met een opleidingscentrum in de Pro Liga. Het gangbare bedrag klimt nu mee met je reeks en met de inflatie (€230 bij een dorpsclub, €437 in de Pro Liga), en het maximum is vier keer dat bedrag. Een bestaand spel waarin je boven de nieuwe grens zat, zakt bij het laden terug naar het maximum.
+
+De tabel op het scherm duidt nu twee toppen aan, en dat is precies de les: de prijs die **volgend seizoen** het meeste opbrengt ligt hoger dan de prijs die **op termijn** het meeste opbrengt, want de helft van je huidige leden blijft nog even zitten. Wie de eerste kiest, cashet één jaar en zakt daarna door. Je jeugdcoördinator kiest voortaan de tweede.
+
+`test/youthfee.test.ts` houdt dit vast, onder meer met een test die over vier reeksen en drie ledenaantallen controleert dat het uiterste van de schuifbalk nooit de beste keuze is. De balans is nagemeten: passief spelen blijft even dodelijk (19 van de 20 faillissementen bij Zuidrand met de aannemer).
+
 ### 0.27.0 — Sorteren werkt weer, en het weekrapport heeft een volgorde
 
 **Sorteren was op drie manieren stuk,** en ze versterkten elkaar.
