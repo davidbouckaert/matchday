@@ -85,6 +85,34 @@ function faq(): QA[] {
         (met de volledige opstelling eronder) en in de kolom Goals bij Ploeg › Selectie.`,
     },
     {
+      q: 'Wat doen de andere clubs in mijn reeks?',
+      a: `Hetzelfde als jij, maar in het kort. Elke club heeft een eigen budget, ambitie, momentum, accommodatie en jeugdwerking, en neemt
+        één keer per zomer één beslissing: versterken, bouwen, de jeugd uitbreiden, besparen, of in het slechtste geval de boeken neerleggen.
+        Die beslissing hangt af van waar ze eindigden, hoeveel geld ze hebben en hoe graag ze hogerop willen. Je leest het in het nieuws van de zomer
+        en je ziet het op Competitie: sterkte, ambitie, werking en wat ze vorige zomer deden. Wie vorig jaar investeerde, is dit jaar lastiger.
+        Promotie en degradatie gebeuren ook in de reeksen waar jij niet speelt, dus de wereld beweegt met of zonder jou.`,
+    },
+    {
+      q: 'Waarom komt er soms iets terug dat ik eerder besliste?',
+      a: `Omdat sommige gebeurtenissen blijven nawerken. Verkoop je een speler, dan kom je hem later tegen in het truitje van zijn nieuwe club.
+        Laat je een boze hoofdsponsor aan zijn lot over, dan ligt er weken later een aangetekende brief. Rond je een bouwproject af,
+        dan komt de streekkrant langs. En sta je een tijd in het rood, dan worden sponsors en vrijwilligers nerveus, ook nadat je saldo weer klopt.
+        Wat de moeite is om te onthouden, komt in je clubkroniek te staan: Club › Museum.`,
+    },
+    {
+      q: 'Wat is dat langetermijndoel op mijn overzicht?',
+      a: `Eén doel voor je hele carrière, dat je in het begin één keer vastlegt: een bepaalde reeks halen, een half miljoen op de rekening,
+        een stadion van tweeduizend plaatsen, acht jeugdploegen, of een combinatie. Het verandert niets aan de regels — het geeft je partij een richting,
+        en je ziet elke week hoever je staat. Haal je het, dan krijg je een melding, een regel in je clubkroniek en een banner in je museum.`,
+    },
+    {
+      q: 'Wat betekent mijn niveau als eigenaar?',
+      a: `Vijf niveaus, van Nieuwkomer tot Clubicoon. Punten verdien je met elk afgewerkt seizoen, met promoties en titels, met mijlpalen,
+        met een seizoen in de plus en met je langetermijndoel. Elk niveau opent één concreet voordeel: een half procent minder rente op nieuwe leningen,
+        een derde bouwproject tegelijk, een extra prospect uit elke sponsorcampagne, en een kwart meer gemeentesubsidie.
+        Geen enkel niveau zet iets achter slot — wat je op dag één kon, kan je altijd. Wat het volgende niveau oplevert, staat op je overzicht.`,
+    },
+    {
       q: 'Wat is het weekmoment op mijn dashboard?',
       a: `Elke week ligt er iets op je bureau dat nu beslist moet worden: het regent al drie dagen, de bus is defect, je hoofdsponsor komt kijken.
         Het verschijnt als een venster zodra je het weekrapport sluit: twee of drie knoppen, en meteen daarna lees je in hetzelfde venster wat je keuze opleverde.

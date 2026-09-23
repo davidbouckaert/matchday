@@ -19,9 +19,18 @@ Sneltoets in het spel: **spatie** = volgende week.
 
 ```
 src/
+  content/         ← de spelinhoud als pure data, zonder logica
+    types.ts       ← de taal: voorwaarden, effecten, getallen, plaatshouders
+    moments.ts     ← de weekmomenten, inclusief de ketens die op elkaar voortbouwen
+    events.ts      ← meevallers en tegenslagen die vanzelf gebeuren
+    news.ts        ← nieuwsberichten als sjabloon, met meerdere formuleringen
+    careers.ts     ← de acht langetermijndoelen en de vijf eigenaarsniveaus
   engine/          ← de simulatie. Geen DOM, deterministisch, volledig testbaar
     types.ts       ← alle datatypes; GameState = het volledige spel als één JSON-object
     turn.ts        ← advanceWeek(): één beurt verwerken (het hart van het spel)
+    content.ts     ← voert de data uit src/content uit: voorwaarden toetsen, effecten toepassen
+    world.ts       ← de andere clubs: budget, ambitie, momentum en hun beslissing per seizoen
+    career.ts      ← je langetermijndoel, je eigenaarsniveau en wat elk niveau opent
     actions.ts     ← alles wat de speler kan doen (kopen, verkopen, lenen, bouwen, ...)
     newGame.ts     ← nieuw spel opzetten (club, investeerder, avatar)
     players.ts     ← kwaliteit, marktwaarde, opstelling, teamsterkte, ontwikkeling
@@ -54,8 +63,11 @@ src/
     screens/contracts.ts← contracten en loononderhandeling (Ploeg › Contracten)
   version.ts       ← versienummer en changelog (onderaan elke pagina)
 test/              ← Mocha + Chai
-scripts/balance.ts ← balanstest over meerdere seizoenen
+scripts/balance.ts     ← balanstest over meerdere seizoenen (SEEDS=n SEASONS=n om bij te stellen)
+scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 ```
+
+**Ontwerpregel: inhoud is data, geen code.** Weekmomenten, gebeurtenissen, nieuwsberichten, carrièredoelen en eigenaarsniveaus staan in `src/content/` als gewone data-objecten. `src/engine/content.ts` leest die en voert ze uit. Een nieuwe situatie of gebeurtenis toevoegen vraagt daarom geen enkele wijziging aan de simulatie — en dat wordt ook getest.
 
 **Ontwerpregel: breed maar ondiep.** Elk systeem heeft maar een handvol knoppen, en elke beslissing heeft een zichtbaar effect. Alle cijfers zitten in `src/engine/data/` en zijn bedoeld om bij te stellen.
 
@@ -152,7 +164,21 @@ scripts/balance.ts ← balanstest over meerdere seizoenen
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 10 (deze versie)
+## Laag 11 (deze versie)
+
+### 0.18.0 — Een levende reeks en een carrière met een boog
+
+**Inhoud losgemaakt van de simulatie.** Weekmomenten, willekeurige gebeurtenissen en een deel van de nieuwsberichten staan nu als pure data in `src/content/`. De contenttaal kent voorwaarden (vlaggen, metingen, verhaallijnen, eerder opgeleverde waarden), effecten, kansen, gewichten, wachttijden en plaatshouders (`{club}`, `{speler}`, `{bedrag}`, `{tegenstander}`). Getallen schalen mee met inflatie, klasse, jeugdploegen of ticketprijs. Twee tests voegen een moment en een gebeurtenis toe die alleen als data bestaan en toch volledig meedraaien — dat is de garantie dat de scheiding echt is.
+
+**De andere clubs zijn clubs geworden.** Elke club in elke reeks heeft een eigen budget, ambitie, momentum, accommodatie, jeugdwerking en financiële toestand, bewaard over weken en seizoenen heen. Eén keer per zomer neemt elke club één beslissing op basis van haar eindpositie, haar kas en haar ambitie: versterken, bouwen, jeugd uitbreiden, besparen, of in het slechtste geval de boeken neerleggen. Promotie en degradatie gebeuren nu ook in de reeksen waar jij niet speelt. Over twintig seizoenen gemeten blijven de reeksen op sterkte en blijft elke reeks duidelijk boven de reeks eronder (48,8 → 57,3 → 64,3 → 70,1 → 75,9 → 83,3).
+
+**Keuzes werken door.** Wat je beslist opent een verhaallijn die weken of seizoenen blijft openstaan, en latere momenten bouwen daarop voort met dezelfde namen en bedragen. De sponsorruzie loopt over drie stappen met twee takken; een verkochte speler kom je later tegen als tegenstander; een afgerond bouwproject levert weken later nog pers en supporters op; geldzorgen maken sponsors en vrijwilligers nerveus, ook nadat het saldo weer klopt; een ambitieuze rivaal met een sterke jeugdwerking kaapt je mooiste belofte weg.
+
+**Een doel voor de lange termijn.** Je legt één keer vast waar je met deze club naartoe wilt — acht doelen, van "naar 2de nationale" over "een echt stadion" tot "hoog én gezond". Het doel staat de hele carrière op je overzicht met de actuele stand erbij, en het moment waarop je het haalt krijgt een melding, een regel in de clubkroniek en een banner in het museum. Daarbovenop één lichte laag: vijf eigenaarsniveaus die elk één concreet voordeel openen (lagere rente, een derde bouwproject, een extra sponsorprospect, meer subsidie). Wat het volgende niveau oplevert, staat altijd op je overzicht, en geen enkel niveau zet bestaande mogelijkheden achter slot.
+
+**Passief spelen loopt nu altijd slecht af.** Over drie seizoenen gemeten (60 partijen per combinatie): Zuidrand 80% / 32% / 100% failliet, Heidebeke 3% / 0% / 87%. Over zes seizoenen (30 partijen) gaat élke combinatie eraan: 30/30, 30/30, 30/30, 30/30, 29/30, 30/30. De makkelijke club geeft je dus een langere aanloop om het te leren, maar niets wordt vanzelf leefbaar.
+
+**Nieuw in de schermen.** Het competitiescherm toont per club haar sterkte, ambitie, werking en laatste zomerzet. Het overzicht heeft een carrièrekaart met je doel, je voortgang en je eigenaarsniveau. Het museum heeft een clubkroniek met alles wat de moeite is om na te vertellen.
 
 ### 0.17.2 — Het weekmoment als venster
 

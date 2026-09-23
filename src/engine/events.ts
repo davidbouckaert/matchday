@@ -106,7 +106,7 @@ export function bankruptcyCheck(state: GameState): void {
   state.weeksNegative++;
   const w = state.weeksNegative;
   // financiële zorgen laten sporen na, ook nadat het saldo weer klopt
-  if (w >= 2) openStoryline(state, 'geldzorgen', 40);
+  if (w >= 3) openStoryline(state, 'geldzorgen', 26);
   if (w === 1) addNews(state, 'slecht', 'Waarschuwing: het saldo staat onder nul. Na 8 weken is de club failliet.');
   if (w === 3) {
     state.emergencyLoanOffered = true;

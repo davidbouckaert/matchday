@@ -524,28 +524,12 @@ export const CHAIN_MOMENTS: MomentDef[] = [
     tekst: 'Er ligt een aangetekende brief van {sponsor} op tafel. Hij wil het contract herbekijken, en de toon is niet vriendelijk.',
     keuzes: [
       {
-        id: 'toegeven',
-        label: 'Een korting geven om hem te houden',
-        uitleg: 'Je verliest een deel van het bedrag, maar de naam blijft op het shirt staan.',
-        gevolgen: [
-          {
-            tekst: 'Je gaf toe. {sponsor} blijft, tegen een lagere prijs — en met een bittere nasmaak aan beide kanten.',
-            effecten: [
-              { boek: 'sponsors', bedrag: { basis: -1800, inflatie: true, klasse: true, afronden: 50 }, reden: 'Korting na het conflict met de hoofdsponsor' },
-              { sponsor: 'grootste', tevredenheid: 8 },
-              { verhaalSluiten: 'sponsorkoud' },
-              { geschiedenis: 'Het conflict met {sponsor} werd afgekocht met een korting.' },
-            ],
-          },
-        ],
-      },
-      {
         id: 'voet',
         label: 'Voet bij stuk houden',
-        uitleg: 'Een contract is een contract. Als hij weg wil, mag hij gaan.',
+        uitleg: 'Een contract is een contract. Als hij weg wil, mag hij gaan — maar dan ben je hem kwijt.',
         gevolgen: [
           {
-            kans: 0.4,
+            kans: 0.5,
             tekst: '{sponsor} bond in. Het contract loopt gewoon door, al is er iets stuk.',
             effecten: [
               { sponsor: 'grootste', tevredenheid: -5 },
@@ -560,6 +544,22 @@ export const CHAIN_MOMENTS: MomentDef[] = [
               { sfeer: -3 },
               { verhaalSluiten: 'sponsorkoud' },
               { geschiedenis: '{sponsor} verliet de club na een conflict.' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'toegeven',
+        label: 'Een korting geven om hem te houden',
+        uitleg: 'Je verliest een deel van het bedrag, maar de naam blijft op het shirt staan.',
+        gevolgen: [
+          {
+            tekst: 'Je gaf toe. {sponsor} blijft, tegen een lagere prijs — en met een bittere nasmaak aan beide kanten.',
+            effecten: [
+              { boek: 'sponsors', bedrag: { basis: -1200, inflatie: true, klasse: true, afronden: 50 }, reden: 'Korting na het conflict met de hoofdsponsor' },
+              { sponsor: 'grootste', tevredenheid: 8 },
+              { verhaalSluiten: 'sponsorkoud' },
+              { geschiedenis: 'Het conflict met {sponsor} werd afgekocht met een korting.' },
             ],
           },
         ],

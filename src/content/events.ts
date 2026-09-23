@@ -262,7 +262,7 @@ export const CHAIN_EVENTS: EventDef[] = [
   {
     id: 'geldzorgen-sponsor',
     categorie: 'sponsor',
-    kans: 0.05,
+    kans: 0.03,
     wanneer: { alle: [{ verhaal: 'geldzorgen' }, { meting: 'sponsors', min: 2 }] },
     focusSponsor: 'willekeurig',
     cooldown: 8,
@@ -282,7 +282,7 @@ export const CHAIN_EVENTS: EventDef[] = [
   {
     id: 'geldzorgen-vrijwilligers',
     categorie: 'bestuur',
-    kans: 0.05,
+    kans: 0.03,
     wanneer: { verhaal: 'geldzorgen' },
     cooldown: 8,
     effecten: [

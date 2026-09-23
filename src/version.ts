@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.17.2';
+export const VERSION = '0.18.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,24 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.18.0',
+    date: '2026-09-23',
+    title: 'Een levende reeks en een carrière met een boog',
+    items: [
+      'Elke club in elke reeks heeft nu een eigen bestuur: budget, ambitie, momentum, accommodatie en jeugdwerking',
+      'Eén keer per zomer beslist elke club wat ze doet — versterken, bouwen, jeugd uitbreiden, besparen of de boeken neerleggen',
+      'Wie vorig jaar investeerde, staat er dit jaar beter voor: de sterktes in je reeks zijn geen vaste getallen meer',
+      'Op het competitiescherm zie je per club haar sterkte, ambitie, werking en wat ze vorige zomer besliste',
+      'Je kiest één keer een langetermijndoel: acht doelen, van "naar 2de nationale" tot "hoog én gezond"',
+      'Dat doel staat de hele carrière op je overzicht, met de actuele stand, en krijgt een plek in je museum zodra het lukt',
+      'Vijf eigenaarsniveaus met elk één concreet voordeel: lagere rente, een derde bouwproject, meer sponsorprospecten, meer subsidie',
+      'Keuzes werken door: een sponsorruzie loopt over drie stappen, een verkochte speler kom je later tegen, geldzorgen slepen aan',
+      'Een ambitieuze rivaal met een sterke jeugdwerking kan je mooiste belofte wegkapen',
+      'Nieuw in je museum: de clubkroniek met alles wat de moeite is om na te vertellen',
+      'Onder de motorkap: weekmomenten, gebeurtenissen en nieuwsberichten zijn nu data in plaats van code',
+    ],
+  },
   {
     version: '0.17.2',
     date: '2026-09-23',
