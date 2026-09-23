@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.22.0';
+export const VERSION = '0.22.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.22.1',
+    date: '2026-09-23',
+    title: 'De handleiding wees nog naar de oude menu\'s',
+    items: [
+      'Na de herindeling verwees de handleiding nog naar "Club › Financiën" en "Club › Cijfers", die daar niet meer staan',
+      'Nieuw: "Waar vind ik wat?" zet per menu op een rij wat je er terugvindt',
+      'Ook de taakbeschrijvingen wijzen nu naar het juiste scherm (Geld › Sponsors in plaats van "tab Sponsors")',
+      'Op Financiën staan de investeerderskaart en de abonnementen naast elkaar in plaats van elk over de volle breedte',
+    ],
+  },
   {
     version: '0.22.0',
     date: '2026-09-23',

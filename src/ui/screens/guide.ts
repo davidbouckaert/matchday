@@ -60,7 +60,7 @@ function faq(): QA[] {
       q: 'Wat levert promotie op?',
       a: `Alles schaalt mee: het supportersplafond, de normale ticketprijs, de sponsorbedragen voor nieuwe contracten, de tv-rechten en de richtprijzen in de clubwinkel.
         Je bestaande sponsors blijven op hun oude bedrag, maar ze zijn na promotie een pak tevredener: de besten bieden spontaan een hoger contract aan en een extra bijdrage vragen lukt vaker.
-        Er is ook een premie, die je op het einde van het seizoen apart geboekt ziet staan onder <strong>premies</strong> (in het weekrapport, bij Club › Cijfers en in je clubgeschiedenis).
+        Er is ook een premie, die je op het einde van het seizoen apart geboekt ziet staan onder <strong>premies</strong> (in het weekrapport, bij Geld › Cijfers en in je clubgeschiedenis).
         Voetbal Vlaanderland betaalt in de amateurreeksen géén prijzengeld: wat je krijgt zijn premies van je sponsors, een kampioenenreceptie en een tombola.
         1ste Provinciale €2.000 (plaats 2: €1.000), 3de Nationale €4.500 (€2.500), 2de Nationale €7.000 (€4.000), 1ste Nationale €40.000 (€25.000), Challenger Pro Liga €160.000 (€95.000).
         Daar staat tegenover dat spelers ongeveer 14% en personeel 10% meer vragen, en dat de aansluiting bij de bond en de verzekeringen duurder worden.`,
@@ -98,7 +98,7 @@ function faq(): QA[] {
     },
     {
       q: 'Wat zijn abonnementen en wanneer verkoop ik ze?',
-      a: `Voor de competitie start (tot en met week 6) kun je op Club › Financiën één keer een abonnementencampagne voeren. Je kiest de prijs,
+      a: `Voor de competitie start (tot en met week 6) kun je op Geld › Financiën één keer een abonnementencampagne voeren. Je kiest de prijs,
         het geld komt meteen binnen, en die mensen betalen de rest van het seizoen niet meer aan de kassa — ook niet als je je ticketprijs verhoogt,
         en ook niet als ze door de regen thuisblijven. Het is de enige beslissing die je een heel jaar vastzet: geld nu tegenover inkomsten later.
         Verkoop je er veel en loopt het seizoen goed, dan had je aan de kassa meer verdiend. Loopt het slecht of regent het vaak, dan was het
@@ -113,14 +113,14 @@ function faq(): QA[] {
     },
     {
       q: 'Waarom zakte mijn kantine-omzet deze week?',
-      a: `Kijk op Club › Financiën bij "Waar kwam het vandaan". Voor de grootste posten van de laatste week staat daar per factor wat hij je
+      a: `Kijk op Geld › Financiën bij "Waar kwam het vandaan". Voor de grootste posten van de laatste week staat daar per factor wat hij je
         opleverde of kostte. Een regel als "Sfeer ×0,81 −€1.562" betekent: zonder die lage sfeer had je €1.562 méér gehad. Zo zie je of het
         aan het weer lag, aan de opkomst, aan je prijzen of aan te weinig vrijwilligers. Het zijn exact dezelfde factoren waarmee de formule
         rekent, dus wat je hier leest is wat er echt gebeurd is.`,
     },
     {
       q: 'Kan ik zien wat er financieel op me afkomt?',
-      a: `Ja. Bovenaan Club › Financiën staat een vooruitblik van maximaal acht weken: de lonen, het onderhoud, de sponsorcontracten,
+      a: `Ja. Bovenaan Geld › Financiën staat een vooruitblik van maximaal acht weken: de lonen, het onderhoud, de sponsorcontracten,
         de aflossingen, de vaste momenten van het jaar zoals de bondsbijdrage en de lidgelden, en per wedstrijd een raming van de kassa
         en de kantine. Ramingen staan met een ± erbij. Onderaan elke week zie je wat er daarna in kas zit; zou je ergens onder nul duiken,
         dan staat dat als waarschuwing bovenaan.`,
@@ -211,7 +211,7 @@ function faq(): QA[] {
     {
       q: 'Hoe verloopt een seizoen?',
       a: `Een seizoen is 52 weken. De competitie loopt van week ${MATCH_WEEKS[0]} tot ${MATCH_WEEKS[MATCH_WEEKS.length - 1]}, met een winterstop ertussen.
-        In week ${SEASON_END_WEEK} vallen de beslissingen over promotie en degradatie. De volledige kalender staat bij Club › Kalender.`,
+        In week ${SEASON_END_WEEK} vallen de beslissingen over promotie en degradatie. De volledige kalender staat bij Competitie › Kalender.`,
     },
     {
       q: 'Waar staat mijn spel opgeslagen?',
@@ -230,15 +230,16 @@ export function guideScreen(s: GameState): string {
       <h2>Handleiding</h2>
       <p class="muted small">Je bent eigenaar van ${esc(s.clubName)}. Jij beslist over geld, mensen en gebouwen; de trainer wint (of verliest) de wedstrijden.
       Versie ${VERSION}.</p>
-      <h3>In het kort</h3>
-      <ol class="small">
-        <li><strong>Overzicht</strong> — je overzichtsscherm: clubscore, volgende wedstrijd, nieuws en je logboek.</li>
-        <li><strong>Ploeg</strong> — selectie en spelersrollen, strategie, transfers en contracten.</li>
-        <li><strong>Personeel</strong> — aanwerven, opleiden en per taak kiezen wie ze doet.</li>
-        <li><strong>Club</strong> — kalender, financiën, cijfers, sponsors, clubwinkel, horeca, evenementen, infrastructuur en clubinfo.</li>
-        <li><strong>Competitie</strong> — de stand, de kalender en de tuchtzaken.</li>
-        <li><strong>Invloeden</strong> — elke vermenigvuldiger die op dit moment meespeelt, met zijn herkomst.</li>
-      </ol>
+      <h3>Waar vind ik wat?</h3>
+      <ul class="where small">
+        <li><strong>Dashboard</strong><span>Wat deze week op je wacht, je saldo en prognose, waar het geld heen ging, je volgende wedstrijd, en hoe je ervoor staat bij publiek en sponsors.</span></li>
+        <li><strong>Ploeg</strong><span>Selectie (het veld en je kern), Strategie (training, tactiek, spelplannen), Transfers en Contracten.</span></li>
+        <li><strong>Personeel</strong><span>Aanwerven en opleiden, en in één tabel per taak kiezen wie ze doet. Datzelfde keuzevak staat ook bovenaan elk taakscherm.</span></li>
+        <li><strong>Geld</strong><span>Financiën (prognose, posten, herkomst, ticketprijs, abonnementen, leningen), Sponsors en Cijfers.</span></li>
+        <li><strong>Club</strong><span>Infrastructuur, Horeca, Clubwinkel, Evenementen, Doelen (je langetermijndoel en het logboek), Museum en Clubinfo.</span></li>
+        <li><strong>Competitie</strong><span>De stand en de tuchtzaken, en de Kalender met het hele seizoen in één streep.</span></li>
+        <li><strong>Menu ☰</strong><span>Deze handleiding, "Wat beïnvloedt wat" met elke vermenigvuldiger die nu meespeelt, en opslaan en instellingen.</span></li>
+      </ul>
       <p class="small">Klaar? Druk op <strong>Volgende week</strong> (of op de spatiebalk). Je ziet een korte animatie en daarna het weekrapport.</p>
     </section>
     <section class="card span2">

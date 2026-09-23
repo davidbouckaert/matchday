@@ -296,10 +296,15 @@ export function financeScreen(s: GameState): string {
   const offers = loanOffers(s);
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
+  // De investeerderskaart en de abonnementen zijn smalle kaarten: naast elkaar in plaats
+  // van elk over de volle breedte met een halve pagina wit ernaast. De prognose en de
+  // herkomst zijn tabellen en krijgen de volle breedte, want daar telt elke kolom.
   return `${taskPicker(s, ['ticketing'])}
-  ${investorCard(s)}
+  <div class="cols-2">
+    <div class="col">${investorCard(s)}</div>
+    <div class="col">${subscriptionsCard(s)}</div>
+  </div>
   ${forecastCard(s)}
-  ${subscriptionsCard(s)}
   ${originsCard(s)}
   <section class="card">
     <h2>Operationeel per week</h2>
