@@ -13,6 +13,7 @@ import { hint, tip, tipAttr } from '../tooltip';
 import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
 import { lineupBoard } from './lineup';
+import { playerCards } from './playercard';
 import { impactChips } from '../impact';
 import { playerImpact } from '../../engine/impact';
 
@@ -231,7 +232,7 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
 
 const TABLE_HEAD = `<thead><tr><th>Basis</th><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th data-tip="Evolutie om de 4 weken">Trend</th><th>Techn/Fys</th><th data-tip="Basisplaatsen dit seizoen">Basis</th><th data-tip="Doelpunten dit seizoen">Goals</th><th>Moraal</th><th>Vorm</th><th data-tip="Vermoeidheid 0-100">Moe</th><th>Kaarten</th><th>Loon/w</th><th>Contract</th><th>Waarde</th><th data-nosort></th></tr></thead>`;
 
-export function squadScreen(s: GameState, open: Record<string, boolean> = { basis: false, bank: false, out: false }, pick: string | null = null): string {
+export function squadScreen(s: GameState, open: Record<string, boolean> = { basis: false, bank: false, out: false }, pick: string | null = null, view: 'tabel' | 'kaarten' = 'kaarten'): string {
   const { slots } = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps);
   const zoneOf = new Map(slots.map((x) => [x.player.id, x.zone]));
   const window = isTransferWindow(s.week);
@@ -277,11 +278,24 @@ export function squadScreen(s: GameState, open: Record<string, boolean> = { basi
     <div class="col">${rolesCard(s)}</div>
   </div>
   <section class="card">
-    <p class="muted small">Alle cijfers per speler, om te sorteren en te vergelijken. Klik op een kolomkop om te sorteren.
-      Kern: ${s.players.length} spelers voor ${euro(wages)}/week.${window ? '' : ' Verkopen kan alleen tijdens de transferperiode.'}</p>
-    ${table('A-kern: de basiself', starters, '★ = door jou vastgezet, ✓ = aangevuld door je trainer. Klik op de ster om iemand vast te zetten of weer los te laten; met 🪑 zet je hem deze week op de bank.', 'Nog niemand opgesteld.', 'basis')}
-    ${table('Bank en reserve', bench, 'Speelklaar, maar niet in de basis. Wie jij met ⛔ op de bank hield, wordt niet opgesteld; klik nogmaals om hem weer beschikbaar te maken.', 'Geen reserves beschikbaar — dat is gevaarlijk bij een blessure.', 'bank')}
-    ${out.length ? table('Niet beschikbaar', out, 'Geblesseerd, geschorst of uitgeleend. Zij kunnen deze week niet spelen.', '', 'out') : ''}
+    <div class="view-switch">
+      <h2>Je kern <span class="tag">${s.players.length}</span></h2>
+      <span class="muted small">${euro(wages)} loon per week${window ? '' : ' · verkopen kan alleen tijdens de transferperiode'}</span>
+      <span class="switch" role="group" aria-label="Weergave">
+        <button class="${view === 'kaarten' ? 'on' : ''}" data-action="squad-view" data-id="kaarten"
+          ${tipAttr('Elke speler als kaartje, gegroepeerd per linie. Toont alleen wat er nu toe doet.')}>Kaarten</button>
+        <button class="${view === 'tabel' ? 'on' : ''}" data-action="squad-view" data-id="tabel"
+          ${tipAttr('Alle cijfers in een tabel, om te sorteren op loon, waarde of contract en spelers te vergelijken.')}>Tabel</button>
+      </span>
+    </div>
+    ${
+      view === 'kaarten'
+        ? playerCards(s, new Set(zoneOf.keys()))
+        : `<p class="muted small">Klik op een kolomkop om te sorteren.</p>
+           ${table('A-kern: de basiself', starters, '★ = door jou vastgezet, ✓ = aangevuld door je trainer. Klik op de ster om iemand vast te zetten of weer los te laten; met 🪑 zet je hem deze week op de bank.', 'Nog niemand opgesteld.', 'basis')}
+           ${table('Bank en reserve', bench, 'Speelklaar, maar niet in de basis. Wie jij met ⛔ op de bank hield, wordt niet opgesteld; klik nogmaals om hem weer beschikbaar te maken.', 'Geen reserves beschikbaar — dat is gevaarlijk bij een blessure.', 'bank')}
+           ${out.length ? table('Niet beschikbaar', out, 'Geblesseerd, geschorst of uitgeleend. Zij kunnen deze week niet spelen.', '', 'out') : ''}`
+    }
   </section>`;
 }
 

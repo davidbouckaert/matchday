@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.23.0';
+export const VERSION = '0.23.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.23.1',
+    date: '2026-09-23',
+    title: 'Je kern als kaarten, of als tabel',
+    items: [
+      'Nieuwe kaartweergave van je kern: per linie, met één stip voor de toestand en de kwaliteit groot',
+      'Elke kaart toont alleen wat er nu toe doet — vorm, vermoeidheid, een contract dat afloopt, een groeispurt',
+      'De tabel van zeventien kolommen blijft bestaan voor wie wil sorteren en vergelijken; je schakelt met één klik',
+      'Je keuze blijft bewaard, ook als je het spel sluit',
+    ],
+  },
   {
     version: '0.23.0',
     date: '2026-09-23',

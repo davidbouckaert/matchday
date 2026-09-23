@@ -1416,3 +1416,48 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 /* de kaartjesrij bovenaan het weekrapport */
 .report-chips { padding: 0 var(--s5) var(--s3); }
 .report-chips .effect { font-size: .88rem; padding: 5px 12px; }
+
+/* ==========================================================================
+   Spelerskaarten: dezelfde kern, maar leesbaar in plaats van zeventien kolommen.
+   ========================================================================== */
+.view-switch { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s4); }
+.view-switch h2 { margin: 0; }
+.view-switch .switch { margin-left: auto; display: inline-flex; background: var(--sunken); border-radius: 99px; padding: 3px; gap: 2px; }
+.view-switch .switch button { background: none; padding: 5px 14px; border-radius: 99px; font-size: .86rem; color: var(--muted); }
+.view-switch .switch button.on { background: var(--card); color: var(--accent); font-weight: 650; box-shadow: var(--shadow); }
+
+.pc-line + .pc-line { margin-top: var(--s5); }
+.pc-line-head { margin: 0 0 var(--s3); font-size: .78rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
+.pc-line-head .muted { letter-spacing: 0; text-transform: none; font-weight: 400; }
+.pc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: var(--s3); }
+
+.pcard {
+  background: var(--sunken); border-radius: var(--radius-sm); padding: var(--s3) var(--s4);
+  display: flex; flex-direction: column; gap: var(--s2); min-width: 0;
+  box-shadow: inset 3px 0 0 var(--line);
+}
+.pcard.in { box-shadow: inset 3px 0 0 var(--good); }
+.pcard.bank { box-shadow: inset 3px 0 0 var(--mid); }
+.pcard.out { box-shadow: inset 3px 0 0 var(--bad); opacity: .72; }
+
+.pc-top { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
+.pc-pos { font-size: .66rem; font-weight: 700; letter-spacing: .05em; color: var(--faint); flex: none; }
+.pc-name { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.2; }
+.pc-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .98rem; }
+.pc-rating { flex: none; font-variant-numeric: tabular-nums; cursor: help; }
+.pc-rating strong { font-size: 1.35rem; font-weight: 750; letter-spacing: -.02em; }
+.pc-rating .of { color: var(--faint); font-size: .8rem; }
+
+.pc-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.pc-badge {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px;
+  font-size: .74rem; background: var(--card); color: var(--muted); white-space: nowrap; cursor: help;
+}
+.pc-badge.good { background: var(--good-soft); color: var(--good); }
+.pc-badge.bad { background: var(--bad-soft); color: var(--bad); }
+
+.pc-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.pc-money { font-size: .84rem; font-variant-numeric: tabular-nums; cursor: help; }
+.pc-acts { display: flex; align-items: center; gap: 4px; }
+.pc-acts .sm { padding: 4px 9px; font-size: .78rem; background: var(--card); }
+.pc-acts .star { background: none; padding: 0 4px; font-size: 1.05rem; }
