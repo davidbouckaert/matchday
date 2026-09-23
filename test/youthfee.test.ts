@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import { maxYouthFee, youthFeeRef, youthForecast, youthPriceFactor, youthTarget } from '../src/engine/actions';
+import { maxYouthFee, youthFeeRef, youthForecast, youthPriceFactor, youthPull, youthTarget } from '../src/engine/actions';
+import { coordinatorTeams, maxYouthTeams } from '../src/engine/youth';
 import { DIVISIONS } from '../src/engine/data/divisions';
 import { readyGame, playWeeks } from './helpers';
 import type { GameState } from '../src/engine/types';
@@ -101,5 +102,91 @@ describe('Het lidgeld heeft een top in plaats van een vluchtstrook', () => {
       const na = playWeeks(start, 10);
       expect(na.community.youthMembers, `seed ${seed}`).to.be.within(verwacht * 0.75, verwacht * 1.3);
     }
+  });
+
+  it('laat het uiterste ook voor een sterke club duidelijk slechter zijn', () => {
+    // een club met veel trekkracht mag meer vragen, maar niet eindeloos
+    const punten = curve(sterkeClub(), (fee) => youthTarget(sterkeClub(), fee));
+    const top = bestePrijs(punten);
+    expect(punten[punten.length - 1].value).to.be.below(top.value * 0.8);
+  });
+});
+
+/** Een club waar ouders graag hun kind naartoe brengen. */
+function sterkeClub(): GameState {
+  const s = readyGame('zuidrand');
+  s.community.reputation = 95;
+  s.community.fanMood = 90;
+  s.infrastructure.academyLevel = 3;
+  s.infrastructure.pitch = 'kunstgras';
+  s.league.divisionLevel = 4;
+  const co = s.staffMarket.find((x) => x.role === 'jeugdcoordinator');
+  if (co) {
+    co.skill = 92;
+    s.staff.push({ ...co });
+  }
+  return s;
+}
+
+/** Een club waar niemand naartoe wil. */
+function zwakkeClub(): GameState {
+  const s = readyGame('zuidrand');
+  s.community.reputation = 15;
+  s.community.fanMood = 25;
+  s.infrastructure.academyLevel = 0;
+  s.staff = s.staff.filter((x) => x.role !== 'jeugdcoordinator');
+  return s;
+}
+
+describe('Een sterkere club mag meer vragen', () => {
+  it('geeft een betere club meer trekkracht', () => {
+    expect(youthPull(sterkeClub())).to.be.above(youthPull(readyGame('zuidrand')));
+    expect(youthPull(readyGame('zuidrand'))).to.be.above(youthPull(zwakkeClub()));
+  });
+
+  it('begrenst die trekkracht, zodat niemand eindeloos kan verhogen', () => {
+    // zonder plafond zou een topclub de oude fout gewoon terugkrijgen
+    expect(youthPull(sterkeClub())).to.be.at.most(1.55);
+    expect(youthPull(zwakkeClub())).to.be.at.least(0.7);
+  });
+
+  it('legt de beste prijs hoger naarmate de club sterker staat', () => {
+    const besteVan = (s: GameState) => bestePrijs(curve(s, (fee) => youthTarget(s, fee))).fee / youthFeeRef(s);
+    const zwak = besteVan(zwakkeClub());
+    const gewoon = besteVan(readyGame('zuidrand'));
+    const sterk = besteVan(sterkeClub());
+    expect(zwak, 'een zwakke club kan niet meer vragen dan de buren').to.be.at.most(1.1);
+    expect(gewoon).to.be.above(zwak);
+    expect(sterk, 'een topclub mag flink boven het gangbare bedrag gaan').to.be.above(1.5);
+  });
+
+  it('verliest bij dezelfde prijsverhoging minder leden als de club sterker staat', () => {
+    // dít is het punt: de helling zelf verandert, niet alleen het niveau
+    const verlies = (s: GameState) => {
+      const ref = youthFeeRef(s);
+      return youthTarget(s, ref * 1.6) / Math.max(1, youthTarget(s, ref));
+    };
+    expect(verlies(sterkeClub()), 'een topclub houdt meer leden over').to.be.above(verlies(zwakkeClub()));
+  });
+
+  it('laat een goede jeugdcoördinator meer ploegen draaien', () => {
+    const zonder = readyGame('zuidrand');
+    zonder.staff = zonder.staff.filter((x) => x.role !== 'jeugdcoordinator');
+    const met = readyGame('zuidrand');
+    const co = met.staffMarket.find((x) => x.role === 'jeugdcoordinator')!;
+    co.skill = 85;
+    met.staff = [...met.staff.filter((x) => x.role !== 'jeugdcoordinator'), { ...co }];
+
+    expect(coordinatorTeams(zonder)).to.equal(0);
+    expect(coordinatorTeams(met), 'een sterke coördinator krijgt er twee ploegen bij').to.equal(2);
+    expect(maxYouthTeams(met)).to.be.above(maxYouthTeams(zonder));
+  });
+
+  it('geeft een middelmatige coördinator één ploeg extra, geen twee', () => {
+    const s = readyGame('zuidrand');
+    const co = s.staffMarket.find((x) => x.role === 'jeugdcoordinator')!;
+    co.skill = 55;
+    s.staff = [...s.staff.filter((x) => x.role !== 'jeugdcoordinator'), { ...co }];
+    expect(coordinatorTeams(s)).to.equal(1);
   });
 });

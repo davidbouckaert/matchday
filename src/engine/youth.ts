@@ -3,6 +3,7 @@
 
 import type { GameState } from './types';
 import { clamp } from './rng';
+import { staffSkill } from './staff';
 
 export const MEMBERS_PER_TEAM = 55; // leden die één extra ploeg rechtvaardigen
 export const VOLUNTEERS_PER_TEAM = 2; // een jeugdtrainer en een ploegafgevaardigde per ploeg
@@ -10,10 +11,26 @@ export const VOLUNTEERS_PER_TEAM = 2; // een jeugdtrainer en een ploegafgevaardi
 /** De namen van de reeksen, in volgorde waarin een club ze opstart. */
 export const TEAM_LABELS = ['U7', 'U9', 'U11', 'U13', 'U15', 'U17', 'U21', 'Dames'];
 
-/** Hoeveel ploegen je terrein en je opleidingscentrum aankunnen. */
+/**
+ * Hoeveel ploegen je club aankan.
+ *
+ * Dit hing alleen aan stenen en gras: je opleidingscentrum, kunstgras, verlichting. Maar
+ * een ploeg draaiende houden is vooral mensenwerk — trainingen inplannen, ouders bellen,
+ * scheidsrechters regelen, een afgevaardigde vinden. Een goede jeugdcoördinator krijgt er
+ * daarom één of twee ploegen bij die je anders niet georganiseerd kreeg, ook al verandert
+ * er niets aan je terrein.
+ *
+ * Gratis is dat niet: elke ploeg bindt twee vrijwilligers die je dan niet meer voor een
+ * evenement kunt inzetten.
+ */
+export function coordinatorTeams(state: GameState): number {
+  const skill = staffSkill(state, 'jeugdcoordinator');
+  return skill >= 75 ? 2 : skill >= 45 ? 1 : 0;
+}
+
 export function maxYouthTeams(state: GameState): number {
   const i = state.infrastructure;
-  return 4 + i.academyLevel * 2 + (i.pitch === 'kunstgras' ? 2 : 0) + (i.lightingLevel >= 2 ? 1 : 0);
+  return 4 + i.academyLevel * 2 + (i.pitch === 'kunstgras' ? 2 : 0) + (i.lightingLevel >= 2 ? 1 : 0) + coordinatorTeams(state);
 }
 
 /** Hoeveel ploegen bij dit ledenaantal horen, begrensd door wat je club aankan. */

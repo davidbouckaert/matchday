@@ -8,7 +8,7 @@ import {
 } from '../../engine/actions';
 import { MAINTENANCE_FACTOR, facilityCost } from '../../engine/finance';
 import { volunteerSatisfaction } from '../../engine/turn';
-import { MEMBERS_PER_TEAM, VOLUNTEERS_PER_TEAM, boundVolunteers, freeVolunteers, maxYouthTeams, teamNames, teamsFor, youthCapacityFactor, youthShortage } from '../../engine/youth';
+import { MEMBERS_PER_TEAM, VOLUNTEERS_PER_TEAM, boundVolunteers, coordinatorTeams, freeVolunteers, maxYouthTeams, teamNames, teamsFor, youthCapacityFactor, youthShortage } from '../../engine/youth';
 import { delegate } from '../../engine/delegation';
 import { LEVEL_WORDS, findClub } from '../../engine/world';
 import { weeks } from '../../engine/util';
@@ -138,6 +138,14 @@ function youthCard(s: GameState): string {
   if (s.infrastructure.pitch !== 'kunstgras') reasons.push('kunstgras (+2 ploegen)');
   if (s.infrastructure.lightingLevel < 2) reasons.push('verlichting niveau 2 (+1)');
   if (s.infrastructure.academyLevel < 3) reasons.push(`opleidingscentrum (+2 per niveau, nu ${s.infrastructure.academyLevel}/3)`);
+  // een jeugdcoördinator krijgt ploegen georganiseerd die je anders niet gedraaid kreeg
+  if (coordinatorTeams(s) < 2) {
+    reasons.push(
+      coach
+        ? `een betere jeugdcoördinator (${coach.name} zit op ${coach.skill}; vanaf 45 krijg je er een ploeg bij, vanaf 75 twee)`
+        : 'een jeugdcoördinator aanwerven (+1 ploeg vanaf vaardigheid 45, +2 vanaf 75)',
+    );
+  }
 
   return `<section class="card span2">
     <h2>Jeugdwerking: ${c.youthTeams} ploegen ${hint(`Elke ploeg telt ongeveer ${MEMBERS_PER_TEAM} leden en bindt ${VOLUNTEERS_PER_TEAM} vrijwilligers: een jeugdtrainer en een ploegafgevaardigde. Zit je aan het plafond van je accommodatie, dan haken ouders af en groeit je ledenaantal niet meer.`)}</h2>
@@ -147,7 +155,7 @@ function youthCard(s: GameState): string {
       <dt>Begeleiding</dt><dd class="${shortage ? 'neg' : ''}">${boundVolunteers(s)} vrijwilligers nodig, ${Math.min(c.volunteers, boundVolunteers(s))} beschikbaar${
         shortage ? ` — <strong>${shortage} te kort</strong>: ouders haken af en je vrijwilligers branden op` : ''
       }</dd>
-      <dt>Coördinator</dt><dd>${coach ? `${esc(coach.name)} (${coach.skill}/100)` : '<span class="neg">geen — je jeugd draait op goodwill</span>'}</dd>
+      <dt>Coördinator</dt><dd>${coach ? `${esc(coach.name)} (${coach.skill}/100)${coordinatorTeams(s) ? ` — goed voor ${count(coordinatorTeams(s), 'ploeg', 'ploegen')} extra` : ''}` : '<span class="neg">geen — je jeugd draait op goodwill</span>'}</dd>
       <dt>Plaats op het complex</dt><dd class="${c.youthTeams >= max ? 'neg' : ''}">${c.youthTeams} van ${max} ploegen${c.youthTeams >= max ? ' — vol' : ''}</dd>
       <dt>Instroom</dt><dd>${Math.round(factor * 100)}% van normaal${factor < 1 ? ' door plaatsgebrek of te weinig begeleiding' : ''}</dd>
       <dt>Bij dit ledenaantal</dt><dd>${want} ploegen ${want > c.youthTeams ? '<span class="pos">(er komt er een bij in week 10)</span>' : want < c.youthTeams ? '<span class="neg">(er verdwijnt er een in week 10)</span>' : '(stabiel)'}</dd>

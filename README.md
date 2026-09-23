@@ -171,6 +171,27 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.30.0 — Een sterkere club mag meer vragen voor haar jeugd
+
+**De prijsgevoeligheid was voor elke club dezelfde, en dat klopt niet.** Als je club goed draait — een naam in de streek, een opleidingscentrum, een coördinator die de ouders kent, een ploeg die bovenaan meedoet — dan kijken ouders niet meer alleen naar het bedrag. Ze blijven omdat hun kind hier beter wordt. Een club die achteraan bengelt met een modderveld heeft dat argument niet en verliest bij elke euro meteen leden.
+
+Dat zit nu in de helling zelf, niet alleen in het niveau. `youthPull()` vat samen hoe hard ouders zich aan jóuw club vasthouden — reputatie, opleidingscentrum, de vaardigheid van je jeugdcoördinator, hoe de ploeg het doet en in welke reeks je speelt — en die waarde maakt de curve platter of steiler. Het verschil is groot:
+
+| club | trekkracht | beste prijs | opbrengst |
+|---|---|---|---|
+| dorpsclub, slechte naam | 0,79 | 1,00× het gangbare bedrag | €52.650 |
+| zoals je begint | 1,08 | 1,37× | €94.720 |
+| goede naam, opleidingscentrum, coach | 1,42 | 1,73× | €156.040 |
+| topclub in de Challenger Pro Liga | 1,55 | 1,89× | €277.500 |
+
+De trekkracht is bewust begrensd tussen 0,7 en 1,55. Zonder plafond zou een topclub opnieuw eindeloos kunnen verhogen, en dat was precies de fout die er in 0.28.0 uitging. Getest: ook bij de sterkste club daalt de opbrengst na de top overal, ligt de beste prijs op 47% van de schuifbalk, en levert het uiterste nog maar 71% van de top op.
+
+**En je jeugdcoördinator verhoogt nu ook het plafond.** Hoeveel ploegen je aankan hing alleen aan stenen en gras: opleidingscentrum, kunstgras, verlichting. Maar een ploeg draaiende houden is vooral mensenwerk — trainingen inplannen, ouders bellen, scheidsrechters regelen, een afgevaardigde vinden. Een coördinator vanaf vaardigheid 45 krijgt er één ploeg bij, vanaf 75 twee. Gratis is dat niet: elke ploeg bindt twee vrijwilligers die je dan niet voor een evenement kunt inzetten.
+
+Allebei staan ze nu op het scherm — je aantrekkingskracht in woorden, met in de tooltip wat eraan bijdraagt, en hoeveel ploegen je aankan. Anders is het een stille mechaniek en lijkt de tabel willekeurig.
+
+Balans nagemeten: vijf van de zes startcombinaties blijven gelijk. Heidebeke met de aannemer gaat van 2 naar 0 faillissementen op 20 — dat was al de makkelijkste weg, en die club begint met een coördinator.
+
 ### 0.29.0 — Je ploegsterkte beweegt mee terwijl je wisselt
 
 **De cijfers stonden er wel, maar niet waar je ze nodig had.** Ploegsterkte, aanval, verdediging en de kwaliteit per linie stonden onder het veld en onder je kern — dus precies buiten beeld op het moment dat je iemand wisselt. En dat is nu net wanneer je ze wil zien. Ze staan nu boven het veld en naast elke linie, en terwijl je wisselt toont elke kandidaat in je kern wat híj met je ploegsterkte zou doen: `+0,4`, `−1,3`. Dat cijfer is gemeten en niet geschat — het doet precies wat de wissel zou doen en laat dezelfde functie het opnieuw uitrekenen die het spel er zondag mee speelt.

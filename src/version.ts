@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.29.0';
+export const VERSION = '0.30.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,20 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.30.0',
+    date: '2026-09-23',
+    title: 'Een sterkere club mag meer vragen voor haar jeugd',
+    items: [
+      'De prijsgevoeligheid van het lidgeld was voor elke club dezelfde; nu hangt de helling af van hoe sterk je club staat',
+      'Reputatie, opleidingscentrum, jeugdcoördinator, hoe de ploeg draait en je reeks bepalen samen je aantrekkingskracht',
+      'Een dorpsclub met een slechte naam kan niet meer vragen dan de buren; een topclub bijna het dubbele',
+      'Bij dezelfde prijsverhoging verliest een sterke club duidelijk minder leden dan een zwakke',
+      'Een jeugdcoördinator verhoogt nu ook je plafond: +1 ploeg vanaf vaardigheid 45, +2 vanaf 75',
+      'De trekkracht en het aantal ploegen dat je aankan staan op het scherm, met wat eraan bijdraagt',
+      'De trekkracht is begrensd, zodat ook een topclub niet eindeloos kan blijven verhogen',
+    ],
+  },
   {
     version: '0.29.0',
     date: '2026-09-23',

@@ -821,10 +821,42 @@ export function youthFeeGrumble(state: GameState): number {
 const YOUTH_DECAY = 0.8; // hoe snel ouders afhaken boven het gangbare bedrag
 const YOUTH_CHEAP_GAIN = 0.8; // hoeveel meer leden je haalt door goedkoop te zijn
 
-export function youthPriceFactor(fee: number, ref: number = YOUTH_FEE_REF): number {
+/**
+ * Hoe hard ouders zich vasthouden aan jóuw club.
+ *
+ * De prijsgevoeligheid was voor elke club dezelfde, en dat klopt niet. Als je club goed
+ * draait — een naam in de streek, een opleidingscentrum, een coördinator die ouders te
+ * woord staat, een ploeg die bovenaan meedoet — dan kijken ouders niet meer alleen naar
+ * het bedrag. Ze blijven omdat hun kind hier beter wordt. Een club die achteraan bengelt
+ * met een modderveld heeft dat argument niet en verliest bij elke euro meteen leden.
+ *
+ * Dit cijfer maakt de curve platter of steiler. Rond 1 is gemiddeld; hoger betekent dat je
+ * meer kunt vragen voor je de mensen kwijtraakt. Het is bewust begrensd: zonder plafond
+ * zou een topclub opnieuw eindeloos kunnen verhogen, en dat was precies de fout die we
+ * eruit haalden.
+ */
+export function youthPull(state: GameState): number {
+  const c = state.community;
+  const coordinator = staffSkill(state, 'jeugdcoordinator');
+  const score =
+    (c.reputation - 50) / 220 + // naam in de streek
+    state.infrastructure.academyLevel * 0.09 + // een echt opleidingscentrum
+    (coordinator - 40) / 320 + // iemand die de ouders kent
+    (popularity(state).factor - 1) * 0.5 + // hoe de ploeg het doet
+    state.league.divisionLevel * 0.035; // op een hoger niveau word je beter opgeleid
+  return clamp(1 + score, 0.7, 1.55);
+}
+
+/**
+ * Hoeveel ouders hun kind bij jou inschrijven, tegenover een club die het gangbare vraagt.
+ *
+ * `pull` maakt de helling: hoe sterker je club staat, hoe trager ze afhaken. Bij een zwakke
+ * club ligt de beste prijs net ónder het gangbare bedrag, bij een topclub bijna het dubbele.
+ */
+export function youthPriceFactor(fee: number, ref: number = YOUTH_FEE_REF, pull = 1): number {
   const ratio = Math.max(0, fee) / Math.max(1, ref);
   if (ratio <= 1) return 1 + (1 - ratio) * YOUTH_CHEAP_GAIN; // maximaal 1,8 bij gratis
-  return Math.exp(-(ratio - 1) * YOUTH_DECAY);
+  return Math.exp(-(ratio - 1) * (YOUTH_DECAY / Math.max(0.3, pull)));
 }
 
 /** Hoeveel jeugdleden je bij dit lidgeld mag verwachten. */
@@ -834,7 +866,7 @@ export function youthTarget(state: GameState, fee = state.youthFee): number {
   // ouders schrijven hun kinderen liever in bij een club die goed draait,
   // maar niet bij een club zonder begeleiding of zonder plaats op het veld
   const success = popularity(state).factor;
-  return Math.round(base * youthPriceFactor(fee, youthFeeRef(state)) * success * youthCapacityFactor(state));
+  return Math.round(base * youthPriceFactor(fee, youthFeeRef(state), youthPull(state)) * success * youthCapacityFactor(state));
 }
 
 /**

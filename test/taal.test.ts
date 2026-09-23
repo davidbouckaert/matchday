@@ -30,13 +30,31 @@ const FILES = sourceFiles('src').map((path) => ({ path, text: readFileSync(path,
  * sjabloonliteralen eruit en gooit de `${...}`-stukken weg: wat overblijft is wat er
  * letterlijk op het scherm komt.
  */
+/**
+ * Haalt de ${...}-stukken uit een sjabloonliteraal.
+ *
+ * Eén keer zoeken naar `${...}` volstaat niet: een uitdrukking kan zelf accolades bevatten
+ * (`${x ? `${y}` : ''}`), en dan bleef er code over die de test aanzag voor tekst — zo
+ * werd `coordinatorTeams(s)` gemeld als het meervoud "(s)". Daarom van binnen naar buiten,
+ * tot er niets meer verandert.
+ */
+function stripExpressions(text: string): string {
+  let out = text;
+  for (let i = 0; i < 10; i++) {
+    const next = out.replace(/\$\{[^{}]*\}/g, '·');
+    if (next === out) break;
+    out = next;
+  }
+  return out.replace(/\$\{[\s\S]*$/, '·');
+}
+
 function texts(): { path: string; line: number; text: string }[] {
   const out: { path: string; line: number; text: string }[] = [];
   for (const { path, text } of FILES) {
     text.split('\n').forEach((raw, i) => {
       const code = raw.replace(/\/\/.*$/, '').replace(/^\s*[*].*$/, '');
       for (const m of code.matchAll(/'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"|`((?:[^`\\]|\\.)*)`/g)) {
-        const body = (m[1] ?? m[2] ?? m[3] ?? '').replace(/\$\{[^}]*\}/g, '·');
+        const body = stripExpressions(m[1] ?? m[2] ?? m[3] ?? '');
         if (body.trim()) out.push({ path, line: i + 1, text: body });
       }
     });

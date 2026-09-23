@@ -13,13 +13,14 @@ import type { GameState } from '../../engine/types';
 import { DIVISIONS } from '../../engine/data/divisions';
 import { AWAY_SHARE, expectedAttendance } from '../../engine/finance';
 import { spendPerHeadCanteen } from '../../engine/canteen';
-import { YOUTH_FEE_WEEK, maxYouthFee, youthFeeGrumble, youthFeeRef, youthForecast, youthTarget } from '../../engine/actions';
+import { YOUTH_FEE_WEEK, maxYouthFee, youthFeeGrumble, youthFeeRef, youthForecast, youthPull, youthTarget } from '../../engine/actions';
+import { coordinatorTeams, maxYouthTeams } from '../../engine/youth';
 import * as seasonTickets from '../../engine/seasontickets';
 import { delegate } from '../../engine/delegation';
-import { esc, euro, signedEuro } from '../format';
+import { count, esc, euro, signedEuro } from '../format';
 import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
-import { hint } from '../tooltip';
+import { hint, tipAttr } from '../tooltip';
 
 /** De regel die live meerekent terwijl je aan de schuifregelaar sleept. */
 export function subscriptionInfo(s: GameState, price: number): string {
@@ -132,6 +133,19 @@ function youthFeeCard(s: GameState): string {
   const besteLang = keuzes.reduce((a, f) => (youthTarget(s, f) * f > youthTarget(s, a) * a ? f : a), keuzes[0]);
   const besteKort = keuzes.reduce((a, f) => (youthForecast(s, f) * f > youthForecast(s, a) * a ? f : a), keuzes[0]);
 
+  // Hoe sterk je club staat, bepaalt hoeveel je kunt vragen voor ouders afhaken. Dat is
+  // een stille mechaniek als je hem niet toont, en dan lijkt de tabel willekeurig.
+  const pull = youthPull(s);
+  const trek =
+    pull >= 1.35
+      ? { woord: 'heel sterk', uitleg: 'Ouders brengen hun kind hier graag naartoe. Je kunt flink boven het gangbare bedrag gaan voor ze afhaken.' }
+      : pull >= 1.1
+        ? { woord: 'sterk', uitleg: 'Je club heeft een naam. Je kunt wat meer vragen dan de buren zonder veel leden te verliezen.' }
+        : pull >= 0.9
+          ? { woord: 'gemiddeld', uitleg: 'Ouders vergelijken je met de clubs eromheen. Ga je er ver boven, dan haken ze af.' }
+          : { woord: 'zwak', uitleg: 'Ouders hebben weinig reden om net voor jou te kiezen. Elke euro meer kost je meteen leden.' };
+  const coachPloegen = coordinatorTeams(s);
+
   return `<section class="card">
     <h2>Lidgeld jeugd ${hint('Wat ouders per seizoen betalen om hun kind bij jou te laten voetballen. Meer leden betekent meer lidgeld, meer subsidie, meer volk in de kantine en meer talent — maar ook meer werkingskosten en meer vrijwilligers.')}</h2>
     ${
@@ -149,6 +163,14 @@ function youthFeeCard(s: GameState): string {
       <span class="pc-fact"><span class="cap">Verwacht aantal leden</span><strong>~${youthForecast(s)}</strong></span>
       <span class="pc-fact"><span class="cap">Brengt op</span><strong>${euro(youthForecast(s) * s.youthFee)}</strong></span>
       <span class="pc-fact"><span class="cap">Inschrijvingen in</span><strong>week ${YOUTH_FEE_WEEK}</strong></span>
+      <span class="pc-fact" ${tipAttr(
+        `${trek.uitleg} Dit hangt af van je reputatie, je opleidingscentrum, je jeugdcoördinator, hoe de ploeg draait en in welke reeks je speelt.`,
+        'Waarom ouders voor jou kiezen',
+      )}><span class="cap">Aantrekkingskracht</span><strong>${trek.woord}</strong></span>
+      <span class="pc-fact" ${tipAttr(
+        `Je terrein, je verlichting en je opleidingscentrum bepalen hoeveel ploegen je aankan${coachPloegen ? `, en je jeugdcoördinator krijgt er ${count(coachPloegen, 'ploeg', 'ploegen')} bij die je anders niet georganiseerd kreeg` : '. Een goede jeugdcoördinator krijgt er één of twee bij'}. Elke ploeg bindt wel twee vrijwilligers.`,
+        'Hoeveel ploegen je aankan',
+      )}><span class="cap">Plaats voor</span><strong>${count(maxYouthTeams(s), 'ploeg', 'ploegen')}</strong></span>
     </div>
     <div class="table-wrap"><table class="compact">
       <thead><tr>
@@ -173,6 +195,8 @@ function youthFeeCard(s: GameState): string {
         .join('')}</tbody>
     </table></div>
     <p class="muted small">Het aantal leden schuift elk seizoen maar half op naar waar het uiteindelijk uitkomt: een prijsverhoging lijkt het eerste jaar voordeliger dan ze is, want de ouders haken pas geleidelijk af.</p>
+    <p class="muted small">Waar die top ligt, hangt af van hoe sterk je club staat. Die van jou is nu <strong>${trek.woord}</strong>: ${esc(trek.uitleg.charAt(0).toLowerCase() + trek.uitleg.slice(1))}
+    Werk je aan je reputatie, je opleidingscentrum of je jeugdcoördinator, dan verschuift de hele tabel naar boven — je mag dan meer vragen én je houdt meer leden.</p>
     <p class="muted small">Er zit een top in die tabel, en die ligt iets boven het gangbare bedrag. Vraag je minder, dan komen er meer kinderen maar houd je per kind te weinig over.
     Vraag je veel meer, dan gaan ze naar de club in het dorp ernaast — en hoe verder je erboven zit, hoe sneller dat gaat. Boven €${youthFeeGrumble(s)} morren je supporters er ook over.</p>
     <p class="muted small">Meer leden is niet alleen opbrengst: het geeft ook meer subsidie, meer volk in de kantine en meer talent voor je eigen ploeg — maar het kost je €3 per lid per week aan werking, en elke jeugdploeg houdt twee vrijwilligers bezig. Hoeveel ploegen je kwijt kunt, staat bij Club › Clubinfo.</p>
