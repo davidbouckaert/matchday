@@ -30,6 +30,8 @@ import { checkMilestones } from './milestones';
 import { checkRecords } from './records';
 import { createOpening, settleSeason } from './opening';
 import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
+import { ageStorylines, news } from './content';
+import { NIEUWS } from '../content/news';
 import { boundVolunteers, maxYouthTeams, teamNames, updateYouthTeams, youthShortage } from './youth';
 import { runDelegatedTasks, strategyTask } from './delegation';
 import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
@@ -54,7 +56,7 @@ export function advanceWeek(previous: GameState): GameState {
   weeklyMerch(state, rng);
   resolveRequests(state, rng);
   weeklyCommunity(state);
-  weeklyStagnation(state);
+  weeklyStagnation(state, rng);
   weeklyVolunteers(state, rng);
   weeklySponsors(state, rng);
   weeklyEvents(state, rng);
@@ -249,15 +251,8 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     if (result > 0) state.derbyRecord.won++;
     else if (result < 0) state.derbyRecord.lost++;
     else state.derbyRecord.drawn++;
-    addNews(
-      state,
-      result > 0 ? 'goed' : result < 0 ? 'slecht' : 'neutraal',
-      result > 0
-        ? `DERBY GEWONNEN van ${opponent.name} (${goalsFor}-${goalsAgainst})! Het dorp gaat plat, de kantine draait tot in de late uurtjes.`
-        : result < 0
-          ? `Derby verloren van ${opponent.name} (${goalsFor}-${goalsAgainst}). Daar horen we een jaar over.`
-          : `Derby tegen ${opponent.name} eindigt op ${goalsFor}-${goalsAgainst}. Geen held, geen schlemiel.`,
-    );
+    const template = result > 0 ? NIEUWS.derbyGewonnen : result < 0 ? NIEUWS.derbyVerloren : NIEUWS.derbyGelijk;
+    news(state, rng, template, { tegenstander: opponent.name, uitslag: `${goalsFor}-${goalsAgainst}` });
     if (result > 0) c.reputation = clamp(c.reputation + 2, 0, 100);
   }
 
@@ -377,7 +372,7 @@ export function weeksIdle(state: GameState): number {
   return (state.season - last.season) * WEEKS_PER_YEAR + (state.week - last.week);
 }
 
-function weeklyStagnation(state: GameState): void {
+function weeklyStagnation(state: GameState, rng: Rng): void {
   const idle = weeksIdle(state);
   if (idle < STAGNATION_WEEKS) return;
   const c = state.community;
@@ -389,11 +384,7 @@ function weeklyStagnation(state: GameState): void {
   c.reputation = decay(c.reputation, 20, bite * 0.1);
   for (const d of state.sponsors) d.satisfaction = decay(d.satisfaction, 30, bite * 0.2);
   if (idle === STAGNATION_WEEKS || (idle - STAGNATION_WEEKS) % 16 === 0) {
-    addNews(
-      state,
-      'slecht',
-      `Er zit geen beweging in de club: al ${idle} weken geen enkele beslissing van het bestuur. Supporters haken af en sponsors merken het.`,
-    );
+    news(state, rng, NIEUWS.stagnatie, { weken: String(idle) });
   }
 }
 
@@ -470,6 +461,8 @@ function weeklyProgress(state: GameState): void {
   }
   // wachttijden van evenementen
   for (const k of Object.keys(state.eventCooldowns)) state.eventCooldowns[k] = Math.max(0, state.eventCooldowns[k] - 1);
+  // verhaallijnen die nog kunnen terugkomen, verjaren ook
+  ageStorylines(state);
 }
 
 function weeklyPlayers(state: GameState, rng: Rng): void {

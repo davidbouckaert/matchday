@@ -87,6 +87,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 18) migrateV18toV19(state);
   if (state.version === 19) migrateV19toV20(state);
   if (state.version === 20) migrateV20toV21(state);
+  if (state.version === 21) migrateV21toV22(state);
   repair(state);
   return state;
 }
@@ -369,6 +370,13 @@ function migrateV20toV21(state: GameState): void {
   state.version = 21;
 }
 
+/** Versie 22: verhaallijnen en de clubkroniek (contentlaag). */
+function migrateV21toV22(state: GameState): void {
+  state.storylines ??= [];
+  state.chronicle ??= [];
+  state.version = 22;
+}
+
 /**
  * Vangnet: vult alles aan wat een opslagbestand nog niet kent. Zo blijft een oud bestand
  * werken, ook als er onderweg een veld bijkwam zonder eigen migratie.
@@ -393,6 +401,8 @@ function repair(state: GameState): void {
     ['derbyRecord', { won: 0, drawn: 0, lost: 0 }],
     ['weekChoice', null],
     ['lastChoice', null],
+    ['storylines', []],
+    ['chronicle', []],
   ];
   for (const [key, value] of fallback) if (s[key] === undefined || s[key] === null) (s as Record<string, unknown>)[key] = value;
   if (state.community) state.community.youthTeams ??= teamsFor(state);
@@ -403,6 +413,12 @@ function repair(state: GameState): void {
   if (state.tactics) {
     state.tactics.benched ??= [];
     state.tactics.gaps ??= {};
+  }
+  // het weekmoment kreeg plaatshouders; een oud moment heeft die nog niet
+  if (state.weekChoice) {
+    state.weekChoice.vars ??= {};
+    state.weekChoice.focusPlayerId ??= null;
+    state.weekChoice.focusSponsorId ??= null;
   }
   const i = state.infrastructure;
   if (i) {

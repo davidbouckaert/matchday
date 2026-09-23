@@ -15,7 +15,7 @@ import { createOpening } from './opening';
 import { teamsFor } from './youth';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -94,6 +94,8 @@ export function createNewGame(opts: NewGameOptions): GameState {
     derbyRecord: { won: 0, drawn: 0, lost: 0 },
     weekChoice: null,
     lastChoice: null,
+    storylines: [],
+    chronicle: [],
     opening: null,
     ambition: null,
     seasonGoals: [],

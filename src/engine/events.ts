@@ -1,151 +1,46 @@
+import type { EventDef } from '../content/types';
 import type { GameState } from './types';
 import type { Rng } from './rng';
 import { clamp, round } from './rng';
+import { RANDOM_EVENTS } from '../content/events';
 import { DIVISIONS } from './data/divisions';
 import { PRO_CLUBS } from './data/names';
-import { isTransferWindow, isWinter } from './calendar';
-import { breakdownChance } from './finance';
+import { isTransferWindow } from './calendar';
+import { apply, pickPlayer, test, worldContext } from './content';
+import type { Focus } from './content';
 import { generatePlayer, marketValue, overall } from './players';
 import { staffSkill } from './staff';
 import { injuryFactors, overFatigueFactor, product } from './factors';
-import { addNews, book, nextId, weeks as weeksLabel } from './util';
+import { addNews, nextId, weeks as weeksLabel } from './util';
 
-interface RandomEvent {
-  id: string;
-  chance: (s: GameState) => number; // kans per week
-  apply: (s: GameState, rng: Rng) => void;
+const EVENT_COOLDOWN_PREFIX = 'event-';
+
+/** De kans dat een gebeurtenis deze week valt, inclusief de factoren uit de data. */
+export function eventChance(state: GameState, def: EventDef): number {
+  const ctx = worldContext(state);
+  if (!test(state, ctx, def.wanneer)) return 0;
+  if ((state.eventCooldowns[EVENT_COOLDOWN_PREFIX + def.id] ?? 0) > 0) return 0;
+  let chance = def.kans;
+  for (const f of def.kansFactoren ?? []) {
+    if (test(state, ctx, f.wanneer)) chance *= f.factor;
+  }
+  return chance;
 }
 
-// Meevallers en tegenslagen. Rudimentair: één effect, één nieuwsbericht.
-const EVENTS: RandomEvent[] = [
-  {
-    id: 'storm',
-    chance: (s) => (isWinter(s.week) ? 0.025 : 0.006),
-    apply: (s, rng) => {
-      const cost = rng.int(2, 7) * 1000;
-      book(s, 'tegenslagen', -cost, 'Stormschade');
-      addNews(s, 'slecht', `Storm! Het dak van de tribune is beschadigd. Herstelling: €${cost.toLocaleString('nl-BE')}.`);
-    },
-  },
-  {
-    id: 'influencer',
-    chance: () => 0.008,
-    apply: (s, rng) => {
-      const extra = rng.int(20, 60);
-      s.community.fanBase += extra;
-      s.community.reputation = clamp(s.community.reputation + 2, 0, 100);
-      addNews(s, 'goed', `Een lokale influencer filmde een wedstrijd. De video ging viraal: +${extra} supporters.`);
-    },
-  },
-  {
-    id: 'subsidie',
-    chance: () => 0.007,
-    apply: (s, rng) => {
-      const amount = rng.int(3, 8) * 1000;
-      book(s, 'subsidies', amount, 'Extra subsidie gemeente');
-      addNews(s, 'goed', `De gemeente kent een extra sportsubsidie toe van €${amount.toLocaleString('nl-BE')}.`);
-    },
-  },
-  {
-    id: 'inbraak',
-    chance: () => 0.006,
-    apply: (s, rng) => {
-      const cost = rng.int(8, 25) * 100;
-      book(s, 'tegenslagen', -cost, 'Inbraak kantine');
-      addNews(s, 'slecht', `Inbraak in de kantine. De kassa en de vriezer met frieten zijn weg (€${cost.toLocaleString('nl-BE')}).`);
-    },
-  },
-  {
-    id: 'koeling',
-    chance: () => 0.006,
-    apply: (s) => {
-      book(s, 'tegenslagen', -3200, 'Koelinstallatie');
-      addNews(s, 'slecht', 'De koelinstallatie van de kantine begeeft het. Vervanging: €3.200.');
-    },
-  },
-  {
-    id: 'defect',
-    chance: (s) => breakdownChance(s),
-    apply: (s, rng) => {
-      const what = rng.pick(['de verwarming van de kleedkamers', 'een deel van de verlichting', 'de dakgoot van de tribune', 'de grasmachine', 'de boiler van de douches']);
-      const level = s.infrastructure.maintenance;
-      const cost = rng.int(1, 5) * 1000 * (level === 'basis' ? 1.4 : 1);
-      book(s, 'tegenslagen', -Math.round(cost), 'Herstelling');
-      addNews(
-        s,
-        'slecht',
-        `Defect: ${what} is stuk. Herstelling: €${Math.round(cost).toLocaleString('nl-BE')}.${level === 'basis' ? ' Met meer onderhoud was dit niet gebeurd.' : ''}`,
-      );
-    },
-  },
-  {
-    id: 'erfenis',
-    chance: () => 0.0015,
-    apply: (s) => {
-      book(s, 'meevallers', 15000, 'Schenking oud-voorzitter');
-      addNews(s, 'goed', 'Een overleden oud-voorzitter liet de club €15.000 na. Er komt een minuut applaus.');
-    },
-  },
-  {
-    id: 'vrijwilliger-weg',
-    chance: (s) => (s.community.volunteerLoyaltyWeeks > 0 ? 0.012 : 0.03),
-    apply: (s, rng) => {
-      const n = rng.int(1, 2);
-      s.community.volunteers = Math.max(2, s.community.volunteers - n);
-      addNews(s, 'slecht', n === 1 ? 'Een vrijwilliger stopt ermee. "Het is te veel geworden."' : `${n} vrijwilligers stoppen ermee. "Het is te veel geworden."`);
-    },
-  },
-  {
-    id: 'vrijwilliger-bij',
-    chance: (s) => 0.01 + s.community.fanMood / 3000,
-    apply: (s, rng) => {
-      const n = rng.int(1, 4);
-      s.community.volunteers += n;
-      addNews(s, 'goed', n === 1 ? 'Een ouder van een jeugdspeler meldt zich als vrijwilliger.' : `${n} ouders van jeugdspelers melden zich als vrijwilliger.`);
-    },
-  },
-  {
-    id: 'griep',
-    chance: (s) => (isWinter(s.week) ? 0.015 : 0),
-    apply: (s, rng) => {
-      const victims = s.players.filter(() => rng.chance(0.2));
-      victims.forEach((p) => (p.injuryWeeks = Math.max(p.injuryWeeks, 1)));
-      addNews(s, 'slecht', `Griepgolf in de kleedkamer: ${victims.length} spelers zijn een week out.`);
-    },
-  },
-  {
-    id: 'supportersclub',
-    chance: (s) => (s.community.fanMood > 70 ? 0.006 : 0),
-    apply: (s) => {
-      s.community.fanBase += 40;
-      s.community.fanMood = clamp(s.community.fanMood + 4, 0, 100);
-      addNews(s, 'goed', 'Een nieuwe supportersclub is opgericht: "De Zuiderlingen". +40 supporters.');
-    },
-  },
-  {
-    id: 'sponsor-failliet',
-    chance: (s) => (s.sponsors.length > 3 ? 0.004 : 0),
-    apply: (s, rng) => {
-      const candidates = s.sponsors.filter((d) => d.kind !== 'stadion');
-      if (!candidates.length) return;
-      const deal = rng.pick(candidates);
-      s.sponsors = s.sponsors.filter((d) => d.id !== deal.id);
-      addNews(s, 'slecht', `Sponsor ${deal.name} is failliet. Het contract valt weg.`);
-    },
-  },
-  {
-    id: 'krant-slecht',
-    chance: (s) => (s.community.fanMood < 40 ? 0.03 : 0),
-    apply: (s) => {
-      s.community.reputation = clamp(s.community.reputation - 3, 0, 100);
-      addNews(s, 'slecht', 'De lokale krant kopt: "Onrust bij de supporters, waar gaat het heen met de club?"');
-    },
-  },
-];
+/** Voert één gebeurtenis uit. Apart zodat een test hem rechtstreeks kan aanroepen. */
+export function fireEvent(state: GameState, rng: Rng, def: EventDef): void {
+  const ctx = worldContext(state);
+  const focus: Focus = {};
+  if (def.focusSpeler) focus.playerId = pickPlayer(state, rng, def.focusSpeler)?.id ?? null;
+  if (def.focusSponsor === 'grootste') focus.sponsorId = [...state.sponsors].sort((a, b) => b.weekly - a.weekly)[0]?.id ?? null;
+  else if (def.focusSponsor === 'willekeurig' && state.sponsors.length) focus.sponsorId = rng.pick(state.sponsors).id;
+  apply(state, rng, def.effecten, focus, ctx);
+  if (def.cooldown) state.eventCooldowns[EVENT_COOLDOWN_PREFIX + def.id] = def.cooldown;
+}
 
 function rollRandomEvents(state: GameState, rng: Rng): void {
-  for (const e of EVENTS) {
-    if (rng.chance(e.chance(state))) e.apply(state, rng);
+  for (const def of RANDOM_EVENTS) {
+    if (rng.chance(eventChance(state, def))) fireEvent(state, rng, def);
   }
 }
 

@@ -482,6 +482,28 @@ export interface WeekChoice {
   options: { id: string; label: string; detail: string }[];
   answer: string | null; // wat je koos (null = nog niet beslist)
   outcome: string | null; // wat het opleverde, voor in het weekrapport
+  vars: Record<string, string>; // de ingevulde plaatshouders, zodat het gevolg dezelfde namen gebruikt
+  focusPlayerId: string | null; // de speler waar dit moment over gaat
+  focusSponsorId: string | null; // de sponsor waar dit moment over gaat
+}
+
+/**
+ * Een gebeurtenis die nog nawerkt: een verkochte speler, een ruzie, een investering die nog
+ * nieuws kan opleveren. Content kan erop toetsen met `{ verhaal: '<naam>' }`.
+ */
+export interface Storyline {
+  name: string;
+  season: number;
+  week: number;
+  weeksLeft: number;
+  vars: Record<string, string>; // namen en bedragen uit de oorspronkelijke gebeurtenis
+}
+
+/** Een regel in de clubkroniek: wat er in de geschiedenis van de club is blijven hangen. */
+export interface ChronicleEntry {
+  season: number;
+  week: number;
+  text: string;
 }
 
 /** De seizoensopening in week 1: voorbeschouwing, doorstromers en de persconferentie. */
@@ -542,6 +564,8 @@ export interface GameState {
   derbyRecord: { won: number; drawn: number; lost: number }; // onderlinge balans tegen je aartsrivaal, over alle seizoenen
   weekChoice: WeekChoice | null; // de beslissing van deze week (zie weekmoment.ts)
   lastChoice: { title: string; outcome: string } | null; // wat die beslissing opleverde, voor het weekrapport
+  storylines: Storyline[]; // gebeurtenissen die nog kunnen terugkomen
+  chronicle: ChronicleEntry[]; // de clubkroniek: wat de moeite is om te onthouden
   opening: SeasonOpening | null; // de seizoensopening van week 1, tot je je ambitie uitspreekt
   ambition: AmbitionId | null; // wat je op de persconferentie beloofde
   seasonGoals: SeasonGoal[]; // de drie doelen van het bestuur voor dit seizoen
