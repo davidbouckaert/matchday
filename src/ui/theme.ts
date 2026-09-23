@@ -90,6 +90,30 @@ export function ensureContrast(color: string, against: string, ratio: number): s
   return out;
 }
 
+/**
+ * Een kleur die zichtbaar moet blijven als vórm — een band, een lijn, een logo — en niet
+ * als tekst. WCAG vraagt daar 3:1 in plaats van 4,5:1. Wit op een witte kaart haalt 1:1,
+ * dus zo'n clubkleur wordt bijgetrokken tot je de vorm nog ziet.
+ */
+export function visibleOn(color: string, surface: string, ratio = 3): string {
+  return ensureContrast(color, surface, ratio);
+}
+
+/**
+ * De initialen op een clublogo staan over beide clubkleuren heen. Bij blauw-wit of
+ * geel-zwart bestaat er geen enkele tekstkleur die tegen allebei afsteekt: wat op wit
+ * werkt, verdwijnt op blauw, en omgekeerd.
+ *
+ * Daarom komen er twee kleuren terug: de vulling, gekozen op het gemiddelde van de twee
+ * helften, en een randje in de tegenkleur dat eromheen wordt getekend. Op de helft waar
+ * de vulling wegvalt, is het randje wél zichtbaar — de letter leest dan als silhouet.
+ * Samen dekken ze elke combinatie.
+ */
+export function inkForPair(a: string, b: string): { fill: string; halo: string } {
+  const gemiddeld = (luminance(a) + luminance(b)) / 2;
+  return gemiddeld > 0.42 ? { fill: '#111111', halo: '#ffffff' } : { fill: '#ffffff', halo: '#111111' };
+}
+
 export interface ThemeTokens {
   accent: string;
   accentInk: string;
@@ -136,6 +160,12 @@ export function applyTheme(colors: [string, string]): void {
 
   set('--club-1', colors[0]);
   set('--club-2', colors[1]);
+  // dezelfde kleuren, maar bijgetrokken tot je ze nog ziet als vorm op een witte of
+  // donkere kaart. Een wit-groene club had anders een onzichtbare helft in de band.
+  set('--club-1-safe-light', visibleOn(colors[0], '#ffffff'));
+  set('--club-2-safe-light', visibleOn(colors[1], '#ffffff'));
+  set('--club-1-safe-dark', visibleOn(colors[0], '#19201c'));
+  set('--club-2-safe-dark', visibleOn(colors[1], '#19201c'));
   set('--accent-light', light.accent);
   set('--accent-ink-light', light.accentInk);
   set('--accent-soft-light', light.accentSoft);

@@ -22,6 +22,11 @@
   --accent-soft: var(--accent-soft-light, #e7f2ec);
   --club-1: #14663d;
   --club-2: #ffffff;
+  /* dezelfde kleuren, bijgetrokken tot je ze als vorm nog ziet op deze ondergrond */
+  --club-1-safe: var(--club-1-safe-light, #14663d);
+  --club-2-safe: var(--club-2-safe-light, #8a8a8a);
+  /* de omtreklijn rond een clublogo */
+  --crest-line: rgba(16, 32, 24, .3);
   --good: #14804a;
   --good-soft: #e6f4ec;
   --mid: #b0770a;
@@ -69,6 +74,9 @@
     --shadow-lift: 0 2px 6px rgba(0, 0, 0, .35), 0 14px 32px -12px rgba(0, 0, 0, .6);
     --tip-bg: #e8eeea;
     --tip-ink: #10150f;
+    --club-1-safe: var(--club-1-safe-dark, #43b377);
+    --club-2-safe: var(--club-2-safe-dark, #9aa5a0);
+    --crest-line: rgba(232, 238, 234, .34);
     color-scheme: dark;
   }
 }
@@ -1067,10 +1075,11 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
   display: grid; grid-template-columns: auto minmax(260px, 1fr) auto auto;
   align-items: center; gap: var(--s4) var(--s6); padding: var(--s4) var(--s5) var(--s3);
 }
-/* de band met je clubkleuren: het enige plekje waar de tweede kleur echt te zien is */
+/* De band met je clubkleuren. Ze gebruikt de bijgetrokken varianten: een club met wit
+   in haar kleuren had anders een onzichtbare helft op een witte kopbalk. */
 .club-band {
-  position: absolute; inset: 0 0 auto; height: 4px;
-  background: linear-gradient(90deg, var(--club-1) 0 62%, var(--club-2) 62% 100%);
+  position: absolute; inset: 0 0 auto; height: 5px;
+  background: linear-gradient(90deg, var(--club-1-safe) 0 62%, var(--club-2-safe) 62% 100%);
 }
 
 .topbar .club {

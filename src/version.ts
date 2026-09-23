@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.23.1';
+export const VERSION = '0.23.2';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,18 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.23.2',
+    date: '2026-09-23',
+    title: 'Clubkleuren met wit erin verdwenen tegen een witte kaart',
+    items: [
+      'Een clubkleur die wit of bijna wit is, liep naadloos over in de witte kopbalk',
+      'De kleurenband bovenaan gebruikt nu bijgetrokken kleuren, zodat je allebei de helften ziet',
+      'Elk clublogo heeft een omtrek gekregen, zodat een witte helft niet meer wegvalt',
+      'De initialen op het logo kiezen hun kleur op basis van de twee helften samen, met een randje in de tegenkleur',
+      'Daardoor blijven ze leesbaar op elke combinatie, ook op blauw-wit of geel-zwart',
+    ],
+  },
   {
     version: '0.23.1',
     date: '2026-09-23',

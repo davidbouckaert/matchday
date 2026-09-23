@@ -138,7 +138,9 @@ export function header(g: GameState): string {
       : '',
   ].join('');
 
-  return `<header class="topbar" style="--club-1:${colors[0]};--club-2:${colors[1]}">
+  // de kleuren van de band komen uit applyTheme, in hun bijgetrokken vorm — hier niets
+  // meer inline zetten, want dan zou een witte clubkleur opnieuw onzichtbaar worden
+  return `<header class="topbar">
     <span class="club-band" aria-hidden="true"></span>
 
     <button class="club" data-action="nav" data-id="club" ${tipAttr('Naar je clubinfo: stadion, gemeente, geschiedenis en je kleuren.')}>
