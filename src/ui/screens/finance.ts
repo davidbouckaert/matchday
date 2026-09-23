@@ -7,6 +7,7 @@ import { AWAY_SHARE, expectedAttendance } from '../../engine/finance';
 import { spendPerHeadCanteen } from '../../engine/canteen';
 import { esc, euro, signedEuro } from '../format';
 import { forecast, topLines } from '../../engine/forecast';
+import { biggestFactors, factorEffect, sortedOrigins } from '../../engine/origins';
 import { hint } from '../tooltip';
 
 function groupByCategory(entries: LedgerEntry[]): [LedgerCategory, number][] {
@@ -132,6 +133,53 @@ function forecastCard(s: GameState): string {
   </section>`;
 }
 
+
+/**
+ * Waar de grootste bedragen van de laatste week vandaan kwamen. Elke regel toont wat een
+ * factor je die week opleverde of kostte: het verschil met wat het geweest zou zijn
+ * zonder die ene factor.
+ */
+function originsCard(s: GameState): string {
+  const origins = sortedOrigins(s, 5);
+  if (!origins.length) {
+    return `<section class="card">
+      <h2>Waar kwam het vandaan</h2>
+      <p class="muted">Speel een week, dan staat hier per post wat het weer, de opkomst, je prijzen en je vrijwilligers precies uithaalden.</p>
+    </section>`;
+  }
+  return `<section class="card origins">
+    <h2>Waar kwam het vandaan ${hint('Voor de grootste posten van de laatste week: welke factoren meespeelden en wat elk van hen opleverde of kostte. Een bedrag van +€400 bij "Sfeer" betekent: zonder die sfeer had je €400 minder gehad. Het zijn dezelfde factoren waarmee de formule rekent.')}</h2>
+    <p class="muted small">De laatst gespeelde week. Dit zijn dezelfde factoren als op de tab Invloeden, maar nu met wat ze déze week waard waren.</p>
+    <div class="origin-list">${origins
+      .map((o) => {
+        const factors = biggestFactors(o, 6);
+        return `<div class="origin">
+          <div class="origin-head">
+            <strong>${esc(o.label)}</strong>
+            <span class="num ${o.amount < 0 ? 'neg' : 'pos'}">${signedEuro(o.amount)}</span>
+          </div>
+          ${
+            factors.length
+              ? `<ul class="origin-factors">${factors
+                  .map((f) => {
+                    const effect = factorEffect(o.amount, f);
+                    return `<li>
+                      <span class="of-label">${esc(f.label)}</span>
+                      <span class="of-source muted small">${esc(f.source)}</span>
+                      <span class="of-mult muted small">×${f.value.toFixed(2)}</span>
+                      <span class="of-effect num ${effect < 0 ? 'neg' : 'pos'}">${signedEuro(effect)}</span>
+                    </li>`;
+                  })
+                  .join('')}</ul>`
+              : '<p class="muted small">Geen factoren die deze week iets uithaalden.</p>'
+          }
+          <p class="muted small">Zonder al die factoren zou hier ongeveer ${euro(o.base)} gestaan hebben.</p>
+        </div>`;
+      })
+      .join('')}</div>
+  </section>`;
+}
+
 export function financeScreen(s: GameState): string {
   const division = DIVISIONS[s.league.divisionLevel];
   const lastWeek = groupByCategory(s.lastWeek);
@@ -142,6 +190,7 @@ export function financeScreen(s: GameState): string {
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
   return `${forecastCard(s)}
+  ${originsCard(s)}
   <section class="card">
     <h2>Operationeel per week</h2>
     <p class="muted small">Inkomsten en uitgaven uit de werking van de club, zonder leningen, investeringen, infrastructuur en transfers. Beweeg over een staaf voor de cijfers. Tabel: laatste 12 weken.</p>

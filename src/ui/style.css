@@ -575,6 +575,20 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .owner-block .bar > span { display: block; height: 100%; background: var(--accent, #4a7); }
 .owner-level { display: flex; flex-direction: column; gap: 1px; }
 
+/* herkomst: wat elke factor deze week uithaalde */
+.origin-list { display: grid; gap: 12px; }
+.origin { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.origin-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+.origin-factors { list-style: none; padding: 0; margin: 0 0 6px; display: grid; gap: 2px; }
+.origin-factors li { display: grid; grid-template-columns: minmax(110px, auto) 1fr auto auto; gap: 10px; align-items: baseline; padding: 3px 0; border-bottom: 1px dotted var(--line); }
+.origin-factors li:last-child { border-bottom: none; }
+.of-effect { min-width: 78px; text-align: right; }
+.of-mult { min-width: 52px; text-align: right; }
+@media (max-width: 640px) {
+  .origin-factors li { grid-template-columns: 1fr auto; }
+  .of-source, .of-mult { display: none; }
+}
+
 /* kasprognose: wat er de komende weken staat aan te komen */
 .forecast-table tbody tr.danger td { background: var(--warn-bg, rgba(179, 38, 30, 0.07)); }
 .forecast-detail td { padding-top: 0; padding-bottom: 8px; border-top: none; }

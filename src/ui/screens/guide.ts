@@ -85,6 +85,27 @@ function faq(): QA[] {
         (met de volledige opstelling eronder) en in de kolom Goals bij Ploeg › Selectie.`,
     },
     {
+      q: 'Waarom zakte mijn kantine-omzet deze week?',
+      a: `Kijk op Club › Financiën bij "Waar kwam het vandaan". Voor de grootste posten van de laatste week staat daar per factor wat hij je
+        opleverde of kostte. Een regel als "Sfeer ×0,81 −€1.562" betekent: zonder die lage sfeer had je €1.562 méér gehad. Zo zie je of het
+        aan het weer lag, aan de opkomst, aan je prijzen of aan te weinig vrijwilligers. Het zijn exact dezelfde factoren waarmee de formule
+        rekent, dus wat je hier leest is wat er echt gebeurd is.`,
+    },
+    {
+      q: 'Kan ik zien wat er financieel op me afkomt?',
+      a: `Ja. Bovenaan Club › Financiën staat een vooruitblik van maximaal acht weken: de lonen, het onderhoud, de sponsorcontracten,
+        de aflossingen, de vaste momenten van het jaar zoals de bondsbijdrage en de lidgelden, en per wedstrijd een raming van de kassa
+        en de kantine. Ramingen staan met een ± erbij. Onderaan elke week zie je wat er daarna in kas zit; zou je ergens onder nul duiken,
+        dan staat dat als waarschuwing bovenaan.`,
+    },
+    {
+      q: 'Moet ik elke rustige week apart doorklikken?',
+      a: `Nee. Naast "Volgende week" staat "Tot de volgende match". Die speelt de rustige weken achter elkaar — de voorbereiding,
+        de winterstop, de weken na de laatste speeldag — en stopt vlak voor de volgende wedstrijd. Er wordt nooit iets voor je beslist:
+        hij stopt ook zodra er een weekmoment op je bureau ligt, je basiself niet rond is, je saldo onder nul duikt of een nieuw seizoen begint.
+        Daarna krijg je één venster met wat er ondertussen gebeurde. Hoeveel stappen je per keer zet, bepaal je dus helemaal zelf.`,
+    },
+    {
       q: 'Wat doen de andere clubs in mijn reeks?',
       a: `Hetzelfde als jij, maar in het kort. Elke club heeft een eigen budget, ambitie, momentum, accommodatie en jeugdwerking, en neemt
         één keer per zomer één beslissing: versterken, bouwen, de jeugd uitbreiden, besparen, of in het slechtste geval de boeken neerleggen.

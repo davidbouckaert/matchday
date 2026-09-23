@@ -3,13 +3,14 @@
 
 import type { CanteenItemId, ConcessionId, GameState } from './types';
 import type { Factor } from './factors';
-import { product, volunteerFactor } from './factors';
+import { product, spendFactors, volunteerFactor } from './factors';
 import type { Rng } from './rng';
 import { clamp, round } from './rng';
 import { CANTEEN_ITEMS, CONCESSIONS, canteenDef, concessionDef } from './data/catalog';
 import { staffSkill } from './staff';
 import { popularity } from './popularity';
 import { book } from './util';
+import { recordOrigin } from './origins';
 
 const x = (label: string, value: number, source: string): Factor => ({ label, value, source, kind: 'x' });
 
@@ -71,7 +72,12 @@ export function bookMatchdayCatering(state: GameState, attendance: number, oppon
     state.stats.canteen[item.id] = (state.stats.canteen[item.id] ?? 0) + units;
   }
   state.canteen.lastCanteen = canteen;
-  book(state, 'kantine', revenue - cost, `Kantine vs ${opponent} (${canteen.reduce((s, c) => s + c.units, 0)} consumpties)`);
+  const drinks = canteen.reduce((s, c) => s + c.units, 0);
+  book(state, 'kantine', revenue - cost, `Kantine vs ${opponent} (${drinks} consumpties)`);
+  recordOrigin(state, 'kantine', `Kantine op de wedstrijddag vs ${opponent}`, revenue - cost, [
+    { label: 'Toeschouwers', value: attendance / Math.max(1, state.community.fanBase), kind: 'x', source: `${attendance} mensen op het complex` },
+    ...spendFactors(state),
+  ]);
 
   const stands: { id: ConcessionId; units: number; revenue: number }[] = [];
   let ownShare = 0;

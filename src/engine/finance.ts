@@ -2,7 +2,9 @@ import type { GameState, Infrastructure } from './types';
 import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
 import { inWinterBreak, isWinter } from './calendar';
+import type { Factor } from './factors';
 import { attendanceFactors, priceFactor, product, spendFactors, volunteerFactor } from './factors';
+import { recordOrigin } from './origins';
 import { payLoanWeek, sponsorWeekly } from './loans';
 import { book, addNews } from './util';
 import { bookMatchdayCatering } from './canteen';
@@ -30,6 +32,20 @@ export function expectedAttendance(state: GameState, input: AttendanceInput): nu
   return Math.round(clamp(total, 30, state.infrastructure.capacity));
 }
 
+/**
+ * Alles wat de opkomst van déze wedstrijd bepaalde: de vaste clubfactoren plus het weer,
+ * de derby en je plaats in het klassement. Dezelfde lijst die `expectedAttendance` gebruikt.
+ */
+export function attendanceOrigin(state: GameState, input: AttendanceInput): Factor[] {
+  const list = [...attendanceFactors(state)];
+  list.push({ label: 'Weer', value: WEATHER_FACTOR[input.weather], kind: 'x', source: input.weather });
+  if (input.derby) list.push({ label: 'Derby', value: 1.75, kind: 'x', source: 'tegen je aartsrivaal komt iedereen kijken' });
+  if (Math.abs(input.positionFactor - 1) > 0.001) {
+    list.push({ label: 'Klassement', value: input.positionFactor, kind: 'x', source: 'hoe je ervoor staat in de reeks' });
+  }
+  return list;
+}
+
 export function spendPerHead(state: GameState): number {
   return SPEND_BASE * product(spendFactors(state));
 }
@@ -45,6 +61,7 @@ export function bookHomeMatch(state: GameState, input: AttendanceInput, opponent
   const attendance = expectedAttendance(state, input);
   const gross = attendance * state.ticketPrice;
   book(state, 'tickets', gross, `Tickets vs ${opponentName} (${attendance} × €${state.ticketPrice})`);
+  recordOrigin(state, 'tickets', `Tickets vs ${opponentName}`, gross, attendanceOrigin(state, input), state.community.fanBase * state.ticketPrice);
   book(state, 'wedstrijdkosten', -gross * AWAY_SHARE, `Aandeel bezoekers en bond (${Math.round(AWAY_SHARE * 100)}% van de ticketverkoop)`);
   bookMatchdayCatering(state, attendance, opponentName);
   book(state, 'wedstrijdkosten', -(250 + 120 + state.league.divisionLevel * 150), `Scheidsrechter en organisatie thuiswedstrijd vs ${opponentName}`);
@@ -96,7 +113,20 @@ export function bookWeeklyFlows(state: GameState): void {
   // tijdens de winterstop ligt alles stil: geen jeugdwedstrijden, veel minder volk in de kantine
   const breakFactor = inWinterBreak(state.week) ? 0.45 : 1;
   const trainingBar = (380 * (0.8 + state.infrastructure.kantineLevel * 0.1) * volunteerFactor(state) + state.community.youthMembers * 1.2) * breakFactor;
-  book(state, 'kantine', trainingBar, inWinterBreak(state.week) ? 'Kantine tijdens de winterstop' : 'Kantine tijdens trainingen en jeugdwedstrijden');
+  const barLabel = inWinterBreak(state.week) ? 'Kantine tijdens de winterstop' : 'Kantine tijdens trainingen en jeugdwedstrijden';
+  book(state, 'kantine', trainingBar, barLabel);
+  recordOrigin(
+    state,
+    'kantine',
+    barLabel,
+    trainingBar,
+    [
+      { label: 'Kantineniveau', value: 0.8 + state.infrastructure.kantineLevel * 0.1, kind: 'x', source: `niveau ${state.infrastructure.kantineLevel}/5` },
+      { label: 'Vrijwilligers', value: volunteerFactor(state), kind: 'x', source: `${state.community.volunteers} vrijwilligers (14 = normaal)` },
+      ...(breakFactor !== 1 ? [{ label: 'Winterstop', value: breakFactor, kind: 'x' as const, source: 'geen competitie, veel minder volk' }] : []),
+    ],
+    380 + state.community.youthMembers * 1.2,
+  );
 
   if (state.infrastructure.pitch === 'kunstgras') book(state, 'verhuur', 650, 'Verhuur kunstgrasveld');
 

@@ -4,6 +4,7 @@
 import type { GameState, MerchItem } from './types';
 import type { Factor } from './factors';
 import { product } from './factors';
+import { recordOrigin } from './origins';
 import type { Rng } from './rng';
 import { clamp } from './rng';
 import { MERCH_ITEM_WEEK_COST, MERCH_WEEK_COST, merchDef } from './data/catalog';
@@ -122,7 +123,10 @@ export function weeklyMerch(state: GameState, rng: Rng): MerchWeek | null {
   m.seasonUnits += result.units.reduce((s, u) => s + u.units, 0);
 
   const sold = result.units.reduce((s, u) => s + u.units, 0);
-  if (result.revenue > 0) book(state, 'clubartikelen', result.revenue, `Clubwinkel: ${sold} artikelen verkocht`);
+  if (result.revenue > 0) {
+    book(state, 'clubartikelen', result.revenue, `Clubwinkel: ${sold} artikelen verkocht`);
+    recordOrigin(state, 'clubartikelen', `Clubwinkel (${sold} artikelen)`, result.revenue, merchFactors(state));
+  }
   if (result.cost > 0) book(state, 'inkoop winkel', -result.cost, `Inkoop van de ${sold} verkochte artikelen`);
   book(state, 'werking winkel', -result.fixed, 'Werking clubwinkel en webwinkel (vaste kost)');
   return result;

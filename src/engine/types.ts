@@ -564,6 +564,8 @@ export interface SeasonOpening {
   done: boolean;
 }
 
+import type { WeekOrigin } from './origins';
+
 export interface GameState {
   version: number;
   seed: number;
@@ -647,6 +649,7 @@ export interface GameState {
   lastMatch: MatchReport | null;
   history: SeasonRecord[];
 
+  lastOrigins: WeekOrigin[]; // waar de grootste posten van de laatste week vandaan kwamen
   lastWeek: LedgerEntry[]; // boekingen van de laatst gespeelde week
   thisWeek: LedgerEntry[]; // boekingen van acties in de huidige week (voor je op volgende week klikt)
   seasonTotals: Partial<Record<LedgerCategory, number>>;

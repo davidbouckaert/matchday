@@ -25,6 +25,7 @@ import { bankruptcyCheck, rollInjuries, weeklyEvents } from './events';
 import { refreshLoanMarket, refreshStaffMarket, refreshTransferList, weeklyMarket } from './market';
 import { addNews, book } from './util';
 import { recordWeek, rolloverStats, snapshot } from './stats';
+import { clearOrigins } from './origins';
 import { recentForm } from './popularity';
 import { checkMilestones } from './milestones';
 import { checkRecords } from './records';
@@ -49,6 +50,7 @@ export function advanceWeek(previous: GameState): GameState {
   const rng = createRng(state);
   const statsBefore = snapshot(state);
 
+  clearOrigins(state); // de herkomst van de bedragen geldt telkens voor één week
   resolveWeekChoice(state, rng); // wie niets besliste, laat het gaan
   runDelegatedTasks(state, rng);
   bookWeeklyFlows(state);

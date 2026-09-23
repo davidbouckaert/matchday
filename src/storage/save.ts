@@ -94,6 +94,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 21) migrateV21toV22(state);
   if (state.version === 22) migrateV22toV23(state);
   if (state.version === 23) migrateV23toV24(state);
+  if (state.version === 24) migrateV24toV25(state);
   repair(state);
   return state;
 }
@@ -392,6 +393,12 @@ function migrateV22toV23(state: GameState): void {
   state.version = 23;
 }
 
+/** Versie 25: waar de bedragen van de week vandaan kwamen. */
+function migrateV24toV25(state: GameState): void {
+  state.lastOrigins ??= [];
+  state.version = 25;
+}
+
 /** Versie 24: je langetermijndoel en je eigen niveau als eigenaar. */
 function migrateV23toV24(state: GameState): void {
   state.career ??= emptyCareer();
@@ -464,6 +471,7 @@ function repair(state: GameState): void {
     ['storylines', []],
     ['chronicle', []],
     ['lastWorldMoves', []],
+    ['lastOrigins', []],
   ];
   if (!s.career || typeof s.career !== 'object') (s as Record<string, unknown>).career = emptyCareer();
   if (!s.owner || typeof s.owner !== 'object') (s as Record<string, unknown>).owner = emptyOwner();
