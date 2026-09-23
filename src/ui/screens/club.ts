@@ -105,7 +105,7 @@ export function infraScreen(s: GameState): string {
             const reason = canUpgrade(s, u.id);
             const busy = s.infrastructure.constructions.find((c) => c.upgrade === u.id);
             return `<div class="choice static"><strong>${esc(u.label)}</strong><span>${esc(u.description)}</span>
-            <span class="big">${euro(upgradeCost(s, u.id))}</span><span class="muted small">${upgradeWeeks(u.id)} weken bouwtijd</span>
+            <span class="big">${euro(upgradeCost(s, u.id))}</span><span class="muted small">${upgradeWeeks(s, u.id)} weken bouwtijd</span>
             ${
               busy
                 ? `<span class="attention-inline small">🏗️ bezig, nog ${weeks(busy.weeksLeft)}</span>`

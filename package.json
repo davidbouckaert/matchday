@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "mocha",
     "test:watch": "mocha --watch",
-    "balance": "tsx scripts/balance.ts"
+    "balance": "tsx scripts/balance.ts",
+    "investors": "tsx scripts/investor-value.ts"
   },
   "devDependencies": {
     "@types/chai": "^5.0.0",

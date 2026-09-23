@@ -694,6 +694,7 @@ const handlers: Record<string, Handler> = {
     return actions.startUpgrade(g, id as Parameters<typeof actions.startUpgrade>[1], seats);
   }),
   event: gameAction(actions.organiseEvent),
+  'member-round': gameAction(actions.holdMemberRound),
   'sell-subs': gameAction((g) => {
     const slider = root.querySelector<HTMLInputElement>('#subs-price');
     return actions.sellSubscriptions(g, slider ? slider.value : '0');

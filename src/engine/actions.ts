@@ -29,6 +29,7 @@ import { openStoryline, remember } from './content';
 import { MIN_PRICE as SEASON_TICKET_MIN, canSell as canSellTickets, sellSeasonTickets } from './seasontickets';
 export * as seasonTickets from './seasontickets';
 import { CARRIERE_DOELEN, maxProjects, setCareerGoal } from './career';
+import { baseProjects, buildDiscount, buildSpeed, canHoldRound, holdRound, roundForecast } from './investors';
 
 export type { ActionResult };
 
@@ -390,7 +391,8 @@ export const MAX_PROJECTS = 2; // standaard aantal bouwwerven dat tegelijk mag l
 
 /** Zoveel bouwwerven mogen er bij jou tegelijk lopen; vanaf voorzitter is dat er een meer. */
 export function projectLimit(state: GameState): number {
-  return maxProjects(state);
+  // je eigen niveau geeft er een bij bovenop wat je investeerder toelaat
+  return baseProjects(state) + (maxProjects(state) - MAX_PROJECTS);
 }
 
 // ---------- Tribune: jij kiest hoeveel plaatsen ----------
@@ -409,7 +411,7 @@ export const TRIBUNE_STEP = 50;
 export function tribunePerSeat(state: GameState, seats: number): number {
   const n = clamp(seats, TRIBUNE_MIN, TRIBUNE_MAX);
   const base = 450 - 150 * Math.log10(n / TRIBUNE_MIN) - 40 * (n / TRIBUNE_MAX) ** 2;
-  const discount = state.investor === 'aannemer' && state.investorActive ? 0.85 : 1;
+  const discount = buildDiscount(state);
   return Math.round(base * discount * state.inflation);
 }
 
@@ -428,12 +430,16 @@ export function upgradeCost(state: GameState, id: UpgradeId, seats = 300): numbe
   if (id === 'tribune') return tribuneCost(state, seats);
   if (id === 'zonnepanelen') return greenEnergyCost(state);
   const def = UPGRADES.find((u) => u.id === id)!;
-  return state.investor === 'aannemer' && state.investorActive ? round(def.cost * 0.85, 1000) : def.cost;
+  return round(def.cost * buildDiscount(state), 1000);
 }
 
-export function upgradeWeeks(id: UpgradeId, seats = 300): number {
-  if (id === 'tribune') return tribuneWeeks(seats);
-  return UPGRADES.find((u) => u.id === id)!.weeks;
+/**
+ * Hoelang een werf duurt. Met de aannemer aan boord krijgen zijn ploegen voorrang en
+ * is alles een kwart sneller klaar.
+ */
+export function upgradeWeeks(state: GameState, id: UpgradeId, seats = 300): number {
+  const base = id === 'tribune' ? tribuneWeeks(seats) : UPGRADES.find((u) => u.id === id)!.weeks;
+  return Math.max(2, Math.round(base * buildSpeed(state)));
 }
 
 /** Loopt dit project al? */
@@ -468,7 +474,7 @@ export function startUpgrade(state: GameState, id: UpgradeId, seats = 300): Acti
   const def = UPGRADES.find((u) => u.id === id)!;
   const rounded = id === 'tribune' ? clamp(Math.round(seats / TRIBUNE_STEP) * TRIBUNE_STEP, TRIBUNE_MIN, TRIBUNE_MAX) : 0;
   const cost = upgradeCost(state, id, rounded);
-  const weeks = upgradeWeeks(id, rounded);
+  const weeks = upgradeWeeks(state, id, rounded);
   if (state.cash < cost) return fail(`Niet genoeg geld (€${cost.toLocaleString('nl-BE')} nodig). Een lening kan helpen.`);
   const label = id === 'tribune' ? `${def.label} (+${rounded} plaatsen)` : def.label;
   book(state, 'infrastructuur', -cost, label);
@@ -1032,4 +1038,17 @@ export function sellSubscriptions(state: GameState, price: string): ActionResult
   return result.sold > 0
     ? ok(`${result.sold} abonnementen verkocht: ${euro(result.revenue)} ineens in kas.`)
     : fail('Aan die prijs tekende niemand. Probeer het goedkoper.');
+}
+
+/** Een ledenronde houden bij de supporterscoöperatie. Eén keer per seizoen. */
+export function holdMemberRound(state: GameState): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const check = canHoldRound(state);
+  if (!check.ok) return fail(check.reason);
+  const expected = roundForecast(state);
+  if (expected <= 0) return fail('De leden hebben op dit moment niets te geven.');
+  const raised = holdRound(state, createRng(state));
+  addLog(state, 'beslissing', `Ledenronde gehouden: ${euro(raised)}`);
+  return ok(`De leden brachten ${euro(raised)} bijeen.`);
 }

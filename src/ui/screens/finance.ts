@@ -9,6 +9,8 @@ import { esc, euro, signedEuro } from '../format';
 import { forecast, topLines } from '../../engine/forecast';
 import { biggestFactors, factorEffect, sortedOrigins } from '../../engine/origins';
 import * as seasonTickets from '../../engine/seasontickets';
+import * as inv from '../../engine/investors';
+import { INVESTORS } from '../../engine/data/setup';
 import { hint } from '../tooltip';
 
 function groupByCategory(entries: LedgerEntry[]): [LedgerCategory, number][] {
@@ -242,6 +244,47 @@ function subscriptionsCard(s: GameState): string {
   </section>`;
 }
 
+
+/**
+ * Wat jouw investeerder voor je club betekent, en — bij de coöperatie — de ledenronde.
+ * Elke investeerder speelt een ander spel, dus dit staat er altijd bij.
+ */
+function investorCard(s: GameState): string {
+  const def = INVESTORS.find((i) => i.id === s.investor);
+  const check = inv.canHoldRound(s);
+  const expected = inv.roundForecast(s);
+  const rounds = s.investorState?.coopRounds ?? 0;
+  const left = inv.seasonsLeft(s);
+
+  return `<section class="card investor">
+    <h2>Je investeerder ${hint('Elke investeerder speelt een ander spel: het fonds geeft veel geld maar houdt de druk erop, de aannemer maakt bouwen goedkoper en sneller, en de coöperatie geeft weinig maar groeit met je club mee.')}</h2>
+    <p><strong>${esc(def?.name ?? '')}</strong></p>
+    <p class="small">${esc(inv.investorSummary(s))}</p>
+    ${
+      s.investor === 'fonds' && s.investorActive && Number.isFinite(left)
+        ? `<p class="small ${left <= 1 ? 'warn' : 'muted'}">${
+            left <= 0
+              ? 'Het geduld van het fonds is op.'
+              : left === 1
+                ? '<strong>Laatste kans:</strong> promoveer je dit seizoen niet, dan trekt het fonds €300.000 terug en stapt het op.'
+                : `Nog ${left} seizoenen om te promoveren voor het fonds zijn geld terugtrekt.`
+          }</p>`
+        : ''
+    }
+    ${
+      s.investor === 'cooperatie' && s.investorActive
+        ? check.ok
+          ? `<div class="round-box">
+              <p class="small">De leden willen bijdragen. Je kunt nu een ronde houden; er wordt zo'n <strong>${euro(expected)}</strong> verwacht${rounds ? ` (ronde ${rounds + 1}, elke volgende brengt wat minder op)` : ''}.</p>
+              <p class="muted small">Je vraagt iets van dezelfde mensen die zondag aan de kassa staan: de sfeer zakt er een paar punten van. Hoe beter je club draait, hoe meer ze storten.</p>
+              <p class="actions left"><button class="primary" data-action="member-round">Ledenronde houden</button></p>
+            </div>`
+          : `<p class="muted small">${esc(check.reason)}${rounds ? ` Tot nu toe hielden de leden ${rounds} ${rounds === 1 ? 'ronde' : 'rondes'}.` : ''}</p>`
+        : ''
+    }
+  </section>`;
+}
+
 export function financeScreen(s: GameState): string {
   const division = DIVISIONS[s.league.divisionLevel];
   const lastWeek = groupByCategory(s.lastWeek);
@@ -251,7 +294,8 @@ export function financeScreen(s: GameState): string {
   const offers = loanOffers(s);
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
-  return `${forecastCard(s)}
+  return `${investorCard(s)}
+  ${forecastCard(s)}
   ${subscriptionsCard(s)}
   ${originsCard(s)}
   <section class="card">

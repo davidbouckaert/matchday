@@ -15,9 +15,10 @@ import { createOpening } from './opening';
 import { teamsFor } from './youth';
 import { buildWorld } from './world';
 import { emptyCareer, emptyOwner } from './career';
+import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 26;
+export const SAVE_VERSION = 27;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -135,6 +136,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
     emergencyLoanOffered: false,
     promotionsWithInvestor: 0,
     investorActive: true,
+    investorState: emptyInvestorState(),
     licenceWarnings: 0,
     nextDivisionLevel: START_DIVISION,
     lastMatch: null,
@@ -207,7 +209,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
   // effecten van de investeerder
   book(state, 'investeerder', investor.capital, `Kapitaalinjectie ${investor.name}`);
   if (opts.investor === 'aannemer') {
-    const deal = makeDeal(state, rng, 'stadion', 600);
+    const deal = makeDeal(state, rng, 'stadion', stadiumSponsorWeekly(START_DIVISION));
     deal.name = 'Stevens Arena';
     deal.sector = 'Bouw'; // de aannemer zelf: naamsponsor van het stadion
     deal.weeksLeft = 9999;

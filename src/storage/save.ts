@@ -12,6 +12,7 @@ import { createOpening } from '../engine/opening';
 import { teamsFor } from '../engine/youth';
 import { buildWorld } from '../engine/world';
 import { emptyCareer, emptyOwner, levelFor } from '../engine/career';
+import { emptyInvestorState, stadiumSponsorWeekly } from '../engine/investors';
 import { DIVISIONS } from '../engine/data/divisions';
 import { MATCH_WEEKS } from '../engine/calendar';
 import { companySector } from '../engine/sponsors';
@@ -96,6 +97,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 23) migrateV23toV24(state);
   if (state.version === 24) migrateV24toV25(state);
   if (state.version === 25) migrateV25toV26(state);
+  if (state.version === 26) migrateV26toV27(state);
   repair(state);
   return state;
 }
@@ -394,6 +396,20 @@ function migrateV22toV23(state: GameState): void {
   state.version = 23;
 }
 
+/** Versie 27: elke investeerder speelt een ander spel. */
+function migrateV26toV27(state: GameState): void {
+  state.investorState = {
+    coopRounds: 0,
+    coopSeason: null,
+    // wie al promoveerde, krijgt de klok vanaf dat seizoen; anders vanaf het begin
+    lastPromotionSeason: (state.promotionsWithInvestor ?? 0) > 0 ? Math.max(0, (state.season ?? 1) - 1) : 0,
+  };
+  // de stadionsponsor van de aannemer schaalt voortaan met de reeks
+  const stadion = state.sponsors?.find((d) => d.kind === 'stadion');
+  if (stadion) stadion.weekly = stadiumSponsorWeekly(state.league?.divisionLevel ?? 1);
+  state.version = 27;
+}
+
 /** Versie 26: abonnementen en meerjarige sponsorcontracten. */
 function migrateV25toV26(state: GameState): void {
   state.seasonTickets ??= null;
@@ -482,6 +498,7 @@ function repair(state: GameState): void {
     ['lastOrigins', []],
   ];
   if (s.seasonTickets === undefined) (s as Record<string, unknown>).seasonTickets = null;
+  state.investorState ??= emptyInvestorState();
   if (!s.career || typeof s.career !== 'object') (s as Record<string, unknown>).career = emptyCareer();
   if (!s.owner || typeof s.owner !== 'object') (s as Record<string, unknown>).owner = emptyOwner();
   if (state.career) state.career.seasonsByLevel ??= {};

@@ -7,6 +7,7 @@ import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
 import { popularity } from './popularity';
 import { staffSkill } from './staff';
+import { volunteerCap } from './investors';
 
 export interface Factor {
   label: string;
@@ -61,8 +62,12 @@ export function attendanceFactors(state: GameState): Factor[] {
   return list;
 }
 
+/**
+ * Hoe zwaar je vrijwilligers meetellen. Bij de supporterscoöperatie ligt het plafond hoger:
+ * daar draait de hele club op mensen, en dat mag je merken.
+ */
 export function volunteerFactor(state: GameState): number {
-  return clamp(state.community.volunteers / 14, 0.35, 1.15);
+  return clamp(state.community.volunteers / 14, 0.35, volunteerCap(state));
 }
 
 export function spendFactors(state: GameState): Factor[] {

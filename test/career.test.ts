@@ -220,8 +220,9 @@ describe('Je eigen niveau als eigenaar', () => {
 });
 
 describe('Wat een niveau ontgrendelt', () => {
+  // niet de aannemer: die krijgt van zijn kant al een extra werf (zie investors.test)
   const at = (level: number): GameState => {
-    const s = newTestGame();
+    const s = newTestGame('zuidrand', 'fonds');
     s.owner.points = EIGENAARSNIVEAUS.find((l) => l.level === level)!.punten;
     s.owner.level = level;
     return s;

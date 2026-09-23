@@ -92,8 +92,9 @@ describe('Acties', () => {
   });
 
   it('twee bouwprojecten mogen samen lopen, een derde niet', () => {
-    const s = newTestGame();
+    const s = newTestGame('zuidrand', 'fonds'); // de aannemer mag er drie, zie investors.test
     s.cash = 3_000_000;
+    expect(actions.projectLimit(s)).to.equal(2);
     expect(actions.startUpgrade(s, 'tribune', 300).ok).to.equal(true);
     expect(actions.startUpgrade(s, 'kantine').ok).to.equal(true);
     const third = actions.startUpgrade(s, 'wifi');
@@ -731,7 +732,7 @@ describe('Populariteit en onderhoud', () => {
     expect(actions.investGreenEnergy(s).ok).to.equal(true);
     expect(s.infrastructure.greenEnergy).to.equal(false); // eerst bouwen
     expect(facilityCost(s)).to.equal(before);
-    s = playWeeks(s, actions.upgradeWeeks('zonnepanelen'));
+    s = playWeeks(s, actions.upgradeWeeks(s, 'zonnepanelen'));
     expect(s.infrastructure.greenEnergy).to.equal(true);
     expect(facilityCost(s)).to.be.below(facilityCost({ ...s, infrastructure: { ...s.infrastructure, greenEnergy: false } }));
   });

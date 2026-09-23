@@ -6,7 +6,9 @@ import { RANDOM_EVENTS } from '../content/events';
 import { DIVISIONS } from './data/divisions';
 import { PRO_CLUBS } from './data/names';
 import { isTransferWindow } from './calendar';
-import { apply, baseVars, openStoryline, pickPlayer, storyline, test, worldContext } from './content';
+import { apply, baseVars, openStoryline, pickPlayer, remember, storyline, test, worldContext } from './content';
+import { forcedSaleCandidate } from './investors';
+import { acceptPlayerOffer } from './actions';
 import type { Focus } from './content';
 import { generatePlayer, marketValue, overall } from './players';
 import { staffSkill } from './staff';
@@ -125,9 +127,32 @@ export function bankruptcyCheck(state: GameState): void {
   }
 }
 
+/**
+ * Het fonds ziet de club als een springplank. Ligt er een stevig bod op een jonge speler,
+ * dan tekenen zij en hoor jij het achteraf. Het geld komt wel binnen — min hun aandeel.
+ */
+function rollForcedSale(state: GameState): void {
+  const forced = forcedSaleCandidate(state);
+  if (!forced) return;
+  const offer = state.playerOffers.find((o) => o.id === forced.offerId);
+  const player = state.players.find((p) => p.id === forced.playerId);
+  if (!offer || !player) return;
+  const result = acceptPlayerOffer(state, offer.id);
+  if (!result.ok) return;
+  addNews(
+    state,
+    'slecht',
+    `Het fonds tekende zelf voor het bod van ${offer.club} op ${player.name} (${player.age} jaar). Jij hoorde het achteraf.`,
+  );
+  remember(state, `Het fonds verkocht ${player.name} aan ${offer.club} zonder jou te vragen.`);
+  state.community.fanMood = clamp(state.community.fanMood - 4, 0, 100);
+  for (const p of state.players) p.morale = clamp(p.morale - 3, 0, 100);
+}
+
 export function weeklyEvents(state: GameState, rng: Rng): void {
   rollRandomEvents(state, rng);
   rollPlayerOffers(state, rng);
+  rollForcedSale(state);
   rollInvestorInterference(state, rng);
 }
 

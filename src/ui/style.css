@@ -575,6 +575,10 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .owner-block .bar > span { display: block; height: 100%; background: var(--accent, #4a7); }
 .owner-level { display: flex; flex-direction: column; gap: 1px; }
 
+/* je investeerder: elk speelt een ander spel */
+.card.investor .warn { padding: 8px 10px; border: 1px solid var(--neg, #b3261e); border-radius: 8px; }
+.round-box { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+
 /* sponsorcontracten: de looptijd kies je zelf */
 .offer .terms { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .offer .term { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: none; color: inherit; cursor: pointer; text-align: left; }

@@ -34,6 +34,7 @@ import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
 import { ageStorylines, news, openStoryline, remember } from './content';
 import { checkCareerGoal, creditMilestones, settleCareerSeason, subsidyFactor } from './career';
 import { settleSeasonTickets } from './seasontickets';
+import { checkFundPatience, notePromotion, takePrizeShare, updateStadiumSponsor } from './investors';
 import { NIEUWS } from '../content/news';
 import type { NieuwsSjabloon } from '../content/types';
 import { clubByName, runWorldSeason } from './world';
@@ -631,21 +632,25 @@ function seasonEnd(state: GameState): void {
     result = 'kampioen';
     state.nextDivisionLevel = level + 1;
     state.promotionsWithInvestor++;
+    notePromotion(state);
     c.reputation = clamp(c.reputation + 12, 0, 100);
     c.fanMood = clamp(c.fanMood + 20, 0, 100);
     c.fanBase = Math.round(c.fanBase * 1.25);
     prize = seasonPrize(level, 'kampioen');
     book(state, 'premies', prize, level < 3 ? `Kampioenenpremies van sponsors en supporters (${DIVISIONS[level].name})` : `Prijzengeld en tv-premie voor de titel (${DIVISIONS[level].name})`);
+    takePrizeShare(state, prize);
     addNews(state, 'goed', `KAMPIOEN! ${state.clubName} promoveert naar ${DIVISIONS[level + 1].name}. Kampioenenpremie: €${prize.toLocaleString('nl-BE')}.`);
   } else if (pos === 2 && level < DIVISIONS.length - 1) {
     result = 'promotie';
     state.nextDivisionLevel = level + 1;
     state.promotionsWithInvestor++;
+    notePromotion(state);
     c.reputation = clamp(c.reputation + 8, 0, 100);
     c.fanMood = clamp(c.fanMood + 12, 0, 100);
     c.fanBase = Math.round(c.fanBase * 1.15);
     prize = seasonPrize(level, 'promotie');
     book(state, 'premies', prize, level < 3 ? `Promotiepremies van sponsors (${DIVISIONS[level].name})` : `Promotiepremie en tv-geld (${DIVISIONS[level].name})`);
+    takePrizeShare(state, prize);
     addNews(state, 'goed', `Tweede plaats en promotie naar ${DIVISIONS[level + 1].name}. Promotiepremie: €${prize.toLocaleString('nl-BE')}.`);
   } else if (pos >= table.length - 2 && level > 0) {
     result = 'degradatie';
@@ -663,7 +668,10 @@ function seasonEnd(state: GameState): void {
   settleSeasonTickets(state);
   state.lastSeasonSettlement = settleSeason(state, pos);
 
-  if (state.nextDivisionLevel !== level) adjustWagesForDivision(state, level, state.nextDivisionLevel);
+  if (state.nextDivisionLevel !== level) {
+    adjustWagesForDivision(state, level, state.nextDivisionLevel);
+    updateStadiumSponsor(state, state.nextDivisionLevel);
+  }
   sponsorsAfterSeason(state, createRng(state), result, state.nextDivisionLevel);
 
   const profit = Object.entries(state.seasonTotals)
@@ -673,12 +681,8 @@ function seasonEnd(state: GameState): void {
   // je eigen groei als eigenaar: punten voor het seizoen, de promotie en het resultaat
   settleCareerSeason(state, result, profit);
 
-  // het fonds wil promotie binnen 3 seizoenen
-  if (state.investor === 'fonds' && state.investorActive && state.season >= 3 && state.promotionsWithInvestor === 0) {
-    state.investorActive = false;
-    book(state, 'investeerder', -300_000, 'Terugtrekking investeringsfonds');
-    addNews(state, 'slecht', 'Het fonds is het geduld kwijt: geen promotie in 3 seizoenen. Het trekt €300.000 terug.');
-  }
+  // het fonds wil blijven promoveren; de klok begint opnieuw bij elke promotie
+  checkFundPatience(state);
 }
 
 /**

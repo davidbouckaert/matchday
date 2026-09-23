@@ -644,6 +644,7 @@ export interface GameState {
   emergencyLoanOffered: boolean;
   promotionsWithInvestor: number;
   investorActive: boolean;
+  investorState: { coopRounds: number; coopSeason: number | null; lastPromotionSeason: number } | null; // wat je investeerder bijhoudt
   licenceWarnings: number;
 
   nextDivisionLevel: number; // wordt bepaald op het einde van het seizoen

@@ -18,7 +18,11 @@ export const INVESTORS: InvestorDef[] = [
     interference: 'laag',
     summary: 'Geduldige lokale ondernemer die zijn naam graag op het stadion ziet.',
     conditions: ['Het stadion heet voortaan "Stevens Arena"', 'Zijn firma voert alle bouwwerken uit'],
-    perks: ['Stadionnaam levert €600 per week op', 'Bouwwerken kosten 15% minder'],
+    perks: [
+      'De stadionnaam groeit mee met je reeks: €600/week in 3de nationale, €2.400 in de Challenger Pro Liga',
+      'Bouwwerken kosten 15% minder en zijn een kwart sneller klaar',
+      'Je mag drie werven tegelijk open hebben in plaats van twee',
+    ],
   },
   {
     id: 'fonds',
@@ -27,10 +31,11 @@ export const INVESTORS: InvestorDef[] = [
     interference: 'hoog',
     summary: 'Veel geld, weinig geduld. Ziet de club als een springplank voor spelers.',
     conditions: [
-      'Promotie binnen 3 seizoenen, anders trekt het fonds €300.000 terug',
-      '30% van elke transferwinst gaat naar het fonds',
+      'Promotie om de 3 seizoenen; blijft die uit, dan trekt het fonds €300.000 terug en stapt het op',
+      '30% van elke transferwinst en 20% van je prijzengeld gaan naar het fonds',
+      'Bij een stevig bod op een jonge speler tekenen zij, en hoor jij het achteraf',
     ],
-    perks: ['Grootste startkapitaal', 'Schuift af en toe (dure) spelers door'],
+    perks: ['Veruit het grootste startkapitaal', 'Schuift af en toe (dure) spelers door'],
   },
   {
     id: 'cooperatie',
@@ -39,7 +44,11 @@ export const INVESTORS: InvestorDef[] = [
     interference: 'middel',
     summary: 'Honderden kleine aandeelhouders uit de buurt. Weinig geld, veel hart.',
     conditions: ['Leden protesteren bij ticketprijzen boven 120% van het normale niveau'],
-    perks: ['+40% vrijwilligers', '+15% supporters en betere sfeer', 'Supporters vergeven sneller slechte resultaten'],
+    perks: [
+      'Elk seizoen een ledenronde: hoe beter je club draait, hoe meer ze bijeenbrengen',
+      '+40% vrijwilligers, en bij jou tellen vrijwilligers zwaarder door dan elders',
+      '+15% supporters, betere sfeer, en supporters die slechte resultaten sneller vergeven',
+    ],
   },
 ];
 
