@@ -18,6 +18,8 @@ import { CLUB_EVENTS, UPGRADES } from '../../engine/data/catalog';
 import { KIND_LABEL } from '../../engine/sponsors';
 import { YOUTH_FEE_WEEK } from '../../engine/actions';
 import { seasonPrize } from '../../engine/turn';
+import { seasonStrip } from '../header';
+import { hint } from '../tooltip';
 import { esc, euro } from '../format';
 
 type Kind = 'match' | 'transfer' | 'fixed' | 'plan' | 'money' | 'break';
@@ -97,7 +99,13 @@ export function calendarScreen(s: GameState): string {
   }
   html += '</tbody></table>';
 
+  // De seizoensbalk stond eerst in de kopbalk, waar ze naast een klein logo vooral drukte
+  // was. Hier heeft ze breedte, en hier zoek je ze ook: dit is het scherm over de tijd.
   return `<section class="card">
+    <h2>Het seizoen in één streep ${hint('Elk streepje is een speeldag, de grijze band is de winterstop en de groene banden zijn de transferperiodes. Het merkteken is waar jij nu staat, het rode streepje is de week waarin de eindstand valt.')}</h2>
+    ${seasonStrip(s)}
+  </section>
+  <section class="card">
     <h2>Kalender ${seasonLabel(s.startYear, s.season)}</h2>
     <p class="muted small">Een speelweek begint op de vermelde datum. <span class="cal-item match">wedstrijd</span> <span class="cal-item transfer">transfers</span>
     <span class="cal-item fixed">vast moment</span> <span class="cal-item plan">jouw planning</span> <span class="cal-item money">geld of contract</span> <span class="cal-item break">winterstop</span></p>

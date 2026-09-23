@@ -693,6 +693,36 @@ export function toggleBench(state: GameState, playerId: string): ActionResult {
   return ok(`${p.name} staat niet meer in je basiself. Die plaats blijft open: duid zelf iemand aan met de ster.`);
 }
 
+/**
+ * Eén speler vervangen door een andere. Dit is wat je op het veld doet: je klikt de man
+ * die eruit moet, en dan wie er in zijn plaats komt.
+ *
+ * Bewust géén gat: bij toggleBench blijft de plaats open omdat je dan alleen iemand
+ * wegneemt. Hier vul je ze in dezelfde beweging weer op, dus er valt niets te beslissen
+ * en je kunt gewoon verder naar de volgende week.
+ */
+export function swapInLineup(state: GameState, outId: string, inId: string): ActionResult {
+  const locked = taskLocked(state, 'opstelling');
+  if (locked) return locked;
+  if (outId === inId) return fail('Dat is dezelfde speler.');
+  const t = state.tactics;
+  const out = state.players.find((x) => x.id === outId);
+  const inc = state.players.find((x) => x.id === inId);
+  if (!out || !inc) return fail('Speler niet gevonden.');
+  if (inc.injuryWeeks > 0) return fail(`${inc.name} is geblesseerd en kan niet spelen.`);
+  if (inc.suspended > 0) return fail(`${inc.name} is geschorst.`);
+  if (inc.loan?.type === 'uit') return fail(`${inc.name} is uitgeleend.`);
+
+  t.manualXI = t.manualXI.filter((id) => id !== outId && id !== inId);
+  t.benched = t.benched.filter((id) => id !== inId);
+  if (!t.benched.includes(outId)) t.benched.push(outId);
+  t.manualXI.push(inId);
+
+  const zone = out.position;
+  const note = inc.position === zone ? '' : ` ${inc.name} speelt daar buiten zijn positie.`;
+  return ok(`${inc.name} komt in de ploeg voor ${out.name}.${note}`);
+}
+
 export function autoLineup(state: GameState): ActionResult {
   const locked = taskLocked(state, 'opstelling');
   if (locked) return locked;

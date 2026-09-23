@@ -5,6 +5,8 @@ import { hasDiploma } from '../../engine/staff';
 import { staffLock } from '../../engine/actions';
 import { delegate, taskCapacity, taskSkill, tasksOf } from '../../engine/delegation';
 import { esc, euro, bar, stars } from '../format';
+import { impactChips } from '../impact';
+import { staffImpact } from '../../engine/impact';
 import { hint, tip } from '../tooltip';
 
 function detailCard(s: GameState, m: Staff): string {
@@ -64,6 +66,7 @@ export function staffScreen(s: GameState, selected: string | null): string {
       <td>${bar(m.skill)} ${m.skill}${m.courseWeeksLeft ? ' 📚' : ''}</td>
       <td>${hasDiploma(m.role) ? m.diploma : '—'}</td>
       <td>${euro(m.wage)}</td>
+      <td>${impactChips(staffImpact(s, m.role, m.skill, null))}</td>
       <td class="small">${tasks.length ? tasks.map((t) => `<span class="tag">${esc(t)}</span>`).join(' ') : '<span class="muted">geen</span>'}
         <br/><span class="muted small">${tasks.length}/${taskCapacity(m)} taken</span></td>
     </tr>`;
@@ -103,7 +106,8 @@ export function staffScreen(s: GameState, selected: string | null): string {
       <td data-v="${STAFF_ROLES.findIndex((r) => r.role === c.role)}">${roleDef(c.role).label}</td>
       <td>${esc(c.name)}<br/><span class="muted small">${c.trait}</span></td>
       <td data-v="${c.skill}">${bar(c.skill)} ${c.skill}</td>
-      <td>${hasDiploma(c.role) ? c.diploma : '—'}<br/><span class="muted small">${esc(roleDef(c.role).effect)}</span></td>
+      <td>${hasDiploma(c.role) ? c.diploma : '—'}</td>
+      <td>${impactChips(staffImpact(s, c.role, c.skill))}</td>
       <td data-v="${c.wage}">${euro(c.wage)}</td>
       <td>${
         staffLock(s, c.role)
@@ -121,7 +125,7 @@ export function staffScreen(s: GameState, selected: string | null): string {
     <p class="muted small">Klik op een personeelslid om taken aan te vinken die hij van je overneemt, of om hem een opleiding te geven.
     Licentie voor ${division.name}: hoofdtrainer met minstens <strong>${division.requiredDiploma}</strong> en een ploegafgevaardigde (audit in week 38).</p>
     <div class="table-wrap"><table>
-      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th>Loon/w</th><th>Taken</th></tr></thead>
+      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th>Loon/w</th><th>Wat hij oplevert</th><th>Taken</th></tr></thead>
       <tbody>${current}</tbody>
     </table></div>
   </section>
@@ -137,9 +141,10 @@ export function staffScreen(s: GameState, selected: string | null): string {
   </section>
   <section class="card">
     <h2>Kandidaten</h2>
-    <p class="muted small">De lijst vernieuwt elke 4 weken. Je hebt maximaal één persoon per functie.</p>
+    <p class="muted small">De lijst vernieuwt elke 4 weken. Je hebt maximaal één persoon per functie.
+      "Wat het je oplevert" is het verschil met wie je nu op die plaats hebt — doorgerekend met dezelfde formules waarmee het spel rekent. Beweeg over een kaartje voor het volledige verhaal.</p>
     <div class="table-wrap"><table data-sort-id="kandidaten">
-      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th>Loon/w</th><th data-nosort></th></tr></thead>
+      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th data-nosort>Wat het je oplevert</th><th>Loon/w</th><th data-nosort></th></tr></thead>
       <tbody>${candidates}</tbody>
     </table></div>
   </section>`;

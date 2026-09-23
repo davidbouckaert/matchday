@@ -1,24 +1,21 @@
-// De kopbalk.
+// De kopbalk, en de seizoensbalk die op de kalender staat.
 //
-// Wat er stond was een etalage: vijf kerncijfers, drie clubscores en een datum, netjes
-// naast elkaar en nergens klikbaar zonder ergens anders te belanden. Sinds het dashboard
-// die cijfers groot toont, stond alles er twee keer.
+// De kopbalk draagt drie dingen en meer niet: wie je bent, wanneer het is, en wat je nu
+// kunt doen. Je clublogo en je naam krijgen daarin de ruimte die ze verdienen, met je
+// clubkleuren als band over de bovenrand — je ziet in één oogopslag bij welke club je zit.
 //
-// Wat een kopbalk wél moet doen, doet hij nu: zeggen wáár in het jaar je staat, en je
-// laten verderspelen. De seizoensbalk is het nieuwe stuk. Die toont de 52 weken in één
-// streep, met elke speeldag als streepje, de winterstop en de transferperiodes als band,
-// en een merkteken waar jij staat. Daarmee zie je zonder na te denken of het venster nog
-// open is, hoeveel weken je nog hebt tot de volgende match en wanneer de rust komt —
-// precies de dingen waar je beslissingen van afhangen.
+// De seizoensbalk hoort daar níét thuis: die toont de 52 weken in één streep met elke
+// speeldag, de winterstop en de transferperiodes erop, en dat is naslag die je erbij
+// haalt, geen ding dat elke seconde in je ooghoek moet staan. Ze staat op de kalender.
 
 import type { GameState } from './../engine/types';
-import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, formatDateLong, inWinterBreak, isTransferWindow, seasonLabel, seasonPhase } from '../engine/calendar';
+import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, formatDateLong, inWinterBreak, isTransferWindow, seasonLabel } from '../engine/calendar';
 import { DIVISIONS } from '../engine/data/divisions';
 import { OWN_TEAM_ID } from '../engine/league';
 import { esc, euro } from './format';
+import { schemeById } from './theme';
 import { tipAttr } from './tooltip';
 import { type CrestShape, clubInitials, crestSvg } from './crest';
-import { START_CLUBS } from '../engine/data/setup';
 
 /** De transferperiodes, afgeleid uit dezelfde functie waarmee de engine rekent. */
 function windows(): { from: number; to: number }[] {
@@ -111,12 +108,23 @@ export interface HeaderOpts {
 }
 
 /**
- * De hele kopbalk. Drie stukken: wie je bent, waar je staat in het jaar, en wat je nu
- * kunt doen. Verder niets — de cijfers staan op het dashboard, waar ze groot mogen zijn.
+ * De kopbalk. Drie dingen, meer niet: wie je bent, wanneer het is, en wat je nu kunt doen.
+ *
+ * De vorige poging propte er ook nog een seizoensbalk in. Op zich een bruikbaar ding — je
+ * ziet er in één streep aan hoe het jaar loopt — maar in een kopbalk van tachtig pixels
+ * werd het drukte naast een logo dat je nauwelijks zag. Die balk staat nu op de kalender,
+ * waar ruimte is en waar je hem zoekt.
+ *
+ * Wat overblijft krijgt de plaats die het verdient: het logo is bijna twee keer zo groot,
+ * de clubnaam staat er in koptekst, en de clubkleuren lopen als band over de bovenrand.
+ * Je weet in één oogopslag bij welke club je zit.
  */
 export function header(g: GameState, o: HeaderOpts): string {
   const division = DIVISIONS[g.league.divisionLevel];
-  const colors = (START_CLUBS.find((c) => c.id === g.clubId)?.colors ?? ['#1f7a3c', '#ffffff']) as [string, string];
+  const colors = schemeById(g.scheme).colors;
+  const match = weeksToMatch(g);
+  const playedDays = MATCH_WEEKS.filter((w) => w < g.week).length;
+
   const nextTip = o.blocked
     ? o.blocked
     : o.fastWeeks >= 2
@@ -125,26 +133,38 @@ export function header(g: GameState, o: HeaderOpts): string {
         ? 'Volgende week wordt er al gespeeld. Gebruik gewoon "Volgende week".'
         : 'Je speelt deze week een wedstrijd. Die week speel je zelf.';
 
-  return `<header class="topbar">
-    <button class="club" data-action="nav" data-id="club" ${tipAttr('Naar je clubinfo.')}>
-      ${crestSvg(g.crest as CrestShape, colors, clubInitials(g.clubName), 40)}
+  // wanneer het is, in drie korte stukken naast elkaar in plaats van een alinea
+  const when = [
+    `<span class="bit"><span class="cap">Week</span><strong>${g.week}<span class="of">/${WEEKS_PER_YEAR}</span></strong></span>`,
+    playedDays || MATCH_WEEKS[0] <= g.week
+      ? `<span class="bit"><span class="cap">Speeldag</span><strong>${playedDays}<span class="of">/${MATCH_WEEKS.length}</span></strong></span>`
+      : `<span class="bit"><span class="cap">Competitie</span><strong>week ${MATCH_WEEKS[0]}</strong></span>`,
+    match
+      ? `<span class="bit ${match.weeks === 0 ? 'now' : ''}"><span class="cap">Volgende match</span><strong>${
+          match.weeks === 0 ? 'deze week' : `over ${match.weeks} ${match.weeks === 1 ? 'week' : 'weken'}`
+        }</strong></span>`
+      : '',
+  ].join('');
+
+  return `<header class="topbar" style="--club-1:${colors[0]};--club-2:${colors[1]}">
+    <span class="club-band" aria-hidden="true"></span>
+
+    <button class="club" data-action="nav" data-id="club" ${tipAttr('Naar je clubinfo: stadion, gemeente, geschiedenis en je kleuren.')}>
+      ${crestSvg(g.crest as CrestShape, colors, clubInitials(g.clubName), 58)}
       <span class="club-name">
         <strong>${esc(g.clubName)}</strong>
-        <span class="muted small">${esc(division.name)} · ${seasonLabel(g.startYear, g.season)}</span>
+        <span class="muted">${esc(division.name)} · ${seasonLabel(g.startYear, g.season)}</span>
       </span>
     </button>
 
-    <div class="when">
-      <button class="today" data-action="nav" data-id="kalender" ${tipAttr('Naar de kalender met alle weken, wedstrijden en uitbetalingen.')}>
-        <strong>${formatDateLong(g.startYear, g.season, g.week)}</strong>
-        <span class="muted small">${esc(seasonPhase(g.week))}</span>
-      </button>
-      ${seasonStrip(g)}
-    </div>
+    <button class="when" data-action="nav" data-id="kalender" ${tipAttr('Naar de kalender: alle weken van het seizoen, met wedstrijden, uitbetalingen en de seizoensbalk.')}>
+      <span class="date">${formatDateLong(g.startYear, g.season, g.week)}</span>
+      <span class="bits">${when}</span>
+    </button>
 
     <div class="head-money">
       <span class="cap">Saldo</span>
-      <button class="big-num sm ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" ${tipAttr('Naar je financiën: prognose, posten en de herkomst van elke post.')}>${euro(g.cash)}</button>
+      <button class="amount ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" ${tipAttr('Naar je financiën: prognose, posten en de herkomst van elke post.')}>${euro(g.cash)}</button>
       ${g.weeksNegative ? `<span class="small neg">${g.weeksNegative}/8 weken rood</span>` : ''}
     </div>
 

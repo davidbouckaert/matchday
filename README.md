@@ -169,7 +169,25 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 14 (deze versie)
+## Laag 15 (deze versie)
+
+### 0.22.0 — Je eigen kleuren, en cijfers die zeggen wat ze doen
+
+**Je kiest je clubkleuren, en ze lopen door de hele app.** Bij een nieuw spel staat er een rij schema's: groen-wit, rood-wit, geel-zwart, bordeaux-goud, en zo verder. Die kleur is niet alleen je logo — het is de accentkleur van alles: de actieve tab, de primaire knop, je balken, de rand van de kaart die je aandacht vraagt.
+
+Dat kan makkelijk fout gaan. Wit op geel is onleesbaar, en marineblauw verdwijnt in een donkere achtergrond. Daarom gaat elke kleur door `src/ui/theme.ts` in plaats van er rechtstreeks in: dat rekent de relatieve helderheid en de contrastverhouding uit zoals WCAG ze definieert, kiest zwarte of witte tekst op basis daarvan, en trekt de accentkleur donkerder of lichter tot ze 4,5:1 haalt. Geel blijft dus geel op je logo en op de band bovenaan, maar wordt oker waar het tekst of een knop moet dragen. `test/theme.test.ts` controleert elk schema in beide thema's op vier punten, dus een nieuw schema kan er niet in glippen als het onleesbaar is. Een bestaand opslagbestand krijgt automatisch het schema dat het dichtst bij zijn oude clubkleuren ligt.
+
+**De kopbalk, derde poging.** De tweede had een seizoensbalk met de 52 weken erin. Op zich bruikbaar, maar in een balk van tachtig pixels werd het drukte naast een logo dat je nauwelijks zag. Die balk staat nu op de kalender, waar ze breedte heeft en waar je ze zoekt. Wat overblijft krijgt de plaats die het verdient: het logo is 58 pixels in plaats van 40, de clubnaam staat er in koptekst, en je clubkleuren lopen als band over de bovenrand. Daarnaast staat wanneer het is, in drie korte stukken — `week 13/52`, `speeldag 6/30`, `volgende match deze week` — en dan je saldo en de twee knoppen.
+
+**Wat levert dit personeelslid op?** Een vaardigheid van 75 zegt niets. Wat je wil weten is wat die 75 je koopt, en hoeveel beter dat is dan de 40 die je nu hebt. Dat stond nergens: je moest het afleiden uit "betere fysiek, stabielere vorm, minder blessures" en dan maar hopen. Op Personeel staat nu per persoon een rijtje kaartjes: `⚽ +3,1 Teamsterkte`, `🩹 −18% Blessurekans`, `👥 +12 Toeschouwers`, `🍺 +€0,14 Per bezoeker`. Bij een kandidaat is dat het verschil met wie je nu op die plaats hebt.
+
+Die cijfers zijn niet overgeschreven uit de formules maar gemeten: `src/engine/impact.ts` maakt twee kopieën van je club, zet in de ene die persoon op die plaats en in de andere wie je nu hebt, en draait er dezelfde engine-functies op die het spel zelf gebruikt. Verandert een formule, dan verandert het kaartje mee. Het kan dus niet uit de pas lopen.
+
+**Minder tekst, meer beeld.** Dat kaartje is meteen het antwoord op een tweede probleem: de tooltips waren goed maar lang, en lange uitleg lees je één keer en daarna scan je eroverheen. Een icoon met een getal lees je in een halve seconde, en je kunt er twee kandidaten mee vergelijken zonder iets te lezen — `🩹 −18%` naast `🩹 −7%`. De volle uitleg zit er nog steeds in, maar in de tooltip: daar staat ze voor wie ze wil, in plaats van in de weg voor wie ze niet nodig heeft.
+
+**Ruimte.** De inhoud mag tot 1700 pixels breed, en op een breed scherm valt het dashboard zelf in twee kolommen: de geldkaart over de volle breedte, daaronder de posten naast de wedstrijd. Strategie staat in drie kolommen, de sponsorplaatsen zijn tien tegels op een rij in plaats van drie uitgerekte blokken met een rijtje kleintjes eronder, en de spelersselectie is een veld geworden met je kern ernaast — klik wie eruit moet, klik wie erin komt. De tabel met alle cijfers blijft bestaan, maar ingeklapt, voor wie wil sorteren op loon of contract. De inklappijltjes zijn daarbij echte ronde knoppen geworden in plaats van een grijs driehoekje van zes pixels.
+
+## Laag 14
 
 ### 0.21.1 — De week begint met wat er op je ligt te wachten
 

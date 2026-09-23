@@ -15,7 +15,9 @@ export function sponsorsScreen(s: GameState): string {
     const used = s.sponsors.filter((d) => d.kind === k).length;
     const [min, max] = kindRange(s, k);
     const lock = kindLock(s, k);
-    return `<div class="tile ${lock ? 'locked' : used >= KIND_MAX[k] ? 'full' : ''}" ${tip(`${KIND_INFO[k]}${lock ? ` ${lock}` : ''}`)}>
+    // let op: niet de class 'full' gebruiken — dat is de opmaakhulp die een element over
+    // alle kolommen laat lopen, en dan werd een bezette plaats een balk over de hele breedte
+    return `<div class="tile ${lock ? 'locked' : used >= KIND_MAX[k] ? 'filled' : ''}" ${tip(`${KIND_INFO[k]}${lock ? ` ${lock}` : ''}`)}>
       <span class="label">${KIND_LABEL[k]}</span><strong>${used}/${KIND_MAX[k]}</strong>
       <span class="muted small">${lock ? `🔒 ${esc(lock)}` : `markt: ${euro(min)}–${euro(max)}/week`}</span></div>`;
   }).join('');
@@ -83,35 +85,54 @@ export function sponsorsScreen(s: GameState): string {
     .join('');
 
   const netWait = s.eventCooldowns['netwerk'] ?? 0;
+
+  // Twee kolommen. Links het brede werk — je plaatsen, wie er al tekent, wie je nog kunt
+  // bellen. Rechts wat er nu op tafel ligt en de twee knoppen om nieuwe namen te vinden.
+  // Vroeger stonden deze vijf kaarten onder elkaar over de volle breedte; je scrollde
+  // langs een halve lege pagina om van je voorstellen naar je sponsors te gaan.
   return `${taskPicker(s, ['sponsoring'])}
-  <section class="card">
-    <h2>Sponsoring: ${euro(sponsorWeekly(s))}/week</h2>
-    ${who ? `<p class="attention-inline small">${esc(who.name)} regelt de sponsorwerving: hij benadert om de twee weken het meest geïnteresseerde bedrijf, tekent aanbiedingen en verlengt tevreden sponsors. Je kunt zelf nog altijd ingrijpen.</p>` : ''}
-    <div class="tiles four">${slots}</div>
-    <p class="muted small">Het bedrag dat een sponsor wil geven, stijgt met je reeks, reputatie, een commercieel medewerker en je achtergrond als ondernemer.</p>
-  </section>
+  <div class="dash">
+    <div class="dash-main">
+      <section class="card">
+        <h2>Sponsoring: ${euro(sponsorWeekly(s))}/week</h2>
+        ${who ? `<p class="attention-inline small">${esc(who.name)} regelt de sponsorwerving: hij benadert om de twee weken het meest geïnteresseerde bedrijf, tekent aanbiedingen en verlengt tevreden sponsors. Je kunt zelf nog altijd ingrijpen.</p>` : ''}
+        <div class="tiles slots">${slots}</div>
+        <p class="muted small">Het bedrag dat een sponsor wil geven, stijgt met je reeks, reputatie, een commercieel medewerker en je achtergrond als ondernemer.</p>
+      </section>
 
-  ${offers ? `<section class="card attention"><h2>Voorstellen</h2><ul class="offers">${offers}</ul></section>` : ''}
+      <section class="card">
+        <h2>Huidige sponsors <span class="tag">${s.sponsors.length}</span></h2>
+        <p class="muted small">Tevredenheid stijgt met goede resultaten, sfeer en reputatie. Tevreden sponsors stellen zelf een verlenging voor, geven sneller een extra bijdrage en blijven langer.</p>
+        <div class="table-wrap"><table data-sort-id="sponsors">
+          <thead><tr><th>Sponsor</th><th>Type</th><th class="num">Per week</th><th class="num">Resterend</th><th>Tevredenheid</th><th data-nosort></th></tr></thead>
+          <tbody>${deals}</tbody>
+        </table></div>
+      </section>
 
-  <section class="card">
-    <h2>Nieuwe sponsors zoeken</h2>
-    <p class="muted small">Benader een bedrijf: volgende week hoor je of het een voorstel doet. De kans hangt af van hun interesse. Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors.</p>
-    <div class="btn-row">
-      <button class="sm" data-action="network" ${netWait ? 'disabled' : ''}>Netwerkavond (${euro(NETWORK_EVENING.cost)})${netWait ? ` · nog ${weeks(netWait)}` : ''}</button>
-      <button class="sm" data-action="campaign" ${s.sponsorCampaignWeeks ? 'disabled' : ''}>Sponsorbureau inschakelen (${euro(CAMPAIGN.cost)}, ${CAMPAIGN.weeks} weken)${s.sponsorCampaignWeeks ? ` · nog ${weeks(s.sponsorCampaignWeeks)}` : ''}</button>
+      <section class="card">
+        <h2>Contacten <span class="tag">${s.prospects.length}</span></h2>
+        <p class="muted small">Benader een bedrijf: volgende week hoor je of het een voorstel doet. De kans hangt af van hun interesse.</p>
+        <div class="table-wrap"><table data-sort-id="prospects">
+          <thead><tr><th>Bedrijf</th><th>Sector</th><th>Budget</th><th>Interesse</th><th data-nosort></th></tr></thead>
+          <tbody>${prospects || '<tr><td colspan="5" class="muted">Geen contacten. Hou een netwerkavond of schakel een bureau in.</td></tr>'}</tbody>
+        </table></div>
+      </section>
     </div>
-    <div class="table-wrap"><table data-sort-id="prospects">
-      <thead><tr><th>Bedrijf</th><th>Sector</th><th>Budget</th><th>Interesse</th><th data-nosort></th></tr></thead>
-      <tbody>${prospects || '<tr><td colspan="5" class="muted">Geen contacten. Hou een netwerkavond of schakel een bureau in.</td></tr>'}</tbody>
-    </table></div>
-  </section>
 
-  <section class="card">
-    <h2>Huidige sponsors</h2>
-    <p class="muted small">Tevredenheid stijgt met goede resultaten, sfeer en reputatie. Tevreden sponsors stellen zelf een verlenging voor, geven sneller een extra bijdrage en blijven langer.</p>
-    <div class="table-wrap"><table data-sort-id="sponsors">
-      <thead><tr><th>Sponsor</th><th>Type</th><th class="num">Per week</th><th class="num">Resterend</th><th>Tevredenheid</th><th data-nosort></th></tr></thead>
-      <tbody>${deals}</tbody>
-    </table></div>
-  </section>`;
+    <div class="dash-side">
+      ${
+        offers
+          ? `<section class="card attention"><h2>Op tafel <span class="tag bad">${s.sponsorOffers.length}</span></h2><ul class="offers">${offers}</ul></section>`
+          : '<section class="card"><h2>Op tafel</h2><p class="muted small">Geen voorstellen op dit moment. Benader een contact of hou een netwerkavond.</p></section>'
+      }
+      <section class="card">
+        <h2>Nieuwe namen vinden</h2>
+        <p class="muted small">Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors.</p>
+        <div class="stack-btns">
+          <button data-action="network" ${netWait ? 'disabled' : ''}>Netwerkavond (${euro(NETWORK_EVENING.cost)})${netWait ? ` · nog ${weeks(netWait)}` : ''}</button>
+          <button data-action="campaign" ${s.sponsorCampaignWeeks ? 'disabled' : ''}>Sponsorbureau (${euro(CAMPAIGN.cost)}, ${CAMPAIGN.weeks} weken)${s.sponsorCampaignWeeks ? ` · nog ${weeks(s.sponsorCampaignWeeks)}` : ''}</button>
+        </div>
+      </section>
+    </div>
+  </div>`;
 }

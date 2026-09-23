@@ -49,7 +49,7 @@ function moneyCard(s: GameState): string {
   const f = forecast(s);
   const troubled = f.trouble;
 
-  return `<section class="card money">
+  return `<section class="card money wide">
     <h2>Geld ${hint('Je saldo nu, wat de voorbije week opleverde of kostte, en waar je uitkomt als je niets verandert. De prognose rekent de komende acht weken door: vaste kosten, contracten, aflossingen en een raming van de kassa per thuiswedstrijd.')}</h2>
     <div class="money-head">
       <div class="money-fig">

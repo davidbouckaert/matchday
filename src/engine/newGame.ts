@@ -18,11 +18,12 @@ import { emptyCareer, emptyOwner } from './career';
 import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 27;
+export const SAVE_VERSION = 28;
 
 export interface NewGameOptions {
   avatar: Avatar;
   crest?: string;
+  scheme?: string;
   clubName?: string; // eigen naam voor je club (leeg = de naam van de club zelf)
   clubId: string;
   investor: InvestorId;
@@ -83,6 +84,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
       constructions: [],
     },
     crest: opts.crest ?? 'schild',
+    scheme: opts.scheme ?? 'groenwit',
     merch: { active: false, items: [], lastUnits: [], seasonUnits: 0 },
     canteen: { items: CANTEEN_ITEMS.map((c) => ({ id: c.id, price: c.ref })), concessions: [], lastCanteen: [], lastConcessions: [] },
     stats: emptyStats(1),

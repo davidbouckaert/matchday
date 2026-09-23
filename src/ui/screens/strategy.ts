@@ -144,18 +144,27 @@ export function strategyScreen(s: GameState): string {
     `)}
   </section>`;
 
+  // Drie kolommen in plaats van vier kaarten onder elkaar met een halve pagina wit ernaast.
+  // Links wat je instelt (training, opstelling), midden je wedstrijdtactiek, rechts de
+  // tegenstander en de tabel die zegt welk spelplan van welk wint — dat is naslag die je
+  // ernaast wilt hebben terwijl je kiest, niet iets waar je naartoe scrollt.
   return `${taskPicker(s, ['training', 'tactiek'])}
   ${coach ? `<p class="attention-inline">🔒 ${esc(lockTip)}</p>` : ''}
-  ${oppCard}
-  <div class="grid">
-    ${trainingCard}
-    ${lineupCard}
-  </div>
-  ${tacticCard}
-  <section class="card">
-    <h2>Welk spelplan wint van welk?</h2>
-    <p class="muted small">Zoals bij Pokémon: elk spelplan is sterk tegen twee andere en zwak tegen twee andere. Een voordeel geeft ongeveer +2 aanval en +1,2 verdediging, een nadeel evenveel minder.
-    Een betere hoofdtrainer en de trainingsfocus "tactiek" versterken dat. Beweeg over een vakje voor de uitleg.</p>
-    ${matrix()}
-  </section>`;
+  <div class="cols-3">
+    <div class="col">
+      ${trainingCard}
+      ${lineupCard}
+    </div>
+    <div class="col">
+      ${tacticCard}
+    </div>
+    <div class="col">
+      ${oppCard}
+      <section class="card">
+        <h2>Welk spelplan wint van welk?</h2>
+        <p class="muted small">Elk spelplan is sterk tegen twee andere en zwak tegen twee andere. Een voordeel geeft ongeveer +2 aanval en +1,2 verdediging, een nadeel evenveel minder. Een betere hoofdtrainer en de trainingsfocus "tactiek" versterken dat. Beweeg over een vakje voor de uitleg.</p>
+        ${matrix()}
+      </section>
+    </div>
+  </div>`;
 }

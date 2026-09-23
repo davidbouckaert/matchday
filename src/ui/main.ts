@@ -37,6 +37,7 @@ import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from 
 import { initTooltips } from './tooltip';
 import { initNumFields } from './numfield';
 import { header } from './header';
+import { applyTheme, schemeById } from './theme';
 import { esc, euro } from './format';
 
 const SLOT = 'slot1';
@@ -93,6 +94,7 @@ interface UiState {
   openTables: Record<string, boolean>; // welke inklapbare tabellen openstaan
   moment: 'dicht' | 'vraag' | 'gevolg'; // popup van het weekmoment
   onboardOpen: boolean; // staat de startlijst open?
+  pitchPick: string | null; // wie je op het veld aanklikte om te vervangen
 }
 
 const ui: UiState = {
@@ -115,6 +117,7 @@ const ui: UiState = {
   openTables: { basis: true, bank: false, out: false },
   moment: 'dicht',
   onboardOpen: false,
+  pitchPick: null,
 };
 
 /** Kleine voorkeur in de browser (fout = standaardwaarde). */
@@ -164,7 +167,7 @@ function renderScreen(g: GameState): string {
   switch (ui.screen) {
     case 'overzicht': return dashboardScreen(g, ui.onboardOpen);
     case 'doelen': return goalsScreen(g);
-    case 'ploeg': return squadScreen(g, ui.openTables);
+    case 'ploeg': return squadScreen(g, ui.openTables, ui.pitchPick);
     case 'strategie': return strategyScreen(g);
     case 'opleiding': return trainingScreen(g);
     case 'invloeden': return influencesScreen(g);
@@ -190,6 +193,8 @@ function renderScreen(g: GameState): string {
 function render(): void {
   const toast = ui.toast ? `<div class="toast ${ui.toast.ok ? '' : 'bad'}" role="status">${esc(ui.toast.text)}</div>` : '';
   const g = ui.game;
+  // de clubkleuren staan in het opslagbestand, dus ze moeten bij elke tekening goed staan
+  applyTheme(g ? schemeById(g.scheme).colors : schemeById(ui.draft.scheme).colors);
   if (!g) {
     root.innerHTML = `<main class="setup-wrap">${setupScreen(ui.draft)}</main>${toast}`;
     return;
@@ -516,6 +521,10 @@ const handlers: Record<string, Handler> = {
   'draft-background': (id) => void (ui.draft.background = id as SetupDraft['background']),
   'draft-club': (id) => void (ui.draft.clubId = id),
   'draft-crest': (id) => void (ui.draft.crest = id as SetupDraft['crest']),
+  'draft-scheme': (id) => {
+    ui.draft.scheme = id;
+    applyTheme(schemeById(id).colors); // meteen zien wat je kiest, in het hele scherm
+  },
   'draft-investor': (id) => void (ui.draft.investor = id as SetupDraft['investor']),
   'draft-back': () => void (ui.draft.step = Math.max(1, ui.draft.step - 1) as SetupDraft['step']),
   'draft-next': () => {
@@ -529,6 +538,7 @@ const handlers: Record<string, Handler> = {
       clubId: d.clubId,
       investor: d.investor,
       crest: d.crest,
+      scheme: d.scheme,
       clubName: d.clubName,
     });
     ui.screen = 'overzicht';
@@ -614,6 +624,9 @@ const handlers: Record<string, Handler> = {
   'stats-view': (id) => void (ui.statsView = id as 'seizoen' | 'week'),
   'toggle-menu': () => void (ui.menuOpen = !ui.menuOpen),
   'toggle-onboard': () => void (ui.onboardOpen = !ui.onboardOpen),
+  // het veld: eerst wie eruit moet aanklikken, dan wie erin komt
+  'pitch-pick': (id) => void (ui.pitchPick = ui.pitchPick === id ? null : id),
+  'pitch-cancel': () => void (ui.pitchPick = null),
 
   // spel
   buy: gameAction(actions.buyPlayer),
@@ -653,7 +666,18 @@ const handlers: Record<string, Handler> = {
   plan: gameAction((g, id) => actions.setPlan(g, id as GamePlan)),
   starter: gameAction(actions.toggleStarter),
   bench: gameAction(actions.toggleBench),
-  'auto-lineup': gameAction((g) => actions.autoLineup(g)),
+  'auto-lineup': gameAction((g) => {
+    ui.pitchPick = null;
+    return actions.autoLineup(g);
+  }),
+  'squad-swap': gameAction((g, inId) => {
+    const outId = ui.pitchPick;
+    ui.pitchPick = null;
+    if (!outId) return { ok: false, message: 'Klik eerst wie eruit moet.' };
+    // een lege plaats: er gaat niemand uit, je vult ze gewoon op
+    if (outId.startsWith('leeg:')) return actions.toggleStarter(g, inId);
+    return actions.swapInLineup(g, outId, inId);
+  }),
   approach: gameAction(actions.approachProspect),
   network: gameAction((g) => actions.networkEvening(g)),
   campaign: gameAction((g) => actions.startCampaign(g)),

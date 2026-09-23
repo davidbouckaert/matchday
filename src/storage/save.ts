@@ -13,6 +13,8 @@ import { teamsFor } from '../engine/youth';
 import { buildWorld } from '../engine/world';
 import { emptyCareer, emptyOwner, levelFor } from '../engine/career';
 import { emptyInvestorState, stadiumSponsorWeekly } from '../engine/investors';
+import { DEFAULT_SCHEME, SCHEMES, rgb } from '../ui/theme';
+import { START_CLUBS } from '../engine/data/setup';
 import { DIVISIONS } from '../engine/data/divisions';
 import { MATCH_WEEKS } from '../engine/calendar';
 import { companySector } from '../engine/sponsors';
@@ -98,6 +100,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 24) migrateV24toV25(state);
   if (state.version === 25) migrateV25toV26(state);
   if (state.version === 26) migrateV26toV27(state);
+  if (state.version === 27) migrateV27toV28(state);
   repair(state);
   return state;
 }
@@ -394,6 +397,25 @@ function migrateV22toV23(state: GameState): void {
   state.lastWorldMoves = [];
   linkLeagueToWorld(state, rng);
   state.version = 23;
+}
+
+/** Versie 28: je kiest je clubkleuren, en die kleuren de hele app. */
+function migrateV27toV28(state: GameState): void {
+  // bestaande spellen hadden geen keuze; we leiden het schema af uit de kleuren van hun
+  // startclub, zodat een oud bestand er niet plots anders uitziet
+  const club = START_CLUBS.find((c) => c.id === state.clubId);
+  const beste = club
+    ? SCHEMES.map((sch) => ({ sch, afstand: kleurAfstand(sch.colors[0], club.colors[0]) })).sort((a, b) => a.afstand - b.afstand)[0].sch
+    : DEFAULT_SCHEME;
+  state.scheme ??= beste.id;
+  state.version = 28;
+}
+
+/** Hoe ver twee kleuren uit elkaar liggen, plat gemeten over de drie kanalen. */
+function kleurAfstand(a: string, b: string): number {
+  const [r1, g1, b1] = rgb(a);
+  const [r2, g2, b2] = rgb(b);
+  return Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
 }
 
 /** Versie 27: elke investeerder speelt een ander spel. */

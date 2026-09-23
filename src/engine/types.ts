@@ -596,6 +596,7 @@ export interface GameState {
   sponsorOffers: SponsorOffer[];
   infrastructure: Infrastructure;
   crest: string; // vorm van het clublogo
+  scheme: string; // gekozen kleurenschema (zie src/ui/theme.ts); bepaalt de accentkleur van de hele app
   merch: Merch;
   canteen: Canteen;
   stats: SeasonStats;

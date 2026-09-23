@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.21.1';
+export const VERSION = '0.22.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,24 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.22.0',
+    date: '2026-09-23',
+    title: 'Je eigen kleuren, en cijfers die zeggen wat ze doen',
+    items: [
+      'Bij een nieuw spel kies je een kleurenschema; die kleuren lopen door de hele app, van je logo tot je knoppen',
+      'Elk schema is doorgerekend op leesbaarheid: geel wordt oker waar tekst nodig is, de echte clubkleur blijft op je logo en de band',
+      'Bestaande spellen krijgen automatisch het schema dat het dichtst bij hun oude clubkleuren ligt',
+      'De kopbalk is opnieuw gemaakt: logo en clubnaam bijna twee keer zo groot, met je clubkleuren als band erboven',
+      'De seizoensbalk verhuisde van de kopbalk naar de kalender, waar ze ruimte heeft en waar je ze zoekt',
+      'Nieuw op Personeel: per persoon staat er nu in kaartjes wát hij oplevert — teamsterkte, blessurekans, toeschouwers, euro\'s',
+      'Bij kandidaten is dat het verschil met wie je nu hebt, doorgerekend met dezelfde formules waarmee het spel rekent',
+      'Op een breed scherm valt het dashboard zelf in twee kolommen, zodat je minder scrolt',
+      'De opstelling is een veld geworden met je kern ernaast: klik wie eruit moet, klik wie erin komt',
+      'Strategie staat in drie kolommen en de sponsorplaatsen als tien tegels in plaats van drie uitgerekte blokken',
+      'Inklappijltjes zijn echte ronde knoppen geworden in plaats van een grijs driehoekje van zes pixels',
+    ],
+  },
   {
     version: '0.21.1',
     date: '2026-09-23',

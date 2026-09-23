@@ -3,6 +3,7 @@ import { BACKGROUNDS, INVESTORS, START_CLUBS } from '../../engine/data/setup';
 import { avatarSvg, HAIRS, SHIRTS, SKINS } from '../avatar';
 import { CREST_LABEL, CREST_SHAPES, type CrestShape, clubInitials, crestSvg } from '../crest';
 import { esc, euro, stars } from '../format';
+import { SCHEMES, schemeById } from '../theme';
 
 export interface SetupDraft {
   step: 1 | 2 | 3;
@@ -13,6 +14,7 @@ export interface SetupDraft {
   hair: number;
   shirt: number;
   background: BackgroundId;
+  scheme: string;
   clubId: string;
   investor: InvestorId;
 }
@@ -26,6 +28,7 @@ export const defaultDraft = (): SetupDraft => ({
   hair: 0,
   shirt: 0,
   background: 'ondernemer',
+  scheme: 'groenwit',
   clubId: 'zuidrand',
   investor: 'aannemer',
 });
@@ -95,12 +98,24 @@ export function setupScreen(d: SetupDraft): string {
       <h3>Naam van je club</h3>
       <p class="muted small">Laat leeg om de bestaande naam te houden. Je kunt de club ook meteen hernoemen — je bent tenslotte de nieuwe eigenaar.</p>
       <label>Clubnaam<input id="draft-clubname" type="text" maxlength="34" value="${esc(d.clubName)}" placeholder="${esc(club.name)}" autocomplete="off"/></label>
+      <h3>Clubkleuren</h3>
+      <p class="muted small">Je kleuren staan niet alleen op het logo: ze kleuren de hele app — de actieve tab, de knoppen, je balken en grafieken.
+        Elk schema is doorgerekend op leesbaarheid, dus je kunt niet in een combinatie belanden waarin je de tekst niet meer ziet.</p>
+      <div class="scheme-row">
+        ${SCHEMES.map(
+          (sch) => `<button class="scheme-pick ${d.scheme === sch.id ? 'sel' : ''}" data-action="draft-scheme" data-id="${sch.id}" data-tip="${esc(sch.naam)}: kleurt je logo, je knoppen en je accenten.">
+            <span class="swatches"><span style="background:${sch.colors[0]}"></span><span style="background:${sch.colors[1]}"></span></span>
+            <span class="small">${esc(sch.naam)}</span>
+          </button>`,
+        ).join('')}
+      </div>
+
       <h3>Kies een logo</h3>
       <p class="muted small">Het logo van ${esc(d.clubName.trim() || club.name)} staat in de kopbalk en op je rapporten.</p>
       <div class="crest-row">
         ${CREST_SHAPES.map(
           (shape) => `<button class="crest-pick ${d.crest === shape ? 'sel' : ''}" data-action="draft-crest" data-id="${shape}" data-tip="${CREST_LABEL[shape]}">
-            ${crestSvg(shape, club.colors as [string, string], clubInitials(d.clubName.trim() || club.name), 56)}
+            ${crestSvg(shape, schemeById(d.scheme).colors, clubInitials(d.clubName.trim() || club.name), 56)}
             <span class="muted small">${CREST_LABEL[shape]}</span>
           </button>`,
         ).join('')}
