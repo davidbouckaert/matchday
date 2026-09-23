@@ -211,7 +211,7 @@ function faq(): QA[] {
     {
       q: 'Hoe verloopt een seizoen?',
       a: `Een seizoen is 52 weken. De competitie loopt van week ${MATCH_WEEKS[0]} tot ${MATCH_WEEKS[MATCH_WEEKS.length - 1]}, met een winterstop ertussen.
-        In week ${SEASON_END_WEEK} vallen de beslissingen over promotie en degradatie. De volledige kalender staat bij Competitie › Kalender.`,
+        In week ${SEASON_END_WEEK} vallen de beslissingen over promotie en degradatie. De volledige agenda staat bij Bureau › Agenda.`,
     },
     {
       q: 'Waar staat mijn spel opgeslagen?',
@@ -232,12 +232,12 @@ export function guideScreen(s: GameState): string {
       Versie ${VERSION}.</p>
       <h3>Waar vind ik wat?</h3>
       <ul class="where small">
-        <li><strong>Bureau</strong><span>Wat deze week op je wacht, je saldo en prognose, waar het geld heen ging, je volgende wedstrijd, en hoe je ervoor staat bij publiek en sponsors.</span></li>
+        <li><strong>Bureau</strong><span>Wat deze week op je wacht, je saldo en prognose, waar het geld heen ging, je volgende wedstrijd, en hoe je ervoor staat bij publiek en sponsors. Daarnaast de Agenda: alle 52 weken met transferperiodes, uitbetalingen en vaste momenten.</span></li>
         <li><strong>Ploeg</strong><span>Selectie (het veld en je kern), Strategie (training, tactiek, spelplannen), Transfers en Contracten.</span></li>
         <li><strong>Personeel</strong><span>Aanwerven en opleiden, en in één tabel per taak kiezen wie ze doet. Datzelfde keuzevak staat ook bovenaan elk taakscherm.</span></li>
         <li><strong>Geld</strong><span>Financiën (prognose, posten, herkomst, ticketprijs, abonnementen, leningen), Sponsors en Cijfers.</span></li>
         <li><strong>Club</strong><span>Infrastructuur, Horeca, Clubwinkel, Evenementen, Doelen (je langetermijndoel en het logboek), Museum en Clubinfo.</span></li>
-        <li><strong>Competitie</strong><span>De stand en de tuchtzaken, en de Kalender met het hele seizoen in één streep.</span></li>
+        <li><strong>Competitie</strong><span>De stand, jouw wedstrijden met hun uitslag, de clubs in je reeks en de tuchtzaken.</span></li>
         <li><strong>Menu ☰</strong><span>Deze handleiding, "Wat beïnvloedt wat" met elke vermenigvuldiger die nu meespeelt, en opslaan en instellingen.</span></li>
       </ul>
       <p class="small">Klaar? Druk op <strong>Volgende week</strong> (of op de spatiebalk). Je ziet een korte animatie en daarna het weekrapport.</p>

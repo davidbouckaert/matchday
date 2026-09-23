@@ -247,7 +247,8 @@ export function leagueScreen(s: GameState): string {
     </section>
     ${rivalsCard(s)}
     <section class="card span2">
-      <h2>Kalender</h2>
+      <h2>Jouw wedstrijden</h2>
+      <p class="muted small">Alles wat je dit seizoen speelde en nog speelt. De volledige agenda — met transferperiodes, uitbetalingen en vaste momenten — staat bij Bureau &rsaquo; Agenda.</p>
       <div class="table-wrap"><table class="compact">
         <tbody>${ours
           .map((f) => {

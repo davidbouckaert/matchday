@@ -15,7 +15,7 @@ import {
   WEEKS_PER_YEAR,
   isWinter,
 } from './calendar';
-import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable } from './league';
+import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, zoneAt } from './league';
 import { developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
@@ -618,7 +618,10 @@ function seasonEnd(state: GameState): void {
   let result: 'promotie' | 'degradatie' | 'behoud' | 'kampioen' = 'behoud';
   let prize = 0;
 
-  if (pos === 1 && level < DIVISIONS.length - 1) {
+  // dezelfde functie waarmee de kopbalk je plaats kleurt, zodat die twee nooit uiteenlopen
+  const zone = zoneAt(state.league, pos, level, DIVISIONS.length);
+
+  if (zone === 'kampioen') {
     result = 'kampioen';
     state.nextDivisionLevel = level + 1;
     state.promotionsWithInvestor++;
@@ -630,7 +633,7 @@ function seasonEnd(state: GameState): void {
     book(state, 'premies', prize, level < 3 ? `Kampioenenpremies van sponsors en supporters (${DIVISIONS[level].name})` : `Prijzengeld en tv-premie voor de titel (${DIVISIONS[level].name})`);
     takePrizeShare(state, prize);
     addNews(state, 'goed', `KAMPIOEN! ${state.clubName} promoveert naar ${DIVISIONS[level + 1].name}. Kampioenenpremie: €${prize.toLocaleString('nl-BE')}.`);
-  } else if (pos === 2 && level < DIVISIONS.length - 1) {
+  } else if (zone === 'promotie') {
     result = 'promotie';
     state.nextDivisionLevel = level + 1;
     state.promotionsWithInvestor++;
@@ -642,7 +645,7 @@ function seasonEnd(state: GameState): void {
     book(state, 'premies', prize, level < 3 ? `Promotiepremies van sponsors (${DIVISIONS[level].name})` : `Promotiepremie en tv-geld (${DIVISIONS[level].name})`);
     takePrizeShare(state, prize);
     addNews(state, 'goed', `Tweede plaats en promotie naar ${DIVISIONS[level + 1].name}. Promotiepremie: €${prize.toLocaleString('nl-BE')}.`);
-  } else if (pos >= table.length - 2 && level > 0) {
+  } else if (zone === 'degradatie') {
     result = 'degradatie';
     state.nextDivisionLevel = level - 1;
     c.reputation = clamp(c.reputation - 10, 0, 100);

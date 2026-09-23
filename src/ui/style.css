@@ -487,11 +487,15 @@ input.price { width: 72px; padding: 4px 6px; font-size: 0.85rem; text-align: rig
 /* de krimpstand */
 :root.scrolled .topbar { padding-top: 7px; padding-bottom: 6px; gap: 8px 28px; }
 :root.scrolled .topbar .club svg { width: 38px; height: 38px; }
-:root.scrolled .topbar .when .date { display: none; }
-:root.scrolled .topbar .when .bits .bit:not(.now) { display: none; }
+:root.scrolled .topbar .club-name .date { display: none; }
+:root.scrolled .hbit { padding-top: 2px; padding-bottom: 2px; }
 /* op een smal scherm staat de datumregel op een eigen rij: die rij moet helemaal weg,
    anders blijft er een lege band van zestig pixels onder je clubnaam hangen */
-@media (max-width: 760px) { :root.scrolled .topbar .when { display: none; } }
+/* op een smal scherm past de hele strook niet naast je clubnaam: dan vallen de twee
+   cijfers weg die je ook uit de kalender haalt, en blijven klassement en saldo staan */
+@media (max-width: 860px) {
+  :root.scrolled .hbit:not(.zone-kampioen):not(.zone-promotie):not(.zone-degradatie):not(.money):not(.neg):not(.now) { display: none; }
+}
 :root.scrolled .topbar .club-name .muted { display: none; }
 :root.scrolled .tabs button { padding-top: 9px; padding-bottom: 7px; }
 :root.scrolled .subtabs { padding-top: 4px; padding-bottom: 4px; }
@@ -1098,8 +1102,8 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
    ========================================================================== */
 .topbar {
   position: relative;
-  display: grid; grid-template-columns: auto minmax(260px, 1fr) auto auto;
-  align-items: center; gap: var(--s4) var(--s6); padding: var(--s4) var(--s5) var(--s3);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--s3) var(--s6); padding: var(--s4) var(--s5) var(--s3);
 }
 /* De band met je clubkleuren. Ze gebruikt de bijgetrokken varianten: een club met wit
    in haar kleuren had anders een onzichtbare helft op een witte kopbalk. */
@@ -1120,26 +1124,44 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 }
 .topbar .club-name .muted { font-size: .84rem; }
 
-/* wanneer het is: drie korte stukken in plaats van een alinea */
-.topbar .when {
-  display: flex; flex-direction: column; gap: var(--s2); align-items: flex-start;
-  background: none; padding: var(--s1) var(--s2); border-radius: var(--radius-sm); text-align: left;
-}
-.topbar .when:hover { background: var(--sunken); }
-.topbar .when .date { font-size: .92rem; font-weight: 600; }
-.topbar .bits { display: flex; gap: var(--s5); flex-wrap: wrap; }
-.topbar .bit { display: flex; flex-direction: column; line-height: 1.15; }
-.topbar .bit strong { font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.topbar .bit .of { font-weight: 400; color: var(--faint); font-size: .84em; }
-.topbar .bit.now strong { color: var(--accent); }
+.topbar .club-name .date { font-size: .8rem; color: var(--faint); }
 
-.topbar .head-money { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
-.topbar .head-money .amount {
-  background: none; padding: 0; font-size: 1.5rem; font-weight: 750;
-  letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+/* ==========================================================================
+   De kerncijfers: week, speeldag, klassement, volgende match, saldo.
+   Eén strook benoemde feiten in plaats van drie blokjes met een gat ertussen.
+   Elk feit is een knop naar het scherm waar het cijfer vandaan komt.
+   ========================================================================== */
+/* `.topbar .head-bits` en niet `.head-bits`: een oudere regel `.topbar > div` zet elke div
+   in de kopbalk op kolom, en die weegt zwaarder dan één losse klasse. Zonder dit stapelen
+   de vijf cijfers onder elkaar in plaats van naast elkaar. */
+.topbar .head-bits { display: flex; flex-direction: row; align-items: stretch; gap: var(--s1); flex-wrap: wrap; margin-left: auto; }
+.hbit {
+  display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  background: none; padding: 4px var(--s4); border-radius: var(--radius-sm);
+  text-align: left; line-height: 1.15; min-width: 0; position: relative;
 }
-.topbar .head-money .amount:hover { background: none; color: var(--accent); }
-.topbar .head-money .amount.neg { color: var(--bad); }
+.hbit + .hbit::before {
+  content: ''; position: absolute; left: 0; top: 18%; bottom: 18%; width: 1px; background: var(--line);
+}
+.hbit:hover { background: var(--sunken); }
+.hbit:hover::before, .hbit:hover + .hbit::before { opacity: 0; }
+.hbit .cap { font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+.hbit strong { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hbit .of { font-weight: 400; color: var(--faint); font-size: .82em; }
+
+/* het saldo is het grootste getal van de rij: dat is waar je als eigenaar naar kijkt */
+.hbit.money strong, .hbit.neg strong { font-size: 1.4rem; font-weight: 750; letter-spacing: -.02em; }
+.hbit.neg strong { color: var(--bad); }
+.hbit.now strong { color: var(--accent); }
+
+/* je plaats in het klassement kleurt naar wat er gebeurt als het zo blijft */
+.hbit.zone-kampioen strong, .hbit.zone-promotie strong { color: var(--good); }
+.hbit.zone-degradatie strong { color: var(--bad); }
+.hbit.zone-kampioen .cap::after { content: ' ▲'; }
+.hbit.zone-promotie .cap::after { content: ' ▲'; }
+.hbit.zone-degradatie .cap::after { content: ' ▼'; }
+
+.head-warn { color: var(--bad); font-weight: 600; cursor: help; flex: none; }
 
 .next-group { display: flex; flex-direction: column; gap: 5px; align-items: stretch; }
 .next-group .next { padding: 11px 22px; font-size: 1rem; }

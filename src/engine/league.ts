@@ -208,6 +208,24 @@ export function ownPosition(league: League): number {
   return sortedTable(league).findIndex((r) => r.teamId === OWN_TEAM_ID) + 1;
 }
 
+/** Wat er met een club gebeurt als de stand zo blijft. */
+export type Zone = 'kampioen' | 'promotie' | 'degradatie' | 'behoud';
+
+/**
+ * In welke zone staat deze plaats?
+ *
+ * Eén plek waar dit staat, want het einde van het seizoen rekent ermee (`seasonEnd`) en
+ * de kopbalk kleurt je plaats ermee. Stonden die twee los van elkaar, dan zou de kopbalk
+ * je een degradatieplaats kunnen aanwijzen die de engine niet als degradatie afrekent.
+ */
+export function zoneAt(league: League, position: number, divisionLevel: number, divisions: number): Zone {
+  const teams = league.table.length;
+  if (position === 1 && divisionLevel < divisions - 1) return 'kampioen';
+  if (position === 2 && divisionLevel < divisions - 1) return 'promotie';
+  if (position >= teams - 2 && divisionLevel > 0) return 'degradatie';
+  return 'behoud';
+}
+
 export interface Side {
   attack: number;
   defense: number;

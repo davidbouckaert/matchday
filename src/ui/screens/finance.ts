@@ -296,9 +296,14 @@ export function financeScreen(s: GameState): string {
   const offers = loanOffers(s);
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
-  // De investeerderskaart en de abonnementen zijn smalle kaarten: naast elkaar in plaats
-  // van elk over de volle breedte met een halve pagina wit ernaast. De prognose en de
-  // herkomst zijn tabellen en krijgen de volle breedte, want daar telt elke kolom.
+  // Vaste kolommen in plaats van een raster dat zichzelf vult.
+  //
+  // Dit scherm stond in een `.grid` met auto-fill: die maakte op een breed scherm vier
+  // kolommen van 336 pixels, en omdat de kaarten hier heel verschillend hoog zijn —
+  // "Ticketprijs" is een alinea, "Vorig seizoen" een tabel van twintig regels — bleef de
+  // halve pagina wit. Nu ligt de indeling vast: wat je instelt naast wat je terugleest,
+  // de twee seizoensoverzichten naast elkaar omdat je ze vergelijkt, en alles wat een
+  // brede tabel is over de volle breedte.
   return `${taskPicker(s, ['ticketing'])}
   <div class="cols-2">
     <div class="col">${investorCard(s)}</div>
@@ -312,7 +317,8 @@ export function financeScreen(s: GameState): string {
     ${weekChart(s.weekHistory.slice(-26))}
     ${weekTable(s.weekHistory)}
   </section>
-  <div class="grid">
+  <div class="cols-2">
+    <div class="col">
     <section class="card">
       <h2>Ticketprijs</h2>
       ${
@@ -330,6 +336,8 @@ export function financeScreen(s: GameState): string {
       Kantinewinst per toeschouwer: ~€${spendPerHeadCanteen(s, 400).toFixed(2)} (prijzen zet je bij Club › Horeca). Een hoge prijs levert per ticket meer op, maar schrikt supporters af en drukt de sfeer.</p>
     </section>
 
+    </div>
+    <div class="col">
     <section class="card">
       <h2>Vorige week</h2>
       ${lastWeek.length ? `<table class="compact"><tbody>${lastWeek.map(([k, v]) => `<tr><td>${k}</td><td class="num">${signedEuro(v)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">Nog niet gespeeld.</p>'}
@@ -337,17 +345,23 @@ export function financeScreen(s: GameState): string {
       ${thisWeek.length ? `<h3>Deze week al geboekt</h3><ul class="small">${thisWeek.map((e) => `<li>${esc(e.label)}: ${signedEuro(e.amount)}</li>`).join('')}</ul>` : ''}
     </section>
 
+    </div>
+  </div>
+  <div class="cols-2">
+    <div class="col">
+      <section class="card">
+        <h2>Dit seizoen</h2>
+        ${totalsTable(s.seasonTotals)}
+      </section>
+    </div>
+    <div class="col">
+      <section class="card">
+        <h2>Vorig seizoen</h2>
+        ${totalsTable(s.lastSeasonTotals)}
+      </section>
+    </div>
+  </div>
     <section class="card">
-      <h2>Dit seizoen</h2>
-      ${totalsTable(s.seasonTotals)}
-    </section>
-
-    <section class="card">
-      <h2>Vorig seizoen</h2>
-      ${totalsTable(s.lastSeasonTotals)}
-    </section>
-
-    <section class="card span2">
       <h2>Leningen</h2>
       <p class="muted small">Openstaande schuld: <strong>${euro(totalDebt(s))}</strong> · Bank wil nog lenen: <strong>${euro(creditLimit(s))}</strong> · Basisrente: ${(interestRate(s) * 100).toFixed(1)}%</p>
       ${
@@ -371,6 +385,5 @@ export function financeScreen(s: GameState): string {
           )
           .join('') || '<p class="muted">De bank leent je op dit moment niets meer.</p>'}
       </div>
-    </section>
-  </div>`;
+    </section>`;
 }

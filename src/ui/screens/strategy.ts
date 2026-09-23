@@ -16,9 +16,10 @@ import {
 import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from '../../engine/factors';
 import { opponentSuspensions } from '../../engine/discipline';
 import { delegate } from '../../engine/delegation';
-import { roleDef } from '../../engine/data/catalog';
+import { TASKS, roleDef } from '../../engine/data/catalog';
 import { esc, euro } from '../format';
 import { taskPicker } from '../taskpicker';
+import { tipAttr } from '../tooltip';
 
 function signed(n: number): string {
   return `<span class="${n < 0 ? 'neg' : n > 0 ? 'pos' : 'muted'}">${n > 0 ? '+' : ''}${n}</span>`;
@@ -42,12 +43,31 @@ function matrix(): string {
 
 export function strategyScreen(s: GameState): string {
   const t = s.tactics;
-  const coach = delegate(s, 'opstelling');
-  const lockTip = coach
-    ? `Uitbesteed aan ${coach.name} (${roleDef(coach.role).label}). Neem de taak "Strategie" terug bij Personeel om hier zelf te beslissen.`
-    : '';
-  const fs = (inner: string) =>
-    coach ? `<fieldset class="locked" disabled data-tip="${esc(lockTip)}">${inner}</fieldset>` : `<fieldset>${inner}</fieldset>`;
+
+  /**
+   * Elk blok hangt aan zijn eigen taak.
+   *
+   * Vroeger keek dit scherm alleen naar "opstelling" en zette het daarmee álle drie de
+   * blokken op slot — dus wie zijn opstelling had uitbesteed, kon ook zijn trainingen en
+   * zijn spelplan niet meer aanraken, terwijl de kiezer erboven netjes "Jij" aanwees.
+   * Twee dingen op één scherm die elkaar tegenspraken. Ze zijn nu per taak gescheiden,
+   * en het slotje staat op het blok waar het over gaat in plaats van over de hele pagina.
+   */
+  const lock = (task: 'training' | 'opstelling' | 'tactiek') => {
+    const who = delegate(s, task);
+    if (!who) return { open: true, note: '', fs: (inner: string) => `<fieldset>${inner}</fieldset>` };
+    const label = TASKS.find((x) => x.id === task)!.label;
+    const tip = `${who.name} (${roleDef(who.role).label}) beslist dit. Zet de keuze hierboven terug op "Jij" om het zelf te doen.`;
+    return {
+      open: false,
+      note: `<p class="lock-note small" ${tipAttr(tip, label)}>🔒 ${esc(who.name)} beslist dit</p>`,
+      fs: (inner: string) => `<fieldset class="locked" disabled data-tip="${esc(tip)}">${inner}</fieldset>`,
+    };
+  };
+
+  const lkTraining = lock('training');
+  const lkLineup = lock('opstelling');
+  const lkTactic = lock('tactiek');
 
   const opp = nextOpponent(s);
   const base = teamStrength(s);
@@ -79,7 +99,8 @@ export function strategyScreen(s: GameState): string {
 
   const trainingCard = `<section class="card">
     <h2>Training</h2>
-    ${fs(`
+    ${lkTraining.note}
+    ${lkTraining.fs(`
       <label>Trainingen per week
         <select data-change="trainings">
           ${Array.from({ length: TRAININGS_MAX - TRAININGS_MIN + 1 }, (_, i) => TRAININGS_MIN + i)
@@ -100,7 +121,8 @@ export function strategyScreen(s: GameState): string {
 
   const lineupCard = `<section class="card">
     <h2>Opstelling</h2>
-    ${fs(`
+    ${lkLineup.note}
+    ${lkLineup.fs(`
       <label>Formatie
         <select data-change="formation">
           ${(Object.keys(FORMATIONS) as Formation[])
@@ -119,7 +141,8 @@ export function strategyScreen(s: GameState): string {
 
   const tacticCard = `<section class="card">
     <h2>Wedstrijdtactiek</h2>
-    ${fs(`
+    ${lkTactic.note}
+    ${lkTactic.fs(`
       <div class="btn-row"><span class="muted small">Mentaliteit</span>
         ${(Object.keys(MENTALITY_INFO) as Mentality[])
           .map((m) => `<button class="sm ${t.mentality === m ? 'primary' : ''}" data-action="mentality" data-id="${m}" data-tip="${esc(MENTALITY_INFO[m].text)}">${m}</button>`)
@@ -148,8 +171,7 @@ export function strategyScreen(s: GameState): string {
   // Links wat je instelt (training, opstelling), midden je wedstrijdtactiek, rechts de
   // tegenstander en de tabel die zegt welk spelplan van welk wint — dat is naslag die je
   // ernaast wilt hebben terwijl je kiest, niet iets waar je naartoe scrollt.
-  return `${taskPicker(s, ['training', 'tactiek'])}
-  ${coach ? `<p class="attention-inline">🔒 ${esc(lockTip)}</p>` : ''}
+  return `${taskPicker(s, ['training', 'opstelling', 'tactiek'])}
   <div class="cols-3">
     <div class="col">
       ${trainingCard}

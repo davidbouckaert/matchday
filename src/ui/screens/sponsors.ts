@@ -86,19 +86,44 @@ export function sponsorsScreen(s: GameState): string {
 
   const netWait = s.eventCooldowns['netwerk'] ?? 0;
 
-  // Twee kolommen. Links het brede werk — je plaatsen, wie er al tekent, wie je nog kunt
-  // bellen. Rechts wat er nu op tafel ligt en de twee knoppen om nieuwe namen te vinden.
-  // Vroeger stonden deze vijf kaarten onder elkaar over de volle breedte; je scrollde
-  // langs een halve lege pagina om van je voorstellen naar je sponsors te gaan.
+  // Bovenaan wat je doet, eronder wat je hebt.
+  //
+  // Dit scherm stond in de dashboard-indeling: een brede kolom met een smalle kolom
+  // ernaast. Op een breed scherm viel die brede kolom zelf nog eens in tweeën, en dan
+  // werden de twee tabellen — zestien sponsors met vijf kolommen, dertien contacten met
+  // vier — in een vak van tweehonderdvijftig pixels geperst, waar elke cel over drie
+  // regels brak. Eén kaart belandde alleen onderaan met tweederde wit ernaast.
+  //
+  // Nu staan de twee dingen waar je iets mee doet bovenaan naast elkaar — je plaatsen en
+  // wat er op tafel ligt — en krijgen de twee tabellen elk de volle breedte.
   return `${taskPicker(s, ['sponsoring'])}
-  <div class="dash">
-    <div class="dash-main">
+  <div class="cols-2">
+    <div class="col">
       <section class="card">
         <h2>Sponsoring: ${euro(sponsorWeekly(s))}/week</h2>
         ${who ? `<p class="attention-inline small">${esc(who.name)} regelt de sponsorwerving: hij benadert om de twee weken het meest geïnteresseerde bedrijf, tekent aanbiedingen en verlengt tevreden sponsors. Je kunt zelf nog altijd ingrijpen.</p>` : ''}
         <div class="tiles slots">${slots}</div>
         <p class="muted small">Het bedrag dat een sponsor wil geven, stijgt met je reeks, reputatie, een commercieel medewerker en je achtergrond als ondernemer.</p>
       </section>
+
+    </div>
+
+    <div class="col">
+      ${
+        offers
+          ? `<section class="card attention"><h2>Op tafel <span class="tag bad">${s.sponsorOffers.length}</span></h2><ul class="offers">${offers}</ul></section>`
+          : '<section class="card"><h2>Op tafel</h2><p class="muted small">Geen voorstellen op dit moment. Benader een contact of hou een netwerkavond.</p></section>'
+      }
+      <section class="card">
+        <h2>Nieuwe namen vinden</h2>
+        <p class="muted small">Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors.</p>
+        <div class="stack-btns">
+          <button data-action="network" ${netWait ? 'disabled' : ''}>Netwerkavond (${euro(NETWORK_EVENING.cost)})${netWait ? ` · nog ${weeks(netWait)}` : ''}</button>
+          <button data-action="campaign" ${s.sponsorCampaignWeeks ? 'disabled' : ''}>Sponsorbureau (${euro(CAMPAIGN.cost)}, ${CAMPAIGN.weeks} weken)${s.sponsorCampaignWeeks ? ` · nog ${weeks(s.sponsorCampaignWeeks)}` : ''}</button>
+        </div>
+      </section>
+    </div>
+  </div>
 
       <section class="card">
         <h2>Huidige sponsors <span class="tag">${s.sponsors.length}</span></h2>
@@ -116,23 +141,5 @@ export function sponsorsScreen(s: GameState): string {
           <thead><tr><th>Bedrijf</th><th>Sector</th><th>Budget</th><th>Interesse</th><th data-nosort></th></tr></thead>
           <tbody>${prospects || '<tr><td colspan="5" class="muted">Geen contacten. Hou een netwerkavond of schakel een bureau in.</td></tr>'}</tbody>
         </table></div>
-      </section>
-    </div>
-
-    <div class="dash-side">
-      ${
-        offers
-          ? `<section class="card attention"><h2>Op tafel <span class="tag bad">${s.sponsorOffers.length}</span></h2><ul class="offers">${offers}</ul></section>`
-          : '<section class="card"><h2>Op tafel</h2><p class="muted small">Geen voorstellen op dit moment. Benader een contact of hou een netwerkavond.</p></section>'
-      }
-      <section class="card">
-        <h2>Nieuwe namen vinden</h2>
-        <p class="muted small">Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors.</p>
-        <div class="stack-btns">
-          <button data-action="network" ${netWait ? 'disabled' : ''}>Netwerkavond (${euro(NETWORK_EVENING.cost)})${netWait ? ` · nog ${weeks(netWait)}` : ''}</button>
-          <button data-action="campaign" ${s.sponsorCampaignWeeks ? 'disabled' : ''}>Sponsorbureau (${euro(CAMPAIGN.cost)}, ${CAMPAIGN.weeks} weken)${s.sponsorCampaignWeeks ? ` · nog ${weeks(s.sponsorCampaignWeeks)}` : ''}</button>
-        </div>
-      </section>
-    </div>
-  </div>`;
+      </section>`;
 }

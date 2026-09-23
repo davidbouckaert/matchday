@@ -171,6 +171,20 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.25.0 — Je plaats in het klassement staat altijd in beeld
+
+**De kopbalk draagt nu de vijf cijfers waar je week om draait.** Ze stonden verspreid: de datum links, drie weekcijfers ernaast, het saldo helemaal rechts en een halve kopbalk leeg ertussen. En je plaats in het klassement stond er niet, terwijl dat het cijfer is waar je hele seizoen om draait. Nu staan week, speeldag, klassement, volgende match en saldo op één lijn, elk met een kopje erboven en elk als knop naar het scherm waar het vandaan komt.
+
+Je plaats kleurt mee: groen met een ▲ op een promotieplaats, rood met een ▼ in de degradatiezone. Die zone komt uit `zoneAt()` in `src/engine/league.ts`, en `seasonEnd()` gebruikt dezelfde functie om het seizoen af te rekenen. Stonden die twee los van elkaar, dan zou de kopbalk je een degradatieplaats kunnen aanwijzen die de engine niet als degradatie afrekent.
+
+**Een bug op Ploeg › Strategie.** Het scherm keek naar één taak — "opstelling" — en zette daarmee álle drie de blokken op slot. Wie zijn opstelling had uitbesteed, kon dus ook zijn trainingsritme en zijn spelplan niet meer aanraken, terwijl de kiezer erboven netjes "Jij" aanwees en de melding eronder sprak over het terugnemen van een taak "Strategie" die niet bestaat. Elk blok hangt nu aan zijn eigen taak, het slotje staat op het blok waar het over gaat en noemt de persoon die beslist, en alle drie de taken staan in de kiezer.
+
+**De kalender stond dubbel.** Onder Competitie stond een kaart "Kalender" met jouw gespeelde en komende wedstrijden, en daarnaast was er een submenu "Kalender" met de echte agenda: alle 52 weken met transferperiodes, uitbetalingen, de licentie-audit en de weken waarin spelers evolueren. Twee verschillende dingen met dezelfde naam. De kaart heet nu "Jouw wedstrijden" en staat bij de stand waar ze hoort; de agenda verhuisde naar **Bureau › Agenda**, want het is planning en geen naslag over de competitie. Competitie houdt daardoor één scherm over en verliest zijn subbalk.
+
+**Drie schermen die de breedte niet gebruikten.** Sponsors stond in de dashboard-indeling: een brede kolom met een smalle ernaast, en op een breed scherm viel die brede kolom zelf nog eens in tweeën. De twee tabellen — zeventien sponsors met zes kolommen, dertien contacten met vijf — werden daardoor in een vak van tweehonderdvijftig pixels geperst waar elke cel over drie regels brak, en één kaart belandde alleen onderaan met tweederde wit ernaast. Nu staan de twee dingen waar je iets mee doet bovenaan naast elkaar, en krijgen de tabellen de volle breedte.
+
+Doelen had hetzelfde probleem in het klein: acht langetermijndoelen die elk een paar zinnen nodig hebben, in een kolom van een derde van de pagina. Die keuze ís het scherm zolang je nog niet gekozen hebt, dus ze krijgt nu de volle breedte; daarna staan je doel, je seizoensdoelen en je eigenaarsniveau naast elkaar. En Financiën stond in een `.grid` met auto-fill: vier kolommen van 336 pixels, met kaarten die van één alinea tot twintig tabelregels lopen. Daar ligt de indeling nu vast.
+
 ### 0.24.0 — De kopbalk blijft staan, en een spelerskaart legt zichzelf uit
 
 **De kopbalk blijft nu boven in beeld.** Ze scrolde weg, en dan was je halverwege een spelerslijst je clublogo, je clubnaam en je saldo kwijt. De vorige poging om alles te laten plakken liep mis omdat elke balk apart plakte op de gemeten hoogte van de vorige: zodra er één van hoogte veranderde bleef er een band over waar de tabel doorheen schoof. Nu zitten kopbalk, menubalk en subbalk samen in één `.bars`, en dat blok plakt als geheel. Er is geen afstand meer om verkeerd te rekenen.
@@ -611,4 +625,3 @@ mkdir -p .github/workflows && mv ci/github-actions.yml .github/workflows/ci.yml 
 ```
 
 Zet in je repository onder *Settings → Pages* de bron op **GitHub Actions**.
-# matchday

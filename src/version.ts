@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.24.0';
+export const VERSION = '0.25.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,25 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.25.0',
+    date: '2026-09-23',
+    title: 'Je plaats in het klassement staat altijd in beeld',
+    items: [
+      'De kopbalk toont nu week, speeldag, klassement, volgende match en saldo op één lijn, elk met een kopje erboven',
+      'Je plaats in het klassement kleurt groen op een promotieplaats en rood in de degradatiezone',
+      'Die kleur komt uit dezelfde functie waarmee het seizoen wordt afgerekend, dus wat rood staat degradeert ook echt',
+      'Elk cijfer in de kopbalk is een knop naar het scherm waar het vandaan komt',
+      'Bug: op Ploeg › Strategie gingen training en wedstrijdtactiek mee op slot als je alleen je opstelling had uitbesteed',
+      'Het slotje staat nu op het blok waar het over gaat, en noemt de persoon die beslist in plaats van een taak die niet bestond',
+      'Alle drie de taken — training, opstelling en wedstrijdtactiek — staan nu in de kiezer bovenaan dat scherm',
+      'De kalender stond dubbel: het wedstrijdenoverzicht bij Competitie heet nu "Jouw wedstrijden"',
+      'De echte agenda met alle 52 weken verhuisde naar Bureau › Agenda',
+      'Sponsors: de twee tabellen krijgen de volle breedte in plaats van een vak van 250 pixels waarin elke cel over drie regels brak',
+      'Doelen: de keuze van je langetermijndoel staat als raster over de volle breedte in plaats van in een smalle kolom',
+      'Financiën: vaste kolommen in plaats van een raster dat zichzelf vulde en de halve pagina wit liet',
+    ],
+  },
   {
     version: '0.24.0',
     date: '2026-09-23',

@@ -1,8 +1,8 @@
 // De kopbalk, en de seizoensbalk die op de kalender staat.
 //
-// De kopbalk draagt drie dingen en meer niet: wie je bent, wanneer het is, en wat je nu
-// kunt doen. Je clublogo en je naam krijgen daarin de ruimte die ze verdienen, met je
-// clubkleuren als band over de bovenrand — je ziet in één oogopslag bij welke club je zit.
+// De kopbalk draagt twee dingen: wie je bent, en de vijf cijfers waar je week om draait.
+// Je clublogo en je naam krijgen de ruimte die ze verdienen, met je clubkleuren als band
+// over de bovenrand — je ziet in één oogopslag bij welke club je zit.
 //
 // De seizoensbalk hoort daar níét thuis: die toont de 52 weken in één streep met elke
 // speeldag, de winterstop en de transferperiodes erop, en dat is naslag die je erbij
@@ -11,7 +11,7 @@
 import type { GameState } from './../engine/types';
 import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, formatDateLong, inWinterBreak, isTransferWindow, seasonLabel } from '../engine/calendar';
 import { DIVISIONS } from '../engine/data/divisions';
-import { OWN_TEAM_ID } from '../engine/league';
+import { OWN_TEAM_ID, type Zone, ownPosition, zoneAt } from '../engine/league';
 import { esc, euro } from './format';
 import { schemeById } from './theme';
 import { tipAttr } from './tooltip';
@@ -108,34 +108,89 @@ export interface HeaderOpts {
 }
 
 /**
- * De kopbalk. Drie dingen, meer niet: wie je bent, wanneer het is, en wat je nu kunt doen.
+ * Waar je staat in het klassement, en wat dat betekent als het zo blijft.
  *
- * De vorige poging propte er ook nog een seizoensbalk in. Op zich een bruikbaar ding — je
- * ziet er in één streep aan hoe het jaar loopt — maar in een kopbalk van tachtig pixels
- * werd het drukte naast een logo dat je nauwelijks zag. Die balk staat nu op de kalender,
- * waar ruimte is en waar je hem zoekt.
+ * De zone komt uit dezelfde functie waarmee de engine het seizoen afrekent, dus wat hier
+ * groen of rood kleurt, is precies wat er in week 46 gebeurt.
+ */
+function standing(g: GameState): { plaats: number; teams: number; zone: Zone; tip: string } {
+  const plaats = ownPosition(g.league);
+  const teams = g.league.table.length;
+  const zone = zoneAt(g.league, plaats, g.league.divisionLevel, DIVISIONS.length);
+  const tip =
+    zone === 'kampioen'
+      ? `Je staat eerste van ${teams}. Blijft dat zo, dan ben je kampioen en promoveer je naar ${DIVISIONS[g.league.divisionLevel + 1].name}.`
+      : zone === 'promotie'
+        ? `Je staat tweede van ${teams}. Ook de tweede promoveert, dus blijft dit zo, dan ga je naar ${DIVISIONS[g.league.divisionLevel + 1].name}.`
+        : zone === 'degradatie'
+          ? `Je staat ${plaats}e van ${teams}. De laatste drie zakken naar ${DIVISIONS[g.league.divisionLevel - 1].name}. Blijft dit zo, dan degradeer je.`
+          : `Je staat ${plaats}e van ${teams}. De eerste twee promoveren, de laatste drie degraderen — jij zit daartussen.`;
+  return { plaats, teams, zone, tip };
+}
+
+/**
+ * De kopbalk. Wie je bent, en de vijf cijfers waar je week om draait.
  *
- * Wat overblijft krijgt de plaats die het verdient: het logo is bijna twee keer zo groot,
- * de clubnaam staat er in koptekst, en de clubkleuren lopen als band over de bovenrand.
- * Je weet in één oogopslag bij welke club je zit.
+ * Links je logo, je clubnaam, je reeks en de datum — dat blok zegt waar en wanneer je
+ * bent. Rechts een strook benoemde feiten: week, speeldag, klassement, volgende match,
+ * saldo. Elk met een kopje erboven en elk een knop naar het scherm waar het vandaan komt.
+ *
+ * Je plaats in het klassement stond er tot nu toe niet, terwijl dat het cijfer is waar je
+ * hele seizoen om draait, en ze kleurt mee: groen op een promotieplaats, rood in de
+ * degradatiezone. Die kleur komt uit dezelfde functie waarmee de engine het seizoen
+ * afrekent, dus wat hier rood staat, degradeert in week 46 ook echt.
  */
 export function header(g: GameState): string {
   const division = DIVISIONS[g.league.divisionLevel];
   const colors = schemeById(g.scheme).colors;
   const match = weeksToMatch(g);
   const playedDays = MATCH_WEEKS.filter((w) => w < g.week).length;
+  const st = standing(g);
 
-  // wanneer het is, in drie korte stukken naast elkaar in plaats van een alinea
-  const when = [
-    `<span class="bit"><span class="cap">Week</span><strong>${g.week}<span class="of">/${WEEKS_PER_YEAR}</span></strong></span>`,
+  /**
+   * De kerncijfers als één strook benoemde feiten.
+   *
+   * Ze stonden verspreid: de datum links, drie weekcijfers ernaast, het saldo helemaal
+   * rechts en een halve kopbalk leeg ertussen. En je plaats in het klassement stond er
+   * niet, terwijl dat het enige cijfer is waar je hele seizoen om draait. Nu staan ze op
+   * één lijn, elk met een kopje erboven, elk een knop naar het scherm waar het vandaan komt.
+   */
+  const bit = (cap: string, value: string, opts: { to: string; tip: string; tone?: string }) =>
+    `<button class="hbit ${opts.tone ?? ''}" data-action="nav" data-id="${opts.to}" ${tipAttr(opts.tip, cap)}>
+      <span class="cap">${cap}</span><strong>${value}</strong>
+    </button>`;
+
+  const bits = [
+    bit('Week', `${g.week}<span class="of">/${WEEKS_PER_YEAR}</span>`, {
+      to: 'kalender',
+      tip: `Week ${g.week} van ${WEEKS_PER_YEAR}. Naar de kalender: alle weken van het seizoen, met wedstrijden en uitbetalingen.`,
+    }),
     playedDays || MATCH_WEEKS[0] <= g.week
-      ? `<span class="bit"><span class="cap">Speeldag</span><strong>${playedDays}<span class="of">/${MATCH_WEEKS.length}</span></strong></span>`
-      : `<span class="bit"><span class="cap">Competitie</span><strong>week ${MATCH_WEEKS[0]}</strong></span>`,
+      ? bit('Speeldag', `${playedDays}<span class="of">/${MATCH_WEEKS.length}</span>`, {
+          to: 'kalender',
+          tip: `Er zijn ${playedDays} van de ${MATCH_WEEKS.length} speeldagen gespeeld.`,
+        })
+      : bit('Competitie', `week ${MATCH_WEEKS[0]}`, {
+          to: 'kalender',
+          tip: `De competitie begint in week ${MATCH_WEEKS[0]}. Tot dan zijn er geen wedstrijden, dus ook geen tickets en geen wedstrijdkantine.`,
+        }),
+    bit('Klassement', `${st.plaats}e<span class="of">/${st.teams}</span>`, {
+      to: 'competitie',
+      tip: st.tip,
+      tone: `zone-${st.zone}`,
+    }),
     match
-      ? `<span class="bit ${match.weeks === 0 ? 'now' : ''}"><span class="cap">Volgende match</span><strong>${
-          match.weeks === 0 ? 'deze week' : `over ${match.weeks} ${match.weeks === 1 ? 'week' : 'weken'}`
-        }</strong></span>`
+      ? bit('Volgende match', match.weeks === 0 ? 'deze week' : `over ${match.weeks} ${match.weeks === 1 ? 'week' : 'weken'}`, {
+          to: 'competitie',
+          tip: match.weeks === 0 ? 'Je speelt deze week. Zet je ploeg klaar voordat je op "Volgende week" klikt.' : `Je volgende wedstrijd is over ${match.weeks} weken, in week ${match.week}.`,
+          tone: match.weeks === 0 ? 'now' : '',
+        })
       : '',
+    bit('Saldo', euro(g.cash), {
+      to: 'financien',
+      tip: `Wat er nu op de rekening staat.${g.weeksNegative ? ` Je staat al ${g.weeksNegative} van de 8 toegestane weken rood.` : ' Naar je financiën: prognose, posten en de herkomst van elke post.'}`,
+      tone: g.cash < 0 ? 'neg' : 'money',
+    }),
   ].join('');
 
   // de kleuren van de band komen uit applyTheme, in hun bijgetrokken vorm — hier niets
@@ -148,20 +203,12 @@ export function header(g: GameState): string {
       <span class="club-name">
         <strong>${esc(g.clubName)}</strong>
         <span class="muted">${esc(division.name)} · ${seasonLabel(g.startYear, g.season)}</span>
+        <span class="date">${formatDateLong(g.startYear, g.season, g.week)}</span>
       </span>
     </button>
 
-    <button class="when" data-action="nav" data-id="kalender" ${tipAttr('Naar de kalender: alle weken van het seizoen, met wedstrijden, uitbetalingen en de seizoensbalk.')}>
-      <span class="date">${formatDateLong(g.startYear, g.season, g.week)}</span>
-      <span class="bits">${when}</span>
-    </button>
-
-    <div class="head-money">
-      <span class="cap">Saldo</span>
-      <button class="amount ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" ${tipAttr('Naar je financiën: prognose, posten en de herkomst van elke post.')}>${euro(g.cash)}</button>
-      ${g.weeksNegative ? `<span class="small neg">${g.weeksNegative}/8 weken rood</span>` : ''}
-    </div>
-
+    <div class="head-bits">${bits}</div>
+    ${g.weeksNegative ? `<span class="head-warn small" ${tipAttr(`Sta je acht weken na elkaar in het rood, dan trekt de bank de stekker eruit en is het spel voorbij. Je staat er nu ${g.weeksNegative}.`, 'Je staat rood')}>⚠️ ${g.weeksNegative}/8 weken rood</span>` : ''}
   </header>`;
 }
 

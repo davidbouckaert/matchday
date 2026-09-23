@@ -58,7 +58,7 @@ type Screen =
  * mensen, je geld, je accommodatie, je competitie.
  */
 const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
-  { id: 'overzicht', label: 'Bureau', screens: [['overzicht', 'Bureau']] },
+  { id: 'overzicht', label: 'Bureau', screens: [['overzicht', 'Bureau'], ['kalender', 'Agenda']] },
   { id: 'ploeg', label: 'Ploeg', screens: [['ploeg', 'Selectie'], ['strategie', 'Strategie'], ['transfers', 'Transfers'], ['contracten', 'Contracten']] },
   { id: 'staff', label: 'Personeel', screens: [['staff', 'Personeel en taken'], ['opleiding', 'Opleiding']] },
   { id: 'geld', label: 'Geld', screens: [['financien', 'Financiën'], ['sponsors', 'Sponsors'], ['cijfers', 'Cijfers']] },
@@ -70,7 +70,7 @@ const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
       ['doelen', 'Doelen'], ['museum', 'Museum'], ['club', 'Clubinfo'],
     ],
   },
-  { id: 'competitie', label: 'Competitie', screens: [['competitie', 'Stand en tucht'], ['kalender', 'Kalender']] },
+  { id: 'competitie', label: 'Competitie', screens: [['competitie', 'Stand en tucht']] },
   { id: 'menu', label: 'Menu', screens: [['handleiding', 'Handleiding'], ['invloeden', 'Wat beïnvloedt wat'], ['opslaan', 'Opslaan en instellingen']] },
 ];
 

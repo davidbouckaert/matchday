@@ -135,15 +135,33 @@ function logCard(s: GameState): string {
   </section>`;
 }
 
+/**
+ * De indeling hangt af van waar je staat.
+ *
+ * Moet je je langetermijndoel nog kiezen, dan ís die keuze het scherm: negen doelen die
+ * elk een paar zinnen nodig hebben. Die stonden in een kolom van een derde van de pagina,
+ * dus je scrolde langs negen kaartjes met tweederde wit ernaast. Nu krijgt de keuze de
+ * volle breedte, en de rest komt eronder.
+ *
+ * Heb je gekozen, dan is die kaart compact en staan de drie dingen die je volgt naast
+ * elkaar: je langetermijndoel, dit seizoen, en hoe ver je zelf staat als eigenaar.
+ */
 export function goalsScreen(s: GameState): string {
-  return `<div class="dash">
-    <div class="dash-main">
-      ${careerCard(s)}
-      ${seasonGoalsCard(s)}
-      ${logCard(s)}
+  const choosing = !careerGoalDef(s);
+
+  if (choosing) {
+    return `${careerCard(s)}
+    <div class="cols-2">
+      <div class="col">${seasonGoalsCard(s)}</div>
+      <div class="col">${ownerBlock(s)}</div>
     </div>
-    <div class="dash-side">
-      ${ownerBlock(s)}
-    </div>
-  </div>`;
+    ${logCard(s)}`;
+  }
+
+  return `<div class="cols-3">
+    <div class="col">${careerCard(s)}</div>
+    <div class="col">${seasonGoalsCard(s)}</div>
+    <div class="col">${ownerBlock(s)}</div>
+  </div>
+  ${logCard(s)}`;
 }
