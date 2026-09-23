@@ -125,12 +125,13 @@ export function staffScreen(s: GameState, selected: string | null): string {
     <p class="muted small">Klik op een personeelslid om taken aan te vinken die hij van je overneemt, of om hem een opleiding te geven.
     Licentie voor ${division.name}: hoofdtrainer met minstens <strong>${division.requiredDiploma}</strong> en een ploegafgevaardigde (audit in week 38).</p>
     <div class="table-wrap"><table>
-      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th>Loon/w</th><th>Wat hij oplevert</th><th>Taken</th></tr></thead>
+      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th data-tip="Wat hij je elke week kost">Loon per week</th><th>Wat hij oplevert</th><th>Taken</th></tr></thead>
       <tbody>${current}</tbody>
     </table></div>
   </section>
   <section class="card">
-    <h2>Wie doet wat? ${hint('Kies per taak wie ze uitvoert. Staat er "Jij", dan beslis jij alles zelf in het bijbehorende scherm. Een personeelslid neemt de beslissing elke week automatisch; hoe beter hij is, hoe minder hij ernaast zit. Je kunt een taak altijd terugnemen.')}</h2>
+    <h2>Wie doet wat? ${hint('Kies per taak wie ze doet: jij, of iemand van je personeel.')}</h2>
+    <p class="muted small">Staat er "Jij", dan beslis je het zelf op het scherm waar die taak thuishoort. Geef je ze uit handen, dan beslist die persoon elke week automatisch — en hoe beter hij is, hoe minder hij ernaast zit. Terugnemen kan altijd.</p>
     <p class="muted small">Je hebt ${TASKS.filter((t) => delegate(s, t.id)).length} van de ${TASKS.length} taken uitbesteed.
     Iemand kan 1 tot 4 taken aan, afhankelijk van zijn vaardigheid, en werkt buiten zijn vakgebied op een lager niveau.
     Staat er "niemand in dienst die dit kan", werf dan eerst zo iemand aan bij de kandidaten hieronder.</p>
@@ -144,7 +145,7 @@ export function staffScreen(s: GameState, selected: string | null): string {
     <p class="muted small">De lijst vernieuwt elke 4 weken. Je hebt maximaal één persoon per functie.
       "Wat het je oplevert" is het verschil met wie je nu op die plaats hebt — doorgerekend met dezelfde formules waarmee het spel rekent. Beweeg over een kaartje voor het volledige verhaal.</p>
     <div class="table-wrap"><table data-sort-id="kandidaten">
-      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th data-nosort>Wat het je oplevert</th><th>Loon/w</th><th data-nosort></th></tr></thead>
+      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th data-nosort>Wat het je oplevert</th><th data-tip="Wat hij je elke week kost">Loon per week</th><th data-nosort></th></tr></thead>
       <tbody>${candidates}</tbody>
     </table></div>
   </section>`;

@@ -54,12 +54,29 @@ export function numField(o: NumFieldOpts): string {
     `<button type="button" class="numbtn ${dir < 0 ? 'minus' : 'plus'}" data-action="num-step" data-for="${id}" data-dir="${dir}"
        aria-label="${dir < 0 ? 'Minder' : 'Meer'}: ${esc(o.label)}" tabindex="-1">${dir < 0 ? '−' : '+'}</button>`;
 
+  // Hoe breed moet het tekstvak zijn?
+  //
+  // Het had een vaste minimumbreedte, en die wist niets van het getal dat erin moest. Bij
+  // een lidgeld van €230 in een veld dat tot €800 loopt bleef er veertig pixels over, en
+  // dan las je "23(" — de nul viel eruit.
+  //
+  // De eerste poging rekende de breedte uit in `ch`. Dat leek de juiste eenheid (`1ch` is
+  // de breedte van een nul) maar klopte niet: de browser gaf hier 8,1 pixels per `ch`
+  // terwijl de cijfers in dit vette, tabellarische lettertype er ruim veertien innemen.
+  // Vijf `ch` was dus veertig pixels voor een getal dat er zevenenveertig nodig had.
+  //
+  // Daarom nu `size`, het attribuut dat precies hiervoor bestaat: de browser meet zelf hoe
+  // breed dat aantal tekens is in het lettertype dat er echt staat. Wij tellen alleen hoe
+  // veel tekens het grootst mogelijke getal telt, inclusief duizendpunten en decimalen.
+  const grootste = Math.max(Math.abs(o.max ?? o.value * 10), Math.abs(o.value), 1);
+  const chars = Math.max(Math.floor(grootste).toLocaleString('nl-BE').length + (dec ? dec + 1 : 0), 2);
+
   return `<div class="numfield${o.slider ? ' with-slider' : ''}${o.extra ? ` ${o.extra}` : ''}">
     <div class="numrow">
       ${btn(-1)}
       <span class="numbox">
         ${o.prefix ? `<span class="affix pre">${esc(o.prefix)}</span>` : ''}
-        <input id="${id}" type="text" inputmode="decimal" class="numinput"
+        <input id="${id}" type="text" inputmode="decimal" class="numinput" size="${chars}"
           value="${o.value.toFixed(dec)}" data-step="${step}" data-dec="${dec}"${bounds}
           ${o.change ? `data-change="${esc(o.change)}"` : ''}${row} aria-label="${esc(o.label)}"/>
         ${o.suffix ? `<span class="affix post">${esc(o.suffix)}</span>` : ''}

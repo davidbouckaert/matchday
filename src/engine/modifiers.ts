@@ -23,7 +23,6 @@ import {
 } from './factors';
 import { devComponents, teamStrength } from './players';
 import { boardSaturation } from './sponsors';
-import { WEATHER_FACTOR } from './finance';
 import { staffSkill } from './staff';
 import { scoutingReport } from './strategy';
 import { YOUTH_FEE_REF, upgradeCost, youthPriceFactor, youthTarget } from './actions';
@@ -47,7 +46,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
   // ---------- Teamsterkte ----------
   groups.push({
     title: 'Teamsterkte',
-    explain: 'Aanval = (30% middenveld + 70% aanval + bonussen) × vermoeidheid + tactiek. Verdediging idem met doel, verdediging en middenveld.',
+    explain: 'Je aanvalskracht komt vooral van je aanvallers en voor een klein deel van je middenveld; je verdediging van je doelman, je verdedigers en opnieuw je middenveld. Alles wat hieronder staat telt daarbij op of af, en vermoeidheid drukt het geheel.',
     factors: [
       plus('Samenwerking', st.chemistry, 'spelers die elkaar liggen, leiders, lastpakken'),
       plus('Personeel', st.trainer, 'hoofdtrainer, assistent-trainer en data-analist'),
@@ -72,7 +71,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
         plus('Spelplan aanval', vs.matchupBonus.att, `${state.tactics.plan} tegen ${scout.knownPlan}`),
         plus('Spelplan verdediging', vs.matchupBonus.def, scout.certain ? 'hun plan is zeker (analist)' : 'hun gebruikelijke plan'),
       ],
-      result: `Jij A ${vs.attack} / V ${vs.defense} tegen hen A ${scout.attack} / V ${scout.defense}`,
+      result: `Jij: aanval ${vs.attack}, verdediging ${vs.defense}. Zij: aanval ${scout.attack}, verdediging ${scout.defense}.`,
     });
   }
 
@@ -80,9 +79,9 @@ export function allModifiers(state: GameState): ModifierGroup[] {
   const fit = state.players.filter((p) => p.injuryWeeks === 0);
   groups.push({
     title: 'Vermoeidheid (per week)',
-    explain: 'Nieuw = oud − natuurlijk herstel (40%) + opbouw − extra herstel. Het extra herstel komt van jouw keuzes: kinesist, verzorger, voedingsdeskundige, conditietrainer, recuperatieruimte en focus herstel.',
+    explain: 'Elke week rusten je spelers vanzelf een stuk uit. Daar komt bij wat trainingen en wedstrijden kosten, en daar gaat af wat jouw keuzes opleveren: een kinesist, een verzorger, een voedingsdeskundige, een conditietrainer, een recuperatieruimte en de trainingsfocus herstel.',
     factors: fatigueFactors(state),
-    result: `Gemiddeld ${Math.round(avgFatigue(fit))}/100 · vermenigvuldiger op de basiself ×${fatigueFactor(st.fatigue).toFixed(3)}`,
+    result: `Je basiself is gemiddeld ${Math.round(avgFatigue(fit))} van de 100 vermoeid. Daardoor speelt ze op ${Math.round(fatigueFactor(st.fatigue) * 100)}% van haar kunnen.`,
   });
 
   // ---------- Toeschouwers en kantine ----------
@@ -90,14 +89,14 @@ export function allModifiers(state: GameState): ModifierGroup[] {
   const att = attendanceFactors(state);
   groups.push({
     title: 'Toeschouwers',
-    explain: `Supporters (${c.fanBase}) × factoren, per wedstrijd nog × weer (zon ×${WEATHER_FACTOR.zon}, regen ×${WEATHER_FACTOR.regen}, storm ×${WEATHER_FACTOR.storm}), × derby ×1,45 en × klassement (×0,85 tot ×1,15). Plus uitsupporters, maximaal de tribune.`,
+    explain: `Je hebt ${c.fanBase} supporters. Hoeveel daarvan komen opdagen, hangt af van alles hieronder. Per wedstrijd telt het weer mee (zon trekt volk, regen en storm houden mensen thuis), een derby trekt bijna de helft meer volk, en hoe hoger je staat hoe meer mensen komen. Daar komen de supporters van de tegenstander nog bij. Meer dan je tribune aankan, past er niet in.`,
     factors: att,
     result: `Bij bewolkt weer: ~${Math.round(c.fanBase * product(att))} thuissupporters (tribune: ${state.infrastructure.capacity})`,
   });
   const spend = canteenFactors(state);
   groups.push({
     title: 'Kantine per toeschouwer',
-    explain: 'Per artikel: aantal per bezoeker × onderstaande factoren × prijsgevoeligheid ((gangbare prijs / jouw prijs) tot de macht 1,2). Je verdient het verschil met de inkoopprijs.',
+    explain: 'Van elk artikel bestelt een bezoeker gemiddeld een bepaald aantal. Wat hieronder staat maakt dat meer of minder, en je prijs telt zwaar mee: vraag je meer dan gangbaar, dan bestellen ze minder dan evenredig minder. Wat je verdient, is het verschil tussen je prijs en wat het je kost.',
     factors: spend,
     result: `Winst ~€${spendPerHeadCanteen(state, 400).toFixed(2)} per toeschouwer bij je huidige prijzen`,
   });
@@ -116,34 +115,34 @@ export function allModifiers(state: GameState): ModifierGroup[] {
   const sat = boardSaturation(state);
   groups.push({
     title: 'Sponsoring',
-    explain: 'Elk sponsorbedrag (nieuw of verlengd) = basisbedrag van het type × factoren. Voor reclameborden geldt ook de verzadiging van de lokale markt.',
-    factors: [...sp, x('Verzadiging borden', sat, `${state.sponsors.filter((s) => s.kind === 'bord').length} borden hangen al (enkel voor borden)`)],
-    result: `×${product(sp).toFixed(2)} op alle sponsorbedragen (borden ×${(product(sp) * sat).toFixed(2)})`,
+    explain: 'Elke nieuwe of verlengde sponsordeal begint bij een basisbedrag dat hoort bij het soort plaats — een shirtsponsor betaalt meer dan een reclamebord. Alles hieronder maakt dat bedrag groter of kleiner. Bij reclameborden telt ook mee hoeveel er al hangen: hoe voller je omheining, hoe minder een bedrijf ervoor overheeft.',
+    factors: [...sp, x('Hoeveel borden er al hangen', sat, `${state.sponsors.filter((s) => s.kind === 'bord').length} stuks — alleen van belang voor nieuwe borden`)],
+    result: `Sponsors betalen je ${Math.round(product(sp) * 100)}% van het basisbedrag. Voor een nieuw reclamebord is dat ${Math.round(product(sp) * sat * 100)}%.`,
   });
 
   // ---------- Blessures ----------
   const inj = injuryFactors(state);
   groups.push({
     title: 'Blessurerisico',
-    explain: 'Basisrisico per gespeelde wedstrijd 3,5% (+1,5% boven 30 jaar, +1,5% feestbeest) × factoren × vermoeidheid (×(1 + vermoeidheid/100), boven 60 nog eens extra). Boven 50 vermoeidheid kunnen spelers ook op training geblesseerd raken. De kinesist werkt preventief (hier) én herstellend (kans op een week sneller genezen).',
-    factors: [...inj, x('Vermoeidheid', overFatigueFactor(avgFatigue(fit)), 'gemiddeld over de selectie')],
-    result: `×${(product(inj) * overFatigueFactor(avgFatigue(fit))).toFixed(2)} op het blessurerisico`,
+    explain: 'Elke speler loopt per wedstrijd ongeveer 3,5% kans op een blessure. Boven de dertig en bij een feestbeest ligt dat hoger. Alles hieronder maakt die kans groter of kleiner, en vermoeidheid weegt het zwaarst: boven de 60 loopt het snel op, en boven de 50 kunnen ze ook al op training uitvallen. Een kinesist doet twee dingen: hij houdt de kans laag, en wie toch valt is vaak een week eerder terug.',
+    factors: [...inj, x('Vermoeidheid', overFatigueFactor(avgFatigue(fit)), 'gemiddeld over je hele kern')],
+    result: `Samen maakt dat de kans op een blessure ${Math.round(product(inj) * overFatigueFactor(avgFatigue(fit)) * 100)}% van normaal.`,
   });
 
   // ---------- Ontwikkeling ----------
   const dc = devComponents(state);
   groups.push({
     title: 'Ontwikkeling van spelers (per maand)',
-    explain: 'Jonge spelers groeien naar hun potentieel, oudere gaan achteruit. Karakter telt mee: harde werker en professioneel ×1,3, feestbeest ×0,7.',
+    explain: 'Jonge spelers groeien naar wat ze ooit kunnen worden; vanaf een jaar of dertig gaan ze weer achteruit. Karakter telt mee: een harde werker en een professioneel trainen zo\'n derde harder dan de rest, een feestbeest een derde minder.',
     factors: [
-      x('Hoofdtrainer', dc.trainer, 'hoe beter de hoofdtrainer, hoe sneller (op opleiding: telt niet)'),
+      x('Hoofdtrainer', dc.trainer, 'hoe beter hij is, hoe sneller ze groeien — zolang hij niet zelf op opleiding is'),
       x('Trainingen', dc.trainings, `${state.tactics.trainings} per week`),
-      plus('Assistent-trainer', r1(dc.assistant * 100) / 100, 'extra voor spelers t/m 23 jaar'),
-      plus('Opleidingscentrum', dc.academy, 'extra voor spelers t/m 21 jaar'),
+      plus('Assistent-trainer', r1(dc.assistant * 100) / 100, 'extra, alleen voor spelers tot en met 23 jaar'),
+      plus('Opleidingscentrum', dc.academy, 'extra, alleen voor spelers tot en met 21 jaar'),
       plus('Keepertrainer', r1(dc.keeperCoach * 100) / 100, 'extra voor doelmannen'),
       plus('Conditietrainer', r1(dc.fitness * 100) / 100, 'fysiek per maand'),
     ],
-    result: `Groeifactor jonge veldspeler: ${(dc.trainer * dc.trainings + dc.assistant + dc.academy).toFixed(2)}`,
+    result: `Een jonge veldspeler groeit hierdoor ${(dc.trainer * dc.trainings + dc.assistant + dc.academy).toFixed(2)} punt per maand.`,
   });
 
   // ---------- Jeugd ----------
@@ -203,7 +202,7 @@ export function allModifiers(state: GameState): ModifierGroup[] {
     const units = state.merch.items.reduce((sum, i) => sum + expectedUnits(state, i), 0);
     groups.push({
       title: 'Clubwinkel',
-      explain: 'Verkoop per artikel = supporters × aantrekkelijkheid van het artikel × onderstaande factoren × prijsgevoeligheid ((richtprijs / jouw prijs) tot de macht 1,5).',
+      explain: 'Hoeveel je van een artikel verkoopt, begint bij je aantal supporters en bij hoe gewild dat artikel is. Alles hieronder maakt dat meer of minder. Je prijs weegt hier nog zwaarder door dan in de kantine: vraag je een derde meer dan gangbaar, dan verkoop je bijna de helft minder.',
       factors: merchFactors(state),
       result: `Verwacht deze week: ${Math.round(units)} artikelen`,
     });

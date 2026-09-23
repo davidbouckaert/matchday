@@ -32,7 +32,8 @@ import { museumScreen } from './screens/museum';
 import { AMBITIONS, chooseAmbition } from '../engine/opening';
 import { answerWeekChoice } from '../engine/weekmoment';
 import { strategyTask } from '../engine/delegation';
-import { financeScreen, subscriptionInfo } from './screens/finance';
+import { financeScreen } from './screens/finance';
+import { pricesScreen, subscriptionInfo } from './screens/prices';
 import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from './screens/club';
 import { initTooltips } from './tooltip';
 import { initNumFields } from './numfield';
@@ -46,7 +47,7 @@ const SLOT = 'slot1';
 
 type Screen =
   | 'overzicht' | 'ploeg' | 'strategie' | 'transfers' | 'contracten' | 'staff' | 'opleiding'
-  | 'kalender' | 'financien' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club' | 'doelen'
+  | 'kalender' | 'financien' | 'prijzen' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club' | 'doelen'
   | 'competitie' | 'invloeden' | 'opslaan' | 'handleiding' | 'museum';
 
 /**
@@ -61,7 +62,7 @@ const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
   { id: 'overzicht', label: 'Bureau', screens: [['overzicht', 'Bureau'], ['kalender', 'Agenda']] },
   { id: 'ploeg', label: 'Ploeg', screens: [['ploeg', 'Selectie'], ['strategie', 'Strategie'], ['transfers', 'Transfers'], ['contracten', 'Contracten']] },
   { id: 'staff', label: 'Personeel', screens: [['staff', 'Personeel en taken'], ['opleiding', 'Opleiding']] },
-  { id: 'geld', label: 'Geld', screens: [['financien', 'Financiën'], ['sponsors', 'Sponsors'], ['cijfers', 'Cijfers']] },
+  { id: 'geld', label: 'Geld', screens: [['financien', 'Financiën'], ['prijzen', 'Tickets en lidgeld'], ['sponsors', 'Sponsors'], ['cijfers', 'Cijfers']] },
   {
     id: 'club',
     label: 'Club',
@@ -177,6 +178,7 @@ function renderScreen(g: GameState): string {
     case 'invloeden': return influencesScreen(g);
     case 'transfers': return transfersScreen(g);
     case 'staff': return staffScreen(g, ui.selectedStaff);
+    case 'prijzen': return pricesScreen(g);
     case 'sponsors': return sponsorsScreen(g);
     case 'financien': return financeScreen(g);
     case 'infrastructuur': return infraScreen(g);
@@ -391,13 +393,13 @@ function measureBars(): void {
 window.addEventListener('resize', measureBars);
 
 /**
- * De kopbalk blijft staan, maar niet op volle hoogte.
+ * Alleen om te weten of je bovenaan staat.
  *
- * Bevroren is wat je wil — je logo, je saldo en je menu horen altijd bereikbaar te zijn —
- * maar een balk van honderdzeventig pixels die nooit meer weggaat vreet op een laptop een
- * kwart van je scherm. Zodra je scrolt, krimpt hij: het logo wordt kleiner, de datumregel
- * en de weekcijfers gaan weg, de marges halveren. Wie je bent en wat je hebt blijft staan,
- * de rest komt terug zodra je weer bovenaan bent.
+ * De kopbalk kromp hier vroeger mee — kleiner logo, datumregel weg — om hoogte te winnen.
+ * Dat is eruit: een balk die onder je handen van vorm verandert kost je meer tijd dan de
+ * twintig pixels opleveren, want je zoekt een cijfer dat er net nog stond. Wat overblijft
+ * is één schaduwrandje onder de balk zodra er iets achter langs schuift, zodat je ziet
+ * dat de balk boven de pagina zweeft en niet erin staat.
  */
 function watchScroll(): void {
   const apply = () => {

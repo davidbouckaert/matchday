@@ -157,7 +157,7 @@ export function fatigueFactors(state: GameState): Factor[] {
   return [
     { label: 'Natuurlijk herstel', value: -NATURAL_RECOVERY * 100, kind: '+', source: '% van de vermoeidheid verdwijnt elke week vanzelf' },
     { label: 'Opbouw trainingen', value: Math.round(trainingLoad(state) * 10) / 10, kind: '+', source: `${t.trainings} per week${t.focus === 'conditie' ? ', focus conditie (−20%)' : ''}${vd ? ', voedingsdeskundige' : ''}` },
-    { label: 'Opbouw wedstrijd (basisspelers)', value: Math.round(matchLoad(state) * 10) / 10, kind: '+', source: t.plan === 'pressing' ? 'incl. pressing' : 'per gespeelde wedstrijd' },
+    { label: 'Opbouw wedstrijd (basisspelers)', value: Math.round(matchLoad(state) * 10) / 10, kind: '+', source: t.plan === 'pressing' ? 'inclusief het pressen van de tegenstander' : 'per gespeelde wedstrijd' },
     ...recoveryFactors(state),
   ];
 }

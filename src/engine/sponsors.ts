@@ -8,7 +8,7 @@ import { ownPosition } from './league';
 import { addLog, addNews, book, nextId } from './util';
 import { remember } from './content';
 import { creditLimit } from './loans';
-import { grantLoan } from './actions';
+import { grantLoan, tooExpensive } from './actions';
 import { sponsorBonus } from './career';
 
 type Kind = SponsorDeal['kind'];
@@ -270,7 +270,7 @@ export function approachProspect(state: GameState, prospectId: string): ActionRe
 
 export function networkEvening(state: GameState): ActionResult {
   if ((state.eventCooldowns['netwerk'] ?? 0) > 0) return fail(`Nog ${state.eventCooldowns['netwerk']} weken wachten.`);
-  if (state.cash < NETWORK_EVENING.cost) return fail('Niet genoeg geld.');
+  if (state.cash < NETWORK_EVENING.cost) return fail(tooExpensive(state, NETWORK_EVENING.cost, 'Een netwerkavond'));
   const rng = createRng(state);
   book(state, 'sponsors', -NETWORK_EVENING.cost, 'Netwerkavond voor lokale ondernemers');
   for (const p of state.prospects) p.interest = Math.round(clamp(p.interest + rng.range(8, 20), 5, 95));
@@ -281,7 +281,7 @@ export function networkEvening(state: GameState): ActionResult {
 
 export function startCampaign(state: GameState): ActionResult {
   if (state.sponsorCampaignWeeks > 0) return fail('Er loopt al een campagne.');
-  if (state.cash < CAMPAIGN.cost) return fail('Niet genoeg geld.');
+  if (state.cash < CAMPAIGN.cost) return fail(tooExpensive(state, CAMPAIGN.cost, 'Een sponsorbureau inschakelen'));
   book(state, 'sponsors', -CAMPAIGN.cost, 'Zoekcampagne sponsorbureau');
   state.sponsorCampaignWeeks = CAMPAIGN.weeks;
   return ok(`Het bureau gaat ${CAMPAIGN.weeks} weken op zoek naar grotere sponsors.`);
@@ -289,7 +289,7 @@ export function startCampaign(state: GameState): ActionResult {
 
 export function cancelSponsor(state: GameState, dealId: string): ActionResult {
   const d = state.sponsors.find((x) => x.id === dealId);
-  if (!d) return fail('Sponsor niet gevonden.');
+  if (!d) return fail('Die sponsor staat niet meer in je lijst. Ververs de pagina.');
   if (d.kind === 'stadion') return fail('De stadionnaam hoort bij de afspraak met je investeerder.');
   state.sponsors = state.sponsors.filter((x) => x.id !== dealId);
   state.community.reputation = clamp(state.community.reputation - 1, 0, 100);
@@ -304,7 +304,7 @@ export function cancelSponsor(state: GameState, dealId: string): ActionResult {
  */
 export function askExtra(state: GameState, dealId: string): ActionResult {
   const d = state.sponsors.find((x) => x.id === dealId);
-  if (!d) return fail('Sponsor niet gevonden.');
+  if (!d) return fail('Die sponsor staat niet meer in je lijst. Ververs de pagina.');
   if (d.extraAskedSeason === state.season) return fail('Je vroeg dit seizoen al een extra bijdrage aan deze sponsor.');
   if (state.requests.some((r) => r.kind === 'sponsor-extra' && r.targetId === dealId)) return fail('Je wacht nog op zijn antwoord.');
   d.extraAskedSeason = state.season;
@@ -365,7 +365,7 @@ export function satisfactionParts(state: GameState): { label: string; value: num
 
 export function renewSponsor(state: GameState, dealId: string): ActionResult {
   const d = state.sponsors.find((x) => x.id === dealId);
-  if (!d) return fail('Sponsor niet gevonden.');
+  if (!d) return fail('Die sponsor staat niet meer in je lijst. Ververs de pagina.');
   if (d.kind === 'stadion') return fail('Dit contract loopt zolang de investeerder blijft.');
   if (d.weeksLeft > 26) return fail('Verlengen kan pas in het laatste half jaar van het contract.');
   if (d.satisfaction < 40) {

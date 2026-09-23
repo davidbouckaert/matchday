@@ -746,7 +746,7 @@ describe('Vrijwilligers en logboek', () => {
     s.staff = s.staff.filter((x) => x.role !== 'jeugdcoordinator'); // niemand die de boel bijeenhoudt
     s = playWeeks(s, 30);
     // (er kunnen intussen ook nieuwe bijkomen via een toevalsgebeurtenis, dus we kijken naar het nieuws)
-    expect(s.news.some((n) => /vrijwilliger\(s\) haken af/.test(n.text))).to.equal(true);
+    expect(s.news.some((n) => /vrijwilligers? haa?kt? af/.test(n.text))).to.equal(true);
   });
 
   it('een extra bijdrage komt pas volgende week en staat in het logboek', () => {

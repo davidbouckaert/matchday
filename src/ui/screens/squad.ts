@@ -8,12 +8,12 @@ import { weeks } from '../../engine/util';
 import * as actions from '../../engine/actions';
 import { available } from '../../engine/discipline';
 import { OPPONENT_STAFF_BONUS } from '../../engine/league';
-import { esc, euro, bar } from '../format';
+import { count, esc, euro, bar } from '../format';
 import { hint, tip, tipAttr } from '../tooltip';
 import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
 import { lineupBoard } from './lineup';
-import { playerCards } from './playercard';
+import { contractLabel, playerCards } from './playercard';
 import { impactChips } from '../impact';
 import { playerImpact } from '../../engine/impact';
 
@@ -75,8 +75,8 @@ export function squadStats(s: GameState): string {
       <span>Vermoeidheid ${st.fatigue}/100 → ×${st.fatigueFactor.toFixed(3)}</span>
       <span>Formatie en mentaliteit: aanval ${signed(st.tactic.att)} · verdediging ${signed(st.tactic.def)}</span>
       <span>Spelplan ${PLAN_INFO[s.tactics.plan].label.toLowerCase()} past bij je spelers ${signed(st.planFit)}</span>
-      ${st.outOfPosition ? `<span class="neg">${st.outOfPosition} speler(s) buiten hun positie (−8 elk)</span>` : ''}
-      ${st.missing ? `<span class="neg">${st.missing} plaats(en) niet ingevuld</span>` : ''}
+      ${st.outOfPosition ? `<span class="neg">${count(st.outOfPosition, 'speler')} buiten hun positie (elk 8 kwaliteit minder)</span>` : ''}
+      ${st.missing ? `<span class="neg">${count(st.missing, 'plaats', 'plaatsen')} niet ingevuld</span>` : ''}
     </div>
     <p class="muted small">Beschikbaar per linie: ${depth.join(' · ')}. Het voor- of nadeel van je spelplan tegen de volgende tegenstander zie je bij Strategie.</p>
   </section>`;
@@ -137,7 +137,7 @@ export function lineupCard(s: GameState): string {
       <span class="line-head"><strong>${ZONE_LABEL[pos]}</strong>
         <span class="count">${filled.length}/${need[pos]}</span></span>
       <span class="muted small">${ready} speelklaar in de kern${foreign ? ` · <span class="neg">${foreign} buiten positie</span>` : ''}${
-        openHere ? ` · <span class="neg">${openHere} plaats(en) die jij openliet</span>` : filled.length < need[pos] ? ` · <span class="neg">${need[pos] - filled.length} plaats(en) leeg</span>` : ''
+        openHere ? ` · <span class="neg">${count(openHere, 'plaats', 'plaatsen')} die jij openliet</span>` : filled.length < need[pos] ? ` · <span class="neg">${count(need[pos] - filled.length, 'plaats', 'plaatsen')} leeg</span>` : ''
       }</span>
       <ul class="line-players small">
         ${Array.from({ length: openHere }, () => '<li class="neg open-slot">— open, duid zelf iemand aan —</li>').join('')}
@@ -160,7 +160,7 @@ export function lineupCard(s: GameState): string {
   return `<section class="card">
     <h2>Basiself: <span class="${total < 11 ? 'neg' : ''}">${total}/11</span> ${hint('De teller per linie komt uit je formatie. ★ = door jou vastgezet, ✓ = aangevuld door je trainer. Staat er iemand buiten zijn positie, dan verliest hij 8 punten kwaliteit.')}</h2>
     <p class="muted small">Formatie <strong>${s.tactics.formation}</strong>${coach ? ` · gekozen door ${esc(coach.name)}` : ''} · wijzig de formatie bij Ploeg › Strategie.
-      ${pinned ? `<strong>${pinned}</strong> speler(s) vastgezet` : 'Je trainer kiest voorlopig alles zelf'}${benched ? ` · <strong>${benched}</strong> op de bank gezet` : ''}.</p>
+      ${pinned ? `<strong>${count(pinned, 'speler')}</strong> vastgezet` : 'Je trainer kiest voorlopig alles zelf'}${benched ? ` · <strong>${benched}</strong> op de bank gezet` : ''}.</p>
     <div class="lineup-lines">${lines}</div>
     ${
       coach || (!pinned && !benched)
@@ -208,11 +208,11 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
         zone && zone !== p.position ? ` <span class="tag bad" ${tipAttr(`Hij speelt op ${zone} terwijl hij ${p.position} is. Dat kost een stuk van zijn kwaliteit.`)}>${zone}</span>` : ''
       }</td>
     <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">${p.injuryWeeks}w geblesseerd</span>` : ''}${p.suspended ? ` <span class="tag bad">${p.suspended} wedstr. geschorst</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
+    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">${p.injuryWeeks}w geblesseerd</span>` : ''}${p.suspended ? ` <span class="tag bad">${p.suspended} ${p.suspended === 1 ? 'wedstrijd' : 'wedstrijden'} geschorst</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
     <td>${p.age}</td>
     <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
     <td data-v="${p.trend}" class="small ${p.trend > 0 ? 'pos' : p.trend < 0 ? 'neg' : 'muted'}" data-tip="Verandering bij de laatste evolutie (om de 4 weken)">${p.trend > 0 ? `▲ +${p.trend}` : p.trend < 0 ? `▼ ${p.trend}` : '–'}</td>
-    <td class="small" data-v="${p.technique}">T ${Math.round(p.technique)} · F ${Math.round(p.physical)}</td>
+    <td class="small" data-v="${p.technique}" ${tipAttr(`Techniek ${Math.round(p.technique)}, fysiek ${Math.round(p.physical)}.`, p.name)}>${Math.round(p.technique)} / ${Math.round(p.physical)}</td>
     <td data-v="${p.starts}" data-tip="Basisplaatsen dit seizoen (deze periode: ${p.periodStarts})">${p.starts}</td>
     <td data-v="${p.goals}" data-tip="Doelpunten dit seizoen">${p.goals ? `⚽ ${p.goals}` : '–'}</td>
     <td data-v="${p.morale}">${bar(p.morale)}</td>
@@ -220,17 +220,43 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
     <td data-v="${p.fatigue}" class="${p.fatigue > 35 ? 'fatigue-hi' : ''}">${Math.round(p.fatigue)}</td>
     <td data-v="${p.yellowCards * 10 + p.redCards * 30}" class="small">${p.yellowCards ? `🟨${p.yellowCards}` : ''}${p.redCards ? ` 🟥${p.redCards}` : ''}</td>
     <td data-v="${p.wage}">${euro(p.wage)}</td>
-    <td data-v="${p.contractUntil}" class="${expiring ? 'neg' : ''}">S${p.contractUntil}</td>
+    <td data-v="${p.contractUntil}" class="${expiring ? 'neg' : ''}">${contractLabel(s, p).kort}</td>
     <td data-v="${marketValue(p, s.marketIndex)}">${euro(marketValue(p, s.marketIndex))}</td>
     <td class="btns">
-      <button class="sm" data-action="goto-contracts" data-id="${p.id}" data-tip="Onderhandelen over een nieuw contract (tab Contracten)">Contract</button>
+      <button class="sm" data-action="goto-contracts" data-id="${p.id}" data-tip="Ga naar Contracten om met hem over een nieuw contract te praten">Contract verlengen</button>
       ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" data-tip="Verkoop tegen het bod van deze week">Verkoop ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
-      <button class="sm ghost" data-action="release" data-id="${p.id}" data-tip="Contract ontbinden">Ontbind</button>
+      <button class="sm ghost" data-action="release" data-id="${p.id}" data-tip="Stuur hem weg en betaal zijn contract af. Hij is dan meteen vertrokken.">Wegsturen</button>
     </td>
   </tr>`;
 }
 
-const TABLE_HEAD = `<thead><tr><th>Basis</th><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th data-tip="Evolutie om de 4 weken">Trend</th><th>Techn/Fys</th><th data-tip="Basisplaatsen dit seizoen">Basis</th><th data-tip="Doelpunten dit seizoen">Goals</th><th>Moraal</th><th>Vorm</th><th data-tip="Vermoeidheid 0-100">Moe</th><th>Kaarten</th><th>Loon/w</th><th>Contract</th><th>Waarde</th><th data-nosort></th></tr></thead>`;
+/**
+ * De kolomkoppen.
+ *
+ * Hier stond "Pos · Kwal/Pot · Techn/Fys · Moe · Loon/w", en de helft daarvan had geen
+ * uitleg. Dat zijn vijf afkortingen op één regel die je eerst moet leren lezen, op het
+ * scherm dat je elke week opent. Nu staan de woorden er voluit; wat niet in één woord
+ * past, staat in de tooltip in plaats van in een afkorting.
+ */
+const TABLE_HEAD = `<thead><tr>
+  <th data-tip="Staat hij zondag in de basiself?">Basis</th>
+  <th data-tip="Zijn positie: doelman, verdediger, middenvelder of aanvaller">Positie</th>
+  <th>Speler</th>
+  <th>Leeftijd</th>
+  <th data-tip="Zijn kwaliteit nu, en hoe goed hij ooit kan worden">Kwaliteit</th>
+  <th data-tip="Hoeveel hij vooruit of achteruit ging bij de laatste evolutie, om de vier weken">Evolutie</th>
+  <th data-tip="Techniek en fysiek. Techniek telt zwaarder voor aanvallers, fysiek voor verdedigers.">Techniek en fysiek</th>
+  <th data-tip="Hoe vaak hij dit seizoen in de basiself stond">Gespeeld</th>
+  <th data-tip="Doelpunten dit seizoen">Doelpunten</th>
+  <th data-tip="Hoe goed hij in zijn vel zit, van 0 tot 100. Lage moraal drukt zijn prestaties.">Moraal</th>
+  <th data-tip="Zit hij in een goede of slechte periode? Dit komt bovenop zijn kwaliteit.">Vorm</th>
+  <th data-tip="Vermoeidheid van 0 tot 100. Boven de 50 speelt hij onder zijn niveau en raakt hij sneller geblesseerd.">Vermoeid</th>
+  <th data-tip="Gele en rode kaarten dit seizoen">Kaarten</th>
+  <th data-tip="Wat hij je elke week kost">Loon per week</th>
+  <th data-tip="Hoelang hij nog vastligt">Contract</th>
+  <th data-tip="Wat hij ongeveer waard is op de transfermarkt">Waarde</th>
+  <th data-nosort></th>
+</tr></thead>`;
 
 export function squadScreen(s: GameState, open: Record<string, boolean> = { basis: false, bank: false, out: false }, pick: string | null = null, view: 'tabel' | 'kaarten' = 'kaarten'): string {
   const { slots } = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps);
@@ -335,7 +361,7 @@ export function transfersScreen(s: GameState): string {
       <td><strong>${esc(p.name)}</strong><br/><span class="muted small">${esc(p.trait)}</span></td>
       <td>${p.age}</td>
       <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
-      <td class="small" data-v="${p.technique}">T ${Math.round(p.technique)} · F ${Math.round(p.physical)}</td>
+      <td class="small" data-v="${p.technique}" ${tipAttr(`Techniek ${Math.round(p.technique)}, fysiek ${Math.round(p.physical)}.`, p.name)}>${Math.round(p.technique)} / ${Math.round(p.physical)}</td>
       <td data-v="${p.wage}">${euro(p.wage)}</td>
       <td data-v="${p.purchasePrice}">${p.purchasePrice ? euro(p.purchasePrice) : '<span class="tag">transfervrij</span>'}</td>
       <td>${impactChips(playerImpact(s, p), 3)}</td>

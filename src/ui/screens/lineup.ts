@@ -12,7 +12,7 @@
 import type { Formation, GameState, Player, Position } from '../../engine/types';
 import { FORMATIONS, POSITIONS, isCorePlayer, marketValue, overall, selectLineup } from '../../engine/players';
 import { delegate } from '../../engine/delegation';
-import { esc, euro } from '../format';
+import { count, esc, euro } from '../format';
 import { hint, tipAttr } from '../tooltip';
 
 /* --------------------------------------------------------------- hulpstukken */
@@ -160,7 +160,7 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
       : inXI
         ? 'Staat in de basis. Klik om hem te vervangen.'
         : blocked
-          ? `Niet beschikbaar: ${p.injuryWeeks ? `geblesseerd, nog ${p.injuryWeeks} weken` : p.suspended ? `geschorst voor ${p.suspended} wedstrijd(en)` : `uitgeleend aan ${p.loan?.club}`}.`
+          ? `Niet beschikbaar: ${p.injuryWeeks ? `geblesseerd, nog ${p.injuryWeeks} weken` : p.suspended ? `geschorst voor ${count(p.suspended, 'wedstrijd', 'wedstrijden')}` : `uitgeleend aan ${p.loan?.club}`}.`
           : 'Klik om hem vast in de basis te zetten.';
 
   return `<div class="squad-row ${inXI ? 'in-xi' : ''} ${benched ? 'benched' : ''} ${blocked ? 'blocked' : ''} ${suggested ? 'suggested' : ''} ${swapping ? 'swappable' : ''}"
@@ -219,7 +219,7 @@ function squadPanel(s: GameState, selected: string | null): string {
         : ''
     }
     <div class="squad-list">${groups}</div>
-    <p class="tiny muted">Samen ${euro(wages)} loon per week · geschatte waarde ${euro(value)} · marktindex ${(s.marketIndex * 100).toFixed(0)}%</p>
+    <p class="tiny muted">Samen ${euro(wages)} loon per week · geschatte waarde ${euro(value)} · <span data-tip="Hoe duur spelers op dit moment zijn vergeleken met een gewoon jaar. Boven de 100% is de markt oververhit en betaal je meer; eronder doe je koopjes.">marktprijzen ${(s.marketIndex * 100).toFixed(0)}%</span></p>
   </section>`;
 }
 

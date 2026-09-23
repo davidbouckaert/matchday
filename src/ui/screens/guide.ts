@@ -122,7 +122,7 @@ function faq(): QA[] {
       q: 'Kan ik zien wat er financieel op me afkomt?',
       a: `Ja. Bovenaan Geld › Financiën staat een vooruitblik van maximaal acht weken: de lonen, het onderhoud, de sponsorcontracten,
         de aflossingen, de vaste momenten van het jaar zoals de bondsbijdrage en de lidgelden, en per wedstrijd een raming van de kassa
-        en de kantine. Ramingen staan met een ± erbij. Onderaan elke week zie je wat er daarna in kas zit; zou je ergens onder nul duiken,
+        en de kantine. Bij een bedrag dat we schatten, staat dat erbij. Onderaan elke week zie je wat er daarna in kas zit; zou je ergens onder nul duiken,
         dan staat dat als waarschuwing bovenaan.`,
     },
     {
@@ -235,8 +235,8 @@ export function guideScreen(s: GameState): string {
         <li><strong>Bureau</strong><span>Wat deze week op je wacht, je saldo en prognose, waar het geld heen ging, je volgende wedstrijd, en hoe je ervoor staat bij publiek en sponsors. Daarnaast de Agenda: alle 52 weken met transferperiodes, uitbetalingen en vaste momenten.</span></li>
         <li><strong>Ploeg</strong><span>Selectie (het veld en je kern), Strategie (training, tactiek, spelplannen), Transfers en Contracten.</span></li>
         <li><strong>Personeel</strong><span>Aanwerven en opleiden, en in één tabel per taak kiezen wie ze doet. Datzelfde keuzevak staat ook bovenaan elk taakscherm.</span></li>
-        <li><strong>Geld</strong><span>Financiën (prognose, posten, herkomst, ticketprijs, abonnementen, leningen), Sponsors en Cijfers.</span></li>
-        <li><strong>Club</strong><span>Infrastructuur, Horeca, Clubwinkel, Evenementen, Doelen (je langetermijndoel en het logboek), Museum en Clubinfo.</span></li>
+        <li><strong>Geld</strong><span>Financiën (prognose, posten, herkomst, leningen), <strong>Tickets en lidgeld</strong> (de drie prijzen die je zelf zet: je ticketprijs, je abonnementen en het lidgeld van de jeugd), Sponsors en Cijfers.</span></li>
+        <li><strong>Club</strong><span>Infrastructuur, Horeca (de prijzen aan de toog), Clubwinkel, Evenementen, Doelen (je langetermijndoel en het logboek), Museum en Clubinfo.</span></li>
         <li><strong>Competitie</strong><span>De stand, jouw wedstrijden met hun uitslag, de clubs in je reeks en de tuchtzaken.</span></li>
         <li><strong>Menu ☰</strong><span>Deze handleiding, "Wat beïnvloedt wat" met elke vermenigvuldiger die nu meespeelt, en opslaan en instellingen.</span></li>
       </ul>

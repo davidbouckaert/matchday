@@ -93,7 +93,7 @@ export function calendarScreen(s: GameState): string {
     const list = items.get(w) ?? [];
     const cls = w === s.week ? 'now' : w < s.week ? 'past' : '';
     html += `<tr class="${cls}">
-      <td class="cal-date">W${w}<br/><span class="muted small">${formatWeek(s.startYear, s.season, w)}</span></td>
+      <td class="cal-date">week ${w}<br/><span class="muted small">${formatWeek(s.startYear, s.season, w)}</span></td>
       <td>${isTransferWindow(w) ? '<span class="tag">transfers</span> ' : ''}${list.map((i) => `<span class="cal-item ${i.kind}">${i.text}</span>`).join('') || '<span class="muted small">—</span>'}</td>
     </tr>`;
   }

@@ -3,8 +3,8 @@ import { CLUB_EVENTS, UPGRADES, VOLUNTEER_ACTIONS } from '../../engine/data/cata
 import { DIVISIONS } from '../../engine/data/divisions';
 import { BACKGROUNDS, INVESTORS } from '../../engine/data/setup';
 import {
-  GREEN_ENERGY_SAVING, TRIBUNE_MAX, TRIBUNE_MIN, TRIBUNE_STEP, YOUTH_FEE_REF, YOUTH_FEE_WEEK,
-  canOrganise, canUpgrade, eventForecast, projectLimit, eventsThisSeason, tribuneCost, tribunePerSeat, tribuneWeeks, upgradeCost, upgradeWeeks, youthForecast, youthTarget,
+  GREEN_ENERGY_SAVING, TRIBUNE_MAX, TRIBUNE_MIN, TRIBUNE_STEP,
+  canOrganise, canUpgrade, eventForecast, projectLimit, eventsThisSeason, tribuneCost, tribunePerSeat, tribuneWeeks, upgradeCost, upgradeWeeks, youthForecast,
 } from '../../engine/actions';
 import { MAINTENANCE_FACTOR, facilityCost } from '../../engine/finance';
 import { volunteerSatisfaction } from '../../engine/turn';
@@ -18,9 +18,8 @@ import { clubRatings } from '../../engine/ratings';
 import { seasonLabel } from '../../engine/calendar';
 import { CHANGELOG, VERSION } from '../../version';
 import { avatarSvg } from '../avatar';
-import { bar, esc, euro, signedEuro, stars } from '../format';
+import { bar, count, esc, euro, signedEuro, stars } from '../format';
 import { hint, tip } from '../tooltip';
-import { numField } from '../numfield';
 import { impactChips } from '../impact';
 import { upgradeImpact } from '../../engine/impact';
 import { taskPicker } from '../taskpicker';
@@ -70,7 +69,7 @@ export function infraScreen(s: GameState): string {
         <dt>Terrein</dt><dd>${i.pitch}</dd>
         <dt>Verlichting</dt><dd>niveau ${i.lightingLevel}/3 <span class="muted small">(nodig: ${division.requiredLighting}, volgende reeks ${next.requiredLighting})</span></dd>
         <dt>Recuperatieruimte</dt><dd>${i.recoveryLevel ? `niveau ${i.recoveryLevel}/2 (−${i.recoveryLevel * 3} vermoeidheid per week)` : 'geen'}</dd>
-        <dt>Opleidingscentrum</dt><dd>${i.academyLevel ? `niveau ${i.academyLevel}/3` : 'geen'} <span class="muted small">(${i.academyLevel ? `+${i.academyLevel} doorstromer(s) per seizoen, betere talenten` : 'jeugd traint op het A-terrein'})</span></dd>
+        <dt>Opleidingscentrum</dt><dd>${i.academyLevel ? `niveau ${i.academyLevel}/3` : 'geen'} <span class="muted small">(${i.academyLevel ? `${count(i.academyLevel, 'doorstromer')} extra per seizoen, en betere talenten` : 'jeugd traint op het A-terrein'})</span></dd>
       </dl>
       ${
         i.constructions.length
@@ -117,7 +116,7 @@ export function infraScreen(s: GameState): string {
                 ? `<span class="attention-inline small">🏗️ bezig, nog ${weeks(busy.weeksLeft)}</span>`
                 : reason
                   ? `<span class="muted small">${esc(reason)}</span>`
-                  : `<button class="sm primary" data-action="upgrade" data-id="${u.id}" ${s.cash < upgradeCost(s, u.id) ? 'disabled' : ''}>Starten</button>`
+                  : `<button class="sm primary" data-action="upgrade" data-id="${u.id}" ${s.cash < upgradeCost(s, u.id) ? 'disabled' : ''}>Bouwen</button>`
             }</div>`;
           })
           .join('')}
@@ -144,7 +143,7 @@ function youthCard(s: GameState): string {
     <h2>Jeugdwerking: ${c.youthTeams} ploegen ${hint(`Elke ploeg telt ongeveer ${MEMBERS_PER_TEAM} leden en bindt ${VOLUNTEERS_PER_TEAM} vrijwilligers: een jeugdtrainer en een ploegafgevaardigde. Zit je aan het plafond van je accommodatie, dan haken ouders af en groeit je ledenaantal niet meer.`)}</h2>
     <p class="small">${teamNames(s).map((t) => `<span class="tag">${t}</span>`).join(' ')}</p>
     <dl class="facts">
-      <dt>Leden</dt><dd>${c.youthMembers} <span class="muted small">(±${MEMBERS_PER_TEAM} per ploeg)</span></dd>
+      <dt>Leden</dt><dd>${c.youthMembers} <span class="muted small">(ongeveer ${MEMBERS_PER_TEAM} per ploeg)</span></dd>
       <dt>Begeleiding</dt><dd class="${shortage ? 'neg' : ''}">${boundVolunteers(s)} vrijwilligers nodig, ${Math.min(c.volunteers, boundVolunteers(s))} beschikbaar${
         shortage ? ` — <strong>${shortage} te kort</strong>: ouders haken af en je vrijwilligers branden op` : ''
       }</dd>
@@ -168,7 +167,9 @@ export function eventsScreen(s: GameState): string {
     .join('');
   return `${taskPicker(s, ['evenementen', 'vrijwilligers'])}
   <section class="card">
-    <h2>Vrijwilligers: ${c.volunteers} ${hint('Vrijwilligers dragen de kantine, de jeugdploegen en elk evenement. Elke jeugdploeg bindt er twee (een jeugdtrainer en een ploegafgevaardigde); alleen de rest kun je voor evenementen inzetten. Hun tevredenheid hangt af van de sfeer, je reputatie, je kantineverantwoordelijke, je jeugdcoördinator en hoeveel evenementen je kort na elkaar organiseert.')}</h2>
+    <h2>Vrijwilligers: ${c.volunteers} ${hint('Zonder vrijwilligers draait er niets: geen kantine, geen jeugdploegen, geen evenementen.')}</h2>
+    <p class="muted small">Elke jeugdploeg houdt er twee bezig — een jeugdtrainer en een ploegafgevaardigde. Alleen wie overblijft kun je voor een evenement inzetten.
+    Of ze blijven, hangt af van de sfeer, je reputatie, je kantineverantwoordelijke, je jeugdcoördinator, en of je ze niet te veel weekends na elkaar laat opdraven.</p>
     <p class="small"><span class="tag">${boundVolunteers(s)} bij de jeugd</span> <span class="tag">${freeVolunteers(s)} vrij voor evenementen</span>
       ${youthShortage(s) ? `<span class="tag bad">${youthShortage(s)} te kort bij de jeugd</span>` : ''}</p>
     <p class="muted small">Tevredenheid: <strong class="${sat < 45 ? 'neg' : sat > 65 ? 'pos' : ''}">${Math.round(sat)}/100</strong> — ${sat < 45 ? 'er haken regelmatig mensen af' : sat > 65 ? 'er sluiten spontaan mensen aan' : 'stabiel'}.
@@ -179,8 +180,8 @@ export function eventsScreen(s: GameState): string {
         const wait = s.eventCooldowns[`vrijwilligers-${a.id}`] ?? 0;
         const [min, max] = a.gain(c.youthMembers);
         return `<div class="choice static"><strong>${esc(a.label)}</strong><span>${esc(a.description)}</span>
-          <dl class="mini"><dt>Kost</dt><dd>${euro(a.cost)}</dd><dt>Verwacht</dt><dd>+${min} tot +${max} vrijwilligers</dd><dt>Resultaat</dt><dd>na ${weeks(a.weeks)}</dd></dl>
-          ${wait ? `<span class="tag">opnieuw over ${weeks(wait)}</span>` : `<button class="sm primary" data-action="volunteer" data-id="${a.id}">Starten</button>`}</div>`;
+          <dl class="mini"><dt>Kost</dt><dd>${euro(a.cost)}</dd><dt>Levert op</dt><dd>${min} tot ${max} vrijwilligers</dd><dt>Je hoort het</dt><dd>na ${weeks(a.weeks)}</dd></dl>
+          ${wait ? `<span class="tag">opnieuw over ${weeks(wait)}</span>` : `<button class="sm primary" data-action="volunteer" data-id="${a.id}">Vrijwilligers zoeken</button>`}</div>`;
       }).join('')}
     </div>
   </section>
@@ -222,7 +223,7 @@ export function leagueScreen(s: GameState): string {
       <p class="muted small">1e = kampioen, 2e promoveert ook. De laatste 3 degraderen. Bij evenveel punten telt eerst het doelpuntensaldo.</p>
       <div class="table-wrap"><table class="compact league">
         <thead><tr>
-          <th>#</th><th>Club</th>
+          <th data-tip="De plaats in het klassement">Plaats</th><th>Club</th>
           <th class="num" ${tip('Gespeelde wedstrijden')}>Gespeeld</th>
           <th class="num" ${tip('Gewonnen wedstrijden (3 punten)')}>Winst</th>
           <th class="num" ${tip('Gelijkspelen (1 punt)')}>Gelijk</th>
@@ -259,7 +260,7 @@ export function leagueScreen(s: GameState): string {
             const ga = home ? f.awayGoals : f.homeGoals;
             const cls = played ? (gf! > ga! ? 'pos' : gf! < ga! ? 'neg' : '') : '';
             const icon = played ? (gf! > ga! ? '🏆' : gf! < ga! ? '🥀' : '🤝') : '';
-            return `<tr><td>W${f.week}</td><td><span class="venue ${home ? 'home' : 'away'}">${home ? '🏠 Thuis' : '🚌 Uit'}</span></td><td>${esc(opp)}</td><td class="num ${cls}">${played ? `${icon} ${gf}-${ga}` : ''}</td></tr>`;
+            return `<tr><td>week ${f.week}</td><td><span class="venue ${home ? 'home' : 'away'}">${home ? '🏠 Thuis' : '🚌 Uit'}</span></td><td>${esc(opp)}</td><td class="num ${cls}">${played ? `${icon} ${gf}-${ga}` : ''}</td></tr>`;
           })
           .join('')}</tbody>
       </table></div>
@@ -280,7 +281,7 @@ function disciplineCard(s: GameState): string {
       (r) => `<tr class="${r.own ? 'own' : ''}"><td>${esc(r.name)}</td><td>${esc(r.team)}</td>
         <td class="num" data-v="${r.y}">${r.y ? `🟨 ${r.y}` : ''}${r.y && r.y % YELLOW_LIMIT === YELLOW_LIMIT - 1 ? ' <span class="tag bad" data-tip="volgende gele kaart = schorsing">!</span>' : ''}</td>
         <td class="num" data-v="${r.r}">${r.r ? `🟥 ${r.r}` : ''}</td>
-        <td class="num" data-v="${r.susp}">${r.susp ? `<span class="tag bad">${r.susp} wedstr.</span>` : ''}</td></tr>`,
+        <td class="num" data-v="${r.susp}">${r.susp ? `<span class="tag bad">${count(r.susp, 'wedstrijd', 'wedstrijden')}</span>` : ''}</td></tr>`,
     )
     .join('');
   return `<section class="card">
@@ -318,19 +319,10 @@ export function clubScreen(s: GameState): string {
       .join('')}
     ${youthCard(s)}
     <section class="card">
-      <h2>Clubbeleid: lidgeld jeugd</h2>
-      <div class="inline-form">
-        <label>Lidgeld per seizoen
-          ${numField({ value: s.youthFee, min: 0, max: 800, step: 10, prefix: '€', change: 'youth-fee', inputId: 'youth-fee', label: 'Lidgeld jeugd', slider: true, extra: 'narrow' })}
-        </label>
-        <span class="muted small">wordt meteen toegepast</span>
-      </div>
-      <p class="small">Inschrijvingen in week ${YOUTH_FEE_WEEK}. Verwacht bij €${s.youthFee}: <strong>~${youthForecast(s)} leden</strong> → ${euro(youthForecast(s) * s.youthFee)}.</p>
-      <div class="table-wrap"><table class="compact"><thead><tr><th>Lidgeld</th><th class="num">Leden dit seizoen</th><th class="num">Opbrengst</th><th class="num">Leden op termijn</th><th class="num">Opbrengst op termijn</th></tr></thead><tbody>
-        ${[...new Set([150, 190, 230, 280, 340, s.youthFee])].sort((a, b) => a - b).map((fee) => `<tr${fee === s.youthFee ? ' class="own"' : ''}><td>€${fee}</td><td class="num">${youthForecast(s, fee)}</td><td class="num">${euro(youthForecast(s, fee) * fee)}</td><td class="num">${youthTarget(s, fee)}</td><td class="num">${euro(youthTarget(s, fee) * fee)}</td></tr>`).join('')}
-      </tbody></table></div>
-      <p class="muted small">Het aantal leden schuift elk seizoen maar half op naar het niveau "op termijn": een prijsverhoging lijkt eerst voordelig, maar ouders haken geleidelijk af.</p>
-      <p class="muted small">Gangbaar in de regio: €${YOUTH_FEE_REF}. Duurder = minder leden (en boven €${Math.round(YOUTH_FEE_REF * 1.5)} morren de supporters); goedkoper = meer leden en wat reputatie. Meer leden betekent ook meer subsidie, kantine-omzet en talent, maar ook meer werkingskosten (€3 per lid per week).</p>
+      <h2>Lidgeld jeugd</h2>
+      <p>Ouders betalen nu <strong>€${s.youthFee}</strong> per seizoen, goed voor ongeveer <strong>${youthForecast(s)} leden</strong>.</p>
+      <p class="muted small">Het bedrag zelf zet je bij Geld &rsaquo; Tickets en lidgeld, samen met je ticketprijs en je abonnementen.</p>
+      <button data-action="nav" data-id="prijzen">Naar Tickets en lidgeld</button>
     </section>
     <section class="card">
       <h2>Kerncijfers</h2>
@@ -346,7 +338,7 @@ export function clubScreen(s: GameState): string {
       <h2>Clubgeschiedenis</h2>
       ${
         s.history.length
-          ? `<div class="table-wrap"><table class="compact"><thead><tr><th>Seizoen</th><th>Reeks</th><th class="num">Plaats</th><th class="num">Ptn</th><th>Resultaat</th><th class="num">Premie</th><th class="num">Financieel</th></tr></thead><tbody>
+          ? `<div class="table-wrap"><table class="compact"><thead><tr><th>Seizoen</th><th>Reeks</th><th class="num">Plaats</th><th class="num">Punten</th><th>Resultaat</th><th class="num">Premie</th><th class="num">Financieel</th></tr></thead><tbody>
           ${s.history.map((h) => `<tr><td>${seasonLabel(s.startYear, h.season)}</td><td>${h.division}</td><td class="num">${h.position}</td><td class="num">${h.points}</td><td>${h.result}</td><td class="num">${h.prize ? euro(h.prize) : '–'}</td><td class="num">${signedEuro(h.profit)}</td></tr>`).join('')}
           </tbody></table></div>`
           : '<p class="muted">Nog geen afgewerkt seizoen.</p>'

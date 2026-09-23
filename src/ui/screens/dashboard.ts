@@ -19,7 +19,7 @@ import { teamStrength } from '../../engine/players';
 import { attendanceFactors } from '../../engine/factors';
 import { expectedAttendance } from '../../engine/finance';
 import { forecast } from '../../engine/forecast';
-import { esc, euro, resultIcon, signedEuro, sparkline } from '../format';
+import { esc, euro, resultIcon, signedEuro, sparkline, whenLabel } from '../format';
 import { hint, tipAttr } from '../tooltip';
 import { onboardingCard } from './onboarding';
 import { weeks } from '../../engine/util';
@@ -93,7 +93,7 @@ function postsCard(s: GameState): string {
   const biggest = Math.max(...rows.map(([, v]) => Math.abs(v)), 1);
 
   return `<section class="card">
-    <h2>Waar het geld heen ging ${hint('De grootste posten van de voorbije week, van groot naar klein. Wil je weten waarom een post zo hoog of laag uitviel, kijk dan bij Financiën: daar staat per post wat het weer, de opkomst, je prijzen en je vrijwilligers uithaalden.')}</h2>
+    <h2>Waar het geld heen ging ${hint('De grootste posten van vorige week, van groot naar klein. Bij Geld › Financiën staat per post waarom hij zo hoog of laag uitviel.')}</h2>
     <div class="posts">
       ${rows
         .map(
@@ -347,7 +347,7 @@ function newsCard(s: GameState): string {
     <ul class="news-feed">
       ${s.news
         .slice(0, 12)
-        .map((n) => `<li class="${n.tone}"><span class="when">S${n.season} W${n.week}</span><span class="what">${esc(n.text)}</span></li>`)
+        .map((n) => `<li class="${n.tone}"><span class="when">${whenLabel(n.season, n.week, s.season)}</span><span class="what">${esc(n.text)}</span></li>`)
         .join('')}
     </ul>
   </section>`;

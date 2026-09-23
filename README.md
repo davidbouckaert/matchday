@@ -171,6 +171,26 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.26.0 — Taal die je begrijpt zonder voorkennis
+
+**Waar zet ik mijn ticketprijs?** Dat bleek niet te beantwoorden zonder te zoeken. De ticketprijs stond halverwege Financiën tussen tien andere kaarten, de abonnementen bovenaan datzelfde scherm, en het jeugdlidgeld onder Clubinfo tussen de clubgeschiedenis en de kerncijfers. Drie beslissingen van dezelfde soort — jij zet een prijs, iemand anders beslist of hij die betaalt — op drie plekken. Ze staan nu samen onder **Geld › Tickets en lidgeld**, met bij elk hetzelfde: wat het nu opbrengt, wat gangbaar is, en wat er gebeurt als je schuift. Op de oude plekken staat een regel met de huidige waarde en een knop ernaartoe.
+
+**De kopbalk kromp bij het scrollen.** Dat was bedoeld om hoogte te winnen, maar een balk die onder je handen van vorm verandert kost meer dan de twintig pixels die hij oplevert: je zoekt een cijfer dat er net nog stond. Eruit.
+
+**"€230" werd "23(".** Het getalveld had een vaste minimumbreedte die niets wist van het getal dat erin moest. De eerste reparatie rekende in `ch` — de breedte van een nul — maar die eenheid klopte hier niet: de browser gaf 8,1 pixels per `ch` terwijl de cijfers in dit vette, tabellarische lettertype er ruim veertien innemen. Nu gebruikt het veld `size`, het attribuut dat daar bestaat: de browser meet zelf. Daarna bleef het in tabelcellen tóch misgaan, omdat de algemene regel `input[type='text']` een `width: 100%` zette die zwaarder weegt dan één losse klasse — de derde keer deze maand dat specificiteit de schuldige was. Alle 56 getalvelden in het spel zijn nagemeten.
+
+**De taalronde.** Het spel is gericht op spelers vanaf een jaar of tien, maar moet uitdagend blijven voor volwassenen. Dat betekent niet: eenvoudiger spel. Het betekent: geen drempel die niets met het spel te maken heeft.
+
+- De kolomkoppen van je kern waren `Pos · Kwal/Pot · Techn/Fys · Moe · Loon/w`, en de helft had geen uitleg. Vijf afkortingen op het scherm dat je elke week opent. Ze staan nu voluit, en wat niet in één woord past staat in de tooltip in plaats van in een afkorting.
+- `S2` en `W17` zijn overal weg. Er staat "nog 2 seizoenen" en "week 17"; in een lijst waarin alles uit hetzelfde seizoen komt, gewoon "week 17".
+- `'Niet genoeg geld.'` stond op zes plekken. Dat is de melding waar je niets mee kunt: je weet niet wat het kost, niet hoeveel je tekortkomt, en niet wat je eraan kunt doen. Eén functie zegt nu alle drie.
+- Knoppen zeggen wat ze doen. Twee verschillende knoppen heetten "Starten" (een tribune bouwen, en vrijwilligers zoeken). "Ontbind" werd "Wegsturen", "Voorstellen" werd "Dit bod doen", "Verder" werd "Sluiten en verderspelen".
+- Het scherm "Wat beïnvloedt wat" las als een rekenblad: *"× prijsgevoeligheid ((gangbare prijs / jouw prijs) tot de macht 1,2)"*. Die formules zijn gewone zinnen geworden die hetzelfde zeggen — "vraag je meer dan gangbaar, dan bestellen ze minder dan evenredig minder" — zonder dat de cijfers verdwijnen.
+- Weg: `speler(s)`, `wedstrijd(en)`, `plaats-eenhe(i)d(en)`, `±`, `vs`, `incl.`, `Ptn`, `Marge/stuk`.
+- Vier tooltips legden drie of vier dingen tegelijk uit. Die zijn gesplitst: het kernidee blijft in de tooltip, de rest staat op het scherm zelf, waar toch plaats is.
+
+`test/taal.test.ts` bewaakt deze regels. Hij leest alleen de inhoud van string- en sjabloonliteralen — de eerste versie las hele regels en zag `teamStrength(s)` aan voor "speler(s)" — en faalt op weekcodes, haakjesmeervouden, `±`, puntafkortingen, ambtelijke taal en tooltips boven de 45 woorden.
+
 ### 0.25.0 — Je plaats in het klassement staat altijd in beeld
 
 **De kopbalk draagt nu de vijf cijfers waar je week om draait.** Ze stonden verspreid: de datum links, drie weekcijfers ernaast, het saldo helemaal rechts en een halve kopbalk leeg ertussen. En je plaats in het klassement stond er niet, terwijl dat het cijfer is waar je hele seizoen om draait. Nu staan week, speeldag, klassement, volgende match en saldo op één lijn, elk met een kopje erboven en elk als knop naar het scherm waar het vandaan komt.

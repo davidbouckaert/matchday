@@ -469,9 +469,10 @@ input.price { width: 72px; padding: 4px 6px; font-size: 0.85rem; text-align: rig
  * veranderde of wegviel, bleef er een band over waar de tabel doorheen schoof. Eén blok
  * kan dat niet fout doen, want er is geen afstand meer om verkeerd te rekenen.
  *
- * Bevroren mag geen kwart van je scherm kosten. Zodra je scrolt krijgt <html> de klasse
- * `scrolled` en krimpt de kopbalk: kleiner logo, geen datumregel, geen weekcijfers, halve
- * marges. Wie je bent en wat je in kas hebt blijft staan; de rest komt terug bovenaan.
+ * De balk krimpt niet als je scrolt. Dat heeft er een tijdje in gezeten — kleiner logo,
+ * datumregel weg — om hoogte te winnen, maar een kopbalk die onder je handen van vorm
+ * verandert kost meer dan de twintig pixels die ze oplevert: je zoekt een cijfer dat er
+ * net nog stond. Wat je bovenaan ziet, zie je overal.
  */
 .bars { position: sticky; top: 0; z-index: 16; background: var(--card); }
 .topbar { position: static; }
@@ -484,24 +485,6 @@ input.price { width: 72px; padding: 4px 6px; font-size: 0.85rem; text-align: rig
 }
 :root.scrolled .bars::after { opacity: 1; }
 
-/* de krimpstand */
-:root.scrolled .topbar { padding-top: 7px; padding-bottom: 6px; gap: 8px 28px; }
-:root.scrolled .topbar .club svg { width: 38px; height: 38px; }
-:root.scrolled .topbar .club-name .date { display: none; }
-:root.scrolled .hbit { padding-top: 2px; padding-bottom: 2px; }
-/* op een smal scherm staat de datumregel op een eigen rij: die rij moet helemaal weg,
-   anders blijft er een lege band van zestig pixels onder je clubnaam hangen */
-/* op een smal scherm past de hele strook niet naast je clubnaam: dan vallen de twee
-   cijfers weg die je ook uit de kalender haalt, en blijven klassement en saldo staan */
-@media (max-width: 860px) {
-  :root.scrolled .hbit:not(.zone-kampioen):not(.zone-promotie):not(.zone-degradatie):not(.money):not(.neg):not(.now) { display: none; }
-}
-:root.scrolled .topbar .club-name .muted { display: none; }
-:root.scrolled .tabs button { padding-top: 9px; padding-bottom: 7px; }
-:root.scrolled .subtabs { padding-top: 4px; padding-bottom: 4px; }
-@media (prefers-reduced-motion: no-preference) {
-  .topbar .club svg { transition: width .15s ease, height .15s ease; }
-}
 /* de kopregel van een lange tabel plakt binnen zijn eigen kader, onder de menubalken */
 .table-wrap.tall thead th { z-index: 1; }
 
@@ -922,7 +905,11 @@ tr.benched td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
 /* ==========================================================================
    Getalinvoer: tekstveld met twee echte knoppen ernaast.
    ========================================================================== */
-.numfield { display: flex; flex-direction: column; gap: 6px; min-width: 128px; }
+/* De breedte volgt het getal dat erin past. Het veld krijgt van numfield.ts een `size`
+   met het aantal tekens van zijn grootst mogelijke waarde; `min-content` laat die maat
+   dan door de hele rij heen werken. Met een vaste breedte werd "€230" afgekapt tot "23(". */
+.numfield { display: flex; flex-direction: column; gap: 6px; min-width: min-content; }
+.numrow { min-width: min-content; }
 .numrow { display: flex; align-items: stretch; gap: 0; }
 .numbtn {
   flex: none; width: 38px; padding: 0; border-radius: var(--radius-sm) 0 0 var(--radius-sm);
@@ -934,22 +921,29 @@ tr.benched td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
 .numbtn:hover { background: var(--accent-soft); color: var(--accent); }
 .numbtn:active { background: var(--accent); color: var(--accent-ink); }
 .numbox {
-  flex: 1 1 auto; min-width: 0; position: relative; display: flex; align-items: center;
+  flex: 1 1 auto; min-width: min-content; position: relative; display: flex; align-items: center;
   background: var(--card); box-shadow: inset 0 0 0 1px var(--line); margin: 0 -1px;
 }
 .numbox:focus-within { box-shadow: inset 0 0 0 2px var(--accent); z-index: 1; }
-.numinput {
-  border: none !important; background: transparent; text-align: center; width: 100%; min-width: 40px;
+/* `input.numinput` en niet `.numinput`: de algemene regel `input[type='text']` bovenaan
+   zet `width: 100%`, en die weegt zwaarder dan één losse klasse. Daardoor werd `size`
+   genegeerd en kromp het veld in een tabelcel tot twintig pixels. */
+input.numinput {
+  border: none !important; background: transparent; text-align: center;
+  /* geen width:100% — dan negeert de browser `size` en krimpt het veld tot niets */
+  flex: 1 0 auto; width: auto; min-width: 0;
   font-variant-numeric: tabular-nums; font-weight: 650; font-size: 1rem; padding: 9px 2px;
 }
-.numinput:focus { outline: none; }
+input.numinput:focus { outline: none; }
 .numbox .affix { color: var(--faint); font-size: .9rem; padding: 0 var(--s2); flex: none; }
 .numslider { width: 100%; margin: 0; accent-color: var(--accent); }
-.numfield.narrow { max-width: 200px; }
-/* in een tabelcel mag het compacter: daar staan er vaak zes onder elkaar */
-td .numfield { min-width: 112px; }
+/* een plafond voor de schuifbalk eronder; het getal zelf duwt de rij zo nodig breder */
+.numfield.narrow { max-width: 220px; }
+/* in een tabelcel mag het compacter: daar staan er vaak zes onder elkaar. De knoppen zijn
+   smaller; het getal houdt zijn eigen breedte via `size`. */
+td .numfield { min-width: min-content; }
 td .numbtn { width: 30px; font-size: 1.1rem; }
-td .numinput { font-size: .95rem; padding: 7px 2px; }
+td input.numinput { font-size: .95rem; padding: 7px 2px; }
 td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 
 /* ==========================================================================
@@ -1530,7 +1524,16 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .pc-badge.good { background: var(--good-soft); color: var(--good); }
 .pc-badge.bad { background: var(--bad-soft); color: var(--bad); }
 
+/* Een rij benoemde feiten: kopje erboven, getal eronder. Zelfde vorm als op een
+   spelerskaart, zodat "wat staat er en wat betekent het" er overal hetzelfde uitziet. */
+.price-facts {
+  display: flex; flex-wrap: wrap; gap: var(--s3) var(--s6);
+  padding: var(--s3) 0; margin: var(--s3) 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+
 /* Loon en contract als twee benoemde feiten. "S2" liet je raden; "nog 2 seizoenen" niet. */
+.lock-note { color: var(--muted); background: var(--sunken); border-radius: var(--radius-sm); padding: 6px 10px; margin: 0 0 var(--s2); display: inline-block; cursor: help; }
+
 .pc-facts { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); padding-top: 2px; }
 .pc-fact { display: block; line-height: 1.25; cursor: help; min-width: 0; }
 .pc-fact .cap { display: block; font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }

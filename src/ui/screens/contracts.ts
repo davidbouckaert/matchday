@@ -5,6 +5,7 @@ import { POSITIONS, isCorePlayer, overall } from '../../engine/players';
 import { askingWage, wageOfferEffect } from '../../engine/actions';
 import { delegate } from '../../engine/delegation';
 import { esc, euro } from '../format';
+import { contractLabel } from './playercard';
 import { tip } from '../tooltip';
 import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
@@ -23,14 +24,14 @@ function row(s: GameState, p: Player, locked: boolean): string {
     <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" ${tip('Kernspeler: bij je beste elf of een groot talent. Hem kwijtspelen doet pijn.')}>★</span>` : ''}
       <br/><span class="muted small">${p.age} jaar · ${esc(p.trait)} · moraal ${Math.round(p.morale)}</span></td>
     <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
-    <td data-v="${p.contractUntil}" class="${seasonsLeft <= 0 ? 'neg' : ''}">S${p.contractUntil}<br/><span class="muted small">${seasonsLeft <= 0 ? 'loopt af dit seizoen' : `nog ${seasonsLeft} seizoen(en)`}</span></td>
+    <td data-v="${p.contractUntil}" class="${seasonsLeft <= 0 ? 'neg' : ''}">${contractLabel(s, p).kort}<br/><span class="muted small">${seasonsLeft <= 0 ? 'hij mag gratis weg' : 'daarna mag hij gratis weg'}</span></td>
     <td data-v="${p.wage}">${euro(p.wage)}</td>
     <td data-v="${ask}" ${tip('Wat hij vraagt. Hangt af van zijn kwaliteit, leeftijd, vorm, moraal en of hij tot je kern behoort.')}>${euro(ask)}</td>
     <td>${
       locked
-        ? '<span class="muted small">gedelegeerd</span>'
+        ? '<span class="muted small">je personeel regelt dit</span>'
         : `<span class="ask">${numField({ value: suggestion, min: 40, step: 5, prefix: '€', inputId: `wage-${p.id}`, label: `Loonvoorstel voor ${p.name}` })}
-           <button class="sm primary" data-action="extend" data-id="${p.id}">Voorstellen</button></span>
+           <button class="sm primary" data-action="extend" data-id="${p.id}">Dit bod doen</button></span>
            <br/><span class="muted small">bij ${euro(suggestion)}: ${Math.round(chance * 100)}% kans, hij is ${moodWord(morale)}</span>`
     }</td>
   </tr>`;

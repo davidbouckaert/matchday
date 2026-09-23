@@ -1,18 +1,12 @@
 import type { GameState, LedgerCategory, LedgerEntry, WeekRecord } from '../../engine/types';
-import { DIVISIONS } from '../../engine/data/divisions';
 import { creditLimit, emergencyOffer, interestRate, loanOffers, totalDebt } from '../../engine/loans';
-import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
-import { AWAY_SHARE, expectedAttendance } from '../../engine/finance';
-import { spendPerHeadCanteen } from '../../engine/canteen';
 import { esc, euro, signedEuro } from '../format';
 import { forecast, topLines } from '../../engine/forecast';
 import { biggestFactors, factorEffect, sortedOrigins } from '../../engine/origins';
-import * as seasonTickets from '../../engine/seasontickets';
 import * as inv from '../../engine/investors';
 import { INVESTORS } from '../../engine/data/setup';
 import { hint } from '../tooltip';
-import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
 
 function groupByCategory(entries: LedgerEntry[]): [LedgerCategory, number][] {
@@ -44,7 +38,7 @@ function weekChart(records: WeekRecord[]): string {
       if ((v ?? 0) > 0) inc += v!;
       else out += v!;
     }
-    return { label: `W${r.week}`, inc, out };
+    return { label: `week ${r.week}`, inc, out };
   });
   const max = Math.max(1, ...data.map((d) => Math.max(d.inc, -d.out)));
   const W = 640;
@@ -82,11 +76,11 @@ function weekTable(records: WeekRecord[]): string {
   const net = (r: WeekRecord) => sorted.reduce((s, k) => s + (r.totals[k] ?? 0), 0);
   const other = (r: WeekRecord) => NON_OPERATIONAL.reduce((s, k) => s + (r.totals[k] ?? 0), 0);
   return `<div class="table-wrap"><table class="compact weektable">
-    <thead><tr><th>Categorie (€)</th>${recent.map((r) => `<th class="num">W${r.week}</th>`).join('')}<th class="num">Totaal</th></tr></thead>
+    <thead><tr><th>Categorie (€)</th>${recent.map((r) => `<th class="num">week ${r.week}</th>`).join('')}<th class="num">Totaal</th></tr></thead>
     <tbody>
       ${sorted.map((k) => `<tr><td>${k}</td>${recent.map((r) => cell(r.totals[k] ?? 0)).join('')}${cell(recent.reduce((s, r) => s + (r.totals[k] ?? 0), 0))}</tr>`).join('')}
       <tr class="total"><td>Operationeel resultaat</td>${recent.map((r) => cell(net(r))).join('')}${cell(recent.reduce((s, r) => s + net(r), 0))}</tr>
-      <tr><td class="muted">Niet-operationeel (leningen, transfers, investeringen)</td>${recent.map((r) => cell(other(r))).join('')}${cell(recent.reduce((s, r) => s + other(r), 0))}</tr>
+      <tr><td class="muted" data-tip="Geld dat niet uit de gewone werking komt: wat je leent of aflost, wat een transfer opbrengt of kost, en wat je in je accommodatie steekt.">Buiten de gewone werking</td>${recent.map((r) => cell(other(r))).join('')}${cell(recent.reduce((s, r) => s + other(r), 0))}</tr>
     </tbody></table></div>`;
 }
 
@@ -106,7 +100,7 @@ function forecastCard(s: GameState): string {
   }
   const worst = f.lowest;
   return `<section class="card forecast">
-    <h2>Wat komt eraan ${hint('Een vooruitblik van maximaal acht weken op basis van wat nu vastligt: lonen, onderhoud, sponsorcontracten, aflossingen en de vaste momenten in het jaar. Wedstrijdinkomsten zijn een raming bij gewoon weer — die staan met een ± erbij.')}</h2>
+    <h2>Wat komt eraan ${hint('Een vooruitblik van maximaal acht weken op basis van wat nu vastligt: lonen, onderhoud, sponsorcontracten, aflossingen en de vaste momenten in het jaar. Wat een wedstrijd opbrengt is een schatting bij gewoon weer; daar staat "(schatting)" bij.')}</h2>
     <p class="muted small">Over ${f.weeks.length} ${f.weeks.length === 1 ? 'week' : 'weken'}: <strong class="${f.net < 0 ? 'neg' : 'pos'}">${signedEuro(f.net)}</strong>.
       Laagste punt: ${euro(worst.balance)} in week ${worst.week}.</p>
     ${
@@ -117,12 +111,12 @@ function forecastCard(s: GameState): string {
     <div class="table-wrap"><table class="compact forecast-table">
       <thead><tr>
         <th>Week</th><th></th>
-        <th class="num">In</th><th class="num">Uit</th><th class="num">Saldo week</th><th class="num">Kas erna</th>
+        <th class="num">In</th><th class="num">Uit</th><th class="num" data-tip="Wat er die week overblijft of bijkomt">Over die week</th><th class="num" data-tip="Wat er daarna op de rekening staat">Op de rekening</th>
       </tr></thead>
       <tbody>${f.weeks
         .map(
           (w) => `<tr class="${w.balance < 0 ? 'danger' : ''}">
-            <td>W${w.week}</td>
+            <td>week ${w.week}</td>
             <td>${w.match ? `<span class="venue ${w.match === 'thuis' ? 'home' : 'away'}">${w.match === 'thuis' ? '🏠' : '🚌'}</span> ${esc(w.opponent)}` : '<span class="muted small">vrij</span>'}</td>
             <td class="num pos">${w.income ? euro(w.income) : '–'}</td>
             <td class="num neg">${w.costs ? euro(-w.costs) : '–'}</td>
@@ -130,7 +124,7 @@ function forecastCard(s: GameState): string {
             <td class="num"><strong class="${w.balance < 0 ? 'neg' : ''}">${euro(w.balance)}</strong></td>
           </tr>
           <tr class="forecast-detail"><td></td><td colspan="5" class="small muted">${topLines(w, 5)
-            .map((l) => `<span class="fc-line ${l.amount < 0 ? 'neg' : 'pos'}">${esc(l.label)}${l.estimate ? ' ±' : ''} ${signedEuro(l.amount)}</span>`)
+            .map((l) => `<span class="fc-line ${l.amount < 0 ? 'neg' : 'pos'}">${esc(l.label)}${l.estimate ? ' (schatting)' : ''} ${signedEuro(l.amount)}</span>`)
             .join(' · ')}</td></tr>`,
         )
         .join('')}</tbody>
@@ -153,7 +147,8 @@ function originsCard(s: GameState): string {
     </section>`;
   }
   return `<section class="card origins">
-    <h2>Waar kwam het vandaan ${hint('Voor de grootste posten van de laatste week: welke factoren meespeelden en wat elk van hen opleverde of kostte. Een bedrag van +€400 bij "Sfeer" betekent: zonder die sfeer had je €400 minder gehad. Het zijn dezelfde factoren waarmee de formule rekent.')}</h2>
+    <h2>Waar kwam het vandaan ${hint('Per post van vorige week: wat er meespeelde, en hoeveel het opleverde of kostte.')}</h2>
+    <p class="muted small">Staat er +€400 bij "Sfeer", dan betekent dat: zonder die goede sfeer had je €400 minder gehad. Het zijn precies dezelfde getallen waarmee het spel rekent.</p>
     <p class="muted small">De laatst gespeelde week. Dit zijn dezelfde factoren als op de tab Invloeden, maar nu met wat ze déze week waard waren.</p>
     <div class="origin-list">${origins
       .map((o) => {
@@ -182,67 +177,6 @@ function originsCard(s: GameState): string {
         </div>`;
       })
       .join('')}</div>
-  </section>`;
-}
-
-
-/** De regel die live meerekent terwijl je aan de schuifregelaar sleept. */
-export function subscriptionInfo(s: GameState, price: number): string {
-  const st = seasonTickets;
-  const full = st.fullPrice(s);
-  const sold = st.expectedSales(s, price);
-  const revenue = st.expectedRevenue(s, price);
-  const gate = st.forgoneGate(s, price);
-  const net = revenue - gate;
-  const discount = Math.round((1 - price / Math.max(1, full)) * 100);
-  if (!sold) return `<strong>${euro(price)} per abonnement</strong> · ${discount > 0 ? `${discount}% korting` : 'geen korting'} — aan die prijs tekent niemand.`;
-  return `<strong>${euro(price)} per abonnement</strong> · ${discount}% korting · naar schatting <strong>${sold}</strong> verkocht
-    · <strong class="pos">${euro(revenue)}</strong> ineens in kas
-    <span class="muted">(die mensen waren aan de kassa ongeveer ${euro(gate)} waard geweest: ${net >= 0 ? 'dat is' : 'dat kost je'} <strong class="${net < 0 ? 'neg' : 'pos'}">${signedEuro(net)}</strong>)</span>`;
-}
-
-/**
- * Abonnementen: de enige beslissing die je een heel seizoen vastzet. Geld nu, en die mensen
- * betalen daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt.
- */
-function subscriptionsCard(s: GameState): string {
-  const st = seasonTickets;
-  const current = s.seasonTickets && s.seasonTickets.season === s.season ? s.seasonTickets : null;
-  const check = st.canSell(s);
-  const full = st.fullPrice(s);
-
-  if (current) {
-    const out = st.outcome(s)!;
-    return `<section class="card">
-      <h2>Abonnementen ${hint('Eén keer per seizoen, voor de competitie start. Abonnees betalen vooraf en daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt. Het is de enige beslissing die je een heel jaar vastzet.')}</h2>
-      <p>Dit seizoen: <strong>${current.sold} abonnementen</strong> aan ${euro(current.price)}, samen <strong class="pos">${euro(current.revenue)}</strong>, meteen ontvangen.</p>
-      <p class="muted small">Aan de kassa zouden diezelfde mensen ongeveer ${euro(out.gate)} waard geweest zijn
-        (${out.diff >= 0 ? 'je staat er dus' : 'je geeft dus'} <strong class="${out.diff < 0 ? 'neg' : 'pos'}">${signedEuro(out.diff)}</strong> ${out.diff >= 0 ? 'beter voor' : 'op'} — maar je had het geld wel meteen,
-        en zij komen ook als het regent).</p>
-      <p class="muted small">Volgend seizoen kun je opnieuw een campagne voeren.</p>
-    </section>`;
-  }
-
-  if (!check.ok) {
-    return `<section class="card">
-      <h2>Abonnementen ${hint('Abonnementen verkoop je voor de competitie start. Abonnees betalen vooraf en daarna niet meer aan de kassa.')}</h2>
-      <p class="muted">${esc(check.reason)}</p>
-    </section>`;
-  }
-
-  const price = Math.round(st.suggestedPrice(s));
-  return `<section class="card subs">
-    <h2>Abonnementen ${hint('Eén keer per seizoen, voor de competitie start. Het geld komt meteen binnen, maar die mensen betalen daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt. Je legt dus je belangrijkste inkomstenbron vast voor een heel jaar.')}</h2>
-    <p class="muted small">Los betalen kost een supporter ${euro(full)} over ${st.HOME_MATCHES} thuiswedstrijden (${euro(s.ticketPrice)} per match),
-      maar niemand komt vijftien keer — reken op ongeveer ${Math.round(st.TYPICAL_ATTENDANCE_RATE * 100)}%. Zonder korting tekent er dus niemand.</p>
-    <p class="muted small">Het is vooral een keuze over tíming: je haalt geld naar voren dat je anders pas match na match zou krijgen.
-      Scherp geprijsd levert het het meeste cash op maar kost je op het jaar; een bescheiden korting brengt minder binnen maar is voordeliger.
-      En abonnees komen ook als het regent. Wat je hier beslist, ligt vast tot het einde van het seizoen.</p>
-    <div class="slider-row">
-      <input type="range" id="subs-price" min="${st.floorPrice(s)}" max="${Math.max(st.floorPrice(s) + 10, Math.round(full * 1.05))}" step="5" value="${price}" data-live="subs" aria-label="Prijs per abonnement"/>
-      <button class="primary" data-action="sell-subs">Campagne voeren</button>
-    </div>
-    <p id="subs-info" class="tribune-info">${subscriptionInfo(s, price)}</p>
   </section>`;
 }
 
@@ -288,11 +222,8 @@ function investorCard(s: GameState): string {
 }
 
 export function financeScreen(s: GameState): string {
-  const division = DIVISIONS[s.league.divisionLevel];
   const lastWeek = groupByCategory(s.lastWeek);
   const thisWeek = s.thisWeek;
-  const attendance = expectedAttendance(s, { weather: 'bewolkt', derby: false, positionFactor: 1 });
-  const ticketer = delegate(s, 'ticketing');
   const offers = loanOffers(s);
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
@@ -305,10 +236,7 @@ export function financeScreen(s: GameState): string {
   // de twee seizoensoverzichten naast elkaar omdat je ze vergelijkt, en alles wat een
   // brede tabel is over de volle breedte.
   return `${taskPicker(s, ['ticketing'])}
-  <div class="cols-2">
-    <div class="col">${investorCard(s)}</div>
-    <div class="col">${subscriptionsCard(s)}</div>
-  </div>
+  ${investorCard(s)}
   ${forecastCard(s)}
   ${originsCard(s)}
   <section class="card">
@@ -320,20 +248,14 @@ export function financeScreen(s: GameState): string {
   <div class="cols-2">
     <div class="col">
     <section class="card">
-      <h2>Ticketprijs</h2>
-      ${
-        ticketer
-          ? `<p class="attention-inline small">${esc(ticketer.name)} bepaalt de ticketprijs: nu €${s.ticketPrice}.</p>`
-          : `<div class="inline-form">
-        <label>Prijs per ticket
-          ${numField({ value: s.ticketPrice, min: 0, max: 100, step: 1, prefix: '€', change: 'ticket-price', inputId: 'ticket-price', label: 'Ticketprijs', slider: true, extra: 'narrow' })}
-        </label>
-        <span class="muted small">wordt meteen toegepast</span>
-      </div>`
-      }
-      <p class="muted small">Normaal in ${division.name}: €${division.refTicketPrice}. Verwachte opkomst bij bewolkt weer: ~${attendance} (tribune: ${s.infrastructure.capacity}).
-      Van elke ticketeuro gaat ${Math.round(AWAY_SHARE * 100)}% naar de bezoekende club en de bond; dat staat apart bij wedstrijdkosten.
-      Kantinewinst per toeschouwer: ~€${spendPerHeadCanteen(s, 400).toFixed(2)} (prijzen zet je bij Club › Horeca). Een hoge prijs levert per ticket meer op, maar schrikt supporters af en drukt de sfeer.</p>
+      <h2>Wat je zelf kunt zetten</h2>
+      <p class="muted small">Je ticketprijs, je abonnementen en het lidgeld van de jeugd staan bij elkaar op een eigen scherm.</p>
+      <div class="price-facts">
+        <span class="pc-fact"><span class="cap">Ticket</span><strong>€${s.ticketPrice}</strong></span>
+        <span class="pc-fact"><span class="cap">Lidgeld jeugd</span><strong>€${s.youthFee}</strong><span class="unit">/seizoen</span></span>
+        <span class="pc-fact"><span class="cap">Abonnementen</span><strong>${s.seasonTickets && s.seasonTickets.season === s.season ? `${s.seasonTickets.sold} verkocht` : 'nog niet verkocht'}</strong></span>
+      </div>
+      <button data-action="nav" data-id="prijzen">Naar Tickets en lidgeld</button>
     </section>
 
     </div>
@@ -363,7 +285,7 @@ export function financeScreen(s: GameState): string {
   </div>
     <section class="card">
       <h2>Leningen</h2>
-      <p class="muted small">Openstaande schuld: <strong>${euro(totalDebt(s))}</strong> · Bank wil nog lenen: <strong>${euro(creditLimit(s))}</strong> · Basisrente: ${(interestRate(s) * 100).toFixed(1)}%</p>
+      <p class="muted small">Je moet nog <strong>${euro(totalDebt(s))}</strong> terugbetalen. De bank wil je nu nog <strong>${euro(creditLimit(s))}</strong> lenen, aan ${(interestRate(s) * 100).toFixed(1)}% rente per jaar.</p>
       ${
         s.loans.length
           ? `<div class="table-wrap"><table class="compact"><thead><tr><th>Lening</th><th class="num">Open</th><th class="num">Rente</th><th class="num">Per week</th><th class="num">Weken</th><th></th></tr></thead><tbody>

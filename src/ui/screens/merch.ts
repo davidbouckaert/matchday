@@ -79,7 +79,7 @@ export function merchScreen(s: GameState): string {
         Je boekhouding splitst dit in drie: <strong>clubartikelen</strong> (omzet), <strong>inkoop winkel</strong> (wat de verkochte artikelen kostten) en <strong>werking winkel</strong> (vaste kosten en eerste voorraad van nieuwe artikelen).</p>
       <div class="table-wrap">
         <table class="compact sortable">
-          <thead><tr><th>Artikel</th><th class="num">Prijs</th><th class="num">Marge</th><th class="num">Prijseffect</th><th class="num">Verwacht/week</th><th class="num">Vorige week</th><th class="num">Totaal</th><th></th></tr></thead>
+          <thead><tr><th>Artikel</th><th class="num">Prijs</th><th class="num" data-tip="Wat je overhoudt per verkocht stuk, na aftrek van de inkoopprijs">Winst per stuk</th><th class="num" data-tip="Hoeveel er meer of minder verkocht wordt door jouw prijs, vergeleken met de richtprijs">Effect van je prijs</th><th class="num">Verwacht/week</th><th class="num">Vorige week</th><th class="num">Totaal</th><th></th></tr></thead>
           <tbody>${rows || '<tr><td colspan="8" class="muted">Nog geen artikelen in de winkel.</td></tr>'}</tbody>
         </table>
       </div>

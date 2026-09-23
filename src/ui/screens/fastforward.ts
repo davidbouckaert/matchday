@@ -40,14 +40,14 @@ export function fastForwardOverlay(g: GameState, result: FastForwardResult): str
       ${
         digest.news.length
           ? `<div class="ff-block"><h3>Wat er gebeurde</h3><ul class="ff-news">${digest.news
-              .map((n) => `<li class="${n.tone}"><span class="muted small">W${n.week}</span> ${esc(n.text)}</li>`)
+              .map((n) => `<li class="${n.tone}"><span class="muted small">week ${n.week}</span> ${esc(n.text)}</li>`)
               .join('')}</ul></div>`
           : '<p class="muted">Rustige weken: er gebeurde niets dat het vermelden waard is.</p>'
       }
 
       <footer class="ff-foot">
         <p class="small"><strong>Gestopt:</strong> ${esc(STOP_TEXT[reason])}</p>
-        <button class="primary" data-action="ff-close">Verder</button>
+        <button class="primary" data-action="ff-close">Sluiten en verderspelen</button>
       </footer>
     </div>
   </div>`;

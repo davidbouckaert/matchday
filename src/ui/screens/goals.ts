@@ -7,7 +7,7 @@
 
 import type { GameState } from '../../engine/types';
 import { OWN_TEAM_ID, ownPosition } from '../../engine/league';
-import { esc, signedEuro } from '../format';
+import { esc, signedEuro, whenLabel } from '../format';
 import { hint } from '../tooltip';
 import { ambitionDef, goalProgress } from '../../engine/opening';
 import { CARRIERE_DOELEN, EIGENAARSNIVEAUS, goalDef as careerGoalDef, goalProgress as careerProgress, nextLevel, ownerLevel } from '../../engine/career';
@@ -126,7 +126,7 @@ function logCard(s: GameState): string {
         ? `<ul class="news-feed">${s.log
             .slice(0, 25)
             .map(
-              (l) => `<li class="${l.kind === 'antwoord' ? 'goed' : 'neutraal'}"><span class="when">S${l.season} W${l.week}</span>
+              (l) => `<li class="${l.kind === 'antwoord' ? 'goed' : 'neutraal'}"><span class="when">${whenLabel(l.season, l.week, s.season)}</span>
                 <span class="what"><span class="tag">${esc(l.kind)}</span> ${esc(l.text)}</span></li>`,
             )
             .join('')}</ul>`

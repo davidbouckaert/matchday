@@ -34,6 +34,17 @@ import { baseProjects, buildDiscount, buildSpeed, canHoldRound, holdRound, round
 export type { ActionResult };
 
 const fail = (message: string): ActionResult => ({ ok: false, message });
+
+/**
+ * "Niet genoeg geld." stond op zes plekken, en dat is precies de melding waar je niets mee
+ * kunt: je weet niet hoeveel het kost, niet hoeveel je tekortkomt, en niet wat je eraan
+ * kunt doen. Deze zegt alle drie.
+ */
+export function tooExpensive(state: GameState, cost: number, wat = 'Dit'): string {
+  const money = (n: number) => `€${Math.round(n).toLocaleString('nl-BE')}`;
+  const tekort = cost - state.cash;
+  return `${wat} kost ${money(cost)} en je hebt ${money(state.cash)}. Je komt ${money(tekort)} tekort — bij Geld › Financiën kun je een lening aanvragen.`;
+}
 const ok = (message: string): ActionResult => ({ ok: true, message });
 
 function guard(state: GameState): ActionResult | null {
@@ -47,9 +58,9 @@ export function buyPlayer(state: GameState, playerId: string): ActionResult {
   if (g) return g;
   if (!isTransferWindow(state.week)) return fail('De transferperiode is gesloten.');
   const p = state.transferList.find((x) => x.id === playerId);
-  if (!p) return fail('Speler niet meer beschikbaar.');
-  if (state.players.length >= 30) return fail('Je selectie is vol (max. 30 spelers).');
-  if (p.purchasePrice > state.cash) return fail('Niet genoeg geld op de rekening.');
+  if (!p) return fail('Die speler staat niet meer op de lijst — een andere club was je voor.');
+  if (state.players.length >= 30) return fail('Je kern zit vol: dertig spelers is het maximum. Verkoop of leen er eerst een uit.');
+  if (p.purchasePrice > state.cash) return fail(tooExpensive(state, p.purchasePrice, `${p.name} kopen`));
   if (state.avatar.background === 'exspeler') p.wage = round(p.wage * 0.95, 5);
   state.transferList = state.transferList.filter((x) => x.id !== playerId);
   if (p.purchasePrice > 0) book(state, 'transfers', -p.purchasePrice, `Aankoop ${p.name}`);
@@ -180,7 +191,7 @@ export function extendContract(state: GameState, playerId: string, offer?: numbe
     if (left <= 0) addNews(state, 'slecht', `De gesprekken met ${p.name} zijn afgesprongen. Hij praat dit seizoen niet meer over een nieuw contract.`);
     return fail(
       `${p.name} wijst €${wage}/week af. Hij vraagt nu ongeveer €${askingWage(state, p)}/week en zijn moraal zakt naar ${Math.round(p.morale)}.` +
-        (left > 0 ? ` Nog ${left} poging(en) voor hij afhaakt.` : ' Hij wil dit seizoen niet meer onderhandelen.'),
+        (left > 0 ? ` Je kunt het nog ${left} ${left === 1 ? 'keer' : 'keer'} proberen voor hij afhaakt.` : ' Hij wil dit seizoen niet meer onderhandelen.'),
     );
   }
   p.wage = wage;
@@ -280,8 +291,8 @@ export function startCourse(state: GameState, staffId: string, type: 'diploma' |
   if (type === 'diploma') {
     if (!hasDiploma(s.role)) return fail('Alleen de hoofdtrainer en de assistent-trainer volgen een diplomaopleiding.');
     const course = COURSES.find((c) => c.from === s.diploma);
-    if (!course) return fail('Hoogste diploma al behaald.');
-    if (state.cash < course.cost) return fail('Niet genoeg geld.');
+    if (!course) return fail(`${s.name} heeft al het hoogste diploma. Verder komt hij alleen nog met bijscholing.`);
+    if (state.cash < course.cost) return fail(tooExpensive(state, course.cost, `De opleiding ${course.to}`));
     book(state, 'opleidingen', -course.cost, `Opleiding ${course.to} voor ${s.name}`);
     s.courseWeeksLeft = course.weeks;
     s.courseType = 'diploma';
@@ -289,7 +300,7 @@ export function startCourse(state: GameState, staffId: string, type: 'diploma' |
   }
   if (s.skill >= BIJSCHOLING.cap) return fail(`${s.name} is al top in zijn vak.`);
   const cost = BIJSCHOLING.cost(s.skill);
-  if (state.cash < cost) return fail('Niet genoeg geld.');
+  if (state.cash < cost) return fail(tooExpensive(state, cost, 'Bijscholing'));
   book(state, 'opleidingen', -cost, `Bijscholing ${s.name}`);
   s.courseWeeksLeft = BIJSCHOLING.weeks;
   s.courseType = 'bijscholing';
@@ -475,7 +486,7 @@ export function startUpgrade(state: GameState, id: UpgradeId, seats = 300): Acti
   const rounded = id === 'tribune' ? clamp(Math.round(seats / TRIBUNE_STEP) * TRIBUNE_STEP, TRIBUNE_MIN, TRIBUNE_MAX) : 0;
   const cost = upgradeCost(state, id, rounded);
   const weeks = upgradeWeeks(state, id, rounded);
-  if (state.cash < cost) return fail(`Niet genoeg geld (€${cost.toLocaleString('nl-BE')} nodig). Een lening kan helpen.`);
+  if (state.cash < cost) return fail(tooExpensive(state, cost, def.label));
   const label = id === 'tribune' ? `${def.label} (+${rounded} plaatsen)` : def.label;
   book(state, 'infrastructuur', -cost, label);
   state.infrastructure.constructions.push({ upgrade: id, weeksLeft: weeks, seats: id === 'tribune' ? rounded : undefined, cost });
@@ -533,7 +544,7 @@ export function canOrganise(state: GameState, def: ClubEventDef): string | null 
   if (free < def.volunteers) {
     return `Je hebt ${def.volunteers} vrije vrijwilligers nodig (nu ${free}: ${state.community.volunteers} in totaal, ${boundVolunteers(state)} vast bij de jeugd).`;
   }
-  if (state.cash < eventCost(state, def)) return `Niet genoeg geld (€${eventCost(state, def).toLocaleString('nl-BE')} nodig).`;
+  if (state.cash < eventCost(state, def)) return tooExpensive(state, eventCost(state, def), def.label);
   return null;
 }
 
@@ -563,11 +574,11 @@ export function volunteerAction(state: GameState, actionId: string): ActionResul
   const g = guard(state);
   if (g) return g;
   const def = VOLUNTEER_ACTIONS.find((a) => a.id === actionId);
-  if (!def) return fail('Onbekende actie.');
+  if (!def) return fail('Die actie bestaat niet meer. Ververs de pagina en probeer opnieuw.');
   const key = `vrijwilligers-${def.id}`;
   if ((state.eventCooldowns[key] ?? 0) > 0) return fail(`Nog ${weeks(state.eventCooldowns[key])} wachten.`);
   const cost = round(def.cost * state.inflation, 50);
-  if (state.cash < cost) return fail(`Niet genoeg geld (€${cost.toLocaleString('nl-BE')} nodig).`);
+  if (state.cash < cost) return fail(tooExpensive(state, cost, def.label));
   const [min, max] = def.gain(state.community.youthMembers);
   const gained = createRng(state).int(min, max);
   book(state, 'evenementen', -cost, def.label);
@@ -853,9 +864,9 @@ export function loanIn(state: GameState, playerId: string): ActionResult {
   if (g) return g;
   if (!isTransferWindow(state.week)) return fail('Huren kan alleen tijdens de transferperiode.');
   const p = state.loanMarket.find((x) => x.id === playerId);
-  if (!p) return fail('Speler niet meer beschikbaar.');
-  if (state.players.length >= 30) return fail('Je selectie is vol (max. 30 spelers).');
-  if (state.cash < p.purchasePrice) return fail('Niet genoeg geld voor de huurvergoeding.');
+  if (!p) return fail('Die speler staat niet meer op de lijst — een andere club was je voor.');
+  if (state.players.length >= 30) return fail('Je kern zit vol: dertig spelers is het maximum. Verkoop of leen er eerst een uit.');
+  if (state.cash < p.purchasePrice) return fail(tooExpensive(state, p.purchasePrice, `${p.name} huren`));
   state.loanMarket = state.loanMarket.filter((x) => x.id !== playerId);
   if (p.purchasePrice) book(state, 'transfers', -p.purchasePrice, `Huurvergoeding ${p.name}`);
   p.loan = { type: 'in', club: p.loan?.club ?? 'profclub', untilSeason: state.season, wageShare: 1 };

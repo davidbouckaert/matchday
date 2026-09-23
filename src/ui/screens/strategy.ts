@@ -17,7 +17,7 @@ import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from '../../engin
 import { opponentSuspensions } from '../../engine/discipline';
 import { delegate } from '../../engine/delegation';
 import { TASKS, roleDef } from '../../engine/data/catalog';
-import { esc, euro } from '../format';
+import { count, esc, euro } from '../format';
 import { taskPicker } from '../taskpicker';
 import { tipAttr } from '../tooltip';
 
@@ -89,7 +89,7 @@ export function strategyScreen(s: GameState): string {
           <div class="tile mu${vsOpp!.matchup}"><span class="label">Jouw spelplan</span><strong class="plan-name">${PLAN_INFO[t.plan].label}</strong>
             <span class="small">${MU_LABEL[vsOpp!.matchup]}: aanval ${signed(vsOpp!.matchupBonus.att)}, verdediging ${signed(vsOpp!.matchupBonus.def)}</span></div>
         </div>
-        ${opponentSuspensions(s, s.league.teams.find((x) => x.name === rep.name)!.id) ? `<p class="small">Geschorst bij hen: <strong>${opponentSuspensions(s, s.league.teams.find((x) => x.name === rep.name)!.id)}</strong> speler(s) (verzwakt hun ploeg).</p>` : ''}
+        ${opponentSuspensions(s, s.league.teams.find((x) => x.name === rep.name)!.id) ? `<p class="small">Geschorst bij hen: <strong>${opponentSuspensions(s, s.league.teams.find((x) => x.name === rep.name)!.id)}</strong> spelers (dat verzwakt hun ploeg).</p>` : ''}
         <p class="small">Gespeelde spelplannen in hun laatste wedstrijden: ${rep.recentPlans.length ? rep.recentPlans.map((p) => `<span class="tag">${PLAN_INFO[p].label}</span>`).join(' ') : '<span class="muted">nog geen</span>'}</p>
         <p class="small">Tip: tegen ${PLAN_INFO[rep.knownPlan].label.toLowerCase()} werken <strong>${PLANS.filter((p) => matchup(p, rep.knownPlan) === 1).map((p) => PLAN_INFO[p].label.toLowerCase()).join(' en ')}</strong> het best;
         ${PLANS.filter((p) => matchup(p, rep.knownPlan) === -1).map((p) => PLAN_INFO[p].label.toLowerCase()).join(' en ')} zijn af te raden.
@@ -133,7 +133,7 @@ export function strategyScreen(s: GameState): string {
             .join('')}
         </select>
       </label>
-      <p class="small">Basiself: ${t.manualXI.length ? `${t.manualXI.length} speler(s) zelf gekozen, de rest vult de computer aan met de besten.` : 'automatisch de beste elf.'}
+      <p class="small">Basiself: ${t.manualXI.length ? `${count(t.manualXI.length, 'speler')} zelf gekozen, de rest vult de computer aan met de besten.` : 'automatisch de beste elf.'}
       Spelers vastzetten doe je met ☆ in de tab Ploeg.
       ${t.manualXI.length ? '<button class="sm" data-action="auto-lineup">Alles automatisch</button>' : ''}</p>
     `)}

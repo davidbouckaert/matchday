@@ -52,3 +52,25 @@ export function resultIcon(goalsFor: number, goalsAgainst: number): string {
 export function venue(home: boolean): string {
   return `<span class="venue ${home ? 'home' : 'away'}">${home ? '🏠 Thuis' : '🚌 Uit'}</span>`;
 }
+
+/**
+ * Wanneer iets gebeurde, als woorden in plaats van als code.
+ *
+ * Hier stond overal "S1 W17". Dat is kort, maar je moet eerst leren dat de S van seizoen
+ * komt en de W van week — en dat is precies het soort kleine leerdrempel waar een spel
+ * niets aan heeft. In een lijst waar alles uit hetzelfde seizoen komt, laten we het
+ * seizoen zelfs helemaal weg: dan volstaat "week 17".
+ */
+export function whenLabel(season: number, week: number, currentSeason?: number): string {
+  return currentSeason === season ? `week ${week}` : `seizoen ${season}, week ${week}`;
+}
+
+/**
+ * Enkelvoud of meervoud, met het getal ervoor.
+ *
+ * "3 speler(s)" en "1 wedstrijd(en)" zijn formuliertaal: je leest de haakjes en moet zelf
+ * de juiste vorm kiezen. Eén speler is één speler.
+ */
+export function count(n: number, enkelvoud: string, meervoud = `${enkelvoud}s`): string {
+  return `${n} ${n === 1 ? enkelvoud : meervoud}`;
+}

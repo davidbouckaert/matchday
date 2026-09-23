@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.25.0';
+export const VERSION = '0.26.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,26 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.26.0',
+    date: '2026-09-23',
+    title: 'Taal die je begrijpt zonder voorkennis',
+    items: [
+      'Nieuw scherm Geld › Tickets en lidgeld: je ticketprijs, je abonnementen en het lidgeld van de jeugd staan nu bij elkaar',
+      'Die drie stonden verspreid — twee ergens op Financiën, één onderaan Clubinfo — en waren daardoor moeilijk terug te vinden',
+      'De kopbalk krimpt niet meer als je scrolt: wat je bovenaan ziet, zie je overal',
+      'Getalvelden waren te smal voor hun eigen inhoud: "€230" werd "23(". Ze meten zich nu naar het grootste getal dat erin past',
+      'Taalronde over het hele spel, gericht op spelers vanaf een jaar of tien zonder het kinderachtig te maken',
+      'De kolomkoppen van je kern stonden vol afkortingen: "Kwal/Pot", "Techn/Fys", "Moe", "Loon/w". Ze staan nu voluit, met uitleg',
+      'De codes "S2" en "W17" zijn overal vervangen door "nog 2 seizoenen" en "week 17"',
+      '"Niet genoeg geld." zegt nu hoeveel iets kost, hoeveel je hebt, hoeveel je tekortkomt en waar je een lening aanvraagt',
+      'Knoppen zeggen wat ze doen: "Starten" werd "Bouwen" of "Vrijwilligers zoeken", "Ontbind" werd "Wegsturen", "Voorstellen" werd "Dit bod doen"',
+      'Het scherm "Wat beïnvloedt wat" las als een rekenblad: formules als "× prijsgevoeligheid tot de macht 1,2" zijn vervangen door gewone zinnen',
+      'Vormen als "speler(s)" en "wedstrijd(en)" zijn weg, net als "±", "vs" en "incl."',
+      'Vier tooltips die drie of vier dingen tegelijk uitlegden zijn gesplitst: het kernidee blijft in de tooltip, de rest staat op het scherm',
+      'Een test bewaakt deze regels, zodat afkortingen en formuliertaal niet terugsluipen',
+    ],
+  },
   {
     version: '0.25.0',
     date: '2026-09-23',

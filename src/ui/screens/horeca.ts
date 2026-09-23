@@ -54,7 +54,7 @@ export function horecaScreen(s: GameState): string {
           locked
             ? `<strong>${c.marginPct}%</strong>`
             : numField({ value: c.marginPct, min: 0, max: 60, step: 1, suffix: '%', change: 'concession-margin', rowId: c.id, label: `Marge ${def.label}` })
-        }<br/><span class="muted small">hij gaat tot ±${max}%</span></td>
+        }<br/><span class="muted small">hij gaat tot ongeveer ${max}% erboven of eronder</span></td>
         <td class="num">${euro(concessionForecast(s, c.id, c.marginPct, attendance))}</td>
         <td class="num">${sold ? `${sold.units} · ${euro(sold.revenue)} omzet` : '–'}</td>
         <td>${locked ? '' : `<button class="sm ghost" data-action="close-concession" data-id="${c.id}">Stopzetten</button>`}</td>
@@ -71,7 +71,7 @@ export function horecaScreen(s: GameState): string {
       <p class="muted small">Prijzen passen zich meteen toe, je hoeft niets op te slaan. Verwachting bij een gewone thuiswedstrijd met ongeveer ${attendance} toeschouwers.</p>
       ${locked ? `<p class="attention-inline small">${esc(manager!.name)} bepaalt de prijzen en de concessies. Neem de taak "Kantine en concessies" terug bij Personeel om zelf te beslissen.</p>` : ''}
       <div class="table-wrap"><table class="compact sortable">
-        <thead><tr><th>Artikel</th><th class="num">Prijs</th><th class="num">Marge/stuk</th><th class="num">Prijseffect</th><th class="num">Verwacht aantal</th><th class="num">Verwachte winst</th><th class="num">Vorige wedstrijd</th></tr></thead>
+        <thead><tr><th>Artikel</th><th class="num">Prijs</th><th class="num" data-tip="Wat je overhoudt per verkocht stuk, na aftrek van de inkoopprijs">Winst per stuk</th><th class="num" data-tip="Hoeveel er meer of minder besteld wordt door jouw prijs, vergeleken met de gangbare prijs">Effect van je prijs</th><th class="num">Verwacht aantal</th><th class="num">Verwachte winst</th><th class="num">Vorige wedstrijd</th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr class="total"><td>Samen</td><td colspan="4"></td><td class="num">${euro(Math.round(totalMargin))}</td><td></td></tr></tfoot>
       </table></div>
@@ -95,7 +95,7 @@ export function horecaScreen(s: GameState): string {
               const max = acceptedMargin(s, d.id);
               const fits = d.space <= space;
               return `<div class="choice static"><strong>${esc(d.label)}</strong>
-              <span class="muted small">prijs voor de supporter ${money(d.price)} · ${d.space} plaats-eenhe(i)d(en) · aanvaardt tot ±${max}%</span>
+              <span class="muted small">prijs voor de supporter ${money(d.price)} · neemt ${d.space} ${d.space === 1 ? 'plaats' : 'plaatsen'} in · gaat akkoord tot ongeveer ${max}% erboven of eronder</span>
               <span class="big">${euro(concessionForecast(s, d.id, max, attendance))} <span class="muted small">per thuiswedstrijd bij ${max}%</span></span>
               ${
                 locked

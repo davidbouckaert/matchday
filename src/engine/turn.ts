@@ -332,7 +332,7 @@ function payPending(state: GameState): void {
     if (p.amount) book(state, p.category, p.amount, p.label);
     if (p.volunteers !== undefined) {
       state.community.volunteers += p.volunteers;
-      addNews(state, p.volunteers > 0 ? 'goed' : 'neutraal', p.volunteers > 0 ? `${p.label}: ${p.volunteers} nieuwe vrijwilliger(s).` : `${p.label}: helaas geen nieuwe vrijwilligers.`);
+      addNews(state, p.volunteers > 0 ? 'goed' : 'neutraal', p.volunteers > 0 ? `${p.label}: ${p.volunteers} ${p.volunteers === 1 ? 'nieuwe vrijwilliger' : 'nieuwe vrijwilligers'}.` : `${p.label}: helaas geen nieuwe vrijwilligers.`);
     } else if (p.amount) {
       addNews(state, 'goed', `${p.label}: €${p.amount.toLocaleString('nl-BE')} ontvangen.`);
     }
@@ -405,7 +405,7 @@ function weeklyVolunteers(state: GameState, rng: Rng): void {
   if (rng.chance(leaveChance)) {
     const gone = rng.int(1, sat < 30 ? 2 : 1);
     c.volunteers = Math.max(2, c.volunteers - gone);
-    addNews(state, 'slecht', `${gone} vrijwilliger(s) haken af (tevredenheid ${Math.round(sat)}/100).`);
+    addNews(state, 'slecht', `${gone} ${gone === 1 ? 'vrijwilliger haakt' : 'vrijwilligers haken'} af. Hun tevredenheid staat op ${Math.round(sat)} van de 100.`);
   } else if (sat > 65 && rng.chance((sat - 65) / 200)) {
     c.volunteers += 1;
     addNews(state, 'goed', 'Een nieuwe vrijwilliger sluit spontaan aan.');
@@ -562,7 +562,7 @@ function licenceAudit(state: GameState): void {
   const problems: string[] = [];
   if (!trainer || diplomaRank(trainer.diploma) < diplomaRank(division.requiredDiploma)) problems.push(`hoofdtrainer zonder diploma ${division.requiredDiploma}`);
   if (!hasStaff(state, 'afgevaardigde')) problems.push('geen ploegafgevaardigde');
-  if (state.infrastructure.lightingLevel < division.requiredLighting) problems.push('verlichting onvoldoende');
+  if (state.infrastructure.lightingLevel < division.requiredLighting) problems.push(`je verlichting haalt niveau ${division.requiredLighting} niet`);
   if (state.infrastructure.capacity < division.requiredCapacity) problems.push('te weinig plaatsen');
   if (!problems.length) {
     addNews(state, 'goed', 'Licentie-audit van Voetbal Vlaanderland: alles in orde.');
@@ -756,7 +756,7 @@ function newSeason(state: GameState, rng: Rng): void {
 
   // wat er deze zomer gebeurde, voor op de openingsaffiche
   const summer: string[] = [];
-  if (hired.length) summer.push(`${hired.length} huurspeler(s) terug naar hun club`);
+  if (hired.length) summer.push(`${hired.length} ${hired.length === 1 ? 'huurspeler' : 'huurspelers'} terug naar hun club`);
   if (back.length) summer.push(`${back.map((p) => p.name).join(', ')} terug van uitleenbeurt`);
   if (leaving.length) summer.push(`Transfervrij vertrokken: ${leaving.map((p) => p.name).join(', ')}`);
   const shirt = state.sponsors.find((d) => d.kind === 'shirt');

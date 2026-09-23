@@ -1,0 +1,165 @@
+// Wat mensen aan je club betalen.
+//
+// Deze drie beslissingen stonden verspreid over het spel: de ticketprijs halverwege een
+// scherm met tien andere kaarten, de abonnementen bovenaan datzelfde scherm, en het
+// jeugdlidgeld ergens onder Clubinfo tussen je clubgeschiedenis en je kerncijfers. Wie
+// zijn ticketprijs wilde aanpassen, moest onthouden waar hij stond.
+//
+// Het zijn nochtans dezelfde soort beslissing: jij zet een prijs, iemand anders beslist of
+// hij die betaalt, en dat bepaalt drie van je vier grootste inkomsten. Daarom staan ze hier
+// bij elkaar, met bij elk hetzelfde: wat het nu opbrengt, en wat er gebeurt als je schuift.
+
+import type { GameState } from '../../engine/types';
+import { DIVISIONS } from '../../engine/data/divisions';
+import { AWAY_SHARE, expectedAttendance } from '../../engine/finance';
+import { spendPerHeadCanteen } from '../../engine/canteen';
+import { YOUTH_FEE_REF, YOUTH_FEE_WEEK, youthForecast, youthTarget } from '../../engine/actions';
+import * as seasonTickets from '../../engine/seasontickets';
+import { delegate } from '../../engine/delegation';
+import { esc, euro, signedEuro } from '../format';
+import { numField } from '../numfield';
+import { taskPicker } from '../taskpicker';
+import { hint } from '../tooltip';
+
+/** De regel die live meerekent terwijl je aan de schuifregelaar sleept. */
+export function subscriptionInfo(s: GameState, price: number): string {
+  const st = seasonTickets;
+  const full = st.fullPrice(s);
+  const sold = st.expectedSales(s, price);
+  const revenue = st.expectedRevenue(s, price);
+  const gate = st.forgoneGate(s, price);
+  const net = revenue - gate;
+  const discount = Math.round((1 - price / Math.max(1, full)) * 100);
+  if (!sold) return `<strong>${euro(price)} per abonnement</strong> · ${discount > 0 ? `${discount}% korting` : 'geen korting'} — aan die prijs tekent niemand.`;
+  return `<strong>${euro(price)} per abonnement</strong> · ${discount}% korting · naar schatting <strong>${sold}</strong> verkocht
+    · <strong class="pos">${euro(revenue)}</strong> ineens in kas
+    <span class="muted">(die mensen waren aan de kassa ongeveer ${euro(gate)} waard geweest: ${net >= 0 ? 'dat is' : 'dat kost je'} <strong class="${net < 0 ? 'neg' : 'pos'}">${signedEuro(net)}</strong>)</span>`;
+}
+
+/** Wat een supporter aan de kassa betaalt. Je grootste knop op de opkomst. */
+function ticketCard(s: GameState): string {
+  const division = DIVISIONS[s.league.divisionLevel];
+  const ticketer = delegate(s, 'ticketing');
+  const attendance = expectedAttendance(s, { weather: 'bewolkt', derby: false, positionFactor: 1 });
+
+  return `<section class="card">
+    <h2>Ticketprijs ${hint('Wat een supporter aan de kassa betaalt voor één wedstrijd. Hoger levert per ticket meer op, maar er komt minder volk — en minder volk betekent ook minder kantine en minder sfeer.')}</h2>
+    ${
+      ticketer
+        ? `<p class="lock-note small">🔒 ${esc(ticketer.name)} bepaalt de ticketprijs: nu €${s.ticketPrice}.</p>`
+        : `<div class="inline-form">
+      <label>Prijs per ticket
+        ${numField({ value: s.ticketPrice, min: 0, max: 100, step: 1, prefix: '€', change: 'ticket-price', inputId: 'ticket-price', label: 'Ticketprijs', slider: true, extra: 'narrow' })}
+      </label>
+      <span class="muted small">wordt meteen toegepast</span>
+    </div>`
+    }
+    <div class="price-facts">
+      <span class="pc-fact"><span class="cap">Gewoon in ${esc(division.name)}</span><strong>€${division.refTicketPrice}</strong></span>
+      <span class="pc-fact"><span class="cap">Verwachte opkomst</span><strong>~${attendance}</strong><span class="unit"> van ${s.infrastructure.capacity} plaatsen</span></span>
+      <span class="pc-fact"><span class="cap">Kantine per bezoeker</span><strong>~€${spendPerHeadCanteen(s, 400).toFixed(2)}</strong></span>
+      <span class="pc-fact"><span class="cap">Naar de bezoekers en de bond</span><strong>${Math.round(AWAY_SHARE * 100)}%</strong></span>
+    </div>
+    <p class="muted small">Van elke euro aan de kassa gaat ${Math.round(AWAY_SHARE * 100)}% naar de bezoekende club en de bond; dat staat apart bij wedstrijdkosten.
+    Wat mensen in de kantine uitgeven, zet je bij Club › Horeca. Een hoge prijs levert per ticket meer op, maar schrikt supporters af en drukt de sfeer.</p>
+  </section>`;
+}
+
+/**
+ * Abonnementen: de enige beslissing die je een heel seizoen vastzet. Geld nu, en die mensen
+ * betalen daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt.
+ */
+function subscriptionsCard(s: GameState): string {
+  const st = seasonTickets;
+  const current = s.seasonTickets && s.seasonTickets.season === s.season ? s.seasonTickets : null;
+  const check = st.canSell(s);
+  const full = st.fullPrice(s);
+
+  if (current) {
+    const out = st.outcome(s)!;
+    return `<section class="card">
+      <h2>Abonnementen ${hint('Eén keer per seizoen, voor de competitie start. Abonnees betalen vooraf en daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt.')}</h2>
+      <p>Dit seizoen: <strong>${current.sold} abonnementen</strong> aan ${euro(current.price)}, samen <strong class="pos">${euro(current.revenue)}</strong>, meteen ontvangen.</p>
+      <p class="muted small">Aan de kassa zouden diezelfde mensen ongeveer ${euro(out.gate)} waard geweest zijn
+        (${out.diff >= 0 ? 'je staat er dus' : 'je geeft dus'} <strong class="${out.diff < 0 ? 'neg' : 'pos'}">${signedEuro(out.diff)}</strong> ${out.diff >= 0 ? 'beter voor' : 'op'} — maar je had het geld wel meteen,
+        en zij komen ook als het regent).</p>
+      <p class="muted small">Volgend seizoen kun je opnieuw een campagne voeren.</p>
+    </section>`;
+  }
+
+  if (!check.ok) {
+    return `<section class="card">
+      <h2>Abonnementen ${hint('Abonnementen verkoop je voor de competitie start. Abonnees betalen vooraf en daarna niet meer aan de kassa.')}</h2>
+      <p class="muted">${esc(check.reason)}</p>
+    </section>`;
+  }
+
+  const price = Math.round(st.suggestedPrice(s));
+  return `<section class="card subs">
+    <h2>Abonnementen ${hint('Eén keer per seizoen, voor de competitie start. Het geld komt meteen binnen, maar die mensen betalen daarna niet meer aan de kassa — ook niet als je je ticketprijs verhoogt.')}</h2>
+    <p class="muted small">Los betalen kost een supporter ${euro(full)} over ${st.HOME_MATCHES} thuiswedstrijden (${euro(s.ticketPrice)} per match),
+      maar niemand komt vijftien keer — reken op ongeveer ${Math.round(st.TYPICAL_ATTENDANCE_RATE * 100)}%. Zonder korting tekent er dus niemand.</p>
+    <p class="muted small">Het is vooral een keuze over tíming: je haalt geld naar voren dat je anders pas match na match zou krijgen.
+      Scherp geprijsd levert het het meeste cash op maar kost je op het jaar; een bescheiden korting brengt minder binnen maar is voordeliger.
+      En abonnees komen ook als het regent. Wat je hier beslist, ligt vast tot het einde van het seizoen.</p>
+    <div class="slider-row">
+      <input type="range" id="subs-price" min="${st.floorPrice(s)}" max="${Math.max(st.floorPrice(s) + 10, Math.round(full * 1.05))}" step="5" value="${price}" data-live="subs" aria-label="Prijs per abonnement"/>
+      <button class="primary" data-action="sell-subs">Campagne voeren</button>
+    </div>
+    <p id="subs-info" class="tribune-info">${subscriptionInfo(s, price)}</p>
+  </section>`;
+}
+
+/** Wat ouders per seizoen betalen om hun kind bij jou te laten voetballen. */
+function youthFeeCard(s: GameState): string {
+  const jeugd = delegate(s, 'jeugd');
+
+  return `<section class="card">
+    <h2>Lidgeld jeugd ${hint('Wat ouders per seizoen betalen om hun kind bij jou te laten voetballen. Meer leden betekent meer lidgeld, meer subsidie, meer volk in de kantine en meer talent — maar ook meer werkingskosten en meer vrijwilligers.')}</h2>
+    ${
+      jeugd
+        ? `<p class="lock-note small">🔒 ${esc(jeugd.name)} bepaalt het lidgeld: nu €${s.youthFee} per seizoen.</p>`
+        : `<div class="inline-form">
+      <label>Lidgeld per seizoen
+        ${numField({ value: s.youthFee, min: 0, max: 800, step: 10, prefix: '€', change: 'youth-fee', inputId: 'youth-fee', label: 'Lidgeld jeugd', slider: true, extra: 'narrow' })}
+      </label>
+      <span class="muted small">wordt meteen toegepast</span>
+    </div>`
+    }
+    <div class="price-facts">
+      <span class="pc-fact"><span class="cap">Gewoon in de streek</span><strong>€${YOUTH_FEE_REF}</strong></span>
+      <span class="pc-fact"><span class="cap">Verwacht aantal leden</span><strong>~${youthForecast(s)}</strong></span>
+      <span class="pc-fact"><span class="cap">Brengt op</span><strong>${euro(youthForecast(s) * s.youthFee)}</strong></span>
+      <span class="pc-fact"><span class="cap">Inschrijvingen in</span><strong>week ${YOUTH_FEE_WEEK}</strong></span>
+    </div>
+    <div class="table-wrap"><table class="compact">
+      <thead><tr><th>Lidgeld</th><th class="num">Leden dit seizoen</th><th class="num">Opbrengst</th><th class="num">Leden op termijn</th><th class="num">Opbrengst op termijn</th></tr></thead>
+      <tbody>${[...new Set([150, 190, 230, 280, 340, s.youthFee])]
+        .sort((a, b) => a - b)
+        .map(
+          (fee) => `<tr${fee === s.youthFee ? ' class="own"' : ''}><td>€${fee}</td><td class="num">${youthForecast(s, fee)}</td><td class="num">${euro(youthForecast(s, fee) * fee)}</td><td class="num">${youthTarget(s, fee)}</td><td class="num">${euro(youthTarget(s, fee) * fee)}</td></tr>`,
+        )
+        .join('')}</tbody>
+    </table></div>
+    <p class="muted small">Het aantal leden schuift elk seizoen maar half op naar het niveau "op termijn": een prijsverhoging lijkt eerst voordelig, maar ouders haken geleidelijk af.</p>
+    <p class="muted small">Duurder betekent minder leden, en boven €${Math.round(YOUTH_FEE_REF * 1.5)} morren de supporters. Goedkoper betekent meer leden en wat reputatie.
+    Meer leden geeft ook meer subsidie, meer kantine-omzet en meer talent, maar kost je €3 per lid per week aan werking. Hoeveel ploegen je kwijt kunt, staat bij Club › Clubinfo.</p>
+  </section>`;
+}
+
+/**
+ * De drie prijzen die je zelf zet, op één scherm.
+ *
+ * Bovenaan de twee die over de wedstrijddag gaan — los ticket of abonnement, en dat is
+ * dezelfde supporter die je twee keer kunt laten betalen of één keer. Daaronder het
+ * lidgeld, dat een heel ander publiek betreft en een heel ander tempo heeft: je zet het
+ * nu, en je ziet het pas in week ${YOUTH_FEE_WEEK}.
+ */
+export function pricesScreen(s: GameState): string {
+  return `${taskPicker(s, ['ticketing', 'jeugd'])}
+  <div class="cols-2">
+    <div class="col">${ticketCard(s)}</div>
+    <div class="col">${subscriptionsCard(s)}</div>
+  </div>
+  ${youthFeeCard(s)}`;
+}

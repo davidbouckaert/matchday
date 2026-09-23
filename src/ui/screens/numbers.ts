@@ -4,7 +4,7 @@ import type { GameState, SeasonStats } from '../../engine/types';
 import { CANTEEN_ITEMS, CONCESSIONS, MERCH_ITEMS } from '../../engine/data/catalog';
 import { totalOf } from '../../engine/stats';
 import { formatWeek, seasonLabel } from '../../engine/calendar';
-import { esc, euro } from '../format';
+import { esc, euro, whenLabel } from '../format';
 import { hint } from '../tooltip';
 
 function column(s: GameState, st: SeasonStats, current: boolean): string {
@@ -19,7 +19,7 @@ function weekView(s: GameState, toggle: string): string {
       const rev = Object.entries(w.revenue).filter(([, v]) => (v ?? 0) !== 0);
       const total = rev.reduce((sum, [, v]) => sum + (v ?? 0), 0);
       return `<tr>
-        <td>S${w.season} W${w.week}<br/><span class="muted small">${formatWeek(s.startYear, w.season, w.week)}</span></td>
+        <td>${whenLabel(w.season, w.week, s.season)}<br/><span class="muted small">${formatWeek(s.startYear, w.season, w.week)}</span></td>
         <td class="num">${w.tickets || '–'}</td>
         <td class="num">${w.canteen || '–'}</td>
         <td class="num">${w.concessions || '–'}</td>
@@ -44,8 +44,8 @@ function weekView(s: GameState, toggle: string): string {
 
 export function numbersScreen(s: GameState, view: 'seizoen' | 'week' = 'seizoen'): string {
   const toggle = `<div class="stat-toggle">
-    <button class="sm ${view === 'seizoen' ? 'primary' : ''}" data-action="stats-view" data-id="seizoen">Per seizoen</button>
-    <button class="sm ${view === 'week' ? 'primary' : ''}" data-action="stats-view" data-id="week">Per week</button>
+    <button class="sm ${view === 'seizoen' ? 'primary' : ''}" data-action="stats-view" data-id="seizoen">Toon per seizoen</button>
+    <button class="sm ${view === 'week' ? 'primary' : ''}" data-action="stats-view" data-id="week">Toon per week</button>
   </div>`;
   if (view === 'week') return `<div class="grid">${weekView(s, toggle)}</div>`;
   return seasonView(s, toggle);

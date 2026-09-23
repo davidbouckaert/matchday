@@ -122,10 +122,10 @@ function weekLines(state: GameState, week: number, offset: number): { lines: For
     const attendance = Math.min(state.infrastructure.capacity, Math.max(expectedAttendance(state, { weather: TYPICAL_WEATHER, derby: !!opponentTeam?.isRival, positionFactor: 1 }), Math.round(subscribers * 0.85)));
     const paying = Math.max(0, attendance - subscribers);
     const gross = paying * state.ticketPrice;
-    add('tickets', subscribers ? `Tickets vs ${opponent} (± ${paying} betalend, ${Math.min(subscribers, attendance)} abonnees)` : `Tickets vs ${opponent} (± ${attendance} toeschouwers)`, gross, true);
+    add('tickets', subscribers ? `Tickets tegen ${opponent} (ongeveer ${paying} betalend, ${Math.min(subscribers, attendance)} abonnees)` : `Tickets tegen ${opponent} (ongeveer ${attendance} toeschouwers)`, gross, true);
     add('wedstrijdkosten', 'Aandeel bezoekers en bond', -gross * AWAY_SHARE, true);
-    add('kantine', `Kantine op de wedstrijddag vs ${opponent}`, attendance * spendPerHead(state) * CATERING_MARGIN, true);
-    add('wedstrijdkosten', `Scheidsrechter en organisatie vs ${opponent}`, -(250 + 120 + state.league.divisionLevel * 150));
+    add('kantine', `Kantine op de wedstrijddag tegen ${opponent}`, attendance * spendPerHead(state) * CATERING_MARGIN, true);
+    add('wedstrijdkosten', `Scheidsrechter en organisatie tegen ${opponent}`, -(250 + 120 + state.league.divisionLevel * 150));
   } else if (fixture) {
     const bus = state.infrastructure.teamBus ? 0.45 : 1;
     add('wedstrijdkosten', `Busvervoer naar ${opponent}`, -(300 + state.league.divisionLevel * 200) * bus);
@@ -137,7 +137,7 @@ function weekLines(state: GameState, week: number, offset: number): { lines: For
     add('bond & verzekering', 'Aansluiting bond en verzekeringen', -fee);
   }
   if (week === YOUTH_FEE_WEEK) {
-    add('lidgelden', `Lidgelden jeugd (± ${youthForecast(state)} × €${state.youthFee})`, youthForecast(state) * state.youthFee, true);
+    add('lidgelden', `Lidgelden jeugd (ongeveer ${youthForecast(state)} leden aan €${state.youthFee})`, youthForecast(state) * state.youthFee, true);
   }
   if (week === SUBSIDY_WEEK) {
     add('subsidies', 'Subsidie gemeente', (8000 + state.community.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12) * subsidyFactor(state));

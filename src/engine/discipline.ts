@@ -77,7 +77,7 @@ export function cardsForOwnTeam(state: GameState, rng: Rng, lineup: Player[], de
     p.suspended += matches;
     book(state, 'tuchtboetes', -RED_FINE, `Rode kaart ${p.name}`);
     parts.push(`🟥 ${p.name}`);
-    addNews(state, 'slecht', `Rode kaart voor ${p.name}: ${matches} wedstrijd(en) schorsing.`);
+    addNews(state, 'slecht', `Rode kaart voor ${p.name}: ${matches} ${matches === 1 ? 'wedstrijd' : 'wedstrijden'} schorsing.`);
   }
   return parts.join(', ');
 }
