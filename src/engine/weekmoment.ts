@@ -9,7 +9,7 @@ import type { GameState, WeekChoice } from './types';
 import type { Rng } from './rng';
 import { createRng } from './rng';
 import { MOMENTS } from '../content/moments';
-import { apply, baseVars, fill, LAST_MATCH_WEEK, pickPlayer, test, value, worldContext } from './content';
+import { apply, baseVars, fill, LAST_MATCH_WEEK, pickPlayer, storyline, test, value, worldContext } from './content';
 import type { Focus, WorldCtx } from './content';
 import { inWinterBreak } from './calendar';
 import { available } from './discipline';
@@ -72,7 +72,8 @@ export function makeWeekChoice(state: GameState, rng: Rng): WeekChoice | null {
   state.eventCooldowns[momentKey(pick.id)] = pick.cooldown ?? MOMENT_COOLDOWN;
 
   const focus = resolveFocus(state, rng, pick);
-  const vars = baseVars(state, ctx, focus);
+  // een vervolgmoment erft de namen en bedragen van de gebeurtenis waar het op voortbouwt
+  const vars = { ...baseVars(state, ctx, focus), ...(pick.verhaal ? storyline(state, pick.verhaal)?.vars : undefined) };
   return {
     id: pick.id,
     season: state.season,
@@ -105,8 +106,10 @@ function run(state: GameState, rng: Rng, choice: WeekChoice, optionId: string): 
   const gevolg = rollOutcome(rng, keuze);
   if (!gevolg) return '';
   const focus: Focus = { playerId: choice.focusPlayerId, sponsorId: choice.focusSponsorId };
-  const produced = apply(state, rng, gevolg.effecten, focus);
-  return fill(gevolg.tekst, choice.vars, produced);
+  // de plaatshouders van het moment gaan mee in de effecten, zodat nieuws en kroniek
+  // dezelfde namen gebruiken als de vraag die je kreeg
+  const produced = apply(state, rng, gevolg.effecten, focus, worldContext(state), { ...choice.vars });
+  return fill(gevolg.tekst, produced);
 }
 
 /** De eigenaar kiest. Het gevolg is meteen zichtbaar. */

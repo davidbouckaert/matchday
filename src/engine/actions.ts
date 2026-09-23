@@ -24,6 +24,7 @@ import { acceptedMargin, concessionPartner } from './canteen';
 import { popularity } from './popularity';
 import { facilityCost } from './finance';
 import { addLog, addNews, book, euro, nextId, weeks } from './util';
+import { openStoryline, remember } from './content';
 
 export type { ActionResult };
 
@@ -77,6 +78,9 @@ function removePlayerWithFee(state: GameState, playerId: string, amount: number,
     if (p.friends.includes(other.id)) other.morale = clamp(other.morale - 6, 0, 100);
   }
   addNews(state, 'neutraal', `${p.name} vertrekt naar ${buyer} voor €${amount.toLocaleString('nl-BE')}.`);
+  remember(state, `${p.name} vertrok naar ${buyer} voor ${euro(amount)}.`);
+  // een verkochte speler verdwijnt niet uit je leven: je komt hem nog tegen
+  openStoryline(state, 'oudspeler', 78, { speler: p.name, oudeclub: buyer, bedrag: euro(amount) });
   return ok(`${p.name} is verkocht voor €${amount.toLocaleString('nl-BE')}.`);
 }
 

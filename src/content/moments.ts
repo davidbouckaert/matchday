@@ -375,3 +375,302 @@ export const MOMENTS: MomentDef[] = [
     ],
   },
 ];
+
+/* ------------------------------------------------------------------- ketens */
+//
+// Hieronder staan momenten die voortbouwen op wat er eerder gebeurde. Ze verschijnen
+// alleen wanneer de bijbehorende verhaallijn openstaat, en ze erven de namen en bedragen
+// van die eerdere gebeurtenis. Zo wordt één keuze een verhaal in plaats van een melding.
+
+export const CHAIN_MOMENTS: MomentDef[] = [
+  // ---- keten "sponsorruzie": onvrede → gesprek of stilte → afloop -------------
+  {
+    id: 'sponsor-onvrede',
+    categorie: 'sponsor',
+    wanneer: {
+      alle: [
+        { meting: 'sponsors', min: 2 },
+        { niet: { verhaal: 'sponsorgesprek' } },
+        { niet: { verhaal: 'sponsorkoud' } },
+        { niet: { verhaal: 'sponsorvriend' } },
+      ],
+    },
+    focusSponsor: 'grootste',
+    cooldown: 30,
+    titel: 'Je hoofdsponsor is niet tevreden',
+    tekst: '{sponsor} belt op. Hij ziet zijn naam nergens hangen, hoort niets van de club en vraagt zich hardop af waar zijn geld naartoe gaat.',
+    keuzes: [
+      {
+        id: 'praten',
+        label: 'Zelf langsgaan',
+        uitleg: 'Een namiddag van je tijd. Je hoort wat er scheelt en hij voelt zich gehoord.',
+        gevolgen: [
+          {
+            tekst: 'Je zat twee uur bij {sponsor} aan tafel. Hij is nog niet overtuigd, maar de deur staat open.',
+            effecten: [
+              { sponsor: 'grootste', tevredenheid: 5 },
+              { verhaalOpenen: { naam: 'sponsorgesprek', weken: 14 } },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'geld',
+        label: 'Een bord en een vermelding beloven ({kost})',
+        uitleg: 'Je lost het op met zichtbaarheid in plaats van met een gesprek. Werkt, maar kost.',
+        kost: { basis: 900, inflatie: true, klasse: true, afronden: 10 },
+        gevolgen: [
+          {
+            tekst: 'Er hangt een nieuw bord met de naam van {sponsor} langs het veld, betaald met {bedrag}.',
+            effecten: [
+              { boek: 'sponsors', bedrag: { basis: -900, inflatie: true, klasse: true, afronden: 10 }, reden: 'Extra zichtbaarheid hoofdsponsor' },
+              { sponsor: 'grootste', tevredenheid: 12 },
+              { verhaalOpenen: { naam: 'sponsorgesprek', weken: 14 } },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'negeren',
+        label: 'Het laten bekoelen',
+        uitleg: 'Je hebt wel andere dingen aan je hoofd. Hij komt er wel overheen. Misschien.',
+        gevolgen: [
+          {
+            tekst: 'Je liet het liggen. {sponsor} heeft sindsdien niets meer van zich laten horen.',
+            effecten: [
+              { sponsor: 'grootste', tevredenheid: -8 },
+              { verhaalOpenen: { naam: 'sponsorkoud', weken: 14 } },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'sponsor-gesprek-vervolg',
+    categorie: 'sponsor',
+    wanneer: { alle: [{ verhaal: 'sponsorgesprek' }, { meting: 'week', min: 4 }] },
+    focusSponsor: 'grootste',
+    verhaal: 'sponsorgesprek',
+    gewicht: 3,
+    cooldown: 20,
+    titel: '{sponsor} heeft nagedacht',
+    tekst: 'Na jullie gesprek is {sponsor} terug. Hij wil verder met de club — op voorwaarde dat hij er iets voor terugkrijgt dat hij aan zijn klanten kan tonen.',
+    keuzes: [
+      {
+        id: 'avond',
+        label: 'Een sponsoravond organiseren ({kost})',
+        uitleg: 'Zijn klanten, jouw kantine, een spelersdelegatie. Duur, maar het bindt hem voor jaren.',
+        kost: { basis: 1400, inflatie: true, klasse: true, afronden: 10 },
+        gevolgen: [
+          {
+            kans: 0.8,
+            tekst: 'De sponsoravond was een schot in de roos. {sponsor} tekende ter plekke bij en bracht twee kennissen mee.',
+            effecten: [
+              { boek: 'evenementen', bedrag: { basis: -1400, inflatie: true, klasse: true, afronden: 10 }, reden: 'Sponsoravond' },
+              { boek: 'sponsors', bedrag: { basis: 2600, inflatie: true, klasse: true, afronden: 50 }, reden: 'Verlenging hoofdsponsor na de sponsoravond' },
+              { sponsor: 'grootste', tevredenheid: 22 },
+              { reputatie: 3 },
+              { verhaalSluiten: 'sponsorgesprek' },
+              { verhaalOpenen: { naam: 'sponsorvriend', weken: 60 } },
+              { geschiedenis: '{sponsor} verlengde na een geslaagde sponsoravond.' },
+            ],
+          },
+          {
+            tekst: 'De avond liep, maar het vonkte niet. {sponsor} blijft, zonder er meer geld tegenaan te gooien.',
+            effecten: [
+              { boek: 'evenementen', bedrag: { basis: -1400, inflatie: true, klasse: true, afronden: 10 }, reden: 'Sponsoravond' },
+              { sponsor: 'grootste', tevredenheid: 10 },
+              { verhaalSluiten: 'sponsorgesprek' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'eerlijk',
+        label: 'Eerlijk zeggen dat het er nu niet in zit',
+        uitleg: 'Geen beloftes die je niet kunt houden. Sommige sponsors waarderen dat meer dan een feest.',
+        gevolgen: [
+          {
+            kans: 0.45,
+            tekst: '{sponsor} gaf je een schouderklop. "Dat je het zegt zoals het is, daar hou ik van." Hij blijft.',
+            effecten: [
+              { sponsor: 'grootste', tevredenheid: 14 },
+              { verhaalSluiten: 'sponsorgesprek' },
+              { verhaalOpenen: { naam: 'sponsorvriend', weken: 60 } },
+            ],
+          },
+          {
+            tekst: '{sponsor} knikte, bedankte, en liet zijn contract stilletjes uitlopen.',
+            effecten: [
+              { sponsor: 'grootste', tevredenheid: -18 },
+              { verhaalSluiten: 'sponsorgesprek' },
+              { geschiedenis: '{sponsor} haakte af na een moeilijk seizoen.' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'sponsor-koud-vervolg',
+    categorie: 'sponsor',
+    wanneer: { alle: [{ verhaal: 'sponsorkoud' }, { meting: 'week', min: 4 }] },
+    focusSponsor: 'grootste',
+    verhaal: 'sponsorkoud',
+    gewicht: 3,
+    cooldown: 20,
+    titel: 'De brief van {sponsor}',
+    tekst: 'Er ligt een aangetekende brief van {sponsor} op tafel. Hij wil het contract herbekijken, en de toon is niet vriendelijk.',
+    keuzes: [
+      {
+        id: 'toegeven',
+        label: 'Een korting geven om hem te houden',
+        uitleg: 'Je verliest een deel van het bedrag, maar de naam blijft op het shirt staan.',
+        gevolgen: [
+          {
+            tekst: 'Je gaf toe. {sponsor} blijft, tegen een lagere prijs — en met een bittere nasmaak aan beide kanten.',
+            effecten: [
+              { boek: 'sponsors', bedrag: { basis: -1800, inflatie: true, klasse: true, afronden: 50 }, reden: 'Korting na het conflict met de hoofdsponsor' },
+              { sponsor: 'grootste', tevredenheid: 8 },
+              { verhaalSluiten: 'sponsorkoud' },
+              { geschiedenis: 'Het conflict met {sponsor} werd afgekocht met een korting.' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'voet',
+        label: 'Voet bij stuk houden',
+        uitleg: 'Een contract is een contract. Als hij weg wil, mag hij gaan.',
+        gevolgen: [
+          {
+            kans: 0.4,
+            tekst: '{sponsor} bond in. Het contract loopt gewoon door, al is er iets stuk.',
+            effecten: [
+              { sponsor: 'grootste', tevredenheid: -5 },
+              { reputatie: 2 },
+              { verhaalSluiten: 'sponsorkoud' },
+            ],
+          },
+          {
+            tekst: '{sponsor} stapte op. Het bord komt van het veld en zijn naam van het shirt.',
+            effecten: [
+              { sponsor: 'grootste', beeindig: true },
+              { sfeer: -3 },
+              { verhaalSluiten: 'sponsorkoud' },
+              { geschiedenis: '{sponsor} verliet de club na een conflict.' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- keten "oude bekende": een verkochte speler komt je tegen ---------------
+  {
+    id: 'oude-bekende',
+    categorie: 'wedstrijd',
+    wanneer: { alle: [{ verhaal: 'oudspeler' }, { vlag: 'match' }] },
+    verhaal: 'oudspeler',
+    gewicht: 2,
+    cooldown: 16,
+    titel: '{speler} staat aan de overkant',
+    tekst: '{speler}, die je eerder liet gaan, speelt nu bij {oudeclub}. Zondag staat hij tegenover zijn oude ploeg, en hij heeft iets recht te zetten.',
+    keuzes: [
+      {
+        id: 'mandekking',
+        label: 'Hem laten bewaken',
+        uitleg: 'Eén man volgt hem de hele match. Dat kost je elders iets aan vrijheid.',
+        gevolgen: [
+          {
+            kans: 0.6,
+            tekst: '{speler} kwam er niet aan te pas. Hij verliet het veld zonder één kans, met een rood hoofd.',
+            effecten: [{ moraalIedereen: 2 }],
+          },
+          {
+            tekst: 'De mandekking hield niet. {speler} glipte er toch tussenuit en liet het merken ook.',
+            effecten: [{ sfeer: -2 }, { moraalIedereen: -1 }],
+          },
+        ],
+      },
+      {
+        id: 'applaus',
+        label: 'Hem laten uitwuiven door het publiek',
+        uitleg: 'Een bloemetje voor de aftrap. Elegant, en de supporters onthouden zo\'n gebaar.',
+        gevolgen: [
+          {
+            tekst: 'Het hele stadion stond recht voor {speler}. Hij was zichtbaar aangedaan — en speelde daarna een halfslachtige match.',
+            effecten: [
+              { sfeer: 4 },
+              { reputatie: 2 },
+              { geschiedenis: '{speler} kreeg een staande ovatie bij zijn terugkeer met {oudeclub}.' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'niets',
+        label: 'Er geen zaak van maken',
+        uitleg: 'Het is gewoon een wedstrijd zoals alle andere.',
+        gevolgen: [{ tekst: 'Je liet het voorbijgaan. {speler} speelde, en niemand had het er nadien nog over.' }],
+      },
+    ],
+  },
+
+  // ---- keten "weggekaapt": de jeugdspeler die de rivaal je afsnoepte ----------
+  {
+    id: 'weggekaapt-wraak',
+    categorie: 'wedstrijd',
+    wanneer: { alle: [{ verhaal: 'weggekaapt' }, { vlag: 'match' }] },
+    verhaal: 'weggekaapt',
+    gewicht: 2,
+    cooldown: 18,
+    titel: 'Je eigen jeugd, in het truitje van de buren',
+    tekst: '{speler} kwam uit je eigen jeugd en tekende vorig jaar bij {oudeclub}. De kleedkamer heeft het er nog altijd over.',
+    keuzes: [
+      {
+        id: 'motiveren',
+        label: 'De groep erop wijzen',
+        uitleg: 'Een toespraak over wat hier gebouwd wordt en wie er wél gebleven is.',
+        gevolgen: [
+          {
+            kans: 0.65,
+            tekst: 'De boodschap kwam aan. De ploeg speelde alsof er iets te bewijzen viel.',
+            effecten: [{ moraalIedereen: 5 }, { sfeer: 2 }],
+          },
+          {
+            tekst: 'Je toespraak viel in een stille kleedkamer. Sommigen vroegen zich hardop af of zij ook beter elders zaten.',
+            effecten: [{ moraalIedereen: -3 }],
+          },
+        ],
+      },
+      {
+        id: 'investeren',
+        label: 'Investeren in wie er wél is ({kost})',
+        uitleg: 'Betere begeleiding voor je eigen jeugd. Duurder dan een toespraak, maar het blijft hangen.',
+        kost: { basis: 1200, inflatie: true, afronden: 10 },
+        gevolgen: [
+          {
+            tekst: 'Je stak {bedrag} in de jeugdwerking. Een duidelijk signaal aan iedereen die twijfelde.',
+            effecten: [
+              { boek: 'opleidingen', bedrag: { basis: -1200, inflatie: true, afronden: 10 }, reden: 'Extra begeleiding eigen jeugd' },
+              { reputatie: 4 },
+              { vrijwilligerstrouw: 6 },
+              { verhaalSluiten: 'weggekaapt' },
+              { geschiedenis: 'Na het vertrek van {speler} ging er extra geld naar de eigen jeugd.' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'schouders',
+        label: 'Schouders ophalen',
+        uitleg: 'Het hoort erbij. Er komen er nog.',
+        gevolgen: [{ tekst: 'Je haalde je schouders op. Het gemor over {speler} zakte vanzelf weg.', effecten: [{ verhaalSluiten: 'weggekaapt' }] }],
+      },
+    ],
+  },
+];
+
+MOMENTS.push(...CHAIN_MOMENTS);

@@ -213,3 +213,117 @@ export const RANDOM_EVENTS: EventDef[] = [
     ],
   },
 ];
+
+/* ------------------------------------------------------------------- ketens */
+//
+// Gebeurtenissen die voortbouwen op iets dat eerder gebeurde. Ze kijken naar een open
+// verhaallijn en erven de namen en bedragen daarvan.
+
+export const CHAIN_EVENTS: EventDef[] = [
+  // een geslaagde investering blijft nazinderen
+  {
+    id: 'nieuwbouw-pers',
+    categorie: 'infrastructuur',
+    kans: 0.09,
+    wanneer: { verhaal: 'nieuwbouw' },
+    verhaal: 'nieuwbouw',
+    cooldown: 26,
+    effecten: [
+      { supporters: { heel: [15, 45] } },
+      { reputatie: 3 },
+      {
+        nieuws: {
+          toon: 'goed',
+          tekst: [
+            'De streekkrant kwam langs voor een reportage over de nieuwe {wat}. +{aantal} supporters die het eens willen zien.',
+            'Sinds de nieuwe {wat} klaar is, komt er volk kijken dat hier nooit eerder stond: +{aantal} supporters.',
+          ],
+        },
+      },
+      { verhaalSluiten: 'nieuwbouw' },
+      { geschiedenis: 'De nieuwe {wat} bracht de club in de streekkrant.' },
+    ],
+  },
+  {
+    id: 'nieuwbouw-sponsor',
+    categorie: 'sponsor',
+    kans: 0.06,
+    wanneer: { alle: [{ verhaal: 'nieuwbouw' }, { meting: 'sponsors', min: 1 }] },
+    verhaal: 'nieuwbouw',
+    focusSponsor: 'willekeurig',
+    cooldown: 26,
+    effecten: [
+      { sponsor: 'willekeurig', tevredenheid: 12 },
+      { nieuws: { toon: 'goed', tekst: '{sponsor} kwam de nieuwe {wat} bekijken en was zichtbaar tevreden met waar zijn geld naartoe gaat.' } },
+    ],
+  },
+
+  // financiële zorgen slepen aan, ook nadat het saldo weer klopt
+  {
+    id: 'geldzorgen-sponsor',
+    categorie: 'sponsor',
+    kans: 0.05,
+    wanneer: { alle: [{ verhaal: 'geldzorgen' }, { meting: 'sponsors', min: 2 }] },
+    focusSponsor: 'willekeurig',
+    cooldown: 8,
+    effecten: [
+      { sponsor: 'willekeurig', tevredenheid: -10 },
+      {
+        nieuws: {
+          toon: 'slecht',
+          tekst: [
+            '{sponsor} heeft de verhalen over de kas gehoord en vraagt garanties voor hij nog iets stort.',
+            'In de streek wordt gepraat over de financiën van de club. {sponsor} houdt zijn portefeuille voorlopig dicht.',
+          ],
+        },
+      },
+    ],
+  },
+  {
+    id: 'geldzorgen-vrijwilligers',
+    categorie: 'bestuur',
+    kans: 0.05,
+    wanneer: { verhaal: 'geldzorgen' },
+    cooldown: 8,
+    effecten: [
+      { vrijwilligers: { heel: [-2, -1] } },
+      {
+        nieuws: {
+          toon: 'slecht',
+          tekst: '{aantal} vrijwilligers haken af: "Ik ga hier niet gratis werken voor een club die morgen niet meer bestaat."',
+          enkelvoud: 'Een vrijwilliger haakt af: "Ik ga hier niet gratis werken voor een club die morgen niet meer bestaat."',
+        },
+      },
+    ],
+  },
+  {
+    id: 'geldzorgen-krant',
+    categorie: 'bestuur',
+    kans: 0.04,
+    wanneer: { alle: [{ verhaal: 'geldzorgen' }, { meting: 'kas', max: 0 }] },
+    cooldown: 12,
+    effecten: [
+      { reputatie: -4 },
+      { sfeer: -3 },
+      { nieuws: { toon: 'slecht', tekst: 'De streekkrant kopt over de financiële toestand van {club}. Dat leest niemand graag aan de toog.' } },
+      { geschiedenis: 'De club haalde de krant met haar financiële toestand.' },
+    ],
+  },
+
+  // een sponsor die door de jaren heen aan de club hangt
+  {
+    id: 'trouwe-sponsor',
+    categorie: 'sponsor',
+    kans: 0.04,
+    wanneer: { alle: [{ verhaal: 'sponsorvriend' }, { meting: 'sponsors', min: 1 }] },
+    verhaal: 'sponsorvriend',
+    focusSponsor: 'grootste',
+    cooldown: 20,
+    effecten: [
+      { boek: 'sponsors', bedrag: { basis: 1200, inflatie: true, klasse: true, afronden: 50 }, reden: 'Extra bijdrage van de hoofdsponsor' },
+      { nieuws: { toon: 'goed', tekst: '{sponsor} stortte uit eigen beweging {bedrag} extra. "Omdat het hier goed zit", zei hij erbij.' } },
+    ],
+  },
+];
+
+RANDOM_EVENTS.push(...CHAIN_EVENTS);

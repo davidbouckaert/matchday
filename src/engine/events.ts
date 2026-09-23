@@ -6,7 +6,7 @@ import { RANDOM_EVENTS } from '../content/events';
 import { DIVISIONS } from './data/divisions';
 import { PRO_CLUBS } from './data/names';
 import { isTransferWindow } from './calendar';
-import { apply, pickPlayer, test, worldContext } from './content';
+import { apply, baseVars, openStoryline, pickPlayer, storyline, test, worldContext } from './content';
 import type { Focus } from './content';
 import { generatePlayer, marketValue, overall } from './players';
 import { staffSkill } from './staff';
@@ -34,7 +34,8 @@ export function fireEvent(state: GameState, rng: Rng, def: EventDef): void {
   if (def.focusSpeler) focus.playerId = pickPlayer(state, rng, def.focusSpeler)?.id ?? null;
   if (def.focusSponsor === 'grootste') focus.sponsorId = [...state.sponsors].sort((a, b) => b.weekly - a.weekly)[0]?.id ?? null;
   else if (def.focusSponsor === 'willekeurig' && state.sponsors.length) focus.sponsorId = rng.pick(state.sponsors).id;
-  apply(state, rng, def.effecten, focus, ctx);
+  const inherited = def.verhaal ? storyline(state, def.verhaal)?.vars : undefined;
+  apply(state, rng, def.effecten, focus, ctx, { ...baseVars(state, ctx, focus), ...inherited });
   if (def.cooldown) state.eventCooldowns[EVENT_COOLDOWN_PREFIX + def.id] = def.cooldown;
 }
 
@@ -97,12 +98,15 @@ function rollInvestorInterference(state: GameState, rng: Rng): void {
 export function bankruptcyCheck(state: GameState): void {
   if (state.cash >= 0) {
     if (state.weeksNegative > 0) addNews(state, 'goed', 'Het saldo is weer positief. De bank ademt opgelucht.');
+    // de zorgen ebben weg, maar niet meteen: de verhaallijn loopt gewoon af
     state.weeksNegative = 0;
     state.emergencyLoanOffered = false;
     return;
   }
   state.weeksNegative++;
   const w = state.weeksNegative;
+  // financiële zorgen laten sporen na, ook nadat het saldo weer klopt
+  if (w >= 2) openStoryline(state, 'geldzorgen', 40);
   if (w === 1) addNews(state, 'slecht', 'Waarschuwing: het saldo staat onder nul. Na 8 weken is de club failliet.');
   if (w === 3) {
     state.emergencyLoanOffered = true;

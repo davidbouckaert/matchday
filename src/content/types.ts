@@ -167,6 +167,11 @@ export interface MomentDef {
   /** Welke speler of sponsor dit moment aangaat; wordt vastgezet zodra het moment verschijnt. */
   focusSpeler?: SpelerKeuze;
   focusSponsor?: 'grootste' | 'willekeurig';
+  /**
+   * De verhaallijn waar dit moment een vervolg op is. De plaatshouders van die eerdere
+   * gebeurtenis ({speler}, {sponsor}, {bedrag}, ...) zijn hier opnieuw beschikbaar.
+   */
+  verhaal?: string;
   /** Weken voor dit moment opnieuw mag. Standaard MOMENT_COOLDOWN. */
   cooldown?: number;
   /** Relatief gewicht bij het loten. Standaard 1. */
@@ -190,6 +195,8 @@ export interface EventDef {
   cooldown?: number;
   focusSpeler?: SpelerKeuze;
   focusSponsor?: 'grootste' | 'willekeurig';
+  /** De verhaallijn waar deze gebeurtenis een vervolg op is; haar plaatshouders komen mee. */
+  verhaal?: string;
   effecten: Effect[];
 }
 

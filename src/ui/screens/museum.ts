@@ -102,6 +102,18 @@ export function museumScreen(s: GameState): string {
     </section>
 
     <section class="card full">
+      <h3>Kroniek ${hint('Wat er in de geschiedenis van de club is blijven hangen: transfers, conflicten, bouwwerken en clubs die verdwenen. Alles wat hier staat, is echt gebeurd in jouw partij.')}</h3>
+      ${
+        s.chronicle?.length
+          ? `<ul class="chronicle">${s.chronicle
+              .slice(0, 40)
+              .map((c) => `<li><span class="muted small">${seasonLabel(s.startYear, c.season)}, week ${c.week}</span><br/>${esc(c.text)}</li>`)
+              .join('')}</ul>`
+          : '<p class="muted">Nog niets om te onthouden. Dat verandert zodra er iets gebeurt dat de moeite is om na te vertellen.</p>'
+      }
+    </section>
+
+    <section class="card full">
       <h3>Mijlpalen</h3>
       <ul class="milestone-wall">
         ${MILESTONES.map((m) => {

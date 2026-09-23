@@ -1,7 +1,7 @@
 // Het hart van het spel: één beurt (week) verwerken.
 // advanceWeek krijgt de huidige toestand en geeft een NIEUWE toestand terug.
 
-import type { ClubMove, Fixture, GamePlan, GameState, WeekRecord } from './types';
+import type { ClubMove, Fixture, GamePlan, GameState, Player, WeekRecord } from './types';
 import type { Rng } from './rng';
 import { clamp, createRng } from './rng';
 import { DIVISIONS, diplomaRank } from './data/divisions';
@@ -30,7 +30,7 @@ import { checkMilestones } from './milestones';
 import { checkRecords } from './records';
 import { createOpening, settleSeason } from './opening';
 import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
-import { ageStorylines, news, remember } from './content';
+import { ageStorylines, news, openStoryline, remember } from './content';
 import { NIEUWS } from '../content/news';
 import type { NieuwsSjabloon } from '../content/types';
 import { clubByName, runWorldSeason } from './world';
@@ -112,6 +112,28 @@ function announceWorldMoves(state: GameState, rng: Rng): void {
     news(state, rng, template, { tegenstander: move.club });
     if (move.move === 'opgedoekt') remember(state, `${move.club} legde de boeken neer en verdween uit de reeks.`);
   }
+}
+
+/**
+ * Een ambitieuze club met een sterke jeugdwerking pikt af en toe je mooiste belofte weg.
+ * Dat is het gevolg van hun investering van vorig seizoen — en het komt later terug,
+ * want je speelt hem nog tegen (zie het moment "weggekaapt-wraak").
+ */
+function poachYouth(state: GameState, rng: Rng, newcomers: Player[]): void {
+  if (newcomers.length < 2) return; // je laatste belofte pikken ze niet af
+  const thieves = state.world.clubs.filter(
+    (c) => !c.defunct && c.divisionLevel >= state.nextDivisionLevel && c.youth >= 2 && c.ambition >= 60,
+  );
+  if (!thieves.length) return;
+  const chance = 0.1 + Math.min(0.2, thieves.length * 0.02);
+  if (!rng.chance(chance)) return;
+  const thief = rng.pick(thieves);
+  const target = [...newcomers].sort((a, b) => b.potential - a.potential)[0];
+  state.players = state.players.filter((p) => p.id !== target.id);
+  news(state, rng, NIEUWS.rivaalWeggekaapt, { speler: target.name, tegenstander: thief.name });
+  remember(state, `${thief.name} pikte onze belofte ${target.name} weg uit de eigen jeugd.`);
+  openStoryline(state, 'weggekaapt', 78, { speler: target.name, oudeclub: thief.name });
+  state.community.fanMood = clamp(state.community.fanMood - 3, 0, 100);
 }
 
 // ---------- Wedstrijden ----------
@@ -447,6 +469,9 @@ function weeklyProgress(state: GameState): void {
     if (id === 'zonnepanelen') i.greenEnergy = true;
     i.constructions = i.constructions.filter((x) => x !== c);
     const label = UPGRADES.find((u) => u.id === id)!.label;
+    // een geslaagde investering levert later nog nieuws op (zie NIEUWBOUW in de events)
+    openStoryline(state, 'nieuwbouw', 26, { wat: label.toLowerCase() });
+    remember(state, `Bouwproject afgerond: ${label}.`);
     addNews(
       state,
       'goed',
@@ -720,6 +745,7 @@ function newSeason(state: GameState, rng: Rng): void {
   state.players.push(...newcomers);
   linkFriends(newcomers.length > 1 ? newcomers : state.players, rng, newcomers.length);
   addNews(state, 'goed', `Doorstromers uit de eigen jeugd naar de A-kern: ${newcomers.map((p) => p.name).join(', ')}.`);
+  poachYouth(state, rng, newcomers);
 
   // wat er deze zomer gebeurde, voor op de openingsaffiche
   const summer: string[] = [];
