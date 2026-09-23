@@ -14,16 +14,22 @@ import { sponsorBonus } from './career';
 
 type Kind = SponsorDeal['kind'];
 
+// Wat een plaats per week opbrengt, op het niveau van een club in 1ste provinciale.
+//
+// Deze bedragen lagen te laag ten opzichte van de rest. Sponsoring was 38% van je
+// inkomsten, terwijl dat bij een echte club in deze reeksen de grootste post is — groter
+// dan de kassa en de kantine samen. Een bestuur van een dorpsclub brengt zijn geld binnen
+// bij de handelaars van het dorp, niet aan het loket.
 const KIND_RANGE: Record<Kind, [number, number]> = {
-  bord: [30, 70],
-  bal: [45, 90],
-  jeugd: [80, 180],
-  scherm: [90, 190],
-  evenement: [110, 230],
-  bus: [140, 280],
-  mouw: [180, 380],
-  shirt: [250, 550],
-  hoofdsponsor: [700, 1300],
+  bord: [40, 90],
+  bal: [60, 120],
+  jeugd: [110, 240],
+  scherm: [120, 250],
+  evenement: [150, 310],
+  bus: [180, 370],
+  mouw: [230, 480],
+  shirt: [320, 700],
+  hoofdsponsor: [900, 1700],
   stadion: [600, 600],
 };
 
@@ -260,14 +266,40 @@ export function makeProspect(state: GameState, rng: Rng, bigger = false): Sponso
 export function startingSponsors(state: GameState, rng: Rng, totalWeekly: number): void {
   state.sponsors.push(makeDeal(state, rng, 'hoofdsponsor', round(totalWeekly * 0.4, 5)));
   state.sponsors.push(makeDeal(state, rng, 'shirt', round(totalWeekly * 0.2, 5)));
+
+  // De rest verdelen over de kleinere plaatsen, van groot naar klein.
+  //
+  // Dit stopte vroeger alles in borden, en toen het startbedrag omhoog ging leverde dat
+  // negentien borden op terwijl er zestien plaatsen zijn. Je begon dus met een overvolle
+  // bordenrij en geen enkele vrije plaats voor een handelaar die zich aanbood.
   let rest = totalWeekly * 0.4;
-  while (rest > 40) {
-    const amount = round(Math.min(rest, rng.range(50, 90)), 5);
+
+  // eerst de bordenrij, want dát is wat een dorpsclub heeft: de bakker, de garage en de
+  // frituur langs de lijn. Niet alle zestien plaatsen, zodat er nog iets te verkopen valt.
+  const [bordMin, bordMax] = kindRange(state, 'bord');
+  let bordBudget = rest * 0.55;
+  while (bordBudget > bordMin && state.sponsors.filter((d) => d.kind === 'bord').length < KIND_MAX.bord - 5) {
+    const amount = round(Math.min(bordBudget, rng.range(bordMin, bordMax)), 5);
     const deal = makeDeal(state, rng, 'bord', amount);
     deal.weeksLeft = rng.int(10, 100);
     state.sponsors.push(deal);
+    bordBudget -= amount;
     rest -= amount;
   }
+
+  // daarna de middelgrote plaatsen, voor zover ze bij deze club al bestaan
+  for (const kind of ['mouw', 'bus', 'jeugd', 'evenement', 'scherm', 'bal'] as Kind[]) {
+    if (rest <= 60) break;
+    if (kindLock(state, kind)) continue; // die plaats bestaat bij deze club nog niet
+    const [min, max] = kindRange(state, kind);
+    const bedrag = round(Math.min(rest * 0.6, rng.range(min, max)), 5);
+    if (bedrag < min * 0.8) continue;
+    const deal = makeDeal(state, rng, kind, bedrag);
+    deal.weeksLeft = rng.int(20, 120);
+    state.sponsors.push(deal);
+    rest -= bedrag;
+  }
+
   for (let i = 0; i < 8; i++) state.prospects.push(makeProspect(state, rng));
 }
 
@@ -390,8 +422,28 @@ export function weeklySponsors(state: GameState, rng: Rng): void {
     if (p.cooldown > 0) p.cooldown--;
     p.interest = Math.round(clamp(p.interest + (base - p.interest) * 0.03 + rng.normal(0, 1), 5, 95));
   }
-  if (state.week === 1) for (let i = 0; i < 3; i++) state.prospects.push(makeProspect(state, rng));
-  if (state.prospects.length > 16) state.prospects = [...state.prospects].sort((a, b) => b.interest - a.interest).slice(0, 16);
+  // Om de twee weken komen er nieuwe namen bij, en haken er een paar af.
+  //
+  // De lijst stond vroeger zo goed als stil: drie nieuwe contacten in week 1, en verder
+  // alleen wat een sponsorbureau opleverde. Wie zijn lijst één keer had afgewerkt, keek de
+  // rest van het seizoen naar dezelfde dertien namen. Nu draait ze: een handelaar die
+  // maanden niets hoort verliest zijn interesse en verdwijnt, en er meldt zich nieuw volk.
+  if (state.week % 2 === 0) {
+    const nieuw: SponsorProspect[] = [];
+    for (let i = 0; i < rng.int(2, 4); i++) nieuw.push(makeProspect(state, rng));
+    state.prospects.push(...nieuw);
+    addNews(state, 'neutraal', `Nieuwe namen op je contactenlijst: ${nieuw.map((p) => p.name).join(', ')}. Zie Sponsors.`);
+  }
+
+  // wie weinig interesse heeft en niet in gesprek is, haakt geleidelijk af
+  state.prospects = state.prospects.filter((p) => p.approached || p.cooldown > 0 || p.interest > 20 || !rng.chance(0.3));
+  if (state.prospects.length > 16) {
+    // vol is vol: de minst geïnteresseerde namen vallen weg, behalve wie in gesprek is of
+    // wie je net gesproken hebt — anders verdwijnt een bedrijf tussen je vraag en zijn antwoord
+    const behouden = state.prospects.filter((p) => p.approached || p.cooldown > 0);
+    const rest = state.prospects.filter((p) => !p.approached && p.cooldown === 0).sort((a, b) => b.interest - a.interest);
+    state.prospects = [...behouden, ...rest].slice(0, 16);
+  }
 }
 
 // ---------- Acties van de eigenaar ----------

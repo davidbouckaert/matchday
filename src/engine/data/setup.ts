@@ -105,7 +105,7 @@ export const START_CLUBS: StartClubDef[] = [
     volunteers: 12,
     youthMembers: 210,
     reputation: 42,
-    sponsorWeekly: 2600,
+    sponsorWeekly: 3400,
     trainer: { skill: 58, wage: 450 },
   },
   {
@@ -126,7 +126,7 @@ export const START_CLUBS: StartClubDef[] = [
     volunteers: 18,
     youthMembers: 290,
     reputation: 38,
-    sponsorWeekly: 2500,
+    sponsorWeekly: 3300,
     trainer: { skill: 50, wage: 350 },
   },
 ];

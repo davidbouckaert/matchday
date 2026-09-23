@@ -307,7 +307,11 @@ function shuffleDivisions(world: World, rng: Rng, positions: Map<string, number>
  */
 function balanceDivisions(world: World, rng: Rng): void {
   const rank = (club: WorldClub): number => club.strength + club.momentum / 10;
-  for (let pass = 0; pass < 2; pass++) {
+  // twee doorgangen waren niet altijd genoeg: een reeks aanvullen maakt haar buur één te
+  // kort, en die schuift het probleem door. Nu herhalen we tot alles klopt.
+  for (let pass = 0; pass < 8; pass++) {
+    const klopt = DIVISIONS.every((_, l) => clubsAtLevel(world, l).length === clubsPerDivision(l));
+    if (klopt) break;
     for (let level = 0; level < DIVISIONS.length; level++) {
       const target = clubsPerDivision(level);
       let here = clubsAtLevel(world, level);
@@ -328,8 +332,13 @@ function balanceDivisions(world: World, rng: Rng): void {
       while (here.length < target && guard++ < 40) {
         const below = clubsAtLevel(world, level - 1).sort((a, b) => rank(b) - rank(a));
         const above = clubsAtLevel(world, level + 1).sort((a, b) => rank(a) - rank(b));
-        const fromBelow = below.length > clubsPerDivision(level - 1) - 1 ? below[0] : null;
-        const fromAbove = above.length > clubsPerDivision(level + 1) - 1 ? above[0] : null;
+        // let op de grens: alleen een buur met écht een club te veel mag er één afstaan.
+        // Stond hier `- 1`, dan telde een reeks die precies vol zat als overschot, en dan
+        // verhuisde het gat alleen maar: reeks 0 haalde er één uit reeks 1, reeks 1 haalde
+        // die meteen terug, en na de laatste doorgang bleef er ergens een reeks van vijftien
+        // ploegen over. Zo speelde 1ste provinciale vanaf seizoen 11 met een ploeg te weinig.
+        const fromBelow = below.length > clubsPerDivision(level - 1) ? below[0] : null;
+        const fromAbove = above.length > clubsPerDivision(level + 1) ? above[0] : null;
         const mover = fromBelow ?? fromAbove;
         if (!mover) break;
         const origin = mover === fromBelow ? 'promovendus' : 'degradant';
@@ -340,15 +349,36 @@ function balanceDivisions(world: World, rng: Rng): void {
       // nog altijd te weinig: een nieuwe club uit de dorpen erbij
       guard = 0;
       while (here.length < target && guard++ < 20) {
-        const names = DIVISION_CLUBS[level] ?? DIVISION_CLUBS[1];
-        const name = names.find((n) => !world.clubs.some((c) => c.name === n));
-        if (!name) break;
-        world.clubs.push(makeClub(rng, `w${world.clubs.length + 100}`, name, level));
+        world.clubs.push(makeClub(rng, `w${world.clubs.length + 100}`, freeClubName(world, level), level));
         here = clubsAtLevel(world, level);
       }
     }
     void pass;
   }
+}
+
+/**
+ * Een clubnaam die nog vrij is.
+ *
+ * Hier lekte een reeks weg. Als een club opdoekt en alle namen uit de lijst van dat niveau
+ * al in gebruik zijn — na een seizoen of acht is dat normaal — vond dit niets meer en bleef
+ * de reeks één club te kort. Die bleef dan voorgoed met vijftien ploegen spelen. Nu putten
+ * we eerst uit de andere niveaus, en anders krijgt een dorp er een tweede ploeg bij.
+ */
+function freeClubName(world: World, level: number): string {
+  const bezet = new Set(world.clubs.map((c) => c.name));
+  const eigen = DIVISION_CLUBS[level] ?? DIVISION_CLUBS[1];
+  const vrij = eigen.find((n) => !bezet.has(n));
+  if (vrij) return vrij;
+  for (const lijst of DIVISION_CLUBS) {
+    const ander = lijst.find((n) => !bezet.has(n));
+    if (ander) return ander;
+  }
+  for (let nummer = 2; nummer < 40; nummer++) {
+    const naam = `${eigen[0]} ${nummer}`;
+    if (!bezet.has(naam)) return naam;
+  }
+  return `Nieuwkomer ${world.clubs.length + 1}`;
 }
 
 /* ------------------------------------------------------------------ leesbaarheid */

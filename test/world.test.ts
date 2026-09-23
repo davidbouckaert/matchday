@@ -211,12 +211,15 @@ describe('De reeks reageert op jou en op zichzelf', () => {
   });
 
   it('speelt niet langer tegen vaste sterktes: de tegenstanders van volgend seizoen zijn veranderd', () => {
+    // We kijken naar de wereld en niet naar jouw eigen reeks: promoveer of degradeer je,
+    // dan spelen er volgend seizoen logischerwijs alleen maar nieuwe namen tegen je, en dan
+    // meet deze test jouw klassement in plaats van hoe de clubs zich ontwikkelen.
     const start = newTestGame('heidebeke', 'fonds', 77);
-    const before = new Map(start.league.teams.map((t) => [t.name, t.strength]));
+    const before = new Map(start.world.clubs.map((c) => [c.id, c.strength]));
     const after = playSeasons(start, 2);
-    const returning = after.league.teams.filter((t) => before.has(t.name));
-    expect(returning.length, 'geen enkele club bleef in de reeks').to.be.above(2);
-    const changed = returning.filter((t) => Math.abs(t.strength - before.get(t.name)!) > 0.5);
+    const levend = after.world.clubs.filter((c) => !c.defunct && before.has(c.id));
+    expect(levend.length, 'geen enkele club overleefde twee seizoenen').to.be.above(20);
+    const changed = levend.filter((c) => Math.abs(c.strength - before.get(c.id)!) > 0.5);
     expect(changed.length, 'alle sterktes bleven identiek').to.be.above(0);
   });
 

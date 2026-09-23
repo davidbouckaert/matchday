@@ -19,14 +19,31 @@ export const LAST_NAMES = [
 
 export const STAFF_FIRST = ['Marc', 'Patrick', 'Luc', 'Dirk', 'Geert', 'Sofie', 'Els', 'Hilde', 'Frank', 'Johan', 'Tom', 'Katrien', 'Bart', 'Nathalie', 'Rudi'];
 
+// De piramide van een dorpsclub.
+//
+// Dit stond op zijn kop: van de achtenveertig bedrijven konden er eenentwintig een shirt of
+// de borst aan, en maar drie een reclamebord — terwijl er zestien bordplaatsen zijn en één
+// hoofdsponsorplaats. Je lijst met contacten stond dus vol banken en brouwerijen die,
+// omdat de grote plaatsen allang bezet waren, een bord van veertig euro kwamen tekenen.
+//
+// In het echt is het omgekeerd: langs het veld hangen dertig borden van de bakker, de
+// loodgieter en de frituur, en is er één bedrijf in de streek groot genoeg voor de borst.
 export const SECTORS: [string, SponsorKind][] = [
-  // grote bedrijven kunnen de grote plaatsen aan, kleine handelaars de kleine
+  // de grote namen: weinig sectoren, en dus zelden iemand op je lijst
   ['Bank', 'hoofdsponsor'], ['Industrie', 'hoofdsponsor'], ['Energie', 'hoofdsponsor'], ['Telecom', 'hoofdsponsor'], ['Brouwerij', 'hoofdsponsor'],
-  ['Bouw', 'shirt'], ['Supermarkt', 'shirt'], ['Vastgoed', 'shirt'], ['Transport', 'shirt'], ['Brandstoffen', 'shirt'],
-  ['Garage', 'mouw'], ['Verzekeringen', 'mouw'], ['Elektro', 'mouw'], ['Boekhouding', 'mouw'],
-  ['Kledij', 'bus'], ['Sport', 'bus'],
-  ['Horeca', 'evenement'], ['Slagerij', 'evenement'], ['Bakkerij', 'scherm'], ['Druk', 'scherm'],
-  ['Kapsalon', 'bal'], ['Tuin', 'bal'], ['Apotheek', 'bord'], ['Sanitair', 'bord'],
+  ['Bouw', 'shirt'], ['Supermarkt', 'shirt'],
+  ['Garage', 'mouw'], ['Vastgoed', 'mouw'], ['Brandstoffen', 'mouw'], ['Elektro', 'mouw'],
+  ['Transport', 'bus'], ['Sport', 'bus'],
+  ['Horeca', 'evenement'], ['Slagerij', 'evenement'],
+  ['Bakkerij', 'scherm'], ['Druk', 'scherm'], ['Verzekeringen', 'scherm'], ['Rijschool', 'scherm'],
+  // wie met kinderen werkt, steunt de jeugd — daar was tot nu geen enkele sector voor
+  ['Kinderopvang', 'jeugd'], ['Speelgoed', 'jeugd'], ['Dansschool', 'jeugd'],
+  ['Kapsalon', 'bal'], ['Tuin', 'bal'], ['Kledij', 'bal'], ['IJssalon', 'bal'], ['Dierenarts', 'bal'],
+  // de brede voet van de piramide: de handelaars die een bord langs het veld hangen
+  ['Apotheek', 'bord'], ['Sanitair', 'bord'], ['Boekhouding', 'bord'], ['Schilder', 'bord'],
+  ['Dakwerken', 'bord'], ['Frituur', 'bord'], ['Nachtwinkel', 'bord'], ['Schoonmaak', 'bord'],
+  ['Taxi', 'bord'], ['Fotograaf', 'bord'], ['Wassalon', 'bord'], ['Schoenmaker', 'bord'],
+  ['Traiteur', 'bord'], ['Vishandel', 'bord'], ['Meubelen', 'bord'], ['Banden', 'bord'],
 ];
 
 /** De grootste soort contract die een bedrijf uit deze sector aankan. */
@@ -84,6 +101,44 @@ export const SPONSOR_COMPANIES: { name: string; sector: string }[] = [
   { name: 'Brandstoffen Tanghe', sector: 'Brandstoffen' },
   { name: 'Loodgieter Lekvrij', sector: 'Sanitair' },
   { name: 'Tegels & Co', sector: 'Bouw' },
+
+  // De handelaars van het dorp. Zij hangen de borden, schenken de wedstrijdbal en steunen
+  // de jeugd — en zij vormden voordien nauwelijks een tiende van je contactenlijst.
+  { name: 'Sanitair Dobbelaere', sector: 'Sanitair' },
+  { name: 'Apotheek Sint-Pieter', sector: 'Apotheek' },
+  { name: 'Boekhoudkantoor Vanacker', sector: 'Boekhouding' },
+  { name: 'Schilderwerken Deprez', sector: 'Schilder' },
+  { name: 'Schilder- en Decoratiewerken Lams', sector: 'Schilder' },
+  { name: 'Dakwerken Coussement', sector: 'Dakwerken' },
+  { name: 'Dakwerken De Meyere', sector: 'Dakwerken' },
+  { name: 'Frituur Het Pleintje', sector: 'Frituur' },
+  { name: 'Frituur Bij Rita', sector: 'Frituur' },
+  { name: 'Nachtwinkel Hallo', sector: 'Nachtwinkel' },
+  { name: 'Schoonmaakbedrijf Blinkend', sector: 'Schoonmaak' },
+  { name: 'Ramen & Gevels Proper', sector: 'Schoonmaak' },
+  { name: 'Taxi Vervaeke', sector: 'Taxi' },
+  { name: 'Fotostudio Vanneste', sector: 'Fotograaf' },
+  { name: 'Wassalon De Kuip', sector: 'Wassalon' },
+  { name: 'Schoenmakerij Het Zooltje', sector: 'Schoenmaker' },
+  { name: 'Traiteur Lekkerbek', sector: 'Traiteur' },
+  { name: 'Vishandel De Zeemeeuw', sector: 'Vishandel' },
+  { name: 'Meubelen Devos', sector: 'Meubelen' },
+  { name: 'Bandencentrale Wielant', sector: 'Banden' },
+  { name: 'Verhuur & Klus Deschacht', sector: 'Schoonmaak' },
+  { name: 'Broodjeszaak De Korenaar', sector: 'Traiteur' },
+
+  // wedstrijdbal en jeugd
+  { name: 'Kinderopvang Pinkeltje', sector: 'Kinderopvang' },
+  { name: 'Onthaalouders De Bijtjes', sector: 'Kinderopvang' },
+  { name: 'Speelgoed Ravot', sector: 'Speelgoed' },
+  { name: 'Dansschool Pirouette', sector: 'Dansschool' },
+  { name: 'Dierenarts Van Hecke', sector: 'Dierenarts' },
+  { name: 'IJssalon Venezia', sector: 'IJssalon' },
+  { name: 'IJssalon De Pinguin', sector: 'IJssalon' },
+  { name: 'Rijschool Stuur', sector: 'Rijschool' },
+  { name: 'Rijschool Vooruit', sector: 'Rijschool' },
+  { name: 'Kapsalon Krul', sector: 'Kapsalon' },
+  { name: 'Tuinaanleg Verhelst', sector: 'Tuin' },
 ];
 
 export const SPONSOR_NAMES = SPONSOR_COMPANIES.map((c) => c.name);

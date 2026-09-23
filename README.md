@@ -171,6 +171,39 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.32.0 — De sponsormarkt stond op zijn kop
+
+**Er waren meer banken dan bakkers.** Van de achtenveertig bedrijven in de streek konden er eenentwintig een shirt of de borst aan — samen twee plaatsen — en maar drie een reclamebord, waarvan er zestien zijn. Je contactenlijst stond dus vol brouwerijen en telecombedrijven die, omdat de grote plaatsen allang bezet waren, een bord van veertig euro kwamen tekenen. In het echt is het net omgekeerd: langs het veld hangen dertig borden van de bakker, de loodgieter en de frituur, en is er één bedrijf in de streek groot genoeg voor de borst.
+
+De markt telt nu eenentachtig bedrijven, en de piramide staat rechtop:
+
+| plaats | bedrijven | plaatsen |
+|---|---|---|
+| reclamebord | 26 | 16 |
+| wedstrijdbal | 11 | 4 |
+| schermen | 7 | 2 |
+| jeugdsponsor | 4 | 3 |
+| shirt en borst | 16 | 2 |
+
+Er kwamen drieëndertig bedrijven bij: dakwerkers, schilders, een frituur, een nachtwinkel, een taxibedrijf, een wassalon, een vishandel. En er zijn nu sectoren die bij de jeugdsponsor passen — kinderopvang, speelgoed, een dansschool — want daar bestond tot nu letterlijk geen enkel bedrijf voor, zodat die plaats alleen gevuld raakte door iemand die eigenlijk groter kon.
+
+**Je contactenlijst draait.** Ze stond zo goed als stil: drie nieuwe namen in week 1 en verder alleen wat een sponsorbureau opleverde. Wie zijn lijst één keer had afgewerkt, keek de rest van het seizoen naar dezelfde dertien bedrijven. Om de twee weken melden zich nu twee tot vier nieuwe contacten — je krijgt er een bericht van — en een handelaar die maanden niets hoort, verliest zijn interesse en verdwijnt. Een bedrijf waarmee een gesprek loopt kan nooit wegvallen voor je zijn antwoord hebt.
+
+**En sponsoring weegt nu zoals bij een echte club.** De bedragen gingen ongeveer 28% omhoog. Gemeten over een seizoen:
+
+| post | voor | na |
+|---|---|---|
+| sponsors | €153.718 (38%) | €193.300 (45%) |
+| lidgelden | €64.256 (16%) | €65.263 (15%) |
+| tickets | €65.609 (16%) | €62.350 (14%) |
+| kantine | €51.052 (13%) | €46.145 (11%) |
+
+Sponsoring is daarmee de grootste post, groter dan de kassa en de kantine samen — en dat klopt met hoe een club in deze reeksen haar geld binnenhaalt: bij de handelaars van het dorp, niet aan het loket.
+
+**Dat heeft een prijs, en die staat hier eerlijk bij.** Passief spelen is duidelijk minder dodelijk geworden: Zuidrand met de aannemer gaat van 17 naar 10 faillissementen op 20, Heidebeke met de coöperatie van 16 naar 3. De tering-naar-de-nering-spanning die het spel had, is dus voor een stuk weg. Dat is geen bijwerking om weg te moffelen: als de inkomsten realistischer worden, moet de druk ergens anders vandaan komen.
+
+**Drie fouten die hierbij bovenkwamen.** Door het hogere startbedrag maakte het spel negentien borden op zestien plaatsen, zodat je begon met een overvolle bordenrij en geen enkele vrije plaats. Je begint nu met acht à tien borden plus een mouw-, jeugd- en balsponsor, en houdt ruimte over om zelf te verkopen. En in de wereld buiten je club lekte een reeks weg: doekte een club op terwijl alle clubnamen van dat niveau al in gebruik waren, dan vond het spel geen vervanger en bleef die reeks voorgoed met vijftien ploegen spelen. Erger nog, een gat opvullen gebeurde bij een buurreeks die zelf precies vol zat, dus het gat verhuisde alleen maar heen en weer tot de doorgangen op waren. Beide zijn gerepareerd en over vijftien seizoenen nagemeten op vier verschillende partijen.
+
 ### 0.31.0 — Jij hangt de prijskaart aan de muur
 
 **Tot nu noemde het bedrijf een bedrag en zei jij ja of nee.** Dat is de omgekeerde wereld voor iemand die de club runt: in het echt bepaalt de club wat een bord langs het veld kost, en beslist de bakker om de hoek of hij dat wil betalen. Nu hangt er een prijskaart onder Geld › Sponsors, met per soort plaats één bedrag dat jij zet. Een reclamebord aan €80? Dat mag. Of je er dan één verkoopt, is een andere vraag.

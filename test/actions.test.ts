@@ -404,8 +404,9 @@ describe('Scouting en weekoverzicht', () => {
 
   it('de sponsorvermenigvuldiger is het product van de getoonde factoren', () => {
     const s = newTestGame();
+    // 320 is de ondergrens van de shirtsponsor in KIND_RANGE; verandert die, dan hoort dit mee te bewegen
     const [min] = kindRange(s, 'shirt');
-    expect(Math.abs(min - 250 * product(sponsorFactors(s)))).to.be.below(5);
+    expect(Math.abs(min - 320 * product(sponsorFactors(s)))).to.be.below(5);
   });
 });
 
@@ -879,9 +880,10 @@ describe('Delegeren, sponsors en tickets', () => {
     const s = newTestGame();
     const kinds = new Set(SECTORS.map(([, k]) => k));
     expect(kinds.size).to.be.at.least(6);
-    const big = SECTORS.filter(([, k]) => k === 'hoofdsponsor').length;
-    const shirt = SECTORS.filter(([, k]) => k === 'shirt').length;
-    expect(big).to.be.at.most(shirt + 1); // geen overschot aan hoofdsponsors
+    // de piramide: veel sectoren die een bord aankunnen, weinig die de borst aankunnen
+    const borden = SECTORS.filter(([, k]) => k === 'bord').length;
+    const groot = SECTORS.filter(([, k]) => k === 'hoofdsponsor').length;
+    expect(borden).to.be.above(groot * 2);
     expect(KIND_MAX.bord).to.be.above(KIND_MAX.hoofdsponsor);
     s.infrastructure.kantineLevel = 1;
     expect(kindLock(s, 'scherm')).to.be.a('string'); // vraagt eerst een betere kantine
@@ -1300,22 +1302,33 @@ describe('Rivaliteit, weekmoment en stilstand', () => {
     expect(lui.news.some((n) => /geen beweging|stilstand|niets van het bestuur/.test(n.text))).to.equal(true);
   });
 
-  it('houdt een actieve club over 20 weken gemiddeld in betere sfeer', () => {
-    // over één seizoen weegt de uitslagenreeks zwaarder dan de stilstand, dus meten we
-    // het gemiddelde over verschillende partijen in plaats van één toevallige
-    const seeds = [42, 7, 99, 123, 2024, 5];
-    let idleSum = 0;
-    let busySum = 0;
+  it('houdt een actieve club over 20 weken in betere sfeer dan een stilstaande', () => {
+    // Dit mat vroeger iets anders dan het beweerde: de "actieve" club paste elke week haar
+    // ticketprijs aan, en die prijs trekt zelf aan de opkomst en de sfeer. Het verschil dat
+    // eruit kwam ging dus over tickets, niet over stilstand, en het sloeg om zodra de
+    // uitslagen anders vielen. Nu spelen beide clubs exact dezelfde wedstrijden en is het
+    // enige verschil dat de ene wél beslissingen neemt.
+    // Zestien partijen, want het bericht over de stilstand verbruikt zelf een toevalsgetal
+    // en daardoor spelen de twee clubs vanaf week tien niet meer exact dezelfde wedstrijden.
+    // Met acht partijen kan de uitslagenruis het effect nog omkeren; gemeten over zestien
+    // blijft er een verschil van ongeveer vijf punten sfeer over.
+    const seeds = Array.from({ length: 16 }, (_, i) => i + 1);
+    let actiefSom = 0;
+    let stilSom = 0;
     for (const seed of seeds) {
-      idleSum += playWeeks(newTestGame('zuidrand', 'aannemer', seed), 20).community.fanMood;
-      let busy = newTestGame('zuidrand', 'aannemer', seed);
+      const basis = newTestGame('zuidrand', 'aannemer', seed);
+      let actief = structuredClone(basis);
+      let stilstaand = basis;
       for (let i = 0; i < 20; i++) {
-        actions.setTicketPrice(busy, 8 + (i % 2));
-        busy = playWeeks(busy, 1);
+        actief.log.unshift({ season: actief.season, week: actief.week, kind: 'beslissing', text: 'Beslissing van de week' });
+        actief = playWeeks(actief, 1);
+        stilstaand = playWeeks(stilstaand, 1);
       }
-      busySum += busy.community.fanMood;
+      expect(weeksIdle(stilstaand)).to.be.at.least(10);
+      actiefSom += actief.community.fanMood;
+      stilSom += stilstaand.community.fanMood;
     }
-    expect(busySum / seeds.length).to.be.above(idleSum / seeds.length);
+    expect(actiefSom / seeds.length).to.be.above(stilSom / seeds.length);
   });
 });
 

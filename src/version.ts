@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.31.1';
+export const VERSION = '0.32.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,26 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.32.0',
+    date: '2026-09-23',
+    title: 'De sponsormarkt staat niet langer op zijn kop',
+    items: [
+      'Er waren eenentwintig bedrijven voor de shirt- en borstplaats (samen twee plaatsen) en drie die een bord konden betalen (zestien plaatsen)',
+      'De markt telt nu eenentachtig bedrijven, met de handelaars van het dorp als brede voet: zesentwintig bordklanten tegenover negen grote namen',
+      'Drieëndertig nieuwe bedrijven erbij, van de frituur en de dakwerker tot de kinderopvang en de dansschool',
+      'Nieuwe sectoren voor de jeugdsponsor: daar bestond tot nu geen enkel bedrijf voor',
+      'Om de twee weken melden zich twee tot vier nieuwe contacten, met een bericht erover',
+      'Handelaars die lang niets horen verliezen hun interesse en verdwijnen, zodat je lijst echt draait in plaats van stil te staan',
+      'Een bedrijf waarmee een gesprek loopt, kan nooit van je lijst vallen voor je zijn antwoord hebt',
+      'De sponsorbedragen gingen ongeveer 28% omhoog: sponsoring is nu 45% van je inkomsten in plaats van 38%, zoals bij een echte club in deze reeksen',
+      'Je begint met een echte bordenrij en een gevarieerde mix, in plaats van met negentien borden op zestien plaatsen',
+      'Balansfout: door het hogere startbedrag maakte het spel meer borden dan er plaatsen zijn',
+      'Wereldfout: doekte een club op nadat alle clubnamen op waren, dan bleef die reeks voorgoed met één ploeg te weinig spelen',
+      'Wereldfout: een gat in een reeks werd opgevuld bij een buur die zelf precies vol zat, waardoor het gat alleen maar heen en weer verhuisde',
+      'Let op: passief spelen is door de hogere sponsorinkomsten duidelijk minder dodelijk geworden',
+    ],
+  },
   {
     version: '0.31.1',
     date: '2026-09-23',
