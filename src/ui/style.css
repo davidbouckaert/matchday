@@ -561,6 +561,23 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .trophy.won { opacity: 1; border-color: var(--accent); }
 .trophy .icon { font-size: 1.6rem; }
 .trophy strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+/* carrière: langetermijndoel en je eigen niveau als eigenaar */
+.card.career h2 { margin-bottom: 4px; }
+.card.career.done { border-color: var(--pos, #2e7d32); }
+.goal-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; margin: 10px 0; }
+.goal-choice { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: none; cursor: pointer; color: inherit; }
+.goal-choice:hover { border-color: var(--accent, #666); }
+.goal-line { display: grid; grid-template-columns: minmax(140px, auto) 1fr; gap: 10px; align-items: center; margin: 6px 0; }
+.goal-line .bar { height: 8px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.goal-line .bar > span { display: block; height: 100%; background: var(--accent, #4a7); }
+.owner-block { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.owner-block .bar { height: 6px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 4px; }
+.owner-block .bar > span { display: block; height: 100%; background: var(--accent, #4a7); }
+.owner-level { display: flex; flex-direction: column; gap: 1px; }
+
+.career-banner { margin: 8px 0 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+.career-banner.pos { border-color: var(--pos, #2e7d32); }
+
 /* de clubkroniek: wat er in de geschiedenis is blijven hangen */
 .chronicle { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; max-height: 420px; overflow-y: auto; }
 .chronicle li { padding: 8px 10px; border-left: 3px solid var(--line); background: var(--soft, transparent); border-radius: 0 8px 8px 0; }

@@ -31,6 +31,7 @@ import { checkRecords } from './records';
 import { createOpening, settleSeason } from './opening';
 import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
 import { ageStorylines, news, openStoryline, remember } from './content';
+import { checkCareerGoal, creditMilestones, settleCareerSeason, subsidyFactor } from './career';
 import { NIEUWS } from '../content/news';
 import type { NieuwsSjabloon } from '../content/types';
 import { clubByName, runWorldSeason } from './world';
@@ -73,6 +74,8 @@ export function advanceWeek(previous: GameState): GameState {
   bankruptcyCheck(state);
 
   state.lastMilestones = checkMilestones(state).map((m) => m.label);
+  creditMilestones(state, state.lastMilestones.length);
+  checkCareerGoal(state); // je langetermijndoel kan elke week binnen zijn
   state.lastRecords = checkRecords(state);
   recordWeek(state, statsBefore);
 
@@ -360,7 +363,8 @@ function scheduledPayments(state: GameState): void {
     }
   }
   if (state.week === SUBSIDY_WEEK) {
-    book(state, 'subsidies', (8000 + c.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12), 'Subsidie gemeente (jeugdwerking en sportieve uitstraling)');
+    const subsidy = (8000 + c.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12) * subsidyFactor(state);
+    book(state, 'subsidies', subsidy, 'Subsidie gemeente (jeugdwerking en sportieve uitstraling)');
   }
 }
 
@@ -662,6 +666,8 @@ function seasonEnd(state: GameState): void {
     .filter(([k]) => k !== 'leningen' && k !== 'investeerder')
     .reduce((s, [, v]) => s + (v ?? 0), 0);
   state.history.push({ season: state.season, division: DIVISIONS[level].name, position: pos, points: row.points, result, profit, prize });
+  // je eigen groei als eigenaar: punten voor het seizoen, de promotie en het resultaat
+  settleCareerSeason(state, result, profit);
 
   // het fonds wil promotie binnen 3 seizoenen
   if (state.investor === 'fonds' && state.investorActive && state.season >= 3 && state.promotionsWithInvestor === 0) {

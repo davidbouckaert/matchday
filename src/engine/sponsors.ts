@@ -8,6 +8,7 @@ import { ownPosition } from './league';
 import { addLog, addNews, book, nextId } from './util';
 import { creditLimit } from './loans';
 import { grantLoan } from './actions';
+import { sponsorBonus } from './career';
 
 type Kind = SponsorDeal['kind'];
 
@@ -235,6 +236,8 @@ export function weeklySponsors(state: GameState, rng: Rng): void {
     state.sponsorCampaignWeeks--;
     if (state.sponsorCampaignWeeks === 0) {
       const found = [makeProspect(state, rng, true), makeProspect(state, rng, true), makeProspect(state, rng, rng.chance(0.5))];
+      // wie naam heeft gemaakt als eigenaar, krijgt er een prospect bij
+      for (let i = 0; i < sponsorBonus(state); i++) found.push(makeProspect(state, rng, true));
       state.prospects.push(...found);
       addNews(state, 'goed', `Het bureau vond ${found.length} geïnteresseerde bedrijven: ${found.map((p) => p.name).join(', ')}.`);
     }

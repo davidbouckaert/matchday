@@ -10,6 +10,7 @@ import { onboardingCard } from './onboarding';
 import { weeks } from '../../engine/util';
 import { available } from '../../engine/discipline';
 import { ambitionDef, goalProgress } from '../../engine/opening';
+import { CARRIERE_DOELEN, EIGENAARSNIVEAUS, goalDef as careerGoalDef, goalProgress as careerProgress, nextLevel, ownerLevel } from '../../engine/career';
 
 export function weekSummary(entries: LedgerEntry[]): { income: number; costs: number } {
   let income = 0;
@@ -36,6 +37,74 @@ function weekChoiceCard(s: GameState): string {
     <h2>📌 ${esc(w.title)} ${hint('Elke week ligt er iets op je bureau dat nu beslist moet worden. Beslis je niet voor je op "Volgende week" drukt, dan gaat de laatste optie door.')}</h2>
     <p>${esc(w.text)}</p>
     <p class="actions left"><button class="primary" data-action="moment-open">Beslissen (${w.options.length} keuzes)</button></p>
+  </section>`;
+}
+
+
+/**
+ * Je carrière: het langetermijndoel waar je naartoe werkt, en hoever je zelf staat
+ * als eigenaar. Zolang je nog geen doel koos, staat hier de keuze.
+ */
+function careerCard(s: GameState): string {
+  const goal = careerGoalDef(s);
+  const niveau = ownerLevel(s);
+  const next = nextLevel(s);
+
+  const ownerBlock = `<div class="owner-block">
+      <div class="owner-level">
+        <span class="muted small">Jij als eigenaar</span>
+        <strong>${esc(niveau.naam)}</strong>
+        <span class="muted small">niveau ${niveau.level} van ${EIGENAARSNIVEAUS.length} · ${s.owner.points} punten</span>
+      </div>
+      ${niveau.voordeel ? `<p class="small"><strong>${esc(niveau.voordeel)}</strong> — ${esc(niveau.uitleg)}</p>` : ''}
+      ${
+        next
+          ? `<p class="small muted">Volgend niveau: <strong>${esc(next.niveau.naam)}</strong> over ${next.missing} ${next.missing === 1 ? 'punt' : 'punten'} — ${esc(next.niveau.uitleg)}</p>
+             <div class="bar"><span style="width:${Math.round((s.owner.points / next.niveau.punten) * 100)}%"></span></div>`
+          : '<p class="small muted">Je hebt het hoogste niveau bereikt. Verder groeit alleen de club nog.</p>'
+      }
+      <p class="small muted">Punten verdien je met elk afgewerkt seizoen, met promoties en titels, met mijlpalen, met een seizoen in de plus — en met je langetermijndoel.</p>
+    </div>`;
+
+  if (!goal) {
+    return `<section class="card full career choose">
+      <h2>🎯 Waar wil je met deze club naartoe? ${hint('Eén doel voor de lange termijn. Het bepaalt niets aan de regels, maar het geeft je carrière een richting — en je ziet elke week hoever je staat. Je kiest maar één keer.')}</h2>
+      <p class="muted small">Kies het doel waar je de komende jaren naartoe werkt. Je legt het één keer vast.</p>
+      <div class="goal-choices">${CARRIERE_DOELEN.map(
+        (g) => `<button class="goal-choice" data-action="career-goal" data-id="${g.id}">
+          <strong>${esc(g.titel)}</strong>
+          <span class="small">${esc(g.beschrijving)}</span>
+          <span class="muted small">richttermijn ${g.looptijd} seizoenen · ${esc(g.belofte)}</span>
+        </button>`,
+      ).join('')}</div>
+      ${ownerBlock}
+    </section>`;
+  }
+
+  const p = careerProgress(s)!;
+  const done = s.career.achievedSeason !== null;
+  const seasons = s.career.chosenSeason ? s.season - s.career.chosenSeason + 1 : s.season;
+  return `<section class="card full career ${done ? 'done' : ''}">
+    <h2>🎯 ${esc(goal.titel)} ${hint('Je langetermijndoel. Het blijft hier staan tot je het haalt, met telkens de actuele stand erbij.')}</h2>
+    <p class="muted small">${esc(goal.beschrijving)}</p>
+    ${
+      done
+        ? `<p class="pos"><strong>Behaald in seizoen ${s.career.achievedSeason}.</strong> ${esc(goal.belofte)}</p>`
+        : `<div class="goal-line">
+             <span>${esc(p.label)}</span>
+             <div class="bar"><span style="width:${Math.round(p.fraction * 100)}%"></span></div>
+           </div>
+           ${
+             p.extra
+               ? `<div class="goal-line">
+                    <span>${esc(p.extra.label)}</span>
+                    <div class="bar"><span style="width:${Math.round(Math.min(1, p.extra.value / Math.max(1, p.extra.target)) * 100)}%"></span></div>
+                  </div>`
+               : ''
+           }
+           <p class="muted small">Bezig sinds seizoen ${s.career.chosenSeason ?? 1} — dit is seizoen ${seasons} van je poging. Richttermijn: ${goal.looptijd}.</p>`
+    }
+    ${ownerBlock}
   </section>`;
 }
 
@@ -131,6 +200,7 @@ export function overviewScreen(s: GameState): string {
     </section>
 
     ${weekChoiceCard(s)}
+    ${careerCard(s)}
     ${goalsCard(s)}
 
     <section class="card">

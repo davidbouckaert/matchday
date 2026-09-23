@@ -25,6 +25,7 @@ import { popularity } from './popularity';
 import { facilityCost } from './finance';
 import { addLog, addNews, book, euro, nextId, weeks } from './util';
 import { openStoryline, remember } from './content';
+import { CARRIERE_DOELEN, maxProjects, setCareerGoal } from './career';
 
 export type { ActionResult };
 
@@ -375,7 +376,12 @@ export { approachProspect, networkEvening, startCampaign, cancelSponsor, askExtr
 
 // ---------- Infrastructuur ----------
 
-export const MAX_PROJECTS = 2; // zoveel bouwwerven mogen er tegelijk lopen
+export const MAX_PROJECTS = 2; // standaard aantal bouwwerven dat tegelijk mag lopen
+
+/** Zoveel bouwwerven mogen er bij jou tegelijk lopen; vanaf voorzitter is dat er een meer. */
+export function projectLimit(state: GameState): number {
+  return maxProjects(state);
+}
 
 // ---------- Tribune: jij kiest hoeveel plaatsen ----------
 
@@ -428,7 +434,8 @@ export function isBuilding(state: GameState, id: UpgradeId): boolean {
 export function canUpgrade(state: GameState, id: UpgradeId): string | null {
   const i = state.infrastructure;
   if (isBuilding(state, id)) return 'Dit project is al bezig.';
-  if (i.constructions.length >= MAX_PROJECTS) return `Er lopen al ${MAX_PROJECTS} bouwprojecten. Wacht tot er een klaar is.`;
+  const limit = projectLimit(state);
+  if (i.constructions.length >= limit) return `Er lopen al ${limit} bouwprojecten. Wacht tot er een klaar is.`;
   if (id === 'kantine' && i.kantineLevel >= 5) return 'De kantine is al op het hoogste niveau.';
   if (id === 'verlichting' && i.lightingLevel >= 3) return 'De verlichting is al op het hoogste niveau.';
   if (id === 'kunstgras' && i.pitch === 'kunstgras') return 'Er ligt al kunstgras.';
@@ -989,4 +996,15 @@ export function investGreenEnergy(state: GameState): ActionResult {
 /** Waarom deze speler deze week niet weg mag (of null). Voor de knoppen in de UI. */
 export function departureBlockReason(state: GameState, p: Player): string | null {
   return departureBlock(state, p, 'verkopen');
+}
+
+/** Je langetermijndoel vastleggen. Kan maar één keer, en pas dan telt hij mee. */
+export function chooseCareerGoal(state: GameState, goalId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (state.career?.goalId) return fail('Je hebt je langetermijndoel al vastgelegd.');
+  if (!setCareerGoal(state, goalId)) return fail('Dat doel bestaat niet.');
+  const goal = CARRIERE_DOELEN.find((x) => x.id === goalId)!;
+  addLog(state, 'beslissing', `Langetermijndoel gekozen: ${goal.titel}`);
+  return ok(`${goal.titel}. ${goal.beschrijving}`);
 }

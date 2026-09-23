@@ -531,6 +531,12 @@ const handlers: Record<string, Handler> = {
     void persist();
   },
   'moment-open': () => void (ui.moment = ui.game?.weekChoice?.answer ? 'gevolg' : 'vraag'),
+  'career-goal': (id) => {
+    if (!ui.game) return;
+    const result = actions.chooseCareerGoal(ui.game, id);
+    if (result.ok) void persist();
+    return result;
+  },
   'moment-close': () => void (ui.moment = 'dicht'),
   'choose-ambition': (id) => {
     if (!ui.game?.opening || ui.game.opening.done) return;

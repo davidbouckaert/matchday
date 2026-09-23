@@ -3,8 +3,8 @@ import { CLUB_EVENTS, UPGRADES, VOLUNTEER_ACTIONS } from '../../engine/data/cata
 import { DIVISIONS } from '../../engine/data/divisions';
 import { BACKGROUNDS, INVESTORS } from '../../engine/data/setup';
 import {
-  GREEN_ENERGY_SAVING, MAX_PROJECTS, TRIBUNE_MAX, TRIBUNE_MIN, TRIBUNE_STEP, YOUTH_FEE_REF, YOUTH_FEE_WEEK,
-  canOrganise, canUpgrade, eventForecast, eventsThisSeason, tribuneCost, tribunePerSeat, tribuneWeeks, upgradeCost, upgradeWeeks, youthForecast, youthTarget,
+  GREEN_ENERGY_SAVING, TRIBUNE_MAX, TRIBUNE_MIN, TRIBUNE_STEP, YOUTH_FEE_REF, YOUTH_FEE_WEEK,
+  canOrganise, canUpgrade, eventForecast, projectLimit, eventsThisSeason, tribuneCost, tribunePerSeat, tribuneWeeks, upgradeCost, upgradeWeeks, youthForecast, youthTarget,
 } from '../../engine/actions';
 import { MAINTENANCE_FACTOR, facilityCost } from '../../engine/finance';
 import { volunteerSatisfaction } from '../../engine/turn';
@@ -95,8 +95,8 @@ export function infraScreen(s: GameState): string {
       }</p>
     </section>
     <section class="card span2">
-      <h2>Bouwprojecten ${hint(`Er mogen ${MAX_PROJECTS} werven tegelijk lopen. Elk project wordt meteen betaald en is klaar na de vermelde bouwtijd.`)}</h2>
-      <p class="muted small">Maximaal ${MAX_PROJECTS} projecten tegelijk — nu bezig: <strong>${i.constructions.length}</strong>.
+      <h2>Bouwprojecten ${hint(`Er mogen ${projectLimit(s)} werven tegelijk lopen. Elk project wordt meteen betaald en is klaar na de vermelde bouwtijd.`)}</h2>
+      <p class="muted small">Maximaal ${projectLimit(s)} projecten tegelijk — nu bezig: <strong>${i.constructions.length}</strong>.
         Te weinig geld? Neem een lening bij Financiën.${s.investor === 'aannemer' ? ' Je aannemer bouwt 15% goedkoper.' : ''}</p>
       ${tribuneCard(s)}
       <div class="choice-grid two">
@@ -412,7 +412,7 @@ function rivalsCard(s: GameState): string {
               <td>${esc(team.name)}${team.isRival ? ' <span class="tag">derby</span>' : ''}${trouble}</td>
               <td class="num">${c.strength.toFixed(1)}</td>
               <td>${ambition}</td>
-              <td class="small muted">accommodatie ${LEVEL_WORDS[c.stadium]}, jeugd ${LEVEL_WORDS[c.youth]}</td>
+              <td class="small muted">accommodatie: ${LEVEL_WORDS[c.stadium]} · jeugd: ${LEVEL_WORDS[c.youth]}</td>
               <td class="small">${c.lastMove ? moveWords[c.lastMove] ?? '—' : 'nog geen zomer meegemaakt'}</td>
             </tr>`;
           })

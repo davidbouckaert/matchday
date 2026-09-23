@@ -14,9 +14,10 @@ import { emptyStats } from './stats';
 import { createOpening } from './opening';
 import { teamsFor } from './youth';
 import { buildWorld } from './world';
+import { emptyCareer, emptyOwner } from './career';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -97,6 +98,8 @@ export function createNewGame(opts: NewGameOptions): GameState {
     lastChoice: null,
     storylines: [],
     chronicle: [],
+    career: emptyCareer(),
+    owner: emptyOwner(),
     world: { clubs: [] },
     lastWorldMoves: [],
     opening: null,

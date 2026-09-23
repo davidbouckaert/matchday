@@ -362,4 +362,4 @@ export function clubProfile(club: WorldClub): string {
 }
 
 /** Hoe hun jeugdwerking en accommodatie ervoor staan, in woorden. */
-export const LEVEL_WORDS = ['niets', 'bescheiden', 'degelijk', 'sterk'];
+export const LEVEL_WORDS = ['geen', 'bescheiden', 'degelijk', 'sterk'];

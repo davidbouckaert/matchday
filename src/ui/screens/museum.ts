@@ -6,6 +6,7 @@ import { DIVISIONS } from '../../engine/data/divisions';
 import { seasonLabel } from '../../engine/calendar';
 import { MILESTONES } from '../../engine/milestones';
 import { rivalTeam } from '../../engine/league';
+import { goalDef as careerGoalDef, goalProgress as careerProgress, ownerLevel } from '../../engine/career';
 import { overall } from '../../engine/players';
 import { esc, euro, signedEuro, sparkline } from '../format';
 import { hint } from '../tooltip';
@@ -24,6 +25,8 @@ export function museumScreen(s: GameState): string {
   const bestPlayer = [...s.players].sort((a, b) => overall(b) - overall(a))[0];
   const veteran = [...s.players].sort((a, b) => b.starts - a.starts)[0];
   const rival = rivalTeam(s);
+  const careerGoal = careerGoalDef(s);
+  const niveau = ownerLevel(s);
   const derbyTotal = s.derbyRecord.won + s.derbyRecord.drawn + s.derbyRecord.lost;
 
   const trophy = (n: number, label: string, icon: string) =>
@@ -33,6 +36,14 @@ export function museumScreen(s: GameState): string {
     <section class="card full museum-head">
       <h2>🏛️ Clubmuseum ${esc(s.clubName)} ${hint('De erelijst van je club: titels, records, mijlpalen en de mensen die er iets van maakten. Alles wordt automatisch bijgehouden.')}</h2>
       <p class="muted small">${seasons ? `${seasons} afgewerkt${seasons === 1 ? ' seizoen' : 'e seizoenen'} sinds ${seasonLabel(s.startYear, 1)}` : 'Het eerste seizoen loopt nog. Hier komt je geschiedenis te staan.'}</p>
+      ${
+        careerGoal
+          ? s.career.achievedSeason !== null
+            ? `<p class="career-banner pos">🎯 <strong>${esc(careerGoal.titel)}</strong> — behaald in seizoen ${s.career.achievedSeason}. ${esc(careerGoal.belofte)}</p>`
+            : `<p class="career-banner">🎯 Op weg naar <strong>${esc(careerGoal.titel)}</strong> — ${esc(careerProgress(s)?.label ?? '')}.</p>`
+          : ''
+      }
+      <p class="muted small">Eigenaar: <strong>${esc(niveau.naam)}</strong> (niveau ${niveau.level}, ${s.owner.points} punten)${niveau.voordeel ? ` · ${esc(niveau.voordeel)}` : ''}</p>
       <div class="trophies">
         ${trophy(titles.length, titles.length === 1 ? 'titel' : 'titels', '🏆')}
         ${trophy(promotions.length + titles.length, 'promoties', '⬆️')}

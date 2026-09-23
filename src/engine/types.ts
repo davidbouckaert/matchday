@@ -529,6 +529,21 @@ export interface Storyline {
   vars: Record<string, string>; // namen en bedragen uit de oorspronkelijke gebeurtenis
 }
 
+/** Je langetermijndoel: de boog waar je hele carrière naartoe werkt. */
+export interface CareerState {
+  goalId: string | null; // het doel dat je koos (zie src/content/careers.ts)
+  chosenSeason: number | null;
+  achievedSeason: number | null; // null zolang het nog niet gelukt is
+  seasonsByLevel: Record<number, number>; // hoeveel seizoenen je in elke reeks speelde
+}
+
+/** Je eigen groei als eigenaar: één laag, vijf niveaus, elk met één voordeel. */
+export interface OwnerState {
+  level: number; // 1-5
+  points: number;
+  lastUnlock: string | null; // wat je het laatst ontgrendelde, voor het weekrapport
+}
+
 /** Een regel in de clubkroniek: wat er in de geschiedenis van de club is blijven hangen. */
 export interface ChronicleEntry {
   season: number;
@@ -596,6 +611,8 @@ export interface GameState {
   lastChoice: { title: string; outcome: string } | null; // wat die beslissing opleverde, voor het weekrapport
   storylines: Storyline[]; // gebeurtenissen die nog kunnen terugkomen
   chronicle: ChronicleEntry[]; // de clubkroniek: wat de moeite is om te onthouden
+  career: CareerState; // je langetermijndoel en hoe ver je staat
+  owner: OwnerState; // je eigen niveau als eigenaar
   world: World; // de andere clubs, met hun eigen budget, ambitie en geschiedenis
   lastWorldMoves: { club: string; move: ClubMove; text: string }[]; // wat de reeks deze zomer deed
   opening: SeasonOpening | null; // de seizoensopening van week 1, tot je je ambitie uitspreekt

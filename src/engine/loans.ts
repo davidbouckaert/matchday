@@ -1,5 +1,6 @@
 import type { GameState, Loan } from './types';
 import { round } from './rng';
+import { loanDiscount } from './career';
 
 export interface LoanOffer {
   key: string;
@@ -53,7 +54,7 @@ const clampScale = (v: number) => Math.min(2.2, Math.max(0.7, v));
 
 export function loanOffers(state: GameState): LoanOffer[] {
   const limit = creditLimit(state);
-  const rate = interestRate(state);
+  const rate = Math.max(0.005, interestRate(state) - loanDiscount(state));
   const scale = loanScale(state);
   const options = [
     { key: 'kort', label: 'Kaskrediet (1 jaar)', principal: 25_000 * scale, weeks: 52, extra: 0.01 },

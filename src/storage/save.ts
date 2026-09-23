@@ -11,6 +11,8 @@ import { emptyStats } from '../engine/stats';
 import { createOpening } from '../engine/opening';
 import { teamsFor } from '../engine/youth';
 import { buildWorld } from '../engine/world';
+import { emptyCareer, emptyOwner, levelFor } from '../engine/career';
+import { DIVISIONS } from '../engine/data/divisions';
 import { MATCH_WEEKS } from '../engine/calendar';
 import { companySector } from '../engine/sponsors';
 import { makeProspect } from '../engine/sponsors';
@@ -91,6 +93,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 20) migrateV20toV21(state);
   if (state.version === 21) migrateV21toV22(state);
   if (state.version === 22) migrateV22toV23(state);
+  if (state.version === 23) migrateV23toV24(state);
   repair(state);
   return state;
 }
@@ -389,6 +392,25 @@ function migrateV22toV23(state: GameState): void {
   state.version = 23;
 }
 
+/** Versie 24: je langetermijndoel en je eigen niveau als eigenaar. */
+function migrateV23toV24(state: GameState): void {
+  state.career ??= emptyCareer();
+  state.owner ??= emptyOwner();
+  // wie al seizoenen achter de rug heeft, begint niet vanaf nul
+  for (const h of state.history ?? []) {
+    const level = DIVISIONS.findIndex((d) => d.name === h.division);
+    if (level >= 0) state.career.seasonsByLevel[level] = (state.career.seasonsByLevel[level] ?? 0) + 1;
+    let points = 1;
+    if (h.result === 'kampioen') points += 5;
+    else if (h.result === 'promotie') points += 3;
+    if (h.profit > 0) points += 2;
+    state.owner.points += points;
+  }
+  state.owner.points += (state.milestones ?? []).length * 2;
+  state.owner.level = levelFor(state.owner.points);
+  state.version = 24;
+}
+
 /**
  * Koppelt de tegenstanders van de lopende competitie aan een club in de wereld. Clubs die
  * nog niet bestaan, worden aangemaakt op het niveau waarop ze spelen; hun huidige sterkte
@@ -443,6 +465,13 @@ function repair(state: GameState): void {
     ['chronicle', []],
     ['lastWorldMoves', []],
   ];
+  if (!s.career || typeof s.career !== 'object') (s as Record<string, unknown>).career = emptyCareer();
+  if (!s.owner || typeof s.owner !== 'object') (s as Record<string, unknown>).owner = emptyOwner();
+  if (state.career) state.career.seasonsByLevel ??= {};
+  if (state.owner) {
+    state.owner.points ??= 0;
+    state.owner.level = levelFor(state.owner.points);
+  }
   for (const [key, value] of fallback) if (s[key] === undefined || s[key] === null) (s as Record<string, unknown>)[key] = value;
   if (state.community) state.community.youthTeams ??= teamsFor(state);
   for (const p of [...(state.players ?? []), ...(state.transferList ?? []), ...(state.loanMarket ?? [])]) {
