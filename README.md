@@ -171,6 +171,12 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 14 (deze versie)
 
+### 0.21.1 — De week begint met wat er op je ligt te wachten
+
+**Het eerste wat een eigenaar doet als hij gaat zitten, is kijken wat er op hem ligt te wachten.** Dat stond in een smal kaartje rechts, onder de cijfers. Het staat nu bovenaan over de volle breedte, vóór alles: "Deze week", met een teller en de regels van dringend naar minder dringend. De beslissing van de week zit erin als eerste regel met de knop erbij, in plaats van in een eigen kaart ernaast — het is de hoofdtaak van de week, geen apart onderwerp. Elke regel zegt er nu bij wat er op het spel staat: dat biedingen na twee weken vervallen, dat je onder de elf spelers forfait geeft, dat wie je niet verlengt gratis vertrekt. Rood blijft voorbehouden aan echte problemen; de gewone weekbeslissing krijgt de clubkleur, anders staat er elke week een rode streep en went ze weg.
+
+**De kopbalk was een etalage.** Vijf kerncijfers, drie clubscores en een datum, netjes naast elkaar — en sinds het dashboard diezelfde cijfers groot toont, stond alles er twee keer. Wat een kopbalk wél moet doen, doet hij nu: zeggen waar in het jaar je staat, en je laten verderspelen. Het nieuwe stuk is de seizoensbalk: de 52 weken in één streep, met elke speeldag als streepje, de winterstop als grijze band, de transferperiodes als groene banden, een merkteken waar jij staat en een rood streepje op de week van de eindstand. Daarmee zie je zonder na te denken of het venster nog open is, hoeveel weken je hebt tot de volgende match en wanneer de rust komt — precies de dingen waar je planning van afhangt. Eronder staat het in woorden: `week 9/52 · speeldag 2/30 · wedstrijd deze week`. Op een telefoon is de kopbalk daarmee ongeveer gehalveerd.
+
 ### 0.21.0 — Een dashboard in plaats van een spreadsheet
 
 **Het probleem.** Alle informatie en alle keuzes voor een leuk spel zaten er al in, maar de manier waarop je ermee omging was chaotisch. Het overzicht was een stapel kaarten in de volgorde waarin ze ooit geschreven waren: clubscore, weekmoment, carrièredoel, seizoensdoelen, volgende wedstrijd, vorige week, aandachtspunten, saldo, logboek, nieuws. Wat je élke week nodig had stond onder wat je één keer per jaar bekeek. Daarbij kwam een groep "Club" met tien subtabs waarin alles belandde dat nergens anders paste.

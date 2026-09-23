@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.21.0';
+export const VERSION = '0.21.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,21 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.21.1',
+    date: '2026-09-23',
+    title: 'De week begint met wat er op je ligt te wachten',
+    items: [
+      '"Deze week" staat nu bovenaan over de volle breedte: het eerste wat je bekijkt, niet een kaartje in de zijkolom',
+      'De beslissing van de week zit erin als eerste regel, met de knop erbij, in plaats van in een aparte kaart',
+      'Elke regel zegt er nu bij wat er op het spel staat: waarom het dringend is, of wanneer het vervalt',
+      'Rood is voor echte problemen; de gewone weekbeslissing krijgt de clubkleur zodat de rode streep iets blijft betekenen',
+      'De kopbalk is herbouwd: de vijf kerncijfers die het dashboard al groot toont staan er niet meer dubbel',
+      'Nieuw in de kopbalk: een seizoensbalk met de 52 weken, elke speeldag als streepje, de winterstop en de transferperiodes als band',
+      'Daarmee zie je in één blik of het venster open is, hoeveel weken tot de volgende match, en wanneer de eindstand valt',
+      'Op een telefoon is de kopbalk ongeveer gehalveerd, zodat je meteen bij je werklijst uitkomt',
+    ],
+  },
   {
     version: '0.21.0',
     date: '2026-09-23',

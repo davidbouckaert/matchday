@@ -987,3 +987,106 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .picker-row select { width: auto; min-width: 240px; flex: 0 1 320px; }
 .warn-note { color: var(--mid); }
 @media (max-width: 700px) { .picker-label { min-width: 0; } .picker-row select { min-width: 0; flex: 1 1 100%; } }
+
+/* ==========================================================================
+   De werklijst: het eerste wat je bekijkt als je gaat zitten.
+   ========================================================================== */
+.attention-bar { padding: var(--s4) var(--s5); }
+.attention-bar h2 { margin-bottom: var(--s3); }
+.attention-bar h2 .tag { font-size: .78rem; padding: 2px 9px; }
+.attention-bar.has-urgent { box-shadow: var(--shadow), inset 4px 0 0 var(--bad); }
+.attention-bar.has-choice { box-shadow: var(--shadow), inset 4px 0 0 var(--accent); }
+.attention-bar.empty { box-shadow: var(--shadow), inset 4px 0 0 var(--good); }
+
+.worklist { list-style: none; padding: 0; display: grid; gap: var(--s1); }
+.worklist li {
+  display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s4); border-radius: var(--radius-sm); background: var(--sunken);
+}
+.worklist li.urgent { background: var(--bad-soft); }
+.worklist li.warn { background: var(--mid-soft); }
+.worklist li .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.worklist li.urgent .dot { background: var(--bad); }
+.worklist li.warn .dot { background: var(--mid); }
+.worklist .what { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.worklist .what strong { font-size: 1rem; font-weight: 650; }
+.worklist .what .sub-line { font-size: .85rem; color: var(--muted); }
+.worklist .go { white-space: nowrap; }
+/* de beslissing van de week weegt het zwaarst en krijgt de enige gevulde knop */
+.worklist li.choice { background: var(--accent-soft); }
+.worklist li.choice .dot { background: var(--accent); }
+.worklist li.choice .what strong { font-size: 1.1rem; }
+@media (max-width: 700px) {
+  .worklist li { grid-template-columns: 10px 1fr; }
+  .worklist .go { grid-column: 2; justify-self: start; }
+}
+
+/* ==========================================================================
+   Kopbalk: identiteit, waar je staat in het jaar, en verderspelen.
+   ========================================================================== */
+.topbar {
+  display: grid; grid-template-columns: auto minmax(220px, 1fr) auto auto;
+  align-items: center; gap: var(--s4) var(--s5); padding: var(--s3) var(--s5);
+}
+.topbar .club {
+  display: flex; align-items: center; gap: var(--s3); background: none; padding: var(--s1) var(--s2);
+  border-radius: var(--radius-sm); text-align: left;
+}
+.topbar .club:hover { background: var(--sunken); }
+.topbar .club-name { display: flex; flex-direction: column; line-height: 1.25; }
+.topbar .club-name strong { font-size: 1.05rem; letter-spacing: -.01em; }
+
+.topbar .when { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.topbar .today {
+  background: none; padding: 0; display: flex; align-items: baseline; gap: var(--s2);
+  text-align: left; line-height: 1.2;
+}
+.topbar .today:hover { background: none; color: var(--accent); }
+.topbar .today strong { font-size: 1rem; font-weight: 650; }
+
+.topbar .head-money { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; }
+.topbar .head-money .big-num { background: none; padding: 0; font-size: 1.35rem; }
+.topbar .head-money .big-num:hover { background: none; color: var(--accent); }
+.topbar .head-money .big-num.neg { color: var(--bad); }
+
+.next-group { display: flex; flex-direction: column; gap: 5px; align-items: stretch; }
+.next-group .next { padding: 10px 20px; font-size: 1rem; }
+.next-group .fast { font-size: .82rem; padding: 6px 12px; }
+
+/* de seizoensbalk */
+.season-strip { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.strip-rail {
+  position: relative; height: 12px; border-radius: 99px; background: var(--sunken);
+  overflow: hidden; cursor: help;
+}
+.strip-rail .band { position: absolute; top: 0; bottom: 0; }
+.strip-rail .band.done { left: 0; background: var(--accent-soft); }
+.strip-rail .band.winter { background: rgba(120, 140, 175, .28); }
+.strip-rail .band.window { background: rgba(20, 102, 61, .16); }
+.strip-rail .tick { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--faint); border-radius: 1px; }
+.strip-rail .tick.played { background: var(--accent); opacity: .55; }
+.strip-rail .end { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--bad); opacity: .7; }
+.strip-rail .here {
+  position: absolute; top: -2px; bottom: -2px; width: 3px; margin-left: -1.5px;
+  background: var(--text); border-radius: 2px; box-shadow: 0 0 0 2px var(--card);
+}
+.strip-legend { display: flex; gap: var(--s3); flex-wrap: wrap; color: var(--muted); align-items: center; }
+.strip-legend strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.tag.winter-tag { background: #dae7f7; color: #1b4a80; }
+
+@media (max-width: 1100px) {
+  .topbar { grid-template-columns: auto 1fr auto; }
+  .topbar .when { grid-column: 1 / -1; grid-row: 2; }
+  .topbar .head-money { margin-left: auto; }
+}
+@media (max-width: 700px) {
+  .topbar { grid-template-columns: 1fr auto; gap: var(--s3); padding: var(--s3); }
+  .topbar .club-name strong { font-size: 1rem; }
+  .topbar .head-money { align-items: flex-end; }
+  .topbar .when { grid-row: 3; }
+  /* op een telefoon naast elkaar: twee volle knoppen onder elkaar eten het halve scherm.
+     Met .topbar ervoor, want er staan oudere .next-group-regels in dit bestand. */
+  .topbar .next-group { grid-column: 1 / -1; grid-row: 2; flex-direction: row; }
+  .topbar .next-group .next { flex: 2 1 0; }
+  .topbar .next-group .fast { flex: 1 1 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}

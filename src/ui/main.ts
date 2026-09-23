@@ -4,13 +4,10 @@ import { createNewGame } from '../engine/newGame';
 import { advanceWeek } from '../engine/turn';
 import * as actions from '../engine/actions';
 import type { ActionResult } from '../engine/actions';
-import { DIVISIONS } from '../engine/data/divisions';
-import {
-  MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, formatDateLong, formatWeek, inWinterBreak, isTransferWindow, seasonLabel, seasonPhase,
-} from '../engine/calendar';
+import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, inWinterBreak } from '../engine/calendar';
 import { indexedDbStore, exportToFile, importFromFile } from '../storage/save';
 import { defaultDraft, setupScreen, type SetupDraft } from './screens/setup';
-import { dashboardScreen, weekSummary } from './screens/dashboard';
+import { dashboardScreen } from './screens/dashboard';
 import { goalsScreen } from './screens/goals';
 import { squadScreen, transfersScreen } from './screens/squad';
 import { staffScreen } from './screens/staff';
@@ -34,17 +31,12 @@ import { momentOverlay } from './screens/moment';
 import { museumScreen } from './screens/museum';
 import { AMBITIONS, chooseAmbition } from '../engine/opening';
 import { answerWeekChoice } from '../engine/weekmoment';
-import { teamStrength } from '../engine/players';
-import { OWN_TEAM_ID, ownPosition } from '../engine/league';
-import { mainSponsor } from '../engine/sponsors';
-import { clubRatings } from '../engine/ratings';
 import { strategyTask } from '../engine/delegation';
 import { financeScreen, subscriptionInfo } from './screens/finance';
 import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from './screens/club';
-import { type CrestShape, clubInitials, crestSvg } from './crest';
-import { START_CLUBS } from '../engine/data/setup';
 import { initTooltips } from './tooltip';
 import { initNumFields } from './numfield';
+import { header } from './header';
 import { esc, euro } from './format';
 
 const SLOT = 'slot1';
@@ -202,15 +194,9 @@ function render(): void {
     root.innerHTML = `<main class="setup-wrap">${setupScreen(ui.draft)}</main>${toast}`;
     return;
   }
-  const division = DIVISIONS[g.league.divisionLevel];
   const gameOver = g.gameOver
     ? `<section class="card attention"><h2>Game over</h2><p>${esc(g.gameOverReason)}</p><p>Je hield het vol tot seizoen ${g.season}, week ${g.week}.</p><button class="primary" data-action="new-game-confirmed">Opnieuw beginnen</button></section>`
     : '';
-  const strength = teamStrength(g);
-  const played = g.league.table.find((r) => r.teamId === OWN_TEAM_ID)?.played ?? 0;
-  const main = mainSponsor(g);
-  const { income, costs } = weekSummary(g.lastWeek);
-  const net = income + costs;
   const group = groupOf(ui.screen);
   const weekLabel = nextWeekLabel(g);
   const gap = lineupGap(g);
@@ -224,52 +210,12 @@ function render(): void {
       : openLines.length
         ? `Je liet plaatsen open in je basiself (${openLines.join(', ')}). Duid bij Ploeg › Selectie zelf iemand aan met de ster, of klik op "Alles loslaten" om je trainer te laten aanvullen.`
         : '';
-  const table = g.league.table.find((r) => r.teamId === OWN_TEAM_ID);
   const fastWeeks = blocked ? 0 : canFastForward(g);
   // onthouden waar de cursor stond: elke wijziging tekent het scherm opnieuw, en wie net
   // een prijs aan het intikken is mag daar niet uit geduwd worden
   const focused = grabFocus();
   root.innerHTML = `
-    <header class="topbar">
-      <div class="club">${crestSvg(g.crest as CrestShape, (START_CLUBS.find((c) => c.id === g.clubId)?.colors ?? ['#1f7a3c', '#ffffff']) as [string, string], clubInitials(g.clubName), 44)}
-        <div class="club-name">
-          <strong>${esc(g.clubName)}</strong>
-          <span class="muted small">${division.name} · ${seasonLabel(g.startYear, g.season)}</span>
-        </div>
-        <button class="rating-chips" data-action="nav" data-id="club" data-tip="Naar je clubinfo">${clubRatings(g)
-          .map(
-            (r) => `<span class="chip" data-tip="${esc(r.label)}: ${r.score}/100 — ${r.parts.map((p) => `${p.label} ${p.score}/100`).join(', ')}">
-              <span class="ic">${r.key === 'sportief' ? '⚽' : r.key === 'financieel' ? '💶' : '🤝'}</span>
-              <span class="stars">${'★'.repeat(r.stars)}<span class="off">${'★'.repeat(5 - r.stars)}</span></span>
-              <span class="score">${r.score}</span></span>`,
-          )
-          .join('')}</button>
-      </div>
-      <button class="today link-stat" data-action="nav" data-id="kalender" data-tip="Naar de kalender"><span class="muted small">Vandaag · seizoen ${g.season}, week ${g.week}</span><strong>${formatDateLong(g.startYear, g.season, g.week)}</strong><span class="small">${inWinterBreak(g.week) ? '<span class="tag big-tag">❄️ winterstop</span>' : seasonPhase(g.week)}${
-        isTransferWindow(g.week) ? ' <span class="tag">transferperiode open</span>' : ''
-      }</span></button>
-      <div class="next-group">
-        <button class="primary next ${weekLabel.highlight ? 'season-end' : ''}" data-action="next-week" ${blocked || g.gameOver || ui.busy ? 'disabled' : ''} data-tip="${
-          blocked ? esc(blocked) : esc(weekLabel.tip)
-        }">${weekLabel.text}</button>
-        <button class="ghost fast" data-action="fast-forward" ${fastWeeks < 2 || ui.busy ? 'disabled' : ''} data-tip="${esc(
-          fastWeeks >= 2
-            ? `Speelt ${fastWeeks} rustige weken achter elkaar en stopt vlak voor de volgende wedstrijd — of eerder, zodra er iets is dat jou nodig heeft.`
-            : blocked
-              ? blocked
-              : fastWeeks === 1
-                ? 'Volgende week wordt er al gespeeld. Gebruik gewoon "Volgende week".'
-                : 'Je speelt deze week een wedstrijd. Die week speel je zelf.',
-        )}">▶▶ Tot de volgende match${fastWeeks >= 2 ? ` <span class="small">(${fastWeeks} weken)</span>` : ''}</button>
-      </div>
-      <div class="stats">
-        <button class="stat link-stat" data-action="nav" data-id="ploeg" data-tip="Naar je selectie"><span class="muted small">Teamsterkte</span><strong>${strength.total}</strong><span class="muted small">A ${strength.attack} · V ${strength.defense}</span></button>
-        <button class="stat link-stat" data-action="nav" data-id="competitie" data-tip="Naar de competitiestand"><span class="muted small">Klassement</span><strong>${played ? `${ownPosition(g.league)}e` : '–'}</strong><span class="muted small">${played ? `${table!.points} ptn uit ${played}` : `start ${formatWeek(g.startYear, g.season, MATCH_WEEKS[0])}`}</span></button>
-        <button class="stat link-stat hide-sm" data-action="nav" data-id="sponsors" data-tip="Naar je sponsors"><span class="muted small">Hoofdsponsor</span><strong class="ellipsis">${main ? esc(main.name) : 'geen'}</strong><span class="muted small">${main ? `${euro(main.weekly)}/week` : 'zoek er een'}</span></button>
-        <button class="stat link-stat" data-action="nav" data-id="financien" data-tip="Naar je financiën"><span class="muted small">Vorige week</span><strong class="${net < 0 ? 'neg' : 'pos'}">${net > 0 ? '+' : ''}${euro(net)}</strong><span class="muted small">in ${euro(income)} · uit ${euro(-costs)}</span></button>
-        <button class="stat cash link-stat ${g.cash < 0 ? 'neg' : ''}" data-action="nav" data-id="financien" data-tip="Naar je financiën"><span class="muted small">Saldo</span><strong>${euro(g.cash)}</strong><span class="muted small">${g.weeksNegative ? `${g.weeksNegative}/8 weken rood` : '&nbsp;'}</span></button>
-      </div>
-    </header>
+    ${header(g, { weekLabel, blocked, fastWeeks, busy: ui.busy })}
     <nav class="tabs">${GROUPS.filter((gr) => gr.id !== 'menu')
       .map((gr) => {
         const warn = gr.id === 'ploeg' && blocked ? '<span class="badge" data-tip="Er is een probleem met je selectie">!</span>' : '';
