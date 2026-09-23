@@ -8,6 +8,7 @@ import type { Rng } from '../engine/rng';
 import { createRng } from '../engine/rng';
 import { CANTEEN_ITEMS } from '../engine/data/catalog';
 import { emptyStats } from '../engine/stats';
+import { overall } from '../engine/players';
 import { createOpening } from '../engine/opening';
 import { teamsFor } from '../engine/youth';
 import { maxYouthFee } from '../engine/actions';
@@ -103,6 +104,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 26) migrateV26toV27(state);
   if (state.version === 27) migrateV27toV28(state);
   if (state.version === 28) migrateV28toV29(state);
+  if (state.version === 29) migrateV29toV30(state);
   repair(state);
   return state;
 }
@@ -317,6 +319,7 @@ function migrateV16toV17(state: GameState): void {
   for (const p of [...state.players, ...state.transferList, ...state.loanMarket]) {
     p.goals ??= 0;
     p.careerGoals ??= 0;
+    p.startQuality ??= overall(p);
   }
   state.version = 17;
 }
@@ -446,6 +449,14 @@ function migrateV28toV29(state: GameState): void {
   state.version = 29;
 }
 
+/** Versie 30: huurspelers kun je verlengen of kopen, en daarvoor telt hun groei mee. */
+function migrateV29toV30(state: GameState): void {
+  for (const p of state.players) p.startQuality ??= overall(p);
+  for (const p of state.loanMarket) p.startQuality ??= overall(p);
+  for (const p of state.transferList ?? []) p.startQuality ??= overall(p);
+  state.version = 30;
+}
+
 function migrateV25toV26(state: GameState): void {
   state.seasonTickets ??= null;
   for (const d of state.sponsors ?? []) d.lockedSeasons ??= 1;
@@ -550,6 +561,7 @@ function repair(state: GameState): void {
   for (const p of [...(state.players ?? []), ...(state.transferList ?? []), ...(state.loanMarket ?? [])]) {
     p.goals ??= 0;
     p.careerGoals ??= 0;
+    p.startQuality ??= overall(p);
   }
   if (!state.world || !Array.isArray(state.world.clubs) || !state.world.clubs.length) {
     const rng = createRng(state);

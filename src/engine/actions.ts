@@ -12,7 +12,7 @@ import {
   canteenDef, concessionDef, merchDef, roleDef, type ClubEventDef,
 } from './data/catalog';
 import { isTransferWindow } from './calendar';
-import { FORMATIONS, currentBid, departureBlock, isCorePlayer, overall, selectLineup, wageDemand } from './players';
+import { FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, selectLineup, wageDemand } from './players';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
 import { emergencyOffer, loanOffers, sponsorWeekly } from './loans';
 import { acceptSponsorOffer } from './sponsors';
@@ -965,6 +965,129 @@ export function loanIn(state: GameState, playerId: string): ActionResult {
   state.players.push(p);
   addNews(state, 'goed', `${p.name} wordt tot het einde van het seizoen gehuurd van ${p.loan.club}.`);
   return ok(`${p.name} gehuurd. Jij betaalt €${p.wage}/week, ${p.loan.club} de rest.`);
+}
+
+/* ---------- Een huurspeler houden: verlengen of kopen ----------
+ *
+ * Een huurcontract loopt af op het einde van het seizoen en dan is hij weg. Wil je hem
+ * houden, dan moet je het vragen aan de club die eigenaar is — en die beslist, niet jij.
+ *
+ * Waar zij naar kijken is precies wat een echte club zou bekijken: hoeveel hij bij jou
+ * gespeeld heeft, of hij er beter van geworden is, en hoeveel je biedt. Dat levert een
+ * spanning op die de moeite waard is om te doorzien. Zet je hem elke week in en groeit hij,
+ * dan zijn ze blij en verlengen ze graag — maar kopen wordt juist duurder, want nu weten
+ * zij ook wat hij waard is. Laat je hem op de bank zitten, dan willen ze hem terug voor een
+ * andere uitleenbeurt, maar verkopen doen ze dan wél makkelijker.
+ */
+
+/** Hoe de eigenaar naar zijn speler bij jou kijkt. */
+export interface LoanStanding {
+  /** Deel van de gespeelde wedstrijden waarin hij in de basis stond (0-1). */
+  speeltijd: number;
+  /** Hoeveel hij erop vooruitging sinds hij bij jou kwam, in kwaliteitspunten. */
+  groei: number;
+  /** Hun tevredenheid over de uitleenbeurt, 0-100. */
+  tevreden: number;
+}
+
+export function loanStanding(state: GameState, p: Player): LoanStanding {
+  const gespeeld = Math.max(1, state.league.table.find((r) => r.teamId === 'club')?.played ?? 0);
+  const speeltijd = clamp(p.starts / gespeeld, 0, 1);
+  const groei = Math.round((p.trend + (overall(p) - p.startQuality)) * 10) / 10;
+  const doelpunten = clamp(p.goals / 8, 0, 1);
+  const tevreden = Math.round(clamp(30 + speeltijd * 45 + groei * 6 + doelpunten * 12, 0, 100));
+  return { speeltijd: Math.round(speeltijd * 100) / 100, groei, tevreden };
+}
+
+/** Wat de eigenaar normaal vraagt om hem nog een seizoen te laten blijven. */
+export function extensionRef(state: GameState, p: Player): number {
+  const basis = marketValue(p, state.marketIndex) * 0.07;
+  const { groei } = loanStanding(state, p);
+  return round(basis * clamp(1 + groei / 12, 0.7, 1.8), 250);
+}
+
+/** Wat de eigenaar normaal vraagt om hem definitief te verkopen. */
+export function purchaseRef(state: GameState, p: Player): number {
+  const { speeltijd, groei } = loanStanding(state, p);
+  // een profclub verkoopt niet graag aan een amateurclub: daar hangt een toeslag aan vast.
+  // Hoe beter hij het bij jou deed, hoe minder graag ze hem kwijt willen.
+  const toeslag = clamp(1.15 + groei / 14 + speeltijd * 0.15, 1.05, 1.9);
+  return round(marketValue(p, state.marketIndex) * toeslag, 500);
+}
+
+/**
+ * De kans dat ze ja zeggen. Dezelfde rekensom die het antwoord een week later maakt, zodat
+ * het scherm niet iets anders kan beweren dan er gebeurt.
+ */
+export function loanRequestChance(state: GameState, p: Player, soort: 'verlengen' | 'kopen', bod: number): number {
+  const { speeltijd, groei } = loanStanding(state, p);
+  const ref = soort === 'verlengen' ? extensionRef(state, p) : purchaseRef(state, p);
+  const bedrag = clamp(bod / Math.max(1, ref), 0, 3);
+  // Een fooi nemen ze niet in behandeling. Zonder dit gaf een bod van één euro op een
+  // speler die toch al op de bank zat nog altijd bijna een op drie kans.
+  const ernst = clamp(bedrag / 0.3, 0, 1);
+  if (soort === 'verlengen') {
+    // Zij willen vooral dat hij speelt en beter wordt; geld is bijzaak — maar niet gratis.
+    // Bied je het gevraagde bedrag en speelde hij veel, dan is het zo goed als rond. Zat hij
+    // op de bank, dan moet je er flink bovenop doen om hen te overtuigen.
+    const spelen = (speeltijd - 0.45) * 0.7;
+    const groeit = clamp(groei / 14, -0.15, 0.2);
+    return clamp((0.15 + bedrag * 0.35 + spelen + groeit) * ernst, 0.01, 0.95);
+  }
+  // Verkopen is een andere zaak: daar telt het geld. Wie bij jou openbloeide houden ze
+  // liever zelf, wie er niet aan te pas kwam laten ze makkelijker gaan.
+  const teGoed = clamp(groei / 20, 0, 0.18);
+  const bank = clamp((0.5 - speeltijd) * 0.4, -0.1, 0.2);
+  return clamp((0.15 + bedrag * 0.5 - teGoed + bank) * ernst, 0.01, 0.92);
+}
+
+/** Mag je het op dit moment vragen? */
+export function loanRequestBlock(state: GameState, p: Player | undefined, soort: 'verlengen' | 'kopen'): string | null {
+  if (!p) return 'Die speler staat niet in je kern.';
+  if (p.loan?.type !== 'in') return `${p.name} is geen huurspeler.`;
+  if (state.week < LOAN_TALK_WEEK) return `Over een huurspeler praat je pas in de terugronde, vanaf week ${LOAN_TALK_WEEK}.`;
+  if (state.requests.some((r) => r.targetId === p.id)) return `Je wacht nog op het antwoord van ${p.loan.club}.`;
+  if (p.loanTalks?.season === state.season && (p.loanTalks.weeksLeft ?? 0) > 0) {
+    return `${p.loan.club} wil er nog ${weeks(p.loanTalks.weeksLeft)} niet op terugkomen.`;
+  }
+  if (soort === 'kopen' && p.loanTalks?.bought) return `${p.name} is al van jou.`;
+  return null;
+}
+
+export const LOAN_TALK_WEEK = 26;
+
+function loanRequest(state: GameState, playerId: string, soort: 'verlengen' | 'kopen', bod: number): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const p = state.players.find((x) => x.id === playerId);
+  const blok = loanRequestBlock(state, p, soort);
+  if (blok) return fail(blok);
+  if (!Number.isFinite(bod) || bod < 0) return fail('Vul in wat je wil bieden.');
+  const bedrag = Math.round(bod);
+  if (state.cash < bedrag) return fail(tooExpensive(state, bedrag, soort === 'kopen' ? `${p!.name} kopen` : `De huur van ${p!.name} verlengen`));
+  const club = p!.loan!.club;
+  state.requests.push({
+    id: nextId(state, 'rq'),
+    kind: soort === 'verlengen' ? 'huur-verlengen' : 'huur-kopen',
+    targetId: p!.id,
+    label: soort === 'verlengen' ? `Verlenging gevraagd voor ${p!.name}` : `Bod uitgebracht op ${p!.name}`,
+    weeksLeft: 1,
+    amount: bedrag,
+  });
+  addLog(state, 'beslissing', soort === 'verlengen'
+    ? `${club} gevraagd of ${p!.name} nog een seizoen mag blijven, voor €${bedrag.toLocaleString('nl-BE')}.`
+    : `Bod van €${bedrag.toLocaleString('nl-BE')} uitgebracht op ${p!.name} bij ${club}.`);
+  return ok(`${club} bekijkt je vraag. Je hoort het volgende week.`);
+}
+
+/** De huur met een seizoen verlengen. */
+export function extendLoan(state: GameState, playerId: string, bod: number): ActionResult {
+  return loanRequest(state, playerId, 'verlengen', bod);
+}
+
+/** Hem definitief kopen. */
+export function buyLoanPlayer(state: GameState, playerId: string, bod: number): ActionResult {
+  return loanRequest(state, playerId, 'kopen', bod);
 }
 
 // ---------- Clubwinkel (merchandising) ----------

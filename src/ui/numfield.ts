@@ -37,6 +37,8 @@ export interface NumFieldOpts {
   slider?: boolean;
   /** Extra classes op de buitenste doos. */
   extra?: string;
+  /** Laat iets anders op het scherm meerekenen terwijl je typt (zie data-live in main.ts). */
+  live?: string;
 }
 
 /**
@@ -78,7 +80,7 @@ export function numField(o: NumFieldOpts): string {
         ${o.prefix ? `<span class="affix pre">${esc(o.prefix)}</span>` : ''}
         <input id="${id}" type="text" inputmode="decimal" class="numinput" size="${chars}"
           value="${o.value.toFixed(dec)}" data-step="${step}" data-dec="${dec}"${bounds}
-          ${o.change ? `data-change="${esc(o.change)}"` : ''}${row} aria-label="${esc(o.label)}"/>
+          ${o.change ? `data-change="${esc(o.change)}"` : ''}${o.live ? ` data-live="${esc(o.live)}"` : ''}${row} aria-label="${esc(o.label)}"/>
         ${o.suffix ? `<span class="affix post">${esc(o.suffix)}</span>` : ''}
       </span>
       ${btn(1)}

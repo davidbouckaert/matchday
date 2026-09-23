@@ -714,10 +714,15 @@ function newSeason(state: GameState, rng: Rng): void {
   state.inflation = Math.round(state.inflation * 1.07 * 1000) / 1000;
   rolloverStats(state);
 
-  // huurlingen keren terug naar hun club, uitgeleende spelers komen terug
-  const hired = state.players.filter((p) => p.loan?.type === 'in');
+  // Huurlingen keren terug naar hun club — behalve wie je mocht houden.
+  //
+  // Dit stuurde elke huurspeler weg, ook als de club akkoord was gegaan met nog een seizoen.
+  // De verlenging was dan een lege afspraak: je betaalde ervoor en hij vertrok toch.
+  const hired = state.players.filter((p) => p.loan?.type === 'in' && p.loan.untilSeason < state.season);
   if (hired.length) addNews(state, 'neutraal', `Huurspelers keren terug naar hun club: ${hired.map((p) => `${p.name} (${p.loan!.club})`).join(', ')}.`);
-  state.players = state.players.filter((p) => p.loan?.type !== 'in');
+  state.players = state.players.filter((p) => !(p.loan?.type === 'in' && p.loan.untilSeason < state.season));
+  const blijvers = state.players.filter((p) => p.loan?.type === 'in');
+  if (blijvers.length) addNews(state, 'goed', `Blijven nog een seizoen op huurbasis: ${blijvers.map((p) => `${p.name} (${p.loan!.club})`).join(', ')}.`);
   const back = state.players.filter((p) => p.loan?.type === 'uit');
   for (const p of back) p.loan = null;
   if (back.length) addNews(state, 'neutraal', `Terug van uitleenbeurt: ${back.map((p) => p.name).join(', ')}.`);

@@ -349,6 +349,79 @@ function nextWindowStart(s: GameState): number {
   return 1;
 }
 
+/**
+ * Je huurspelers houden.
+ *
+ * Een huurcontract loopt af op het einde van het seizoen. Wil je hem houden, dan moet je het
+ * vragen aan de club die eigenaar is — en zíj beslissen. Daarom staat bij elk bedrag meteen
+ * hoe groot de kans is dat ze ja zeggen, en die kans beweegt mee terwijl je aan het bedrag
+ * draait. Het is dezelfde rekensom die een week later het antwoord maakt.
+ */
+export function loanKeepCard(s: GameState): string {
+  const gehuurd = s.players.filter((p) => p.loan?.type === 'in');
+  if (!gehuurd.length) return '';
+  const vroeg = s.week < actions.LOAN_TALK_WEEK;
+
+  const blokken = gehuurd
+    .map((p) => {
+      const stand = actions.loanStanding(s, p);
+      const optie = (soort: 'verlengen' | 'kopen', ref: number, uitleg: string, knop: string) => {
+        const rem = actions.loanRequestBlock(s, p, soort);
+        const kans = actions.loanRequestChance(s, p, soort, ref);
+        return `<div class="lk-opt">
+          <span class="cap">${soort === 'verlengen' ? 'Nog een seizoen huren' : 'Definitief kopen'}</span>
+          <p class="muted tiny">${uitleg}</p>
+          ${numField({
+            value: ref,
+            min: 0,
+            max: Math.max(1000, ref * 4),
+            step: soort === 'verlengen' ? 250 : 500,
+            prefix: '\u20ac',
+            inputId: `huur-${soort}-${p.id}`,
+            live: 'huur',
+            label: `Bod om ${p.name} te ${soort}`,
+          })}
+          <span class="lk-kans" id="kans-${soort}-${p.id}" ${tipAttr(
+            `De kans dat ${p.loan!.club} ja zegt op dit bedrag. Meer bieden helpt altijd. Wat verder meetelt: hoeveel hij bij jou speelt (${Math.round(
+              stand.speeltijd * 100,
+            )}% van de wedstrijden) en hoeveel hij erop vooruitging (${stand.groei >= 0 ? '+' : ''}${stand.groei}). Speelt hij veel, dan verlengen ze graag maar verkopen ze hem niet graag; zit hij op de bank, dan is het net omgekeerd.`,
+            'Kans op ja',
+          )}>${Math.round(kans * 100)}% kans</span>
+          <button class="sm primary" data-action="loan-${soort === 'verlengen' ? 'extend' : 'buy'}" data-id="${p.id}"${
+            rem ? ` disabled data-tip="${esc(rem)}"` : ''
+          }>${knop}</button>
+        </div>`;
+      };
+
+      return `<div class="loan-keep">
+        <div class="lk-head">
+          <strong>${esc(p.name)}</strong>
+          <span class="muted small">${overall(p)} \u00b7 ${p.age} jaar \u00b7 gehuurd van ${esc(p.loan!.club)}</span>
+        </div>
+        <p class="lk-stand small">${count(p.starts, 'basisplaats', 'basisplaatsen')} \u00b7 ${count(p.goals, 'doelpunt', 'doelpunten')} \u00b7 ${
+          stand.groei >= 0 ? 'gegroeid' : 'gezakt'
+        } ${stand.groei >= 0 ? '+' : ''}${stand.groei} sinds hij kwam \u00b7 ${esc(p.loan!.club)} is ${
+          stand.tevreden >= 70 ? 'tevreden' : stand.tevreden >= 45 ? 'redelijk tevreden' : 'niet tevreden'
+        } (${stand.tevreden}/100)</p>
+        <div class="lk-cols">
+          ${optie('verlengen', actions.extensionRef(s, p), 'Hij blijft nog een seizoen. Ze willen vooral dat hij speelt en beter wordt.', 'Verlenging vragen')}
+          ${optie('kopen', actions.purchaseRef(s, p), 'Hij wordt van jou en tekent een contract. Een profclub verkoopt niet graag aan een amateurclub.', 'Bod uitbrengen')}
+        </div>
+      </div>`;
+    })
+    .join('');
+
+  return `<section class="card">
+    <h2>Je huurspelers <span class="tag">${gehuurd.length}</span></h2>
+    <p class="muted small">${
+      vroeg
+        ? `Een huurspeler keert op het einde van het seizoen terug naar zijn club. Vanaf week ${actions.LOAN_TALK_WEEK} kun je vragen of hij mag blijven, of hem proberen te kopen.`
+        : 'Zij beslissen, niet jij. Hoeveel hij speelt, hoeveel hij erop vooruitging en wat je biedt, bepalen samen of het ja of nee wordt. Zeggen ze nee, dan kun je het vier weken later opnieuw proberen.'
+    }</p>
+    ${blokken}
+  </section>`;
+}
+
 export function transfersScreen(s: GameState): string {
   const window = isTransferWindow(s.week);
   const scout = delegate(s, 'transfers');
@@ -431,6 +504,7 @@ export function transfersScreen(s: GameState): string {
     }</p>
   </section>
   ${offers ? `<section class="card attention"><h2>Biedingen op je spelers (${s.playerOffers.length})</h2><ul class="offers">${offers}</ul></section>` : ''}
+  ${loanKeepCard(s)}
   <section class="card">
     <h2>Transfermarkt: kopen</h2>
     <p class="muted small">${window ? 'De transferperiode is open. Elke week verdwijnen er spelers en komen er nieuwe bij.' : 'De transferperiode is gesloten. Je kunt al rondkijken; kopen, verkopen en huren kan van mei tot eind augustus en in januari.'}

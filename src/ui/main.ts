@@ -459,6 +459,33 @@ root.addEventListener('toggle', (e) => {
   if (el?.tagName === 'DETAILS' && el.dataset.table) ui.openTables[el.dataset.table] = el.open;
 }, true);
 
+/** Wat je in het veld typt, staat in het veld — niet in de spelstand. */
+function bodVoor(soort: 'verlengen' | 'kopen', playerId: string): number {
+  const veld = document.getElementById(`huur-${soort}-${playerId}`) as HTMLInputElement | null;
+  return Number(String(veld?.value ?? '0').replace(',', '.'));
+}
+
+/**
+ * De kans dat de eigenaar ja zegt, rekent mee terwijl je aan het bedrag draait.
+ *
+ * Anders zie je pas na het klikken wat je bod waard was, en dat is precies het moment waarop
+ * je het niet meer kunt veranderen.
+ */
+function updateLoanChances(): void {
+  const g = ui.game;
+  if (!g) return;
+  for (const el of root.querySelectorAll<HTMLElement>('.lk-kans')) {
+    const [, soort, ...rest] = el.id.split('-');
+    const playerId = rest.join('-');
+    const speler = g.players.find((p) => p.id === playerId);
+    if (!speler || (soort !== 'verlengen' && soort !== 'kopen')) continue;
+    const kans = actions.loanRequestChance(g, speler, soort, bodVoor(soort, playerId));
+    el.textContent = `${Math.round(kans * 100)}% kans`;
+    el.classList.toggle('good', kans >= 0.6);
+    el.classList.toggle('bad', kans < 0.25);
+  }
+}
+
 /** De abonnementenschuifregelaar rekent live mee terwijl je sleept. */
 function updateSubsInfo(): void {
   const g = ui.game;
@@ -472,6 +499,7 @@ root.addEventListener('input', (e) => {
   const live = (e.target as HTMLElement).dataset?.live;
   if (live === 'tribune') updateTribuneInfo();
   if (live === 'subs') updateSubsInfo();
+  if (live === 'huur') updateLoanChances();
 });
 
 // ---------- Een week spelen ----------
@@ -731,6 +759,8 @@ const handlers: Record<string, Handler> = {
   'remove-merch-item': gameAction((g, id) => actions.removeMerchItem(g, id as Parameters<typeof actions.removeMerchItem>[1])),
   'loan-out': gameAction(actions.loanOut),
   'loan-in': gameAction(actions.loanIn),
+  'loan-extend': gameAction((g, id) => actions.extendLoan(g, id, bodVoor('verlengen', id))),
+  'loan-buy': gameAction((g, id) => actions.buyLoanPlayer(g, id, bodVoor('kopen', id))),
   loan: gameAction(actions.takeLoan),
   repay: gameAction(actions.repayLoan),
   'accept-sponsor': gameAction(actions.acceptSponsor),

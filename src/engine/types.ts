@@ -39,6 +39,10 @@ export interface Player {
   askingPrice: number; // vraagprijs als hij te koop staat
   loan: PlayerLoan | null;
   friends: string[]; // ids van spelers met wie hij goed samenwerkt
+  /** Gesprekken met de club die hem uitleent: wanneer en met welk gevolg. */
+  loanTalks?: { season: number; weeksLeft: number; bought?: boolean };
+  /** Zijn kwaliteit toen hij bij de club kwam, om zijn groei te kunnen tonen. */
+  startQuality: number;
   purchasePrice: number; // wat de club betaalde (0 = eigen kern of transfervrij)
   bidFactor: number; // huidige marktstemming voor deze speler (0.7-1.3)
   isYouth: boolean; // uit eigen jeugd
@@ -358,10 +362,12 @@ export interface WeekStats {
 /** Een vraag die je stelde en waarop je volgende week antwoord krijgt. */
 export interface PendingRequest {
   id: string;
-  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract' | 'lening';
+  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract' | 'lening' | 'huur-verlengen' | 'huur-kopen';
   targetId: string;
   label: string;
   weeksLeft: number;
+  /** Het bedrag dat je bood (bij een vraag over een huurspeler). */
+  amount?: number;
   payload?: { key: string; principal: number; annualRate: number; weeklyPayment: number; weeks: number };
 }
 

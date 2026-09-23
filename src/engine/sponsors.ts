@@ -1,15 +1,16 @@
-import type { ActionResult, GameState, SponsorDeal, SponsorProspect } from './types';
+import type { ActionResult, GameState, PendingRequest, SponsorDeal, SponsorProspect } from './types';
 import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
 import { SECTORS, SPONSOR_COMPANIES, sectorKind } from './data/names';
 import { staffSkill } from './staff';
+import { wageDemand } from './players';
 import { product, sponsorFactors } from './factors';
 import { ownPosition } from './league';
 import { popularity } from './popularity';
 import { addLog, addNews, book, nextId } from './util';
 import { remember } from './content';
 import { creditLimit } from './loans';
-import { grantLoan, tooExpensive } from './actions';
+import { grantLoan, loanRequestChance, loanStanding, tooExpensive } from './actions';
 import { sponsorBonus } from './career';
 
 type Kind = SponsorDeal['kind'];
@@ -565,6 +566,10 @@ export function resolveRequests(state: GameState, rng: Rng): void {
       }
       continue;
     }
+    if (r.kind === 'huur-verlengen' || r.kind === 'huur-kopen') {
+      resolveLoanRequest(state, rng, r);
+      continue;
+    }
     if (r.kind !== 'sponsor-extra') continue;
     const d = state.sponsors.find((x) => x.id === r.targetId);
     if (!d) continue;
@@ -722,4 +727,62 @@ export function sponsorsAfterSeason(state: GameState, rng: Rng, result: 'kampioe
 
 function euroText(n: number): string {
   return `€${Math.round(n).toLocaleString('nl-BE')}`;
+}
+
+/**
+ * Het antwoord van de club die je huurspeler uitleent.
+ *
+ * Zij beslissen, niet jij: ze wegen hoeveel hij gespeeld heeft, of hij erop vooruitging en
+ * wat je biedt. De kans die het scherm toonde toen je de vraag stelde, is exact deze.
+ */
+function resolveLoanRequest(state: GameState, rng: Rng, r: PendingRequest): void {
+  const p = state.players.find((x) => x.id === r.targetId);
+  if (!p || p.loan?.type !== 'in') return;
+  const club = p.loan.club;
+  const verlengen = r.kind === 'huur-verlengen';
+  const bod = r.amount ?? 0;
+  const kans = loanRequestChance(state, p, verlengen ? 'verlengen' : 'kopen', bod);
+  const stand = loanStanding(state, p);
+
+  if (!rng.chance(kans)) {
+    // vier weken niet meer over beginnen: ze hebben hun standpunt gegeven
+    p.loanTalks = { season: state.season, weeksLeft: 4, bought: p.loanTalks?.bought };
+    const reden = verlengen
+      ? stand.speeltijd < 0.4
+        ? `hij speelt bij jou te weinig; ze zoeken een club waar hij wél aan spelen toekomt`
+        : `ze vinden €${bod.toLocaleString('nl-BE')} te weinig voor nog een seizoen`
+      : stand.groei > 2
+        ? `hij is bij jou zo gegroeid dat ze hem liever zelf houden`
+        : `ze vinden €${bod.toLocaleString('nl-BE')} te weinig`;
+    addNews(state, 'slecht', `${club} zegt nee: ${reden}. Over vier weken kun je het opnieuw proberen.`);
+    addLog(state, 'antwoord', `${club} wijst je vraag over ${p.name} af.`);
+    return;
+  }
+
+  if (state.cash < bod) {
+    addNews(state, 'slecht', `${club} ging akkoord voor ${p.name}, maar je hebt €${bod.toLocaleString('nl-BE')} niet meer op de rekening. De afspraak gaat niet door.`);
+    p.loanTalks = { season: state.season, weeksLeft: 4, bought: p.loanTalks?.bought };
+    return;
+  }
+
+  if (verlengen) {
+    book(state, 'transfers', -bod, `Huur verlengd: ${p.name}`);
+    p.loan = { ...p.loan, untilSeason: state.season + 1 };
+    p.contractUntil = state.season + 1;
+    p.loanTalks = { season: state.season, weeksLeft: 0, bought: p.loanTalks?.bought };
+    addNews(state, 'goed', `${club} gaat akkoord: ${p.name} blijft nog een seizoen bij je club.`);
+    addLog(state, 'antwoord', `${club} verlengt de huur van ${p.name} voor €${bod.toLocaleString('nl-BE')}.`);
+    return;
+  }
+
+  book(state, 'transfers', -bod, `Aankoop ${p.name} van ${club}`);
+  p.loan = null;
+  p.purchasePrice = bod;
+  p.contractUntil = state.season + 2;
+  p.wage = round(wageDemand(p), 5);
+  p.loanTalks = { season: state.season, weeksLeft: 0, bought: true };
+  p.morale = clamp(p.morale + 8, 0, 100);
+  addNews(state, 'goed', `${p.name} is definitief van jou: ${club} verkoopt hem voor €${bod.toLocaleString('nl-BE')}. Hij tekent voor twee seizoenen aan €${p.wage} per week.`);
+  addLog(state, 'antwoord', `${p.name} gekocht van ${club} voor €${bod.toLocaleString('nl-BE')}.`);
+  remember(state, `${p.name} kwam als huurspeler en bleef: je kocht hem van ${club}.`);
 }

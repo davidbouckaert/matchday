@@ -53,6 +53,14 @@ function faq(): QA[] {
       a: 'Sommige functies hebben eerst infrastructuur of een werking nodig: een kinesist een recuperatieruimte, een data-analist wifi, een kantineverantwoordelijke een kantine van niveau 2, een jeugdcoördinator minstens 3 jeugdploegen. Je ziet de reden bij de kandidaat.',
     },
     {
+      q: 'Kan ik een huurspeler houden?',
+      a: `Ja, maar zij beslissen. Vanaf week 26 staat bij Ploeg › Transfers een blok "Je huurspelers" met twee mogelijkheden: nog een seizoen huren, of hem definitief kopen.
+        Jij vult in wat je biedt en ziet meteen hoe groot de kans is dat ze ja zeggen; die kans beweegt mee terwijl je aan het bedrag draait. Waar ze naar kijken: hoeveel hij bij jou
+        speelde, hoeveel hij erop vooruitging, en je bod. Dat werkt twee kanten op. Liet je hem elke week spelen en werd hij beter, dan verlengen ze graag — maar verkopen doen ze dan
+        juist niet graag, en duur. Zat hij op de bank, dan willen ze hem terug voor een andere uitleenbeurt, maar kopen lukt dan veel makkelijker. Je hoort het antwoord een week later.
+        Zeggen ze nee, dan kun je het vier weken later opnieuw proberen, met een ander bedrag.`,
+    },
+    {
       q: 'Hoeveel mag ik voor een sponsorplaats vragen?',
       a: `Dat beslis jij, op je prijskaart bij Geld › Sponsors. Bij elke plaats staat wat gangbaar is bij een club als de jouwe, en zet je er een ander bedrag in,
         dan zie je meteen wat bedrijven ervan vinden. Vraag je minder, dan tekenen er meer maar brengt elk contract minder op; vraag je meer, dan is het net omgekeerd.

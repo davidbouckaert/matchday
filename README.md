@@ -171,6 +171,28 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.34.0 — Een huurspeler die je wil houden
+
+**Een huurcontract liep af en dan was hij weg, punt.** Je haalde een jonge speler van een profclub, liet hem een seizoen groeien in je ploeg, en in week 52 stond hij weer op de bus. Nu kun je erover praten — maar zíj beslissen, niet jij.
+
+Vanaf week 26 staat er bij Ploeg › Transfers een blok met je huurspelers en twee mogelijkheden per speler: nog een seizoen huren, of hem definitief kopen. Jij vult in wat je biedt en ziet meteen hoe groot de kans is dat ze ja zeggen — en die kans beweegt mee terwijl je aan het bedrag draait, want anders weet je pas ná het klikken wat je bod waard was. Het is exact dezelfde rekensom die een week later het antwoord maakt.
+
+**Wat zij bekijken, werkt twee kanten op.** Hoeveel hij bij jou speelde, hoeveel hij erop vooruitging, en je bod. Gemeten bij een huurspeler van 22 die een half seizoen achter de rug heeft:
+
+| | speelde 18 van de 20, gegroeid +4 | zat op de bank, 2 van de 20 |
+|---|---|---|
+| wat ze vragen om te verlengen | €1.000 | €750 |
+| kans bij dat bedrag | 95% | 26% |
+| kans als je het dubbele biedt | 95% | 61% |
+| wat ze vragen om hem te verkopen | €16.500 | €12.000 |
+| kans bij dat bedrag | 37% | 81% |
+
+Liet je hem elke week spelen en werd hij beter, dan verlengen ze graag — hij ontwikkelt zich precies zoals ze hoopten — maar verkopen doen ze dan juist niet graag, en duur, want nu weten zij ook wat hij waard is. Zat hij op de bank, dan willen ze hem terug voor een uitleenbeurt die wél iets oplevert, maar kopen lukt dan een stuk makkelijker. Een fooi nemen ze niet in behandeling: een bod van één euro gaf in de eerste versie nog 31% kans, nu 1%. Zeggen ze nee, dan hoor je waarom en kun je het vier weken later opnieuw proberen.
+
+**Eén fout kwam meteen boven.** Het seizoenseinde stuurde élke huurspeler terug naar zijn club, ook wie je net had mogen houden. De verlenging was dus een lege afspraak: je betaalde ervoor en hij vertrok toch. Nu keert alleen terug wie zijn huur echt zag aflopen, en wie blijft krijgt een eigen bericht.
+
+Elke speler houdt voortaan bij op welk niveau hij binnenkwam, zodat zijn groei meetbaar is — ook in oude opgeslagen spellen, die dat cijfer bij het inladen krijgen.
+
 ### 0.33.1 — Nu vergelijk je appels met appels
 
 **Het scherm liet je twee verschillende dingen vergelijken.** In het scoutingrapport stond hun sterkte op papier, en daarnaast jouw totaal — maar jouw totaal draagt al je blessures, je moraal, je vorm, je chemie en je spelplan in zich, en dat van hen niets. Keek je naar die twee cijfers en zag je "gelijkaardig of zelfs lager", dan klopte dat gevoel: je las een cijfer dat niets met het andere te maken had. Er staat nu hun échte sterkte van zondag — precies het getal waarmee de motor de wedstrijd berekent — met hun papieren cijfer en de tik van het seizoen erbij.

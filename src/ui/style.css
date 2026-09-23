@@ -1640,3 +1640,17 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .pc-acts > .pc-btn.sell { width: 100%; }
 .pc-acts .pc-btn.sell { color: var(--good); }
 .pc-acts .pc-btn.sell:hover { background: var(--good-soft); color: var(--good); box-shadow: inset 0 0 0 1px var(--good-soft); }
+
+/* Een huurspeler houden: verlengen of kopen, allebei met het bedrag en de kans erbij. */
+.loan-keep { background: var(--sunken); border-radius: var(--radius-sm); padding: var(--s3); margin-top: var(--s3); }
+.loan-keep .lk-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s3); }
+.loan-keep .lk-stand { margin: 4px 0 var(--s2); color: var(--muted); }
+.loan-keep .lk-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--s3); }
+.lk-opt { background: var(--card); border-radius: var(--radius-sm); padding: var(--s2) var(--s3); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.lk-opt .cap { font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.lk-opt p { margin: 0; }
+.lk-opt .numfield { width: 100%; }
+.lk-opt button { align-self: stretch; }
+.lk-kans { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); cursor: help; }
+.lk-kans.good { color: var(--good); }
+.lk-kans.bad { color: var(--bad); }

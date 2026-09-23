@@ -98,7 +98,9 @@ export function generatePlayer(state: GameState, rng: Rng, opts: PlayerOptions):
     purchasePrice: 0,
     bidFactor: rng.range(0.85, 1.15),
     isYouth: opts.isYouth ?? false,
+    startQuality: 0,
   };
+  player.startQuality = overall(player); // waar hij stond toen hij binnenkwam
   player.wage = opts.isYouth ? 40 : wageDemand(player);
   return player;
 }

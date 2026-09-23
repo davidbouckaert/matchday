@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.33.1';
+export const VERSION = '0.34.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,22 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.34.0',
+    date: '2026-09-23',
+    title: 'Een huurspeler die je wil houden',
+    items: [
+      'Nieuw bij Ploeg › Transfers: vraag de eigenaar of je huurspeler nog een seizoen mag blijven, of breng een bod uit om hem te kopen',
+      'Jij vult het bedrag in, zij beslissen — en je ziet meteen hoe groot de kans is dat ze ja zeggen',
+      'Die kans beweegt mee terwijl je aan het bedrag draait, en het is exact de rekensom die een week later het antwoord maakt',
+      'Zij kijken naar hoeveel hij bij jou speelde, hoeveel hij erop vooruitging en wat je biedt',
+      'Speelde hij veel, dan verlengen ze graag maar verkopen ze hem duur; zat hij op de bank, dan is het net omgekeerd',
+      'Een fooi nemen ze niet in behandeling, en zeggen ze nee, dan kun je het vier weken later opnieuw proberen',
+      'Praten kan vanaf week 26, als het einde van het huurcontract in zicht komt',
+      'Balansfout: het seizoenseinde stuurde élke huurspeler terug, ook wie je net mocht houden — die verlenging was dus een lege afspraak',
+      'Elke speler houdt nu bij op welk niveau hij binnenkwam, zodat je zijn groei kunt zien',
+    ],
+  },
   {
     version: '0.33.1',
     date: '2026-09-23',
