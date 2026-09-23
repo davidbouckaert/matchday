@@ -6,6 +6,8 @@ import { weeks } from '../../engine/util';
 import { AWAY_SHARE, expectedAttendance } from '../../engine/finance';
 import { spendPerHeadCanteen } from '../../engine/canteen';
 import { esc, euro, signedEuro } from '../format';
+import { forecast, topLines } from '../../engine/forecast';
+import { hint } from '../tooltip';
 
 function groupByCategory(entries: LedgerEntry[]): [LedgerCategory, number][] {
   const map = new Map<LedgerCategory, number>();
@@ -82,6 +84,54 @@ function weekTable(records: WeekRecord[]): string {
     </tbody></table></div>`;
 }
 
+
+/**
+ * Wat er de komende weken staat aan te komen. Alleen wat nu al vastligt of goed te ramen is:
+ * lonen, onderhoud, sponsorcontracten, aflossingen, de vaste momenten in het jaar en per
+ * wedstrijd een schatting van de kassa en de kantine.
+ */
+function forecastCard(s: GameState): string {
+  const f = forecast(s);
+  if (!f.weeks.length) {
+    return `<section class="card">
+      <h2>Wat komt eraan</h2>
+      <p class="muted">Het seizoen loopt op zijn einde; vanaf het nieuwe seizoen verandert er te veel om vooruit te rekenen.</p>
+    </section>`;
+  }
+  const worst = f.lowest;
+  return `<section class="card forecast">
+    <h2>Wat komt eraan ${hint('Een vooruitblik van maximaal acht weken op basis van wat nu vastligt: lonen, onderhoud, sponsorcontracten, aflossingen en de vaste momenten in het jaar. Wedstrijdinkomsten zijn een raming bij gewoon weer — die staan met een ± erbij.')}</h2>
+    <p class="muted small">Over ${f.weeks.length} ${f.weeks.length === 1 ? 'week' : 'weken'}: <strong class="${f.net < 0 ? 'neg' : 'pos'}">${signedEuro(f.net)}</strong>.
+      Laagste punt: ${euro(worst.balance)} in week ${worst.week}.</p>
+    ${
+      f.trouble
+        ? `<p class="warn"><strong>Let op:</strong> met wat er nu vastligt duik je in week ${f.trouble.week} onder nul. Zoek inkomsten of schuif een uitgave op.</p>`
+        : ''
+    }
+    <div class="table-wrap"><table class="compact forecast-table">
+      <thead><tr>
+        <th>Week</th><th></th>
+        <th class="num">In</th><th class="num">Uit</th><th class="num">Saldo week</th><th class="num">Kas erna</th>
+      </tr></thead>
+      <tbody>${f.weeks
+        .map(
+          (w) => `<tr class="${w.balance < 0 ? 'danger' : ''}">
+            <td>W${w.week}</td>
+            <td>${w.match ? `<span class="venue ${w.match === 'thuis' ? 'home' : 'away'}">${w.match === 'thuis' ? '🏠' : '🚌'}</span> ${esc(w.opponent)}` : '<span class="muted small">vrij</span>'}</td>
+            <td class="num pos">${w.income ? euro(w.income) : '–'}</td>
+            <td class="num neg">${w.costs ? euro(-w.costs) : '–'}</td>
+            <td class="num ${w.net < 0 ? 'neg' : 'pos'}">${signedEuro(w.net)}</td>
+            <td class="num"><strong class="${w.balance < 0 ? 'neg' : ''}">${euro(w.balance)}</strong></td>
+          </tr>
+          <tr class="forecast-detail"><td></td><td colspan="5" class="small muted">${topLines(w, 5)
+            .map((l) => `<span class="fc-line ${l.amount < 0 ? 'neg' : 'pos'}">${esc(l.label)}${l.estimate ? ' ±' : ''} ${signedEuro(l.amount)}</span>`)
+            .join(' · ')}</td></tr>`,
+        )
+        .join('')}</tbody>
+    </table></div>
+  </section>`;
+}
+
 export function financeScreen(s: GameState): string {
   const division = DIVISIONS[s.league.divisionLevel];
   const lastWeek = groupByCategory(s.lastWeek);
@@ -91,7 +141,8 @@ export function financeScreen(s: GameState): string {
   const offers = loanOffers(s);
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
-  return `<section class="card">
+  return `${forecastCard(s)}
+  <section class="card">
     <h2>Operationeel per week</h2>
     <p class="muted small">Inkomsten en uitgaven uit de werking van de club, zonder leningen, investeringen, infrastructuur en transfers. Beweeg over een staaf voor de cijfers. Tabel: laatste 12 weken.</p>
     ${weekChart(s.weekHistory.slice(-26))}
