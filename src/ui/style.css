@@ -967,7 +967,10 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .pos-tag { display: inline-block; min-width: 40px; font-size: 0.72rem; color: var(--muted); }
 
 /* ---------- Tribune bouwen ---------- */
-.tribune-builder { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; background: var(--accent-soft); }
+/* geen accentkleur meer: die betekent elders "geselecteerd", en sinds de tribune tussen
+   de andere projectkaarten staat (0.68.0) suggereerde de groene tint een staat die er
+   niet is. Ze is nu gewoon een kaart als de rest. */
+.tribune-builder { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; background: var(--card); }
 .tribune-builder h3 { margin-top: 0; }
 .slider-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 .slider-row input[type='range'] { flex: 1 1 260px; accent-color: var(--accent); height: 28px; }
