@@ -496,7 +496,7 @@ export interface MatchReport {
    *  tussenstand (thuis-uit) erbij. De minuten van de tegenstander komen uit een eigen
    *  toevalsbron met een vaste seed, zodat de hoofdstroom van het toeval onaangeroerd
    *  blijft en een opgeslagen spel exact hetzelfde verder speelt. */
-  moments?: { minute: number; us: boolean; text: string; score: string }[];
+  moments?: { minute: number; us: boolean; text: string; score: string; type?: 'wissel' }[];
 }
 
 export interface SeasonRecord {

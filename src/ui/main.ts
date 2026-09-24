@@ -26,7 +26,7 @@ import { numbersScreen } from './screens/numbers';
 import { contractsScreen } from './screens/contracts';
 import { VERSION } from '../version';
 import { lineupGap, squadBlock } from '../engine/players';
-import { animationOverlay, reportOverlay, type WeekRef } from './screens/report';
+import { ANIM_MATCH_MS, ANIM_T, ANIM_WEEK_MS, animationOverlay, reportOverlay, type WeekRef } from './screens/report';
 import { fastForwardOverlay } from './screens/fastforward';
 import { canFastForward, playAhead as playAheadEngine, type FastForwardResult } from '../engine/fastforward';
 import { openingOverlay } from './screens/opening';
@@ -293,6 +293,7 @@ function render(): void {
   applySorts();
   measureBars();
   rollNumbers();
+  driveMatchClock();
   if (ui.report?.phase === 'report') revealLines(`${ui.report.prev.season}-${ui.report.prev.week}`);
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
@@ -532,9 +533,8 @@ root.addEventListener('input', (e) => {
 // ---------- Een week spelen ----------
 
 let animTimer = 0;
-
-/** Hoe lang de animatie na een week duurt. */
-const ANIM_MS = 3600;
+/** Wanneer de animatie startte: de lopende wedstrijdklok rekent hiermee, ook na een hertekening. */
+let animStartedAt = 0;
 
 async function playWeek(): Promise<void> {
   if (!ui.game || ui.busy || ui.game.gameOver) return;
@@ -558,14 +558,47 @@ async function playWeek(): Promise<void> {
   ui.report = { phase: ui.animate ? 'anim' : 'report', prev };
   ui.held = voordien;
   if (ui.animate) {
+    // een wedstrijdweek krijgt de langere tijdlijn (klok, rust, wissels); een gewone week de korte balk
+    const m = ui.game.lastMatch;
+    const metTijdlijn = !!(m && m.week === prev.week && m.moments && !m.forfeit);
+    animStartedAt = performance.now();
     window.clearTimeout(animTimer);
     animTimer = window.setTimeout(() => {
       if (ui.report?.phase === 'anim') {
         ui.report.phase = 'report';
         render();
       }
-    }, ANIM_MS);
+    }, metTijdlijn ? ANIM_MATCH_MS : ANIM_WEEK_MS);
   }
+}
+
+/**
+ * De lopende wedstrijdklok in de animatie: telt de eerste helft naar 45, valt stil op
+ * "Rust", telt de tweede helft naar 90 en blijft daar staan bij het affluiten. Rekent
+ * vanaf animStartedAt, dus een hertekening onderweg zet de klok niet terug.
+ */
+let clockToken = 0;
+function driveMatchClock(): void {
+  const el = root.querySelector<HTMLElement>('.match-clock');
+  clockToken++;
+  if (!el || ui.report?.phase !== 'anim') return;
+  const token = clockToken;
+  const tick = () => {
+    if (token !== clockToken || !el.isConnected) return;
+    const t = (performance.now() - animStartedAt) / 1000;
+    if (t < ANIM_T.start) el.textContent = "1'";
+    else if (t < ANIM_T.h1) el.textContent = `${Math.min(45, Math.round(1 + ((t - ANIM_T.start) / (ANIM_T.h1 - ANIM_T.start)) * 44))}'`;
+    else if (t < ANIM_T.h2) el.textContent = 'Rust';
+    else if (t < ANIM_T.end) el.textContent = `${Math.min(90, Math.round(46 + ((t - ANIM_T.h2) / (ANIM_T.end - ANIM_T.h2)) * 44))}'`;
+    else if (t < ANIM_T.fin) el.textContent = "90'";
+    else {
+      el.textContent = el.dataset.fin ?? "90'";
+      el.classList.add('af');
+      return;
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 /** Meerdere rustige weken achter elkaar. Stopt zodra er iets is dat jou nodig heeft. */

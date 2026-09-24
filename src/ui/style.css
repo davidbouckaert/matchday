@@ -416,7 +416,7 @@ td.mu-1 { color: var(--bad); font-weight: 600; }
 
 .overlay { position: fixed; inset: 0; background: rgba(10, 16, 12, 0.55); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .anim-card, .report-card { background: var(--card); border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.35); width: min(920px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
-.anim-card { padding: 24px; text-align: center; width: min(420px, 100%); cursor: pointer; }
+.anim-card { padding: 28px 36px; text-align: center; width: min(600px, 100%); cursor: pointer; }
 .anim-card h2 { margin: 4px 0 12px; }
 .pitch { width: 100%; height: auto; }
 .pitch .field { fill: #2f8a4c; }
@@ -649,7 +649,7 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 @keyframes beat { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes beat-last { 0% { opacity: 0; transform: translateY(6px) scale(0.95); } 20% { opacity: 1; transform: none; } 100% { opacity: 1; transform: none; } }
 .anim-bar { height: 4px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 6px; }
-.anim-bar span { display: block; height: 100%; width: 0; background: var(--accent); animation: fill 3.6s linear forwards; }
+.anim-bar span { display: block; height: 100%; width: 0; background: var(--accent); animation: fill var(--dur, 3.6s) linear forwards; }
 @keyframes fill { to { width: 100%; } }
 .scoreboard.reveal { animation: pop 0.45s cubic-bezier(.2,1.6,.4,1); }
 @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 60% { transform: scale(1.04); opacity: 1; } 100% { transform: none; } }
@@ -1303,7 +1303,13 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 
 /* De wedstrijd als tijdlijn in de animatie: elk hoogtepunt verschijnt op het moment in
    de wedstrijd waarop het viel, en pas op het einde klinkt het affluiten met de uitslag. */
-.match-ticker { list-style: none; margin: var(--s3) 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; min-height: 140px; }
+.match-ticker { list-style: none; margin: var(--s3) 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; min-height: 260px; font-size: 1rem; }
+/* de klok: groot en tabulair, en hij kleurt bij het affluiten */
+.match-clock { font-size: 1.9rem; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.01em; margin-top: 4px; min-height: 1.2em; }
+.match-clock.af { color: var(--accent); }
+.match-ticker li.rust { color: var(--muted); font-weight: 700; margin: 2px 0; }
+.match-ticker li.sub { color: var(--muted); font-size: .9rem; }
+.match-ticker li.sub.us .who { font-weight: 650; color: var(--text); }
 .match-ticker li { opacity: 0; transform: translateY(6px); animation: ticker-in .28s ease-out forwards;
   display: flex; gap: 8px; align-items: baseline; justify-content: center; }
 .match-ticker .min { color: var(--faint); font-variant-numeric: tabular-nums; min-width: 2.4em; text-align: right; flex: none; }

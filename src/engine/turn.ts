@@ -289,21 +289,47 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
   // opgeslagen spel speelt exact hetzelfde verder.
   const animRng = createRng({ rngState: (state.season * 97 + state.week) * 2654435761 + opponentId.charCodeAt(opponentId.length - 1) });
   const bezet = new Set(scorers.map((g) => g.minute));
-  const hunGoals: number[] = [];
-  for (let i = 0; i < goalsAgainst; i++) {
-    let minuut = animRng.int(1, 90);
-    while (bezet.has(minuut)) minuut = animRng.int(1, 90);
+  const vrijeMinuut = (van: number, tot: number) => {
+    let minuut = animRng.int(van, tot);
+    while (bezet.has(minuut)) minuut = animRng.int(van, tot);
     bezet.add(minuut);
-    hunGoals.push(minuut);
+    return minuut;
+  };
+  const hunGoals: number[] = [];
+  for (let i = 0; i < goalsAgainst; i++) hunGoals.push(vrijeMinuut(1, 90));
+
+  // Wissels, van beide kanten. Dit is vertelling: een echt wisselsysteem (bankspelers met
+  // speelminuten en gevolgen) staat op de planning, en tot dan hebben deze wissels geen
+  // enkel spelgevolg — maar de namen zijn echt: jouw wissels komen van je eigen bank, die
+  // van de tegenstander uit hun kern.
+  const bank = state.players.filter((p) => p.injuryWeeks === 0 && p.suspended === 0 && p.loan?.type !== 'uit' && !lineupIds.has(p.id));
+  const wissels: { minute: number; us: boolean; text: string }[] = [];
+  const eigenWissels = Math.min(animRng.int(1, 3), bank.length, lineup.length);
+  const eruitGeweest = new Set<string>();
+  for (let i = 0; i < eigenWissels; i++) {
+    const erin = bank[i];
+    const kandidaten = lineup.filter((p) => !eruitGeweest.has(p.id));
+    if (!erin || !kandidaten.length) break;
+    const eruit = kandidaten[animRng.int(0, kandidaten.length - 1)];
+    eruitGeweest.add(eruit.id);
+    wissels.push({ minute: vrijeMinuut(46, 88), us: true, text: `${erin.name} erin, ${eruit.name} eruit` });
   }
+  const hunNamen = [...opponent.roster];
+  const hunWissels = Math.min(animRng.int(1, 3), Math.floor(hunNamen.length / 2));
+  for (let i = 0; i < hunWissels; i++) {
+    wissels.push({ minute: vrijeMinuut(46, 88), us: false, text: `${hunNamen[i * 2]} erin, ${hunNamen[i * 2 + 1]} eruit` });
+  }
+
   const moments = [
-    ...scorers.map((g) => ({ minute: g.minute, us: true, text: g.name })),
-    ...hunGoals.map((minute) => ({ minute, us: false, text: opponent.name })),
+    ...scorers.map((g) => ({ minute: g.minute, us: true, text: g.name, type: undefined as 'wissel' | undefined })),
+    ...hunGoals.map((minute) => ({ minute, us: false, text: opponent.name, type: undefined as 'wissel' | undefined })),
+    ...wissels.map((w) => ({ ...w, type: 'wissel' as const })),
   ]
     .sort((a, b) => a.minute - b.minute)
-    .reduce<{ minute: number; us: boolean; text: string; score: string }[]>((lijst, g) => {
-      const voor = lijst.filter((x) => x.us).length + (g.us ? 1 : 0);
-      const tegen = lijst.filter((x) => !x.us).length + (g.us ? 0 : 1);
+    .reduce<{ minute: number; us: boolean; text: string; score: string; type?: 'wissel' }[]>((lijst, g) => {
+      const goals = lijst.filter((x) => x.type !== 'wissel');
+      const voor = goals.filter((x) => x.us).length + (g.type !== 'wissel' && g.us ? 1 : 0);
+      const tegen = goals.filter((x) => !x.us).length + (g.type !== 'wissel' && !g.us ? 1 : 0);
       lijst.push({ ...g, score: home ? `${voor}-${tegen}` : `${tegen}-${voor}` });
       return lijst;
     }, []);

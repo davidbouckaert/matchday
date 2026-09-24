@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.55.0';
+export const VERSION = '0.56.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,19 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.56.0',
+    date: '2026-09-24',
+    title: 'De wedstrijd duurt vijf tellen, met klok, rust en wissels',
+    items: [
+      'De wedstrijdtijdlijn ging van drie naar vijf seconden, in een ruimer kader',
+      'Een lopende klok telt de eerste helft naar 45, valt stil op "Rust" (met de ruststand), en telt dan door naar 90',
+      'Bij het affluiten toont de klok de uitslag',
+      'Wissels van beide ploegen staan in de tijdlijn, met echte namen van je bank en uit hun kern',
+      'De wissels zijn vertelling: het echte wisselsysteem (bankspelers met speelminuten) staat op de planning',
+      'Een week zonder wedstrijd houdt de korte animatie van vroeger',
+    ],
+  },
   {
     version: '0.55.0',
     date: '2026-09-24',

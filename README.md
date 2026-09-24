@@ -171,6 +171,14 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.56.0 — De wedstrijd duurt vijf tellen, met klok, rust en wissels
+
+**De tijdlijn van 0.54.0 kreeg lucht.** Drie seconden was te gejaagd en het kader te krap; het is nu vijf seconden in een ruimer kader (600 in plaats van 420 pixels), en een week zónder wedstrijd houdt de korte animatie — die hoeft niet langer te duren.
+
+**Er loopt nu een echte wedstrijdklok** (`ANIM_T` in `report.ts`, aangedreven vanuit `main.ts` zodat een hertekening de klok niet terugzet): ze telt de eerste helft naar 45, valt stil op **"Rust"** — dat ook als gebeurtenis in de tijdlijn staat, mét ruststand — telt dan door naar 90, en toont bij het affluiten de uitslag. In de draaiende app gemeten: 22' → Rust → 71' → "2 - 0".
+
+**En er wordt gewisseld, aan beide kanten.** Jouw wissels komen van je echte bank (fitte, niet-geschorste spelers die niet in de basis stonden), die van de tegenstander uit hun eigen kern — allemaal bestaande namen. Eerlijk erbij gezegd, in de code én hier: dit is vertelling. Een echt wisselsysteem, met bankspelers die minuten maken en er iets aan overhouden, staat op de planning; tot dan hebben deze wissels geen enkel spelgevolg. De minuten komen uit dezelfde aparte toevalsbron als de rest van de tijdlijn, dus opgeslagen spellen spelen exact hetzelfde verder.
+
 ### 0.55.0 — Het sponsorscherm in de vorm van het personeelsscherm
 
 **Zelfde denkstructuur, zelfde vorm.** Het personeelsscherm van 0.53.0 beviel — links wat je hebt, rechts wat je kunt halen, acties compact — dus het sponsorscherm volgt nu dezelfde opbouw: de prijskaart vol breed bovenaan (dat is én je instrument én je filter), daaronder links "Huidige sponsors" en rechts "Op tafel", "Contacten" en "Nieuwe namen vinden". De tabellen zijn compacter gemaakt (type bij de naam, budget en vrije plaats bij het bedrijf), en het scherm ging van 2.596 naar 2.230 pixels.

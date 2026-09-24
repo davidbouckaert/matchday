@@ -28,19 +28,37 @@ describe('de wedstrijd als tijdlijn', () => {
   it('elk doelpunt van beide kanten staat erin, in wedstrijdvolgorde, en de laatste tussenstand is de uitslag', () => {
     const { m } = totDoelpuntrijkeMatch();
     const moments = m.moments!;
-    expect(moments).to.have.length(m.goalsFor + m.goalsAgainst);
-    expect(moments.filter((g) => g.us)).to.have.length(m.goalsFor);
+    const goals = moments.filter((g) => g.type !== 'wissel');
+    expect(goals).to.have.length(m.goalsFor + m.goalsAgainst);
+    expect(goals.filter((g) => g.us)).to.have.length(m.goalsFor);
     for (let i = 1; i < moments.length; i++) expect(moments[i].minute).to.be.above(moments[i - 1].minute);
     const hg = m.home ? m.goalsFor : m.goalsAgainst;
     const ag = m.home ? m.goalsAgainst : m.goalsFor;
     expect(moments[moments.length - 1].score).to.equal(`${hg}-${ag}`);
   });
 
+  it('beide ploegen wisselen, met echte namen, altijd in de tweede helft', () => {
+    const { s, m } = totDoelpuntrijkeMatch();
+    const wissels = m.moments!.filter((g) => g.type === 'wissel');
+    expect(wissels.filter((w) => w.us).length).to.be.at.least(1);
+    expect(wissels.filter((w) => !w.us).length).to.be.at.least(1);
+    for (const w of wissels) {
+      expect(w.minute).to.be.above(45);
+      expect(w.text).to.contain(' erin, ');
+    }
+    // jouw invaller is een echte speler van je bank
+    const eigen = wissels.find((w) => w.us)!;
+    const invaller = eigen.text.split(' erin, ')[0];
+    expect(s.players.some((p) => p.name === invaller)).to.equal(true);
+  });
+
   it('de animatie toont de tijdlijn met aftrap en affluiten, elk moment op zijn eigen tel', () => {
     const { s, m, prev } = totDoelpuntrijkeMatch();
     const html = animationOverlay(s, prev);
     expect(html).to.contain('match-ticker');
+    expect(html).to.contain('match-clock');
     expect(html).to.contain('Aftrap');
+    expect(html).to.contain('Rust: ');
     const hg = m.home ? m.goalsFor : m.goalsAgainst;
     const ag = m.home ? m.goalsAgainst : m.goalsFor;
     expect(html).to.contain(`Affluiten: ${hg} - ${ag}`);
