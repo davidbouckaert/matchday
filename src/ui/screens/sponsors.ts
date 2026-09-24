@@ -4,7 +4,7 @@ import { sponsorWeekly } from '../../engine/loans';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
 import { bar, esc, euro } from '../format';
-import { tip } from '../tooltip';
+import { hint, tip } from '../tooltip';
 import { taskPicker } from '../taskpicker';
 import { numField } from '../numfield';
 
@@ -157,8 +157,9 @@ export function sponsorsScreen(s: GameState): string {
   <section class="card">
     <h2>Sponsoring: ${euro(sponsorWeekly(s))}/week</h2>
     ${who ? `<p class="attention-inline small">${esc(who.name)} regelt de sponsorwerving: hij benadert om de twee weken het meest geïnteresseerde bedrijf, tekent aanbiedingen en verlengt tevreden sponsors. Je kunt zelf nog altijd ingrijpen.</p>` : ''}
-    <h3>Je prijskaart</h3>
-    <p class="muted small">Jij zet hier wat elke plaats per week kost. Bedrijven zeggen daar ja of nee op: vraag je minder dan gangbaar, dan tekenen er meer, vraag je meer, dan tekenen er minder maar brengt elk contract meer op. Wat gangbaar is, groeit mee met je reeks, je reputatie, je commercieel medewerker en je achtergrond als ondernemer.</p>
+    <h3>Je prijskaart ${hint(
+      'Jij zet hier wat elke plaats per week kost. Vraag je minder dan gangbaar, dan tekenen meer bedrijven; vraag je meer, dan minder, maar elk contract brengt meer op. Het gangbare bedrag groeit mee met je reeks, reputatie, medewerker en ondernemersachtergrond.',
+    )}</h3>
     <p class="attention-inline small" ${tip(
       `Hoe graag bedrijven bij je club willen horen, hangt af van je reputatie (${Math.round(s.community.reputation)}/100), de sfeer rond de club (${Math.round(s.community.fanMood)}/100), je populariteit, je reeks en je commercieel medewerker. Hoe liever ze erbij horen, hoe minder ze afhaken als je meer vraagt.`,
     )}>${
