@@ -1,6 +1,8 @@
 import './style.css';
 import { attachBrowserLog } from '../log/browser';
-import type { Formation, GamePlan, GameState, Mentality, TaskId, TrainingFocus } from '../engine/types';
+import type { Formation, GamePlan, GameState, Mentality, SponsorDeal, StaffRole, TaskId, TrainingFocus } from '../engine/types';
+
+type SponsorKind = SponsorDeal['kind'];
 import { createNewGame } from '../engine/newGame';
 import { advanceWeek } from '../engine/turn';
 import * as actions from '../engine/actions';
@@ -91,6 +93,10 @@ interface UiState {
   statsView: 'seizoen' | 'week';
   menuOpen: boolean;
   selectedStaff: string | null;
+  /** Rolfilter op de kandidatenlijst (Personeel) en plaatsfilter op Sponsors: klik op een
+   *  functie of tegel om te filteren, nog eens (of op het kruisje) om hem weg te halen. */
+  staffFilter: StaffRole | null;
+  sponsorFilter: SponsorKind | null;
   sorts: Record<string, { col: number; dir: 1 | -1 }>;
   report: { phase: 'anim' | 'report'; prev: WeekRef } | null;
   /**
@@ -122,6 +128,8 @@ const ui: UiState = {
   statsView: 'seizoen',
   menuOpen: false,
   selectedStaff: null,
+  staffFilter: null,
+  sponsorFilter: null,
   sorts: {},
   report: null,
   held: null,
@@ -187,9 +195,9 @@ function renderScreen(g: GameState): string {
     case 'opleiding': return trainingScreen(g);
     case 'invloeden': return influencesScreen(g);
     case 'transfers': return transfersScreen(g);
-    case 'staff': return staffScreen(g, ui.selectedStaff);
+    case 'staff': return staffScreen(g, ui.selectedStaff, ui.staffFilter);
     case 'prijzen': return pricesScreen(g);
-    case 'sponsors': return sponsorsScreen(g);
+    case 'sponsors': return sponsorsScreen(g, ui.sponsorFilter);
     case 'financien': return financeScreen(g);
     case 'infrastructuur': return infraScreen(g);
     case 'evenementen': return eventsScreen(g);
@@ -728,6 +736,12 @@ const handlers: Record<string, Handler> = {
   release: gameAction(actions.releasePlayer),
   'accept-offer': gameAction(actions.acceptPlayerOffer),
   'decline-offer': gameAction(actions.declinePlayerOffer),
+  'staff-filter': (id) => {
+    ui.staffFilter = ui.staffFilter === id ? null : (id as StaffRole);
+  },
+  'sponsor-filter': (id) => {
+    ui.sponsorFilter = ui.sponsorFilter === id ? null : (id as SponsorKind);
+  },
   hire: gameAction(actions.hireStaff),
   'hire-replace': gameAction(actions.replaceStaff),
   fire: gameAction(actions.fireStaff),

@@ -65,8 +65,9 @@ describe('personeel vervangen', () => {
     const s = readyGame('heidebeke');
     const html = staffScreen(s, null);
     const aanwerfKnoppen = (html.match(/data-action="hire"(?!-)/g) ?? []).length;
-    const vrij = s.staffMarket.filter((c) => !s.staff.some((x) => x.role === c.role) && !staffLock(s, c.role)).length;
-    expect(aanwerfKnoppen).to.equal(vrij);
+    // het overzicht toont de beste kandidaat per functie: één knop per vrije, open functie
+    const vrijeRollen = new Set(s.staffMarket.filter((c) => !s.staff.some((x) => x.role === c.role) && !staffLock(s, c.role)).map((c) => c.role));
+    expect(aanwerfKnoppen).to.equal(vrijeRollen.size);
     // en op een bezette functie zou de oude knop ook echt geweigerd hebben
     const bezet = s.staffMarket.find((c) => s.staff.some((x) => x.role === c.role))!;
     expect(hireStaff(structuredClone(s), bezet.id).ok).to.equal(false);

@@ -171,6 +171,14 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.53.0 — Personeel en Sponsors: klikken om te filteren, half zoveel scrollen
+
+**Het personeelsscherm was bijna vijfduizend pixels onder elkaar**: wie heb je, wie doet wat, wie kun je halen. Maar "wie heb je" en "wie kun je halen" zijn één gedachte — je kijkt naar een lege of zwakke functie en wilt meteen zien wie ervoor te vinden is. Die twee staan nu **naast elkaar**, en de takenlijst (delegeren: een andere denkbui) staat eronder over de volle breedte.
+
+**Klikken is filteren, op beide schermen dezelfde taal.** Klik op een functie in je personeelslijst en de kandidaten ernaast filteren op die rol; klik op een tegel van je sponsorprijskaart en je sponsors én je contacten filteren op die plaats (contacten op de plaats die ze écht zouden krijgen, uit dezelfde functie die hun kans berekent). De actieve keuze licht op met een bolletje, bij de gefilterde lijst staat een chip met een kruisje, en nogmaals klikken haalt de filter ook weg. De teller zegt wat je ziet: "2 van 31", "10 van 15".
+
+**Zonder filter is de kandidatenlijst een overzicht**: de beste kandidaat per functie (dertien rijen) in plaats van de hele lichting (eenendertig). De volledige lichting zit één klik ver, per functie. Gemeten met Playwright op 1440 breed: het personeelsscherm ging van **4.778 naar 2.878 pixels**, en met een filter actief naar 1.980 — meer dan de helft minder scrollen, zonder dat er informatie verdween.
+
 ### 0.52.0 — Je ziet vooraf wat vrij is
 
 **Twee schermen lieten je raden welke plaatsen nog vrij waren, en dat is de omgekeerde wereld.** Op Sponsors stond de bezetting als voetnootje van elf pixels onder het invoerveld ("9 van 16 bezet" — een rekensommetje dat niemand zag; het werd gemeld als "staat er niet meer", terwijl het er stond). En op Personeel kon je in de kandidatenlijst op "Aanwerven" klikken om pas dáárna te horen dat je die functie al ingevuld had.

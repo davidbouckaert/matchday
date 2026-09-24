@@ -1,5 +1,5 @@
 import { courseButton } from '../coursebutton';
-import type { GameState, Staff } from '../../engine/types';
+import type { GameState, Staff, StaffRole } from '../../engine/types';
 import { COURSES, STAFF_ROLES, TASKS, roleDef } from '../../engine/data/catalog';
 import { DIVISIONS } from '../../engine/data/divisions';
 import { hasDiploma } from '../../engine/staff';
@@ -20,6 +20,7 @@ function detailCard(s: GameState, m: Staff): string {
       <button class="sm ghost" data-action="staff-open" data-id="${m.id}">Sluiten ✕</button>
     </div>
     <p class="small">${esc(def.effect)}</p>
+    <p>${impactChips(staffImpact(s, m.role, m.skill, null))}</p>
     ${m.courseWeeksLeft ? `<p class="attention-inline small">📚 Volgt ${m.courseType === 'bijscholing' ? 'bijscholing' : 'een diplomaopleiding'}: nog ${m.courseWeeksLeft} weken (werkt intussen op 60%).</p>` : ''}
     <h3>Taken die ${esc(m.name.split(' ')[0])} van je overneemt</h3>
     ${
@@ -57,24 +58,41 @@ function fitStars(s: GameState, taskId: Parameters<typeof taskSkill>[1], m: Staf
   return taskStars(s, taskId, m);
 }
 
-export function staffScreen(s: GameState, selected: string | null): string {
+/**
+ * Het scherm in de volgorde waarin je werkt, met twee tabellen naast elkaar.
+ *
+ * Het stond onder elkaar — wie heb je, wie doet wat, wie kun je halen — en dat was
+ * vijfduizend pixels scrollen. Maar "wie heb je" en "wie kun je halen" zijn één
+ * gedachte: je kijkt naar een lege of zwakke functie en wilt meteen zien wie er voor
+ * die plek te vinden is. Die twee staan nu naast elkaar, en de functienaam links is
+ * een filter op de kandidaten rechts: klik op "Kinesist" en je ziet alleen kinesisten,
+ * met een duidelijk kruisje om de filter weer weg te halen (of klik de functie nog
+ * eens). De takenlijst — een andere denkbui: delegeren, niet aanwerven — staat eronder
+ * over de volle breedte.
+ */
+export function staffScreen(s: GameState, selected: string | null, filter: StaffRole | null = null): string {
   const division = DIVISIONS[s.league.divisionLevel];
   const member = selected ? s.staff.find((x) => x.id === selected) : undefined;
+
+  const roleBtn = (role: StaffRole, label: string, effect: string) =>
+    `<button class="filter-pick ${filter === role ? 'on' : ''}" data-action="staff-filter" data-id="${role}" ${tipAttr(
+      `${effect} Klik om de kandidatenlijst op ${label.toLowerCase()} te filteren${filter === role ? ' — nog eens klikken haalt de filter weg' : ''}.`,
+    )}><strong>${esc(label)}</strong>${filter === role ? ' ●' : ''}</button>`;
 
   const current = STAFF_ROLES.map((def) => {
     const m = s.staff.find((x) => x.role === def.role);
     if (!m) {
-      return `<tr class="empty"><td><strong>${def.label}</strong><br/><span class="muted small">${esc(def.effect)}</span></td><td colspan="5" class="muted">Niet ingevuld</td></tr>`;
+      return `<tr class="empty ${filter === def.role ? 'filtering' : ''}">
+        <td>${roleBtn(def.role as StaffRole, def.label, def.effect)}</td>
+        <td colspan="3" class="muted">Niet ingevuld — <button class="link-btn" data-action="staff-filter" data-id="${def.role}">${filter === def.role ? 'filter weghalen' : 'toon kandidaten'}</button></td>
+      </tr>`;
     }
     const tasks = tasksOf(s, m.id).map((id) => TASKS.find((t) => t.id === id)!.label);
-    return `<tr class="clickable ${member?.id === m.id ? 'selected' : ''}" data-action="staff-open" data-id="${m.id}">
-      <td><strong>${def.label}</strong><br/><span class="muted small">${esc(def.effect)}</span></td>
-      <td><strong class="link">${esc(m.name)}</strong><br/><span class="muted small">${m.trait}</span></td>
-      <td>${bar(m.skill)} ${m.skill}${m.courseWeeksLeft ? ' 📚' : ''}</td>
-      <td>${hasDiploma(m.role) ? m.diploma : '—'}</td>
-      <td>${euro(m.wage)}</td>
-      <td>${impactChips(staffImpact(s, m.role, m.skill, null))}</td>
-      <td class="small">${tasks.length ? tasks.map((t) => `<span class="tag">${esc(t)}</span>`).join(' ') : '<span class="muted">geen</span>'}
+    return `<tr class="clickable ${member?.id === m.id ? 'selected' : ''} ${filter === def.role ? 'filtering' : ''}" data-action="staff-open" data-id="${m.id}">
+      <td>${roleBtn(def.role as StaffRole, def.label, def.effect)}</td>
+      <td><strong class="link">${esc(m.name)}</strong><br/><span class="muted small">${m.trait}${hasDiploma(m.role) ? ` · ${m.diploma}` : ''} · ${euro(m.wage)}/week</span></td>
+      <td data-v="${m.skill}">${bar(m.skill)} ${m.skill}${m.courseWeeksLeft ? ' 📚' : ''}</td>
+      <td class="small">${tasks.length ? tasks.map((t) => `<span class="tag">${esc(t)}</span>`).join(' ') : '<span class="muted">geen taken</span>'}
         <br/><span class="muted small">${tasks.length}/${taskCapacity(m)} taken</span></td>
     </tr>`;
   }).join('');
@@ -107,10 +125,14 @@ export function staffScreen(s: GameState, selected: string | null): string {
       <td class="small muted">${esc(who ? t.delegated : t.owner)}</td></tr>`;
   }).join('');
 
-  // Bij elke kandidaat staat vóór je klikt of zijn functie vrij is, bezet (door wie, en
-  // wat vervangen kost) of op slot. Dat stond nergens: je klikte "Aanwerven" en kreeg
-  // pas dán te horen dat er geen plaats was.
-  const candidates = s.staffMarket
+  // Zonder filter: de beste kandidaat per functie — dertien rijen overzicht in plaats van
+  // eenendertig rijen lijst. Wie een functie aanklikt (links of in de rij zelf), krijgt
+  // de volledige lichting voor die rol.
+  const bestePerFunctie = STAFF_ROLES.map((def) =>
+    s.staffMarket.filter((c) => c.role === def.role).sort((a, b) => b.skill - a.skill)[0],
+  ).filter((c): c is NonNullable<typeof c> => !!c);
+  const markt = filter ? s.staffMarket.filter((c) => c.role === filter) : bestePerFunctie;
+  const candidates = markt
     .map((c) => {
       const lock = staffLock(s, c.role);
       const zittend = s.staff.find((x) => x.role === c.role);
@@ -125,48 +147,54 @@ export function staffScreen(s: GameState, selected: string | null): string {
           ? `<button class="sm" data-action="hire-replace" data-id="${c.id}" ${tipAttr(
               `${zittend.name} vertrekt met een opzegvergoeding van ${euro(zittend.wage * 8)}, ${c.name} tekent voor ${euro(c.wage * 2)} tekengeld. Zijn taken gaan mee naar de opvolger.`,
             )}>Vervang ${esc(zittend.name.split(' ')[0])} (${euro(zittend.wage * 8 + c.wage * 2)})</button>`
-          : `<button class="sm primary" data-action="hire" data-id="${c.id}">Aanwerven (tekengeld ${euro(c.wage * 2)})</button>`;
+          : `<button class="sm primary" data-action="hire" data-id="${c.id}">Aanwerven (${euro(c.wage * 2)})</button>`;
       return `<tr>
-      <td data-v="${STAFF_ROLES.findIndex((r) => r.role === c.role)}">${roleDef(c.role).label}<br/>${status}</td>
-      <td>${esc(c.name)}<br/><span class="muted small">${c.trait}</span></td>
+      <td data-v="${STAFF_ROLES.findIndex((r) => r.role === c.role)}"><strong>${esc(c.name)}</strong> <span class="muted small">${c.trait}${hasDiploma(c.role) ? ` · ${c.diploma}` : ''} · ${euro(c.wage)}/week</span><br/>
+        <button class="filter-pick small ${filter === c.role ? 'on' : ''}" data-action="staff-filter" data-id="${c.role}" ${tipAttr(
+          filter === c.role ? 'Klik om de filter weg te halen.' : `Klik om alle kandidaten voor ${roleDef(c.role).label.toLowerCase()} te zien.`,
+        )}>${roleDef(c.role).label}${filter === c.role ? ' ●' : ''}</button> · ${status}</td>
       <td data-v="${c.skill}">${bar(c.skill)} ${c.skill}</td>
-      <td>${hasDiploma(c.role) ? c.diploma : '—'}</td>
       <td>${impactChips(staffImpact(s, c.role, c.skill))}</td>
-      <td data-v="${c.wage}">${euro(c.wage)}</td>
       <td>${actie}</td>
     </tr>`;
     })
     .join('');
 
+  const filterChip = filter
+    ? `<button class="filter-chip" data-action="staff-filter" data-id="${filter}" aria-label="Filter op ${roleDef(filter).label} weghalen">${roleDef(filter).label} ✕</button>`
+    : '';
+
   return `
   ${member ? detailCard(s, member) : ''}
-  <section class="card">
-    <h2>Jouw personeel</h2>
-    <p class="muted small">Klik op een personeelslid om taken aan te vinken die hij van je overneemt, of om hem een opleiding te geven.
-    Licentie voor ${division.name}: hoofdtrainer met minstens <strong>${division.requiredDiploma}</strong> en een ploegafgevaardigde (audit in week 38).</p>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th data-tip="Wat hij je elke week kost">Loon per week</th><th>Wat hij oplevert</th><th>Taken</th></tr></thead>
-      <tbody>${current}</tbody>
-    </table></div>
-  </section>
+  <div class="cols-2">
+    <div class="col">
+      <section class="card">
+        <h2>Jouw personeel ${hint('Klik op een naam voor taken en opleiding. Klik op een functie om de kandidatenlijst ernaast op die functie te filteren.')}</h2>
+        <p class="muted small">Licentie voor ${division.name}: hoofdtrainer met minstens <strong>${division.requiredDiploma}</strong> en een ploegafgevaardigde (audit in week 38).</p>
+        <div class="table-wrap"><table class="compact">
+          <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Taken</th></tr></thead>
+          <tbody>${current}</tbody>
+        </table></div>
+      </section>
+    </div>
+    <div class="col">
+      <section class="card">
+        <h2>Kandidaten <span class="tag">${markt.length}${filter ? ` van ${s.staffMarket.length}` : ''}</span> ${filterChip}</h2>
+        <p class="muted small">${filter ? 'Alle kandidaten voor deze functie in deze lichting.' : 'Je ziet de beste kandidaat per functie; klik op een functie voor de volledige lichting.'} De lijst vernieuwt elke 4 weken; maximaal één persoon per functie. Bij elke kandidaat staat of zijn functie vrij is, bezet (vervangen kan in één beslissing) of nog op slot. "Wat het je oplevert" is het verschil met wie je nu hebt.</p>
+        <div class="table-wrap"><table class="compact" data-sort-id="kandidaten">
+          <thead><tr><th>Kandidaat</th><th>Vaardigheid</th><th data-nosort>Wat het je oplevert</th><th data-nosort></th></tr></thead>
+          <tbody>${candidates || `<tr><td colspan="4" class="muted">Geen kandidaten voor deze functie in deze lichting. Haal de filter weg met het kruisje hierboven, of wacht op de volgende lichting.</td></tr>`}</tbody>
+        </table></div>
+      </section>
+    </div>
+  </div>
   <section class="card">
     <h2>Wie doet wat? ${hint('Kies per taak wie ze doet: jij, of iemand van je personeel.')}</h2>
-    <p class="muted small">Staat er "Jij", dan beslis je het zelf op het scherm waar die taak thuishoort. Geef je ze uit handen, dan beslist die persoon elke week automatisch — en hoe beter hij is, hoe minder hij ernaast zit. Terugnemen kan altijd.</p>
-    <p class="muted small">Je hebt ${TASKS.filter((t) => delegate(s, t.id)).length} van de ${TASKS.length} taken uitbesteed.
-    Iemand kan 1 tot 4 taken aan, afhankelijk van zijn vaardigheid, en werkt buiten zijn vakgebied op een lager niveau.
-    Staat er "niemand in dienst die dit kan", werf dan eerst zo iemand aan bij de kandidaten hieronder.</p>
+    <p class="muted small">Staat er "Jij", dan beslis je het zelf op het scherm waar die taak thuishoort. Geef je ze uit handen, dan beslist die persoon elke week automatisch — en hoe beter hij is, hoe minder hij ernaast zit. Terugnemen kan altijd.
+    Je hebt ${TASKS.filter((t) => delegate(s, t.id)).length} van de ${TASKS.length} taken uitbesteed. Iemand kan 1 tot 4 taken aan, en werkt buiten zijn vakgebied op een lager niveau.</p>
     <div class="table-wrap"><table class="compact">
       <thead><tr><th>Taak</th><th>Wie doet het?</th><th>Wat gebeurt er</th></tr></thead>
       <tbody>${overview}</tbody>
-    </table></div>
-  </section>
-  <section class="card">
-    <h2>Kandidaten</h2>
-    <p class="muted small">De lijst vernieuwt elke 4 weken. Je hebt maximaal één persoon per functie: bij elke kandidaat staat of zijn functie vrij is, bezet (vervangen kan in één beslissing: opzegvergoeding plus tekengeld, zijn taken gaan mee) of nog op slot.
-      "Wat het je oplevert" is het verschil met wie je nu op die plaats hebt — doorgerekend met dezelfde formules waarmee het spel rekent. Beweeg over een kaartje voor het volledige verhaal.</p>
-    <div class="table-wrap"><table data-sort-id="kandidaten">
-      <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th data-nosort>Wat het je oplevert</th><th data-tip="Wat hij je elke week kost">Loon per week</th><th data-nosort></th></tr></thead>
-      <tbody>${candidates}</tbody>
     </table></div>
   </section>`;
 }

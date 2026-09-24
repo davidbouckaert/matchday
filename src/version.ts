@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.52.1';
+export const VERSION = '0.53.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,19 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.53.0',
+    date: '2026-09-24',
+    title: 'Personeel en Sponsors: klikken om te filteren, half zoveel scrollen',
+    items: [
+      'Personeel: "wie heb je" en "wie kun je halen" staan naast elkaar — dat is één gedachte',
+      'Klik op een functie en de kandidatenlijst filtert op die rol; nog eens klikken of het kruisje haalt de filter weg',
+      'Zonder filter zie je de beste kandidaat per functie; met filter de volledige lichting',
+      'De takenlijst (delegeren, een andere denkbui) staat eronder over de volle breedte',
+      'Sponsors: klik op een tegel van je prijskaart en je sponsors én contacten filteren op die plaats, met dezelfde chip',
+      'Gemeten: het personeelsscherm ging van 4.778 naar 2.878 pixels, met filter 1.980',
+    ],
+  },
   {
     version: '0.52.1',
     date: '2026-09-24',

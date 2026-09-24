@@ -1297,6 +1297,18 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .slot-badge.vol { color: var(--good); }
 .slot-badge.leeg { color: var(--muted); font-weight: 600; }
 
+/* Filteren door aan te klikken: een functie op Personeel of een tegel-kop op Sponsors.
+   De knop ziet eruit als de tekst die hij was; actief = accentkleur met een bolletje,
+   en bij de gefilterde lijst staat een chip met een kruisje om hem weg te halen. */
+.filter-pick { background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.filter-pick:hover { color: var(--accent); }
+.filter-pick.on { color: var(--accent); }
+.tile.filter-on { box-shadow: inset 0 0 0 2px var(--accent); }
+tr.filtering td { background: var(--accent-soft); }
+.filter-chip { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 700;
+  padding: 2px 10px; border: none; border-radius: 999px; background: var(--accent-soft); color: var(--accent); cursor: pointer; }
+.filter-chip:hover { background: var(--accent); color: var(--accent-ink); }
+
 /* de status van een functie in de kandidatenlijst: vrij, bezet of op slot */
 .seat-free { color: var(--accent); font-weight: 700; }
 .seat-taken { color: var(--muted); }
@@ -1311,6 +1323,7 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
    Elke kolom is zelf een stapel kaarten, zodat een kaart nooit uitgerekt wordt. */
 .cols-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4); align-items: start; }
 .cols-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); align-items: start; }
+@media (max-width: 1100px) { .cols-2 { grid-template-columns: 1fr; } }
 .cols-3 > .col, .cols-2 > .col { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
 @media (max-width: 1240px) { .cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 820px) { .cols-3, .cols-2 { grid-template-columns: 1fr; } }
