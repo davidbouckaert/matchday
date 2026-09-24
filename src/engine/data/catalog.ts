@@ -44,12 +44,27 @@ export const COURSES: CourseDef[] = [
   { from: 'EUFA A', to: 'EUFA Pro', cost: 15_000, weeks: 30 },
 ];
 
+/** Waar een bouwproject thuishoort op het infrastructuurscherm. Eén vlakke lijst van
+ *  twaalf werven las als een rommelmarkt: beton naast wifi naast een bus. De groepen
+ *  volgen hoe een bestuur erover praat: wat bouw je, wat richt je in, wat ligt op het
+ *  veld, wat hangt eraan, en wat verdient zichzelf terug. */
+export type UpgradeGroup = 'ruwbouw' | 'afdeling' | 'sportief' | 'technologie' | 'investering';
+
+export const UPGRADE_GROUPS: { id: UpgradeGroup; label: string; sub: string }[] = [
+  { id: 'ruwbouw', label: '🧱 Ruwbouw', sub: 'Het complex zelf: stenen, stoelen en plaats voor volk.' },
+  { id: 'sportief', label: '⚽ Sportief', sub: 'Het veld en alles wat erop en errond nodig is om te spelen.' },
+  { id: 'afdeling', label: '🚪 Afdelingen', sub: 'Ruimtes met een eigen werking, die elke week iets opleveren.' },
+  { id: 'technologie', label: '📡 Technologie', sub: 'Slimme upgrades die beleving en omzet verhogen.' },
+  { id: 'investering', label: '💶 Investeringen', sub: 'Kosten vooraf, maar ze verdienen zichzelf terug.' },
+];
+
 export interface UpgradeDef {
   id: UpgradeId;
   label: string;
   description: string;
   cost: number;
   weeks: number;
+  group: UpgradeGroup;
 }
 
 export const UPGRADES: UpgradeDef[] = [
@@ -59,28 +74,31 @@ export const UPGRADES: UpgradeDef[] = [
     description: 'Jij kiest hoeveel plaatsen erbij komen. Hoe groter je bestelt, hoe goedkoper per zitje — maar hoe langer de werken duren.',
     cost: 115_000,
     weeks: 7,
+    group: 'ruwbouw',
   },
-  { id: 'kantine', label: 'Kantine renoveren (+1 niveau)', description: 'Supporters besteden meer per bezoek. Maximaal niveau 5.', cost: 45_000, weeks: 6 },
-  { id: 'kunstgras', label: 'Kunstgras aanleggen', description: 'Minder onderhoud, geen afgelastingen, verhuur aan andere clubs.', cost: 420_000, weeks: 8 },
-  { id: 'verlichting', label: 'Verlichting verbeteren (+1 niveau)', description: 'Nodig voor hogere reeksen. Maximaal niveau 3.', cost: 65_000, weeks: 4 },
+  { id: 'kantine', label: 'Kantine renoveren (+1 niveau)', description: 'Supporters besteden meer per bezoek. Maximaal niveau 5.', cost: 45_000, weeks: 6, group: 'ruwbouw' },
+  { id: 'kunstgras', label: 'Kunstgras aanleggen', description: 'Minder onderhoud, geen afgelastingen, verhuur aan andere clubs.', cost: 420_000, weeks: 8, group: 'sportief' },
+  { id: 'verlichting', label: 'Verlichting verbeteren (+1 niveau)', description: 'Nodig voor hogere reeksen. Maximaal niveau 3.', cost: 65_000, weeks: 4, group: 'sportief' },
   {
     id: 'opleidingscentrum',
     label: 'Jeugdopleidingscentrum (+1 niveau)',
     description: 'Meer en betere jeugdspelers die doorstromen, snellere ontwikkeling van spelers tot 21 jaar, meer jeugdleden. Kost €400/week onderhoud per niveau. Maximaal niveau 3.',
     cost: 160_000,
     weeks: 12,
+    group: 'afdeling',
   },
-  { id: 'wifi', label: 'Wifi en mobiel bereik (+1 niveau)', description: 'Supporters delen alles live, bestellen sneller aan de toog en blijven langer hangen. Meer toeschouwers en meer consumpties. Maximaal niveau 2.', cost: 28_000, weeks: 3 },
-  { id: 'sanitair', label: 'Toiletten en kleedkamers (+1 niveau)', description: 'Nette toiletten houden gezinnen langer op het complex: meer toeschouwers en meer kantineomzet. Maximaal niveau 2.', cost: 55_000, weeks: 6 },
-  { id: 'scorebord', label: 'Scorebord (+1 niveau)', description: 'Een echt scorebord maakt er een wedstrijd van: meer sfeer, en sponsors betalen meer voor een bord dat iedereen ziet. Niveau 2 is een ledscherm met reclameblokken. Maximaal niveau 2.', cost: 42_000, weeks: 4 },
-  { id: 'ploegbus', label: 'Eigen ploegbus', description: 'Een tweedehands bus met de clubkleuren. Je betaalt nog enkel brandstof en een chauffeur (55% goedkoper per verplaatsing) en een bedrijf kan zijn naam op de bus zetten (nieuwe sponsorplaats).', cost: 32_000, weeks: 2 },
-  { id: 'parking', label: 'Parking uitbreiden (+1 niveau)', description: 'Bezoekers van verder af geraken vlot tot aan het veld. Meer toeschouwers, vooral bij een derby. Maximaal niveau 2.', cost: 70_000, weeks: 7 },
+  { id: 'wifi', label: 'Wifi en mobiel bereik (+1 niveau)', description: 'Supporters delen alles live, bestellen sneller aan de toog en blijven langer hangen. Meer toeschouwers en meer consumpties. Maximaal niveau 2.', cost: 28_000, weeks: 3, group: 'technologie' },
+  { id: 'sanitair', label: 'Toiletten en kleedkamers (+1 niveau)', description: 'Nette toiletten houden gezinnen langer op het complex: meer toeschouwers en meer kantineomzet. Maximaal niveau 2.', cost: 55_000, weeks: 6, group: 'ruwbouw' },
+  { id: 'scorebord', label: 'Scorebord (+1 niveau)', description: 'Een echt scorebord maakt er een wedstrijd van: meer sfeer, en sponsors betalen meer voor een bord dat iedereen ziet. Niveau 2 is een ledscherm met reclameblokken. Maximaal niveau 2.', cost: 42_000, weeks: 4, group: 'technologie' },
+  { id: 'ploegbus', label: 'Eigen ploegbus', description: 'Een tweedehands bus met de clubkleuren. Je betaalt nog enkel brandstof en een chauffeur (55% goedkoper per verplaatsing) en een bedrijf kan zijn naam op de bus zetten (nieuwe sponsorplaats).', cost: 32_000, weeks: 2, group: 'investering' },
+  { id: 'parking', label: 'Parking uitbreiden (+1 niveau)', description: 'Bezoekers van verder af geraken vlot tot aan het veld. Meer toeschouwers, vooral bij een derby. Maximaal niveau 2.', cost: 70_000, weeks: 7, group: 'ruwbouw' },
   {
     id: 'zonnepanelen',
     label: 'Zonnepanelen en ledverlichting',
     description: 'Panelen op het dak van de tribune en de kantine, led overal. Daarna betaal je elke week 20% minder vaste kosten. De prijs hangt af van hoe groot je complex is.',
     cost: 0, // dynamisch: zie greenEnergyCost()
     weeks: 5,
+    group: 'investering',
   },
   {
     id: 'recuperatie',
@@ -88,6 +106,7 @@ export const UPGRADES: UpgradeDef[] = [
     description: 'IJsbad, sauna en massagetafels: spelers herstellen sneller van vermoeidheid. Maximaal niveau 2.',
     cost: 35_000,
     weeks: 5,
+    group: 'afdeling',
   },
 ];
 

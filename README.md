@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.62.0 — De bouwprojecten in vijf herkenbare groepen
+
+**Twaalf werven in één vlakke lijst las als een rommelmarkt**: beton naast wifi naast een tweedehands bus. Het bouwscherm deelt ze nu in zoals een bestuur erover praat: **🧱 Ruwbouw** (de tribune vooraan, kantine, toiletten en kleedkamers, parking), **⚽ Sportief** (kunstgras, verlichting), **🚪 Afdelingen** — ruimtes met een eigen werking — (jeugdopleidingscentrum, recuperatieruimte), **📡 Technologie** (wifi, scorebord) en **💶 Investeringen** die zichzelf terugverdienen (ploegbus, zonnepanelen). Elke groep opent met één zin die zegt wat je er koopt. De groep is een veld in de catalogus (`UPGRADE_GROUPS` in `catalog.ts`), dus een toekomstig project — een persruimte, kantoren, een fitness — moet bij het toevoegen meteen een plek kiezen. Voor en na met Playwright vastgelegd: zelfde elf kaarten plus de tribune, nu onder vijf koppen.
+
 ### 0.61.0 — Eén rondleiding in plaats van twee lijsten
 
 **Er stonden twee begeleidingssystemen boven elkaar op het Bureau** — "Eerste stappen" (tien punten die je op dag één voor je kiezen kreeg) en "Deze week" — en samen overdonderden ze precies de nieuwe speler die ze moesten helpen. Wie in die stortvloed iets miste, het lidgeld bijvoorbeeld, werd daar stilletjes voor gestraft zonder ooit te horen dat het bestond.

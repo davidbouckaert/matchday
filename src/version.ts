@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.61.0';
+export const VERSION = '0.62.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.62.0',
+    date: '2026-09-24',
+    title: 'De bouwprojecten in vijf herkenbare groepen',
+    items: [
+      'Twaalf werven stonden in één vlakke lijst: beton naast wifi naast een bus',
+      'Nu vijf groepen zoals een bestuur erover praat: 🧱 Ruwbouw (tribune, kantine, sanitair, parking), ⚽ Sportief (kunstgras, verlichting), 🚪 Afdelingen (opleidingscentrum, recuperatie), 📡 Technologie (wifi, scorebord), 💶 Investeringen (ploegbus, zonnepanelen)',
+      'Elke groep met één zin die zegt wat je er koopt; de groep staat in de catalogus, dus elk toekomstig project moet er een kiezen',
+    ],
+  },
   {
     version: '0.61.0',
     date: '2026-09-24',

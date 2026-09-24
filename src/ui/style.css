@@ -1190,6 +1190,14 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .link-btn { background: none; box-shadow: none; padding: 0; color: var(--accent); font-weight: 650; }
 .link-btn:hover { background: none; text-decoration: underline; }
 
+/* De bouwgroepen op het infrastructuurscherm: vijf kopjes die de twaalf werven ordenen
+   zoals een bestuur erover praat. De kop draagt de betekenis, de kaarten blijven gelijk. */
+.bouw-groep { margin-top: var(--s5); }
+.bouw-groep:first-of-type { margin-top: var(--s3); }
+.bouw-groep h3 { margin: 0; }
+.bouw-groep > .muted { margin: 2px 0 var(--s2); }
+.bouw-groep .choice-grid { margin-top: var(--s2); }
+
 /* de lokale taakkiezer bovenaan een taakscherm */
 .card.picker { padding: var(--s3) var(--s4); display: flex; flex-direction: column; gap: var(--s2); }
 .card.picker h2 { margin-bottom: var(--s1); }
