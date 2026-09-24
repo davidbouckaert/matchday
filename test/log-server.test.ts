@@ -8,6 +8,7 @@ import { attachBrowserLog } from '../src/log/browser';
 import worker from '../worker/index';
 import { parseLogBody } from '../src/log/parseRecords';
 import { clearSinks, logInfo, logDebug, logWarn } from '../src/log/logger';
+import { VERSION } from '../src/version';
 
 describe('De browserbestemming', () => {
   afterEach(() => clearSinks());
@@ -119,5 +120,12 @@ describe('Het ontvangststuk (worker/index.ts)', () => {
     const request = new Request('https://voetbalclub.example/api/log', { method: 'GET' });
     const antwoord = await worker.fetch(request);
     expect(antwoord.status).to.equal(405);
+  });
+
+  it('vertelt op /api/version welke versie er draait — hetzelfde nummer als de git-tag', async () => {
+    const antwoord = await worker.fetch(new Request('https://voetbalclub.example/api/version'));
+    expect(antwoord.status).to.equal(200);
+    const body = (await antwoord.json()) as { version: string };
+    expect(body.version).to.equal(VERSION);
   });
 });

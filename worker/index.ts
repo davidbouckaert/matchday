@@ -11,12 +11,23 @@
 
 import { formatRecord } from '../src/log/logger';
 import { parseLogBody } from '../src/log/parseRecords';
+import { VERSION } from '../src/version';
 
 const MAX_BODY_BYTES = 2_000_000; // een op hol geslagen logboek mag de Worker niet laten crashen
 
 export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+    // Welke versie draait hier? Hetzelfde nummer als onderaan elke pagina en als de git-tag,
+    // maar opvraagbaar zonder de site te openen — zo zie je over alle systemen heen wat er
+    // gedeployed staat: version.ts → git-tag → GitHub → dit adres.
+    if (url.pathname === '/api/version') {
+      if (request.method !== 'GET') return new Response(null, { status: 405 });
+      return new Response(JSON.stringify({ name: 'matchday', version: VERSION }), {
+        status: 200,
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+      });
+    }
     if (url.pathname !== '/api/log') return new Response(null, { status: 404 });
     if (request.method !== 'POST') return new Response(null, { status: 405 });
 
