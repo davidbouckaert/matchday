@@ -362,6 +362,18 @@ function transferTask(state: GameState): void {
   const s = delegate(state, 'transfers');
   if (!s || !isTransferWindow(state.week)) return;
 
+  // Een scout zonder budget kan alleen noodaankopen doen, en dat hoor je te weten. De
+  // doorlichting van september 2026 vond dat het budget op nul start en niemand het zegt:
+  // "transfers uitbesteed" deed dan stilletjes bijna niets.
+  if (state.transferBudget <= 0 && (state.eventCooldowns['scout-budget'] ?? 0) === 0) {
+    state.eventCooldowns['scout-budget'] = 20;
+    addNews(
+      state,
+      'neutraal',
+      `${s.name}: "Mijn transferbudget staat op nul. Zet er bij Ploeg › Transfers iets op, of ik kan alleen ingrijpen als de kern te klein wordt."`,
+    );
+  }
+
   /*
    * Eerst de kern rond krijgen.
    *

@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.48.0';
+export const VERSION = '0.50.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,30 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.50.0',
+    date: '2026-09-24',
+    title: 'Knoppen die de goede kant op wijzen',
+    items: [
+      'Parking en tribune zijn verbonden: een tribune van 2.000 met een dorpsparking raakt nooit vol, en een volgelopen parking kost sfeer',
+      'Uitverkocht is zichtbaar: je leest hoeveel volk er niet binnen geraakte en waarom',
+      'Zuinig onderhoud raakt nu ook je sponsors en het blessurerisico — dingen die niet achter een volle tribune verstopt zitten',
+      'De reeksnorm voor supporters is een plafond dat je verdient met resultaten en acties, geen roltrap',
+      'Een scout zonder transferbudget zegt het je voortaan zelf',
+      'De ongebruikte defect-kansfunctie is opgeruimd: één waarheid over het risico van zuinig onderhoud',
+    ],
+  },
+  {
+    version: '0.49.0',
+    date: '2026-09-24',
+    title: 'Inflatie geldt voor iedereen',
+    items: [
+      'Sponsorbedragen, spelerslonen, staflonen, tv-rechten, premies en subsidies volgen voortaan het prijspeil',
+      'De doorlichting vond dat de grootste inkomstenpost én de grootste kostenpost als enige buiten de inflatie stonden',
+      'Ticket-, kantine- en winkelprijzen blijven vraaggestuurd: dat zijn prijzen die jij zet, geen contracten',
+      'Aan het begin van een carrière (inflatie 1) verandert er niets',
+    ],
+  },
   {
     version: '0.48.0',
     date: '2026-09-24',

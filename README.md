@@ -171,6 +171,23 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.50.0 — Knoppen die de goede kant op wijzen
+
+De doorlichting vond een rij knoppen die dood stonden of de verkeerde kant op wezen, met als hoofdoorzaak één clamp: 99% van de thuiswedstrijden van een klimmende club was uitverkocht, en dan doet álles wat de opkomst vermenigvuldigt niets meer. Deze laag zet ze recht:
+
+- **Parking en tribune zijn verbonden** (`parkingSupport` in `finance.ts`). Wie te voet of met de fiets komt plus de parking bepaalt wat je bereikbaarheid aankan; daarboven komt van de rest maar 60% opdagen en zakt de sfeer — mensen parkeren één keer in het dorp, daarna blijven ze thuis. Geen harde lijn, wel een zachte rem: een tribune van 2.000 met een dorpsparking raakt nooit vol. Voor een dorpsclub onder de 600 verandert er niets.
+- **Uitverkocht is zichtbaar.** Je leest in het nieuws hoeveel volk er niet binnen geraakte en of de tribune dan wel de parking het eerst volliep — het geld dat je laat liggen, met de reden erbij.
+- **Onderhoud raakt nu iets dat niet achter de volle tribune verstopt zit.** Basisonderhoud drukt de sponsortevredenheid (−6 op hun evenwicht: een bord langs een verwaarloosd veld is een slecht uithangbord) en verhoogt het blessurerisico met 8%; premium doet het omgekeerde. Gemeten stond basis vóór deze laag op +€279 à +€340 per week zonder enig nadeel dat aankwam.
+- **De reeksnorm voor supporters is een plafond, geen roltrap** — de automatische kruip ernaartoe is meer dan gehalveerd; resultaten, sfeer en een fandag doen het werk. Daarmee is de fandag (opbrengst/kost 0,5, maar +4% supporters) eindelijk een echte koop.
+- **Een scout zonder budget zegt het zelf.** Het transferbudget start op nul en niemand zei het; "transfers uitbesteed" deed dan stilletjes bijna niets.
+- **Opgeruimd:** de defect-kansfunctie die door niets gebruikt werd (het echte risico loopt via het content-event) is weg — één waarheid.
+
+### 0.49.0 — Inflatie geldt voor iedereen
+
+**Het principe was "alles wordt elk seizoen 7% duurder", maar het gold maar voor een kwart van de geldstromen.** Onderhoud, bond en bouw volgden de inflatie; de grootste inkomstenpost (sponsors) en de grootste kostenpost (lonen) stonden er als enige buiten. Zo kon het prijspeil verhoudingen stilletjes verschuiven — hetzelfde soort scheefgroei als 0.42.0, maar dan over de tijd in plaats van over de reeksen.
+
+Nu volgen **sponsorbedragen** (`kindRange`), **spelerslonen** (`wageDemand`), **staflonen** (`staffWage`), **tv-rechten, premies en subsidies** het prijspeil, aan beide kanten van de boekhouding tegelijk. Lopende contracten blijven nominaal staan tot ze vernieuwd worden — ook dat is echt: wie lang niet heronderhandelt, ziet zijn loon achterop raken en de loononrust van 0.45.0 doet de rest. Ticket-, kantine- en winkelprijzen blijven bewust vraaggestuurd: dat zijn prijzen die jíj zet tegen een vraagcurve, geen contracten; hun referenties meesleuren zou alleen de schuifbalk verschuiven. Aan het begin van een carrière (inflatie 1) verandert er niets, en `test/inflatie.test.ts` legt de indexering vast.
+
 ### 0.48.0 — De bond en je sponsors reageren op stijgen en zakken
 
 **De licentie was een papieren grens.** De doorlichting mat een club die seizoenen lang 1ste Nationale speelde met vijfhonderd plaatsen en verlichting niveau 1; de boete (`problemen × €2.500 × waarschuwingen`) haalde de top tien van haar boekhouding niet. Nu is de licentie wat ze hoort te zijn: **zonder licentie voor de hogere reeks gaat een promotie niet door.** Word je kampioen zonder de accommodatie, de trainer of de afgevaardigde die de nieuwe reeks vraagt, dan hou je de eer en de premie — en blijf je waar je bent. De jaarlijkse audit en de promotieweigering rekenen met exact dezelfde lijst (`licenceProblems` in `turn.ts`), en wie in week 30 of 41 op een promotieplaats staat zonder licentie, leest in het nieuws precies wat er nog ontbreekt. Bouwen is daarmee een verplicht deel van klimmen — elke trede heeft nu een kostenkant die je niet kunt overslaan.

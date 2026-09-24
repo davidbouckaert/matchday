@@ -187,5 +187,8 @@ export function injuryFactors(state: GameState): Factor[] {
   if (t.plan === 'pressing' && !fit && t.focus !== 'conditie') list.push(x('Pressing', 1.5, 'zonder conditietrainer of focus conditie'));
   list.push(x('Trainingen', 1 + (t.trainings - 3) * 0.12, `${t.trainings} per week`));
   if (t.focus === 'herstel') list.push(x('Focus herstel', 0.75, 'trainingsfocus'));
+  // een hobbelig, verwaarloosd veld is een blessureveld; premium onderhoud ligt er vlak bij
+  if (state.infrastructure.maintenance === 'basis') list.push(x('Basisonderhoud', 1.08, 'een verwaarloosd veld is een blessureveld'));
+  if (state.infrastructure.maintenance === 'premium') list.push(x('Premium onderhoud', 0.95, 'een vlak, verzorgd veld'));
   return list;
 }

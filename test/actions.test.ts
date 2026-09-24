@@ -6,7 +6,8 @@ import { transferWillingness } from '../src/engine/appeal';
 import { FORMATIONS, POSITIONS, declineFactor, growthFactor, lineupGap, overall, pickScorers, playEffect, selectLineup, teamStrength, trainingEffect } from '../src/engine/players';
 import { bestPrice, expectedUnits, refPrice } from '../src/engine/merch';
 import { acceptedMargin, expectedCanteenUnits } from '../src/engine/canteen';
-import { AWAY_SHARE, breakdownChance, expectedAttendance, facilityCost } from '../src/engine/finance';
+import { AWAY_SHARE, expectedAttendance, facilityCost } from '../src/engine/finance';
+import { injuryFactors } from '../src/engine/factors';
 import { SECTORS } from '../src/engine/data/names';
 import { runDelegatedTasks, taskCapacity, taskSkill, tasksOf } from '../src/engine/delegation';
 import { PLANS, matchup, nextOpponent, scoutingReport } from '../src/engine/strategy';
@@ -722,11 +723,14 @@ describe('Populariteit en onderhoud', () => {
   it('minder onderhoud is goedkoper maar riskanter', () => {
     const s = newTestGame();
     const normal = facilityCost(s);
+    const risico = product(injuryFactors(s));
     actions.setMaintenance(s, 'basis');
     expect(facilityCost(s)).to.be.below(normal);
-    expect(breakdownChance(s)).to.be.above(0.02);
+    // een verwaarloosd veld is een blessureveld, en sponsors hangen er niet graag naast
+    expect(product(injuryFactors(s))).to.be.above(risico);
     actions.setMaintenance(s, 'premium');
     expect(facilityCost(s)).to.be.above(normal);
+    expect(product(injuryFactors(s))).to.be.below(risico);
   });
 
   it('zonnepanelen zijn een bouwproject en verlagen daarna de vaste kosten', () => {
