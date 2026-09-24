@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.38.0';
+export const VERSION = '0.39.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,22 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.39.0',
+    date: '2026-09-24',
+    title: 'Sterren bepalen wat je personeel voor je uithaalt',
+    items: [
+      'Personeel hébben ontgrendelt het delegeren; hoe goed het loopt, hangt nu aan één duidelijke schaal',
+      'Eén ster haalt 50% van wat er uit een taak te halen valt, twee 59%, drie 68%, vier 76% en vijf 85%',
+      'Die laatste 15% haalt niemand: er bestaat een wiskundig beste keuze, en die is er alleen voor jou',
+      'De kantine, de ticketprijs en het trainingsschema werken nu allemaal op die schaal, gemeten tegen wat een perfecte beslissing zou opleveren',
+      'Gemeten aan de toog: €3,16 per bezoeker bij één ster, €4,02 bij vijf',
+      'Opleiden gaat per ster en wordt telkens fors duurder: €1.550, €3.400, €7.450 en €16.400, met 7 tot 16 weken waarin hij op 60% werkt',
+      'De stap naar vier sterren wordt pas aangeboden vanaf 2de nationale, die naar vijf vanaf 1ste nationale',
+      'Eén opleiding brengt hem ook echt een ster hoger, in plaats van een vage plus die niets veranderde',
+      'Op het personeelsscherm staat bij elke taak hoeveel procent die medewerker eruit haalt',
+    ],
+  },
   {
     version: '0.38.0',
     date: '2026-09-24',

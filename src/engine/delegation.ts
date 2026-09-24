@@ -33,6 +33,51 @@ export function tasksOf(state: GameState, staffId: string): TaskId[] {
   return TASKS.filter((t) => state.delegation[t.id] === staffId).map((t) => t.id);
 }
 
+/**
+ * Wat een personeelslid uit een taak haalt, als deel van wat er maximaal uit te halen valt.
+ *
+ * Dit is de kern van het spel geworden, dus het verdient een duidelijke regel in plaats van
+ * een handvol losse vuistregels. Personeel hébben ontgrendelt het delegeren; hoe góed het
+ * loopt, hangt af van wie je erop zet.
+ *
+ * Eén ster haalt de helft van wat er te halen valt, vijf sterren 85%. Die 85% is een plafond
+ * met opzet: de laatste procenten zijn er alleen voor jou. Er bestaat een wiskundig perfecte
+ * manier om elke week te spelen, en die kan een mens vinden — zelden, en met werk. Wie alles
+ * uitbesteedt, koopt gemak en betaalt daarvoor met die vijftien procent.
+ *
+ * De trap ertussen is gelijkmatig: elke ster is ongeveer negen procentpunten waard. Dat maakt
+ * opleiden de moeite in elke fase van het spel — van één naar twee sterren levert evenveel op
+ * als van vier naar vijf, maar kost een stuk minder.
+ */
+export const STAR_EFFICIENCY = [0.5, 0.59, 0.68, 0.76, 0.85];
+
+/** Van 1 tot 5 sterren: zijn vaardigheid, zijn vakgebied en zijn werklast samen. */
+export function taskStars(state: GameState, taskId: TaskId, staff: Staff): number {
+  return clamp(Math.round(taskSkill(state, taskId, staff) / 20), 1, 5);
+}
+
+/** Het deel van de winst dat hij pakt: 0,50 bij één ster, 0,85 bij vijf. */
+export function taskEfficiency(state: GameState, taskId: TaskId, staff: Staff): number {
+  return STAR_EFFICIENCY[taskStars(state, taskId, staff) - 1];
+}
+
+/**
+ * Kiest uit een reeks mogelijkheden die welke bij deze efficiëntie hoort.
+ *
+ * De beste keuze is bekend — het spel kan ze uitrekenen — maar alleen jij mag eraan. Een
+ * medewerker landt tussen niets doen en het beste, op de hoogte die bij zijn sterren past.
+ * Zo betekent "80% efficiënt" ook echt tachtig procent van de winst, en niet een vaag gevoel.
+ */
+export function pickByEfficiency<T>(opties: { optie: T; waarde: number }[], basis: number, eff: number): T | null {
+  if (!opties.length) return null;
+  const beste = opties.reduce((a, b) => (b.waarde > a.waarde ? b : a));
+  const doel = basis + (beste.waarde - basis) * eff;
+  // de beste keuze die het doel niet voorbijschiet; is er geen, dan de zwakste
+  const haalbaar = opties.filter((o) => o.waarde <= doel);
+  if (!haalbaar.length) return opties.reduce((a, b) => (b.waarde < a.waarde ? b : a)).optie;
+  return haalbaar.reduce((a, b) => (b.waarde > a.waarde ? b : a)).optie;
+}
+
 /** Een toevalsbron voor taken die er zelf geen meekrijgen. */
 function rng2(state: GameState): Rng {
   return createRng(state);
@@ -127,17 +172,18 @@ export function strategyTask(state: GameState, rng: Rng = createRng(state)): voi
   const injured = state.players.filter((p) => p.injuryWeeks > 0).length;
   const tired = avgFatigue(state.players.filter((p) => p.injuryWeeks === 0));
   if (trainingStaff) {
-    const grens = 26 + (skill / 100) * 12; // een zwakke trainer houdt meer marge aan
-    let gekozen = 2;
-    for (let n = 5; n >= 2; n--) {
+    // Hoeveel een schema waard is: meer trainingen laten spelers sneller groeien, maar een
+    // groep die volgende week over de streep gaat, speelt slechter en raakt geblesseerd.
+    const eff = taskEfficiency(state, 'training', trainingStaff);
+    const waardeVan = (n: number) => {
       const proef = { ...state, tactics: { ...t, trainings: n } };
-      // wat er volgende week overblijft: wat ze nu hebben, plus training en wedstrijd, min herstel
       const volgende = tired * (1 - NATURAL_RECOVERY) + trainingLoad(proef) + matchLoad(proef) - recovery(proef);
-      if (volgende <= grens || n === 2) {
-        gekozen = n;
-        break;
-      }
-    }
+      const teVeel = Math.max(0, volgende - 32);
+      return n * 1.2 - teVeel * teVeel * 0.12; // winst van trainen, min wat oververmoeidheid kost
+    };
+    const opties = [2, 3, 4, 5].map((n) => ({ optie: n, waarde: waardeVan(n) }));
+    // de basis is drie trainingen: wat een club zonder trainer sowieso doet
+    const gekozen = pickByEfficiency(opties, waardeVan(3), eff) ?? 3;
     t.trainings = injured >= 3 ? Math.min(gekozen, 3) : gekozen;
 
     if (injured >= 3 || tired > 45) t.focus = 'herstel';
@@ -293,20 +339,18 @@ function ticketTask(state: GameState, rng: Rng): void {
   const ref = DIVISIONS[state.league.divisionLevel].refTicketPrice;
   const cap = state.investor === 'cooperatie' ? ref * 1.2 : ref * 1.8;
   const original = state.ticketPrice;
-  let best = original;
-  let bestRevenue = -1;
-  for (let price = Math.round(ref * 0.5); price <= cap; price++) {
+  const opbrengst = (price: number) => {
     state.ticketPrice = price;
     const att = expectedAttendance(state, { weather: 'bewolkt', derby: false, positionFactor: 1 });
-    // een goede medewerker houdt rekening met de sfeer: dure tickets drukken die op termijn
-    const moodPenalty = price > ref * 1.2 ? (price - ref * 1.2) * att * 0.4 * (s.skill / 100) : 0;
-    const revenue = att * (price + spendPerHead(state)) - moodPenalty;
-    if (revenue > bestRevenue) {
-      bestRevenue = revenue;
-      best = price;
-    }
-  }
-  state.ticketPrice = Math.max(0, Math.round(best * (1 + rng.normal(0, errorChance(taskSkill(state, 'ticketing', s)) / 3))));
+    // dure tickets brengen vandaag meer op maar drukken de sfeer, en dat kost je op termijn volk
+    const moodPenalty = price > ref * 1.2 ? (price - ref * 1.2) * att * 0.4 : 0;
+    return att * (price + spendPerHead(state)) - moodPenalty;
+  };
+  const opties: { optie: number; waarde: number }[] = [];
+  for (let price = Math.round(ref * 0.5); price <= cap; price++) opties.push({ optie: price, waarde: opbrengst(price) });
+  const basis = opbrengst(ref); // de richtprijs van je reeks: wat het zonder ingrijpen opbrengt
+  const gekozen = pickByEfficiency(opties, basis, taskEfficiency(state, 'ticketing', s)) ?? original;
+  state.ticketPrice = Math.max(0, Math.round(gekozen * (1 + rng.normal(0, errorChance(taskSkill(state, 'ticketing', s)) / 4))));
 }
 
 // ---------- Evenementen ----------
@@ -422,24 +466,24 @@ function horecaTask(state: GameState): void {
   //
   // Hoe beter hij is, hoe dichter hij bij die top uitkomt. Een zwakke kracht kijkt maar een
   // paar stappen ver en mikt ernaast; een topper haalt er alles uit.
+  const eff = taskEfficiency(state, 'horeca', s);
   const bezoekers = Math.max(50, Math.round(expectedAttendance(state, { weather: 'bewolkt', derby: false, positionFactor: 1 })));
-  const blik = clamp(vaardigheid / 100, 0.25, 1); // hoe ver hij vooruit kijkt
   for (const item of state.canteen.items) {
     const def = CANTEEN_ITEMS.find((c) => c.id === item.id)!;
-    const origineel = item.price;
-    let beste = origineel;
-    let besteOpbrengst = -Infinity;
-    const onder = def.ref * (1 - 0.35 * blik);
-    const boven = def.ref * (1 + 0.6 * blik);
-    for (let prijs = Math.round(onder * 10) / 10; prijs <= boven; prijs = Math.round((prijs + 0.1) * 10) / 10) {
+    const opbrengst = (prijs: number) => {
+      const bewaard = item.price;
       item.price = prijs;
-      const opbrengst = expectedCanteenUnits(state, item.id, bezoekers) * (prijs - def.cost);
-      if (opbrengst > besteOpbrengst) {
-        besteOpbrengst = opbrengst;
-        beste = prijs;
-      }
+      const waarde = expectedCanteenUnits(state, item.id, bezoekers) * (prijs - def.cost);
+      item.price = bewaard;
+      return waarde;
+    };
+    const opties: { optie: number; waarde: number }[] = [];
+    for (let prijs = Math.round(def.ref * 0.6 * 10) / 10; prijs <= def.ref * 1.8; prijs = Math.round((prijs + 0.1) * 10) / 10) {
+      opties.push({ optie: prijs, waarde: opbrengst(prijs) });
     }
-    item.price = Math.max(0.5, Math.round(beste * (1 + rng2(state).normal(0, err / 2.5)) * 10) / 10);
+    // de basis is de richtprijs: wat de kantine opbrengt als niemand er iets aan doet
+    const gekozen = pickByEfficiency(opties, opbrengst(def.ref), eff) ?? def.ref;
+    item.price = Math.max(0.5, Math.round(gekozen * (1 + rng2(state).normal(0, err / 4)) * 10) / 10);
   }
   if ((state.eventCooldowns['auto-concessie'] ?? 0) > 0) return;
   const open = CONCESSIONS.filter((c) => !state.canteen.concessions.some((x) => x.id === c.id) && usedConcessionSpace(state) + c.space <= CONCESSION_SPACE);

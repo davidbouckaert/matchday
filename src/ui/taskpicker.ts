@@ -12,15 +12,15 @@
 
 import type { GameState, TaskId } from '../engine/types';
 import { TASKS, roleDef } from './../engine/data/catalog';
-import { delegate, taskCapacity, taskSkill, tasksOf } from '../engine/delegation';
+import { delegate, taskCapacity, taskEfficiency, taskSkill, taskStars, tasksOf } from '../engine/delegation';
 import { esc } from './format';
 import { tipAttr } from './tooltip';
 
 /** Hoe goed iemand bij deze taak past, in sterren. */
 function fitStars(s: GameState, taskId: TaskId, staffId: string): number {
+  // dezelfde sterren als de engine: ze bepalen hoeveel hij uit de taak haalt
   const m = s.staff.find((x) => x.id === staffId);
-  if (!m) return 0;
-  return Math.max(1, Math.min(5, Math.round(taskSkill(s, taskId, m) / 20)));
+  return m ? taskStars(s, taskId, m) : 0;
 }
 
 /**
@@ -42,7 +42,7 @@ export function taskPicker(s: GameState, taskIds: TaskId[]): string {
           const stars = fitStars(s, id, m.id);
           return `<option value="${m.id}" ${who?.id === m.id ? 'selected' : ''} ${full ? 'disabled' : ''}>${esc(m.name)} ${'★'.repeat(stars)}${'☆'.repeat(
             5 - stars,
-          )}${t.roles.indexOf(m.role) === 0 ? ' · vakgebied' : ''}${full ? ` · vol (${busy}/${taskCapacity(m)})` : ''}</option>`;
+          )}${Math.round(taskEfficiency(s, id, m) * 100)}%${t.roles.indexOf(m.role) === 0 ? ' · vakgebied' : ''}${full ? ` · vol (${busy}/${taskCapacity(m)})` : ''}</option>`;
         })
         .join('');
 

@@ -171,6 +171,45 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.39.0 — Sterren bepalen wat je personeel voor je uithaalt
+
+**Personeel hébben ontgrendelt het delegeren; wie je erop zet bepaalt wat het oplevert.** Dat zat verspreid over een handvol losse vuistregels per taak. Nu is er één schaal, en die geldt overal:
+
+| sterren | wat hij uit de taak haalt |
+|---|---|
+| ★ | 50% |
+| ★★ | 59% |
+| ★★★ | 68% |
+| ★★★★ | 76% |
+| ★★★★★ | 85% |
+
+Die 85% is een plafond met opzet. Er bestaat een wiskundig beste keuze — het spel kan ze uitrekenen — en die is er alleen voor jou. Wie alles uitbesteedt koopt gemak en betaalt daarvoor met die laatste vijftien procent, elke week opnieuw.
+
+**Wat "50%" betekent, is meetbaar en niet vaag.** Voor elke taak berekent het spel wat de beste keuze oplevert én wat je krijgt als niemand er iets aan doet. De medewerker landt daar precies tussenin, op de hoogte die bij zijn sterren past. Aan de toog is dat direct te zien:
+
+| kantineverantwoordelijke | opbrengst per bezoeker |
+|---|---|
+| ★ (50%) | €3,16 |
+| ★★ (59%) | €3,38 |
+| ★★★ (68%) | €3,59 |
+| ★★★★ (76%) | €3,80 |
+| ★★★★★ (85%) | €4,02 |
+
+De ticketprijs en het trainingsschema werken op dezelfde manier.
+
+**Twee wegen naar goed personeel, allebei duur.** Kopen kost je elke week loon; opleiden kost een bedrag ineens plus weken waarin hij op 60% werkt. Elke ster is een aparte opleiding en elke volgende kost ruim het dubbele:
+
+| stap | kost | duurt | vanaf |
+|---|---|---|---|
+| ★ → ★★ | €1.550 | 7 weken | meteen |
+| ★★ → ★★★ | €3.400 | 10 weken | meteen |
+| ★★★ → ★★★★ | €7.450 | 13 weken | 2de nationale |
+| ★★★★ → ★★★★★ | €16.400 | 16 weken | 1ste nationale |
+
+Zo is het personeelsspel iets voor je eerste seizoen én voor je vijfde: in provinciale til je iemand van één naar drie sterren, de bovenste twee treden zijn een reden om te promoveren. En één opleiding brengt hem nu ook echt een ster hoger; vroeger was het een plus van vier tot acht waarmee je tussen twee sterren in bleef hangen zonder dat er iets veranderde.
+
+**Wat nog niet klopt, eerlijk gemeten.** Alles uitbesteden aan de staf die je toevallig al hebt eindigt in 1 tot 7 van de 12 partijen in een faillissement — dat werkt. Maar wie de beste betaalbare mensen aanwerft en dan doorklikt, gaat nog altijd 0 op 12 failliet, terwijl de afspraak ongeveer 2 op 20 is. De oorzaak zit niet in deze schaal maar in de inkomsten: een club die 68% van het maximum haalt, draait nog altijd winst. Dat is dezelfde knoop als de moeilijkheidsinstelling, en daar hoort ze ook thuis.
+
 ### 0.38.0 — Je personeel denkt na, en je kern heeft een ondergrens
 
 **Autopilot was gratis.** Alles uitbesteden aan personeel en dan doorklikken gaf nul faillissementen op twintig partijen. Dat hoort niet: het verschil tussen een zwakke en een sterke medewerker moet je in je boekhouding voelen. Nu wel:

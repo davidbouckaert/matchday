@@ -1,13 +1,14 @@
+import { courseButton } from '../coursebutton';
 import type { GameState, Staff } from '../../engine/types';
-import { BIJSCHOLING, COURSES, STAFF_ROLES, TASKS, roleDef } from '../../engine/data/catalog';
+import { COURSES, STAFF_ROLES, TASKS, roleDef } from '../../engine/data/catalog';
 import { DIVISIONS } from '../../engine/data/divisions';
 import { hasDiploma } from '../../engine/staff';
 import { staffLock } from '../../engine/actions';
-import { delegate, taskCapacity, taskSkill, tasksOf } from '../../engine/delegation';
+import { delegate, taskCapacity, taskEfficiency, taskSkill, taskStars, tasksOf } from '../../engine/delegation';
 import { esc, euro, bar, stars } from '../format';
 import { impactChips } from '../impact';
 import { staffImpact } from '../../engine/impact';
-import { hint, tip } from '../tooltip';
+import { hint, tip, tipAttr } from '../tooltip';
 
 function detailCard(s: GameState, m: Staff): string {
   const def = roleDef(m.role);
@@ -29,7 +30,12 @@ function detailCard(s: GameState, m: Staff): string {
               const mine = current?.id === m.id;
               return `<li>
                 <label class="check"><input type="checkbox" data-action="delegate" data-id="${t.id}|${m.id}" ${mine ? 'checked' : ''}/>
-                <span><strong>${esc(t.label)}</strong> <span class="fit-stars">${stars(fitStars(s, t.id, m))}</span>${current && !mine ? ` <span class="tag">nu bij ${esc(current.name)}</span>` : ''}<br/>
+                <span><strong>${esc(t.label)}</strong> <span class="fit-stars" ${tipAttr(
+                  `${taskStars(s, t.id, m)} van de 5 sterren voor deze taak. Daarmee haalt hij er ${Math.round(
+                    taskEfficiency(s, t.id, m) * 100,
+                  )}% uit van wat er maximaal uit te halen valt. Sterren hangen af van zijn vaardigheid, of de taak bij zijn functie past en hoeveel taken hij al heeft. De laatste 15% haalt niemand: die is er alleen voor jou.`,
+                  'Wat hij eruit haalt',
+                )}>${stars(fitStars(s, t.id, m))} <span class="eff">${Math.round(taskEfficiency(s, t.id, m) * 100)}%</span></span>${current && !mine ? ` <span class="tag">nu bij ${esc(current.name)}</span>` : ''}<br/>
                 <span class="muted small">${esc(mine ? t.delegated : `Zelf: ${t.owner} Overlaten: ${t.delegated}`)}</span></span></label>
               </li>`;
             })
@@ -39,7 +45,7 @@ function detailCard(s: GameState, m: Staff): string {
     <h3>Opleiding</h3>
     <div class="btn-row">
       ${course && !m.courseWeeksLeft ? `<button class="sm" data-action="course" data-id="${m.id}">Diploma ${course.to} (${euro(course.cost)}, ${course.weeks} weken)</button>` : ''}
-      ${!m.courseWeeksLeft && m.skill < BIJSCHOLING.cap ? `<button class="sm" data-action="bijscholing" data-id="${m.id}">Bijscholing +${BIJSCHOLING.gain[0]}-${BIJSCHOLING.gain[1]} (${euro(BIJSCHOLING.cost(m.skill))}, ${BIJSCHOLING.weeks} weken)</button>` : ''}
+      ${courseButton(s, m)}
       <button class="sm ghost" data-action="fire" data-id="${m.id}">Ontslaan (${euro(m.wage * 8)})</button>
     </div>
   </section>`;
@@ -47,7 +53,8 @@ function detailCard(s: GameState, m: Staff): string {
 
 /** Geschiktheid van 1 tot 5 sterren: vaardigheid, hoe goed de taak bij zijn functie past en zijn werklast. */
 function fitStars(s: GameState, taskId: Parameters<typeof taskSkill>[1], m: Staff): number {
-  return Math.max(1, Math.min(5, Math.round(taskSkill(s, taskId, m) / 20)));
+  // dezelfde sterren als de engine gebruikt om zijn efficiëntie te bepalen
+  return taskStars(s, taskId, m);
 }
 
 export function staffScreen(s: GameState, selected: string | null): string {

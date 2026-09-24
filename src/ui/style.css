@@ -1665,3 +1665,6 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
    "niet verkopen", deze zegt "hier komen ze voor". */
 .star-mark { font-size: .82em; cursor: help; }
 .chip-name .star-mark { font-size: .72em; margin-right: 1px; }
+
+/* Wat een medewerker uit een taak haalt, naast zijn sterren. */
+.fit-stars .eff { font-size: .78rem; font-weight: 700; color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }

@@ -25,6 +25,7 @@ import { weeklyMerch } from './merch';
 import { bankruptcyCheck, rollInjuries, weeklyEvents } from './events';
 import { refreshLoanMarket, refreshStaffMarket, refreshTransferList, weeklyMarket } from './market';
 import { addNews, book } from './util';
+import { STAR_THRESHOLDS, TRAINING_CAP, skillStars } from './training-staff';
 import { recordWeek, rolloverStats, snapshot } from './stats';
 import { clearOrigins } from './origins';
 import { recentForm } from './popularity';
@@ -46,7 +47,6 @@ import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
 import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from './factors';
 import { available, cardsForOpponent, cardsForOwnTeam, serveOpponentSuspensions, serveOwnSuspensions } from './discipline';
 import { YOUTH_FEE_WEEK, youthFeeGrumble, youthFeeRef, youthForecast } from './actions';
-import { BIJSCHOLING } from './data/catalog';
 
 export function advanceWeek(previous: GameState): GameState {
   if (previous.gameOver) return previous;
@@ -506,10 +506,21 @@ function weeklyProgress(state: GameState): void {
     s.courseWeeksLeft--;
     if (s.courseWeeksLeft > 0) continue;
     if (s.courseType === 'bijscholing') {
-      const gain = BIJSCHOLING.gain[0] + ((state.week + s.skill) % (BIJSCHOLING.gain[1] - BIJSCHOLING.gain[0] + 1));
-      s.skill = Math.min(BIJSCHOLING.cap, s.skill + gain);
+      // Eén opleiding is precies één ster: hij komt er net boven de drempel uit. Vroeger was
+      // het een vaste plus van vier tot acht, en dan bleef je hangen tussen twee sterren in
+      // zonder dat er iets veranderde aan wat hij voor je doet.
+      const voor = skillStars(s.skill);
+      const doel = STAR_THRESHOLDS[Math.min(4, voor)] + ((state.week + s.skill) % 5);
+      s.skill = Math.min(TRAINING_CAP, Math.max(s.skill + 3, doel));
       if (s.trait === 'ambitieus') s.wage = Math.max(s.wage, staffWage(s.role, s.skill, s.trait, s.diploma));
-      addNews(state, 'goed', `${s.name} rondt de bijscholing af: vaardigheid +${gain} (nu ${s.skill}).`);
+      const na = skillStars(s.skill);
+      addNews(
+        state,
+        'goed',
+        na > voor
+          ? `${s.name} is klaar met zijn opleiding: van ${voor} naar ${na} sterren (vaardigheid ${s.skill}). Hij haalt nu meer uit elke taak die je hem geeft.`
+          : `${s.name} rondt zijn opleiding af: vaardigheid ${s.skill}.`,
+      );
     } else {
       const course = COURSES.find((c) => c.from === s.diploma);
       if (course) {

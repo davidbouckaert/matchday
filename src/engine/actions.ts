@@ -9,10 +9,11 @@ import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
 import { DIVISIONS } from './data/divisions';
 import {
-  BIJSCHOLING, CLUB_EVENTS, CONCESSION_SPACE, COURSES, MERCH_START_COST, TASKS, UPGRADES, VOLUNTEER_ACTIONS,
+  CLUB_EVENTS, CONCESSION_SPACE, COURSES, MERCH_START_COST, TASKS, UPGRADES, VOLUNTEER_ACTIONS,
   canteenDef, concessionDef, merchDef, roleDef, type ClubEventDef,
 } from './data/catalog';
 import { isTransferWindow } from './calendar';
+import { coursePlan } from './training-staff';
 import { FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, selectLineup, squadBlock, wageDemand } from './players';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
 import { emergencyOffer, loanOffers, sponsorWeekly } from './loans';
@@ -309,13 +310,17 @@ export function startCourse(state: GameState, staffId: string, type: 'diploma' |
     s.courseType = 'diploma';
     return ok(`${s.name} start de opleiding ${course.to} (${course.weeks} weken). Tijdens de opleiding werkt hij op 60%.`);
   }
-  if (s.skill >= BIJSCHOLING.cap) return fail(`${s.name} is al top in zijn vak.`);
-  const cost = BIJSCHOLING.cost(s.skill);
-  if (state.cash < cost) return fail(tooExpensive(state, cost, 'Bijscholing'));
-  book(state, 'opleidingen', -cost, `Bijscholing ${s.name}`);
-  s.courseWeeksLeft = BIJSCHOLING.weeks;
+  // Bijscholing werkt nu per ster: elke trap kost ruim het dubbele van de vorige en duurt
+  // langer, en de laatste twee zitten achter je klassement. Zo blijft opleiden in elke fase
+  // van het spel een echte afweging tegenover een dure kracht kopen.
+  const plan = coursePlan(state, s);
+  if (plan.blocked) return fail(plan.blocked);
+  book(state, 'opleidingen', -plan.cost, `Opleiding ${s.name} naar ${plan.toStar} sterren`);
+  s.courseWeeksLeft = plan.weeks;
   s.courseType = 'bijscholing';
-  return ok(`${s.name} volgt ${BIJSCHOLING.weeks} weken bijscholing (+${BIJSCHOLING.gain[0]} tot +${BIJSCHOLING.gain[1]} vaardigheid).`);
+  return ok(
+    `${s.name} gaat ${plan.weeks} weken op opleiding naar ${plan.toStar} sterren (€${plan.cost.toLocaleString('nl-BE')}). Zolang hij bezig is, werkt hij op 60%.`,
+  );
 }
 
 // ---------- Financiën ----------

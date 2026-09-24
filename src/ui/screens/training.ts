@@ -1,5 +1,6 @@
+import { courseButton } from '../coursebutton';
 import type { GameState } from '../../engine/types';
-import { BIJSCHOLING, COURSES, STAFF_ROLES } from '../../engine/data/catalog';
+import { COURSES, STAFF_ROLES } from '../../engine/data/catalog';
 import { DIVISIONS, DIPLOMA_ORDER, diplomaRank } from '../../engine/data/divisions';
 import { hasDiploma } from '../../engine/staff';
 import { bar, esc, euro } from '../format';
@@ -31,8 +32,7 @@ export function trainingScreen(s: GameState): string {
       <td>${busy ? `📚 ${m.courseType === 'bijscholing' ? 'bijscholing' : 'diploma'}: nog ${m.courseWeeksLeft} weken` : '<span class="muted">beschikbaar</span>'}</td>
       <td class="btns">
         ${course && !busy ? `<button class="sm primary" data-action="course" data-id="${m.id}">${course.to}: ${euro(course.cost)}, ${course.weeks} weken</button>` : ''}
-        ${!busy && m.skill < BIJSCHOLING.cap ? `<button class="sm" data-action="bijscholing" data-id="${m.id}">Bijscholing +${BIJSCHOLING.gain[0]}–${BIJSCHOLING.gain[1]}: ${euro(BIJSCHOLING.cost(m.skill))}, ${BIJSCHOLING.weeks} weken</button>` : ''}
-        ${!busy && m.skill >= BIJSCHOLING.cap && !course ? '<span class="muted small">volledig opgeleid</span>' : ''}
+        ${busy ? '' : courseButton(s, m)}
       </td>
     </tr>`;
   }).join('');
@@ -58,7 +58,7 @@ export function trainingScreen(s: GameState): string {
     </section>
     <section class="card">
       <h2>Bijscholing</h2>
-      <p class="muted small">Voor elk personeelslid: ${BIJSCHOLING.weeks} weken, +${BIJSCHOLING.gain[0]} tot +${BIJSCHOLING.gain[1]} vaardigheid, tot maximaal ${BIJSCHOLING.cap}.
+      <p class="muted small">Elke ster kost ruim het dubbele van de vorige en duurt langer; de laatste twee worden pas aangeboden in de nationale reeksen. Opleiden is de goedkope weg naar goed personeel, maar hij kost weken waarin hij op 60% werkt.
       Kost €800 + €20 per vaardigheidspunt (hoe beter iemand al is, hoe duurder).</p>
       <p class="muted small">Het jeugdopleidingscentrum (voor spelers) vind je bij Infrastructuur.</p>
     </section>
