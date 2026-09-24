@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.73.0';
+export const VERSION = '0.74.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.74.0',
+    date: '2026-09-24',
+    title: 'Volwaardig op de iPad, zonder één pixel verschil op de pc',
+    items: [
+      'Alle tikdoelen naar minstens 40 pixels: tabs, subtabs, vraagtekens, plus/min-knoppen, sterren, wisselbank en sponsorfilters (gemeten: 20 schermen × 2 oriëntaties, alles groen)',
+      'Invoervelden naar 16 pixels op aanraakschermen, zodat iPadOS niet meer inzoomt bij focus',
+      'Het plakkende hover-effect na een tik is geneutraliseerd, overlays volgen de echte schermrand (dvh) en de speelbalk ontwijkt de thuisbalk',
+      'Alles zit achter (pointer: coarse) en (hover: none): met een muis verandert er niets — nagemeten',
+    ],
+  },
   {
     version: '0.73.0',
     date: '2026-09-24',

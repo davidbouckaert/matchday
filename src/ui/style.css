@@ -1992,3 +1992,62 @@ tr.filtering td { background: var(--accent-soft); }
 
 /* Wat een medewerker uit een taak haalt, naast zijn sterren. */
 .fit-stars .eff { font-size: .78rem; font-weight: 700; color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   Aanraakschermen (iPad en andere tablets).
+
+   Alles hieronder zit achter (pointer: coarse) of (hover: none): een pc met muis
+   krijgt geen enkele wijziging. Drie soorten ingrepen, uit de meting van sept 2026
+   (20 schermen, 2 oriëntaties): tikdoelen naar minstens 40 pixels, invoervelden naar
+   16 pixels zodat iPadOS niet inzoomt bij focus, en het plakkende :hover-effect na
+   een tik geneutraliseerd.
+   ========================================================================== */
+button, .button, select, input[type='range'], .choice, .ambition { touch-action: manipulation; }
+html { -webkit-tap-highlight-color: transparent; }
+
+@media (pointer: coarse) {
+  /* navigatie: tabs en subtabs waren 31 pixels hoog */
+  .tabs button, .subtabs button { min-height: 44px; }
+  /* het vraagteken was 17×17: onraakbaar met een duim */
+  .hint { width: 34px; height: 34px; font-size: .9rem; }
+  /* de filterlabels op de sponsortegels en de schuifbalken: echte tikhoogte */
+  /* de tegel-labels dragen elders een em-hoogte met hogere specificiteit; hier winnen */
+  .filter-pick, .slot-head .filter-pick, .tiles.slots .tile .label.filter-pick { min-height: 40px; display: inline-flex; align-items: center; }
+  input[type='range'] { min-height: 36px; }
+  /* kleine actieknoppen (sm), sterren, banken en de plus/min van getalvelden */
+  button.sm, .sr-btn, .bench-btn, .star, .bench, .numfield button { min-width: 40px; min-height: 40px; }
+  .link-btn { display: inline-flex; align-items: center; min-height: 40px; }
+  .worklist .go .link-btn, .tour-steps .link-btn { min-height: 44px; }
+  .playbar .fast, .playbar .next, .bureau-knop { min-height: 46px; }
+  .pb-open { min-height: 40px; }
+  /* iPadOS zoomt de hele pagina in zodra een veld onder de 16 pixels focus krijgt */
+  input, select, textarea { font-size: 16px; }
+  input.numinput { font-size: 16px; }
+  /* de wisselrij en de speler-tegels op het veld: dikkere tikvlakken */
+  .squad-row { min-height: 52px; }
+  .p-tile, .pitch-row button { min-height: 44px; }
+}
+
+@media (hover: none) {
+  /* iPadOS laat :hover plakken na een tik; haal de opvallendste wrijvingen weg */
+  button:hover, .button:hover { background: none; }
+  button.primary:hover:not(:disabled) { background: var(--accent); filter: none; }
+  button.sm.primary:hover { background: var(--accent); }
+  .hbit:hover { background: none; }
+  .squad-row[role='button']:hover { background: transparent; }
+  .squad-row.in-xi[role='button']:hover { background: var(--accent-soft); box-shadow: none; }
+  .squad-row.benched[role='button']:hover { background: var(--mid-soft); }
+  .pb-cash:hover { color: inherit; }
+  .subtabs button.on { background: var(--accent-soft); }
+}
+
+/* iPadOS-balken: 100vh is daar hoger dan het zichtbare venster. dvh volgt de echte rand. */
+@supports (height: 100dvh) {
+  .anim-card, .report-card { max-height: calc(100dvh - 32px); }
+  .opening-card { max-height: calc(100dvh - 32px); }
+  .confirm-card { max-height: calc(100dvh - 32px); }
+  .squad-list { max-height: max(720px, calc(100dvh - 260px)); }
+}
+
+/* de thuisbalk van een iPad overlapt anders de speelbalk */
+.playbar { padding-bottom: max(var(--s2), env(safe-area-inset-bottom)); }

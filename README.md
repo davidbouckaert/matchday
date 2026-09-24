@@ -171,6 +171,14 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.74.0 — Volwaardig op de iPad, zonder één pixel verschil op de pc
+
+**Eerst meten, dan pas raken.** Een Playwright-audit als echte iPad (touch aan, iPad Pro 11 liggend en iPad gen 7 staand) nam alle twintig schermen door en mat drie dingen: horizontale overflow, tikdoelen kleiner dan de duimmaat, en invoervelden onder de 16 pixels (die laten iPadOS de hele pagina inzoomen bij focus). De structuur bleek gezond — **nul overflow, overal** — maar er waren tientallen te kleine tikdoelen: subtabs van 31 pixels, vraagtekens van 17, linkknoppen van 23, en het sponsorscherm alleen al telde er 55 (de plus/min-knopjes en filterlabels van de prijstegels).
+
+**De aanraaklaag zit volledig achter `(pointer: coarse)` en `(hover: none)`** — een pc met muis krijgt geen enkele wijziging, en dat is nagemeten (de media query matcht er niet, de maten blijven byte voor byte gelijk). Op aanraakschermen: alle tikdoelen naar minstens 40 pixels, invoervelden naar 16 pixels, het plakkende `:hover` na een tik geneutraliseerd, `touch-action: manipulation` tegen de dubbeltik-zoom, overlays op `dvh` zodat de Safari-balk niets afsnijdt, en de speelbalk ontwijkt de thuisbalk via `safe-area-inset`.
+
+**En dan het bewijs in de praktijk**: een volledige spelsessie op de gesimuleerde iPad met alléén tikken — wizard, rondleidingsstap met wijzer, wisselbank (gele rij), tooltip vastgepind via het vraagteken, getalveld met plus-knop op 16 pixels, weekanimatie en -rapport netjes binnen de 834 pixels van het scherm, bevestigingspopup openen en annuleren, en terug naar het Bureau. Tien van de tien interacties groen; de eindaudit rapporteert "ok" op alle veertig metingen.
+
 ### 0.73.0 — Een vaste weg naar het Bureau, en Selectie in balans
 
 **De tijdelijke terugknop van de rondleiding bleek gewoon een goede knop.** David twijfelde er zelf al aan ("het Bureau is dé hoofdplek") — dus is hij permanent geworden: **🏠 Bureau** staat nu vast in de speelbalk naast de speelknoppen, op elk scherm behalve het Bureau zelf. Volg je een rondleidingsstap, dan stuitert het vingertje erboven: daar wacht je volgende stap. En de terugverdientijd van de kraampjes ging in 0.72.1 van twee seizoenen naar **22 weken** (gemeten: ±19) — te realistisch is te saai; investeren moet een rush geven, en dat principe geldt vanaf nu voor elke prijs in het spel.
