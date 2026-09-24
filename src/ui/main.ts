@@ -106,6 +106,9 @@ interface UiState {
    * verslag ze kon vertellen. De kopbalk loopt nu pas bij wanneer jij het verslag sluit.
    */
   held: GameState | null;
+  /** De versie die de server draait als die nieuwer is dan deze bundle: dan staat er een
+   *  banner "ververs". Een open tabblad draait anders wekenlang stil een oude versie door. */
+  updateAvailable: string | null;
   fastForward: FastForwardResult | null; // wat er gebeurde toen je meerdere weken doorspeelde
   animate: boolean;
   lastScreen: Record<string, Screen>; // laatst bezochte subtab per groep
@@ -133,6 +136,7 @@ const ui: UiState = {
   sorts: {},
   report: null,
   held: null,
+  updateAvailable: null,
   fastForward: null,
   animate: readPref('vcg-anim', true),
   lastScreen: {},
@@ -244,7 +248,11 @@ function render(): void {
   // onthouden waar de cursor stond: elke wijziging tekent het scherm opnieuw, en wie net
   // een prijs aan het intikken is mag daar niet uit geduwd worden
   const focused = grabFocus();
-  root.innerHTML = `
+  const updateBanner = ui.updateAvailable
+    ? `<div class="update-banner" role="status">Er staat een nieuwe versie klaar (${esc(ui.updateAvailable)}, jij speelt ${VERSION}). Je spel is opgeslagen.
+        <button class="sm primary" data-action="reload">Ververs de pagina</button></div>`
+    : '';
+  root.innerHTML = `${updateBanner}
     <div class="bars">
     ${header(ui.report && ui.held ? ui.held : g)}
     <nav class="tabs">${GROUPS.filter((gr) => gr.id !== 'menu')
@@ -736,6 +744,9 @@ const handlers: Record<string, Handler> = {
   release: gameAction(actions.releasePlayer),
   'accept-offer': gameAction(actions.acceptPlayerOffer),
   'decline-offer': gameAction(actions.declinePlayerOffer),
+  reload: () => {
+    window.location.reload();
+  },
   'staff-filter': (id) => {
     ui.staffFilter = ui.staffFilter === id ? null : (id as StaffRole);
   },
@@ -943,3 +954,32 @@ document.addEventListener('keydown', (e) => {
   }
   render();
 })();
+
+// ---------- Nieuwe versie klaar? ----------
+//
+// Een browsertabblad draait de bundle die het bij het openen laadde, en blijft dat doen —
+// ook dagen na een deploy (Safari zet een tabblad zelfs terug zonder herladen). De server
+// zelf weet wél welke versie er staat: /api/version. We kijken er elke vijf minuten naar,
+// en meteen wanneer je naar het tabblad terugkeert; verschilt het van deze bundle, dan
+// verschijnt bovenaan een banner met een ververs-knop. Alleen in productie: tijdens
+// npm run dev is "de server" gewoon deze code zelf.
+async function checkForUpdate(): Promise<void> {
+  try {
+    const r = await fetch('/api/version', { cache: 'no-store' });
+    if (!r.ok) return;
+    const { version } = (await r.json()) as { version?: string };
+    if (version && version !== VERSION && ui.updateAvailable !== version) {
+      ui.updateAvailable = version;
+      render();
+    }
+  } catch {
+    /* offline of onderweg: dan proberen we het straks gewoon opnieuw */
+  }
+}
+
+if (import.meta.env.PROD) {
+  window.setInterval(checkForUpdate, 5 * 60_000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') void checkForUpdate();
+  });
+}

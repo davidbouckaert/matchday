@@ -1297,6 +1297,11 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .slot-badge.vol { color: var(--good); }
 .slot-badge.leeg { color: var(--muted); font-weight: 600; }
 
+/* De banner die zegt dat er een nieuwe versie klaarstaat. Boven alles, in de accentkleur:
+   wie hem negeert speelt gewoon door, wie klikt zit meteen op de nieuwste versie. */
+.update-banner { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; justify-content: center; gap: var(--s3);
+  padding: 8px var(--s4); background: var(--accent-soft); color: var(--accent); font-weight: 650; font-size: .9rem; }
+
 /* Filteren door aan te klikken: een functie op Personeel of een tegel-kop op Sponsors.
    De knop ziet eruit als de tekst die hij was; actief = accentkleur met een bolletje,
    en bij de gefilterde lijst staat een chip met een kruisje om hem weg te halen. */

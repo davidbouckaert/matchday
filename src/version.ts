@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.53.0';
+export const VERSION = '0.53.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.53.1',
+    date: '2026-09-24',
+    title: 'Het spel zegt zelf wanneer er een nieuwe versie klaarstaat',
+    items: [
+      'Een open tabblad bleef stil een oude versie draaien, ook dagen na een update — de voettekst zei 0.50.0 terwijl de server al verder stond',
+      'Het spel kijkt nu elke vijf minuten (en zodra je naar het tabblad terugkeert) naar /api/version',
+      'Staat er een nieuwere versie, dan verschijnt bovenaan een banner met een ververs-knop; je spel is dan al opgeslagen',
+      'Eén keer nog zelf hard verversen: tabbladen die nu nog een oudere versie draaien, hebben deze banner zelf nog niet',
+    ],
+  },
   {
     version: '0.53.0',
     date: '2026-09-24',
