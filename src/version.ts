@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.58.0';
+export const VERSION = '0.58.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.58.1',
+    date: '2026-09-24',
+    title: 'Een week zonder wedstrijd zegt dat nu zelf',
+    items: [
+      'In de winterstop toonde de weekanimatie een leeg veld met een rollende bal — dat las als een kapotte wedstrijdanimatie',
+      'Winterstop: besneeuwd veld, dwarrelende vlokken, geen bal, kop "❄️ Winterstop"',
+      'Elke andere week zonder wedstrijd zegt het er nu gewoon bij: "Geen wedstrijd deze week"',
+    ],
+  },
   {
     version: '0.58.0',
     date: '2026-09-24',

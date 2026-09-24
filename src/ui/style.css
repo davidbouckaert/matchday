@@ -502,7 +502,19 @@ td.mu-1 { color: var(--bad); font-weight: 600; }
 @keyframes net { 0%, 85% { transform: translateX(0); } 92% { transform: translateX(3px); } 100% { transform: translateX(0); } }
 .anim-text { font-weight: 600; margin-top: 10px; animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .45; } }
-@media (prefers-reduced-motion: reduce) { .ball-move, .anim-text, .pitch .goal { animation: none; } }
+/* winterstop: het veld ligt onder een laagje sneeuw, de doellijn beweegt niet en er
+   dwarrelen een paar vlokken — zo leest een week zonder wedstrijd niet als een kapotte
+   wedstrijdanimatie maar als wat ze is */
+.pitch.winter .field { fill: #b9cbd8; }
+.pitch.winter .lines { stroke: rgba(255,255,255,.9); }
+.pitch.winter .goal { animation: none; }
+.pitch.winter .sneeuw circle { fill: #fff; opacity: .9; animation: vlok 3.4s linear infinite; }
+.pitch.winter .sneeuw circle:nth-child(2) { animation-delay: .8s; animation-duration: 4.1s; }
+.pitch.winter .sneeuw circle:nth-child(3) { animation-delay: 1.6s; animation-duration: 3.7s; }
+.pitch.winter .sneeuw circle:nth-child(4) { animation-delay: .4s; animation-duration: 4.5s; }
+.pitch.winter .sneeuw circle:nth-child(5) { animation-delay: 1.1s; animation-duration: 3.9s; }
+@keyframes vlok { from { transform: translateY(0); } to { transform: translateY(150px); } }
+@media (prefers-reduced-motion: reduce) { .ball-move, .anim-text, .pitch .goal, .pitch.winter .sneeuw circle { animation: none; } }
 /* Het kader scrollt niet zelf meer: de kop en de knoppenbalk blijven staan en alleen het
    middenstuk schuift. Zo staat "Naar je bureau" er ook na een drukke week nog, in plaats
    van onder duizend pixels nieuws. */

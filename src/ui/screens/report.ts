@@ -86,16 +86,30 @@ export function animationOverlay(s: GameState, prev: WeekRef): string {
       <li class="mid fin" style="animation-delay:${ANIM_T.fin}s"><span class="min">90'</span> Affluiten: ${hg} - ${ag}</li>
     </ul>`;
     } else {
-    middenstuk = `<svg class="pitch" viewBox="0 0 300 120" aria-hidden="true">
+    // Zonder wedstrijd rolde hier gewoon een bal over een leeg veld, met "De rekeningen
+    // komen binnen…" eronder. Wie net de wedstrijdtijdlijn kende, dacht dat die kapot was
+    // — terwijl het gewoon winterstop was. De kaart zegt dat nu zelf: een besneeuwd veld
+    // zonder bal in de winterstop, en anders de kop "Geen wedstrijd deze week".
+    const winter = !m && inWinterBreak(prev.week);
+    if (!m) {
+      affiche = winter
+        ? `<h2>❄️ Winterstop</h2><p class="center muted small">De competitie ligt stil — geen wedstrijd deze week.</p>`
+        : `<h2>${title}</h2><p class="center muted small">Geen wedstrijd deze week.</p>`;
+    }
+    middenstuk = `<svg class="pitch${winter ? ' winter' : ''}" viewBox="0 0 300 120" aria-hidden="true">
         <rect x="2" y="2" width="296" height="116" rx="6" class="field"/>
         <line x1="150" y1="2" x2="150" y2="118" class="lines"/>
         <circle cx="150" cy="60" r="16" class="lines" fill="none"/>
         <rect x="262" y="38" width="36" height="44" class="lines" fill="none"/>
         <rect x="292" y="48" width="6" height="24" class="goal"/>
-        <g class="ball-move"><circle cx="0" cy="0" r="6" class="ball"/><path d="M-3 -2 L0 -4 L3 -2 L2 2 L-2 2Z" class="ball-dot"/></g>
+        ${
+          winter
+            ? `<g class="sneeuw"><circle cx="45" cy="-6" r="3"/><circle cx="105" cy="-22" r="2"/><circle cx="150" cy="-10" r="2.6"/><circle cx="205" cy="-28" r="2.2"/><circle cx="255" cy="-14" r="3"/></g>`
+            : `<g class="ball-move"><circle cx="0" cy="0" r="6" class="ball"/><path d="M-3 -2 L0 -4 L3 -2 L2 2 L-2 2Z" class="ball-dot"/></g>`
+        }
       </svg>
       <div class="anim-beats">
-        <span>${m ? 'De bal rolt…' : 'De week begint…'}</span>
+        <span>${m ? 'De bal rolt…' : winter ? 'Het veld ligt er stil bij…' : 'De week begint…'}</span>
         <span>${m ? 'Tweede helft…' : 'De rekeningen komen binnen…'}</span>
         <span>${m ? 'Affluiten!' : 'Alles geteld!'}</span>
       </div>`;
