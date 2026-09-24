@@ -104,7 +104,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: 'kraampjes',
     label: 'Kraampjesplaats (+1)',
-    description: 'Verharding, stroom en water voor een extra standhouder. De prijs volgt je opkomst en verdient zichzelf in ongeveer twee seizoenen terug. Maximaal 6 plaatsen.',
+    description: 'Verharding, stroom en water voor een extra standhouder. De prijs volgt je opkomst en is in een week of twintig terugverdiend. Maximaal 6 plaatsen.',
     cost: 0, // dynamisch: zie kraampjesCost()
     weeks: 3,
     group: 'investering',

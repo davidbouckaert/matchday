@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.72.0';
+export const VERSION = '0.72.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,15 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.72.1',
+    date: '2026-09-24',
+    title: 'Kraampjes verdienen zichzelf nu in twintig weken terug',
+    items: [
+      'Twee seizoenen terugverdientijd was netjes realistisch en precies daarom fout: investeren moet een rush geven',
+      'De prijs rekent nu met 22 weken (gemeten: ±19 in de praktijk) — het spel mag geen grind worden',
+    ],
+  },
   {
     version: '0.72.0',
     date: '2026-09-24',

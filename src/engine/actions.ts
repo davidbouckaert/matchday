@@ -1393,17 +1393,19 @@ export const LED_SAVING = 0.06; // ledverlichting: idem, kleiner
 const GREEN_ENERGY_PAYBACK_WEEKS = 156; // drie seizoenen
 
 /** De installatie wordt geprijsd naar de grootte van je complex: altijd ongeveer drie seizoenen terugverdientijd. */
-/** Wat een extra kraamplaats kost: de verwachte opbrengst per plaats-eenheid per
- *  thuiswedstrijd, keer een seizoen of twee — zo verdient hij zichzelf netjes terug en
- *  groeit de prijs mee met je opkomst. Gemiddeld over de standtypes aan hun gangbare
- *  marge, zodat één uitschieter de prijs niet zet. */
-const KRAAMPJES_PAYBACK_SEASONS = 2;
+/** Wat een extra kraamplaats kost: de verwachte weekopbrengst per plaats-eenheid, keer
+ *  ruim twintig weken. De eerste versie rekende twee seizoenen terugverdientijd — netjes
+ *  realistisch, en precies daarom fout: investeren moet in dit spel een 'rush' geven,
+ *  je wil het geld zien terugstromen. Op 22 weken voelt bouwen als winst, en omdat de
+ *  prijs je opkomst volgt, blijft die belofte in elke reeks overeind. Gemiddeld over de
+ *  standtypes aan hun gangbare marge, zodat één uitschieter de prijs niet zet. */
+const KRAAMPJES_PAYBACK_WEEKS = 22;
 export function kraampjesCost(state: GameState): number {
   const att = Math.max(120, expectedAttendance(state, { weather: 'bewolkt', derby: false, positionFactor: 1 }));
-  const perEenheid =
+  const perEenheidPerMatch =
     CONCESSIONS.reduce((sum, d) => sum + concessionForecast(state, d.id, acceptedMargin(state, d.id), att) / d.space, 0) / CONCESSIONS.length;
-  const thuisPerSeizoen = MATCH_WEEKS.length / 2;
-  return Math.max(2_000, round(perEenheid * thuisPerSeizoen * KRAAMPJES_PAYBACK_SEASONS, 500));
+  const perWeek = (perEenheidPerMatch * (MATCH_WEEKS.length / 2)) / 52; // thuismatchen uitgesmeerd over het jaar
+  return Math.max(500, round(perWeek * KRAAMPJES_PAYBACK_WEEKS, 100));
 }
 
 export function greenEnergyCost(state: GameState, id: 'zonnepanelen' | 'ledverlichting' = 'zonnepanelen'): number {
