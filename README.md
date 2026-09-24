@@ -171,6 +171,50 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 17 (deze versie)
 
+### 0.44.0 — De log is een log, geen spelfeature
+
+**De vorige laag deed het half goed.** Er kwam een echte logmodule met een bestand en een terminal, maar het oude kader bleef ook gewoon staan: "Wat je personeel besliste", op het scherm Personeel, met een uitleg in gewone taal bij elke beslissing, en dezelfde regels in de console van je browser. Dat was een breindump vermomd als logging. Een log is voor wie de code nakijkt, niet voor wie het spel speelt. Alles wat in de richting van de speler wees, is eruit:
+
+- het kader op het scherm Personeel
+- de regels in je browserconsole
+- `src/log/browser.ts` en het ontvangststuk in `vite.config.ts`
+- `state.reasoning` uit de opgeslagen stand — met een migratie die het uit bestaande spellen haalt
+
+**Wat ervoor in de plaats komt.** Dezelfde berekening, maar als waarden in plaats van als verhaal:
+
+```
+2026-09-24T09:04:08.912Z debug [delegatie.horeca] canteen price set
+    season: 1
+    week: 1
+    staff: s82
+    item: pils
+    eff: 0.582
+    support: 0.855
+    visitors: 494
+    ref: 2.5
+    cost: 0.75
+    baseline: 706.1
+    optimum: {"price":4.5,"value":747.4}
+    picked: 3
+    from: 2.5
+    to: 2.9
+```
+
+Daar staat alles in wat je nodig hebt om na te rekenen of de motor doet wat hij belooft: waar hij van vertrok (`baseline`, de richtprijs), wat het meetbare optimum was, met welke efficiëntie hij werkte, wat hij koos en wat er uiteindelijk stond. Zonder een woord uitleg, want die hoort in de code en in dit bestand, niet in elke logregel.
+
+De scopes zijn `delegatie.<taak>`, dus `grep 'delegatie.training' logs/*.log` geeft je één taak over een heel seizoen. De wekelijkse doorlichting staat onder `delegatie.scan`.
+
+**Alles loopt op `debug`, en dat is de veilige stand.** Zonder aangehaakte bestemming doet loggen niets — er wordt niet eens een record gemaakt. Een testronde of een meting van zes seizoenen is dus even snel als daarvoor, tenzij je er expliciet om vraagt:
+
+| wat je doet | waar je regels komen |
+|---|---|
+| `VCG_LOG=debug npx mocha` | `logs/test.log` en de terminal |
+| `VCG_LOG=debug npm run autopilot` | `logs/autopilot.log` en de terminal |
+| `VCG_LOG=debug npm run economie` | `logs/economie.log` en de terminal |
+| `npm run dev` en spelen | niets — de motor draait dan in je browser, en die heeft geen bestandssysteem |
+
+Die laatste regel is de prijs van deze keuze, en hij is bewust betaald: browserspel levert geen logbestand meer op. Wil je dat later terug, dan hoort het via een echte server te lopen, niet via een kader in het spel.
+
 ### 0.43.0 — Een echt logboek: naar een bestand en naar de terminal
 
 **Wat er vorige laag stond, was geen log.** Ik had "logging toevoegen aan de code base" gelezen als "laat zien wat het brein uitrekent", en dat is ook gebeurd: elke beslissing komt met haar stappen op het scherm Personeel. Maar het ging verder alleen naar `console.debug`, en dat is geen logbestand. Je kunt er niet in grepen, je houdt er na het sluiten van je tabblad niets van over, en je kunt het later niet naar een server sturen. Dat is nu rechtgezet.

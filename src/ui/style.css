@@ -1668,13 +1668,3 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 
 /* Wat een medewerker uit een taak haalt, naast zijn sterren. */
 .fit-stars .eff { font-size: .78rem; font-weight: 700; color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
-
-/* Het logboek van het brein: wat je personeel uitrekende voor het iets deed. */
-.brain { background: var(--sunken); border-radius: var(--radius-sm); padding: var(--s2) var(--s3); margin-top: 6px; }
-.brain summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s3); cursor: pointer; }
-.brain summary::-webkit-details-marker { display: none; }
-.brain-when { font-size: .72rem; color: var(--faint); font-variant-numeric: tabular-nums; min-width: 42px; }
-.brain-uitkomst { font-variant-numeric: tabular-nums; font-weight: 650; }
-.brain-uitkomst.changed { color: var(--accent); }
-.brain-steps { margin: var(--s2) 0 0; padding-left: 1.4em; font-size: .82rem; color: var(--muted); }
-.brain-steps li { margin: 2px 0; }

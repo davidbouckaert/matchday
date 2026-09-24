@@ -3,7 +3,7 @@ import { MIN_SQUAD, squadBlock } from '../src/engine/players';
 import { delegateTask, hireStaff, loanOut, releasePlayer, sellPlayer, startCourse } from '../src/engine/actions';
 import { STAR_EFFICIENCY, pickByEfficiency, runDelegatedTasks, strategyTask, taskEfficiency, taskSkill } from '../src/engine/delegation';
 import { MIN_SUPPORT, supportReport } from '../src/engine/support';
-import { recentReasoning } from '../src/engine/reasoning';
+import { addSink, clearSinks, type LogRecord } from '../src/log/logger';
 import { spendPerHeadCanteen } from '../src/engine/canteen';
 import { recovery } from '../src/engine/factors';
 import { createRng } from '../src/engine/rng';
@@ -250,21 +250,34 @@ describe('Wat je club om een medewerker heen heeft, telt mee', () => {
   });
 });
 
-describe('Het logboek van het brein', () => {
-  it('schrijft op wat er berekend is voor de beslissing genomen wordt', () => {
+describe('Het logboek van de rekenkern', () => {
+  // Dit is een ontwikkelaarslog, geen spelfeature: de regels gaan naar src/log en niet naar
+  // het scherm of de browserconsole. Wat hier getest wordt is dat de waarden waarmee gerekend
+  // is ook echt in de log terechtkomen, en dat er niets gebeurt als niemand meeluistert.
+  afterEach(() => clearSinks());
+
+  it('legt de berekening van de trainer vast met de waarden erbij', () => {
+    const gezien: LogRecord[] = [];
+    addSink((r) => gezien.push(r), 'debug');
     const s = readyGame();
     const trainer = s.staff.find((x) => x.role === 'hoofdtrainer')!;
     delegateTask(s, 'training', trainer.id);
     strategyTask(s);
-    const regel = recentReasoning(s, 5).find((e) => e.subject === 'Trainingen per week');
-    expect(regel, 'de trainer hoort zijn rekenwerk op te schrijven').to.not.equal(undefined);
-    expect(regel!.steps.length, 'met de stappen erbij').to.be.above(3);
-    expect(regel!.staff).to.equal(trainer.name);
-    expect(regel!.to).to.equal(String(s.tactics.trainings));
+    const regel = gezien.find((r) => r.scope === 'delegatie.training');
+    expect(regel, 'de trainer hoort zijn rekenwerk in de log te zetten').to.not.equal(undefined);
+    const meta = regel!.meta!;
+    expect(meta.staff).to.equal(trainer.id);
+    expect(meta.to).to.equal(s.tactics.trainings);
+    expect(meta.eff, 'de efficiëntie waarmee hij werkte').to.be.a('number');
+    expect(meta.baseline, 'de waarde zonder ingrijpen').to.be.a('number');
+    expect(meta.candidates, 'elke optie met zijn waarde').to.be.an('object');
+    expect(meta.optimum, 'het meetbare optimum').to.be.a('number');
   });
 
-  it('past de beslissing aan als je club verandert, en zegt dat het veranderd is', () => {
+  it('laat in de log zien dat een beslissing meeverandert met de club', () => {
     // het concrete voorbeeld: van 3 naar 4 trainingen zodra er een kinesist in dienst is
+    const gezien: LogRecord[] = [];
+    addSink((r) => gezien.push(r), 'debug');
     const s = readyGame();
     const trainer = s.staff.find((x) => x.role === 'hoofdtrainer')!;
     trainer.skill = 85;
@@ -285,13 +298,31 @@ describe('Het logboek van het brein', () => {
     s.week++;
     strategyTask(s);
     expect(s.tactics.trainings, 'met opvang erbij mag er zwaarder getraind worden').to.be.above(eerst);
-    const laatste = recentReasoning(s, 1)[0];
-    expect(laatste.changed, 'en dat hoort als wijziging in het logboek te staan').to.equal(true);
-    expect(laatste.from).to.equal(String(eerst));
+    const laatste = gezien.filter((r) => r.scope === 'delegatie.training').at(-1)!;
+    expect(laatste.meta!.from, 'de log hoort te tonen waar hij vandaan kwam').to.equal(eerst);
+    expect(laatste.meta!.to).to.equal(s.tactics.trainings);
   });
 
-  it('houdt het logboek begrensd', () => {
-    const s = playWeeks(readyGame(), 30);
-    expect(s.reasoning.length).to.be.at.most(120);
+  it('schrijft de wekelijkse doorlichting van de club weg', () => {
+    const gezien: LogRecord[] = [];
+    addSink((r) => gezien.push(r), 'debug');
+    const s = readyGame();
+    const trainer = s.staff.find((x) => x.role === 'hoofdtrainer')!;
+    delegateTask(s, 'training', trainer.id);
+    runDelegatedTasks(s, createRng(s));
+    const scan = gezien.find((r) => r.scope === 'delegatie.scan');
+    expect(scan, 'de doorlichting hoort elke week in de log te staan').to.not.equal(undefined);
+    expect(scan!.meta!.delegated).to.be.a('string');
+    expect(scan!.meta!.support).to.be.an('object');
+  });
+
+  it('kost niets als er geen bestemming aanhangt', () => {
+    // De motor mag niet trager worden door een log waar niemand naar luistert, en er mag al
+    // helemaal niets van in de opgeslagen stand terechtkomen.
+    clearSinks();
+    const s = readyGame();
+    delegateTask(s, 'training', s.staff.find((x) => x.role === 'hoofdtrainer')!.id);
+    expect(() => strategyTask(s)).to.not.throw();
+    expect((s as unknown as Record<string, unknown>).reasoning, 'het logboek hoort niet in de state te zitten').to.equal(undefined);
   });
 });

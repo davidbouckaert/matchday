@@ -588,7 +588,6 @@ export interface SeasonOpening {
 
 import type { WeekOrigin } from './origins';
 
-import type { ReasoningEntry } from './reasoning';
 
 export interface GameState {
   version: number;
@@ -675,8 +674,8 @@ export interface GameState {
   /** Wie vorige week je sterspeler was, zodat een nieuwe ster in het nieuws komt. */
   starIds: string[];
   /** Het logboek van het brein: wat je personeel uitrekende voor het iets deed. */
-  reasoning: ReasoningEntry[];
   /** De club zoals ze er vorige week bij stond, om wijzigingen te kunnen zien. */
+  /** Handtekening van de club van vorige week, om te zien wat er veranderd is. Alleen voor de log. */
   clubScan?: { staf: string; omkadering: string };
   emergencyLoanOffered: boolean;
   promotionsWithInvestor: number;

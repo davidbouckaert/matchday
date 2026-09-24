@@ -13,8 +13,8 @@ import { FORMATIONS, POSITIONS, bestForRole, bestFormation, departureBlock, isCo
 import { expectedAttendance, spendPerHead } from './finance';
 import { acceptedMargin, expectedCanteenUnits } from './canteen';
 import { staffSkill } from './staff';
-import { supportFactor, supportReport } from './support';
-import { logDecision, logScan } from './reasoning';
+import { supportFactor } from './support';
+import { logDebug, logging } from '../log/logger';
 import { skillStars } from './training-staff';
 import { acceptSponsorOffer, approachProspect, renewSponsor } from './sponsors';
 import {
@@ -137,6 +137,22 @@ export function taskSkill(state: GameState, taskId: TaskId, staff: Staff): numbe
  * kinesist erbij, een kantine verbouwd, iemand die een ster hoger komt — dan rekenen ze
  * daarna met die nieuwe werkelijkheid, en zie je in het logboek waaróm hun keuze verschoof.
  */
+/**
+ * Eén technische logregel uit de rekenkern.
+ *
+ * Dit is een ontwikkelaarslog, geen spelfeature. Er stond hier ooit een verhaaltje in gewone
+ * taal dat ook op het scherm en in de browserconsole terechtkwam; dat was een breindump
+ * vermomd als logging. Wat hier staat zijn de waarden waarmee gerekend is: de invoer, de
+ * tussenstappen en wat eruit kwam, zodat je in het logbestand kunt nakijken of de motor doet
+ * wat hij belooft.
+ *
+ * Alles loopt op debug: bij een normale run hangt er geen bestemming aan en kost dit niets.
+ */
+function taskLog(state: GameState, task: string, message: string, meta: Record<string, unknown>): void {
+  if (!logging('debug')) return;
+  logDebug(`delegatie.${task}`, message, { season: state.season, week: state.week, ...meta });
+}
+
 function scanClub(state: GameState, rng: Rng): void {
   const bezet = TASKS.filter((t) => delegate(state, t.id));
   if (!bezet.length) return;
@@ -169,15 +185,13 @@ function scanClub(state: GameState, rng: Rng): void {
   }
   state.clubScan = nu;
 
-  logScan(state, {
-    staf: `${state.staff.length} personeelsleden in dienst, ${bezet.length} van de ${TASKS.length} taken uitbesteed.`,
-    omkadering: bezet
-      .map((t) => `${t.label.split(' (')[0].toLowerCase()} ${Math.round(supportFactor(state, t.id) * 100)}%`)
-      .join(', '),
-    groep: `Groep op vermoeidheid ${Math.round(avgFatigue(state.players.filter((p) => p.injuryWeeks === 0)))}, ${
-      state.players.filter((p) => p.injuryWeeks > 0).length
-    } geblesseerd.`,
-    wijzigingen,
+  taskLog(state, 'scan', wijzigingen.length ? 'club changed' : 'no change', {
+    staff: state.staff.length,
+    delegated: `${bezet.length}/${TASKS.length}`,
+    support: Object.fromEntries(bezet.map((t) => [t.id, Number(supportFactor(state, t.id).toFixed(3))])),
+    fatigue: Number(avgFatigue(state.players.filter((p) => p.injuryWeeks === 0)).toFixed(1)),
+    injured: state.players.filter((p) => p.injuryWeeks > 0).length,
+    ...(wijzigingen.length ? { changes: wijzigingen } : {}),
   });
 }
 
@@ -262,25 +276,20 @@ export function strategyTask(state: GameState, rng: Rng = createRng(state)): voi
     const plafond = tired >= 52 ? 2 : tired >= 42 || injured >= 3 ? 3 : 5;
     t.trainings = Math.min(gekozen, plafond);
 
-    // opschrijven wat hij gerekend heeft, vóór de week gespeeld wordt
-    const omkadering = supportReport(state, 'training');
-    logDecision(state, {
-      task: 'training',
-      staff: trainingStaff.name,
-      subject: 'Trainingen per week',
-      from: String(vorige),
-      to: String(t.trainings),
-      changed: vorige !== t.trainings,
-      efficiency: eff,
-      steps: [
-        `Groep staat op vermoeidheid ${Math.round(tired)}; ${injured} ${injured === 1 ? 'speler is' : 'spelers zijn'} geblesseerd.`,
-        `Herstel per week: ${recovery(state).toFixed(1)} punten (natuurlijk ${Math.round(NATURAL_RECOVERY * 100)}% plus je staf en accommodatie).`,
-        ...opties.map((o) => `${o.optie} trainingen zou uitkomen op waarde ${o.waarde.toFixed(2)}.`),
-        `Beste keuze is ${opties.reduce((a, b) => (b.waarde > a.waarde ? b : a)).optie} trainingen; met ${Math.round(eff * 100)}% efficiëntie wordt het er ${gekozen}.`,
-        omkadering.missing
-          ? `Hij mist ${omkadering.missing.label.toLowerCase()}: ${omkadering.missing.hint}`
-          : 'Alles wat hij nodig heeft, is aanwezig.',
-      ],
+    taskLog(state, 'training', 'trainings set', {
+      staff: trainingStaff.id,
+      eff: Number(eff.toFixed(3)),
+      support: Number(supportFactor(state, 'training').toFixed(3)),
+      fatigue: Number(tired.toFixed(1)),
+      injured,
+      recovery: Number(recovery(state).toFixed(2)),
+      baseline: Number(waardeVan(3).toFixed(3)),
+      candidates: Object.fromEntries(opties.map((o) => [o.optie, Number(o.waarde.toFixed(3))])),
+      optimum: opties.reduce((a, b) => (b.waarde > a.waarde ? b : a)).optie,
+      picked: gekozen,
+      ceiling: plafond,
+      from: vorige,
+      to: t.trainings,
     });
 
     if (injured >= 3 || tired > 45) t.focus = 'herstel';
@@ -447,24 +456,18 @@ function ticketTask(state: GameState, rng: Rng): void {
   const gekozen = pickByEfficiency(opties, basis, eff) ?? original;
   state.ticketPrice = Math.max(0, Math.round(gekozen * (1 + rng.normal(0, errorChance(taskSkill(state, 'ticketing', s)) / 4))));
   const beste = opties.reduce((a, b) => (b.waarde > a.waarde ? b : a));
-  const omkadering = supportReport(state, 'ticketing');
-  logDecision(state, {
-    task: 'ticketing',
-    staff: s.name,
-    subject: 'Ticketprijs',
-    from: `€${original}`,
-    to: `€${state.ticketPrice}`,
-    changed: original !== state.ticketPrice,
-    efficiency: eff,
-    steps: [
-      `Richtprijs in ${DIVISIONS[state.league.divisionLevel].name} is €${ref}; bij die prijs brengt een thuismatch €${basis.toFixed(0)} op.`,
-      `De beste prijs zou €${beste.optie} zijn, goed voor €${beste.waarde.toFixed(0)} — maar dat drukt de sfeer.`,
-      `Met ${Math.round(eff * 100)}% efficiëntie mikt hij op €${gekozen}.`,
-      gekozen !== state.ticketPrice
-        ? `Hij schat het niet tot op de euro en zet uiteindelijk €${state.ticketPrice}.`
-        : `Hij zet €${state.ticketPrice}.`,
-      omkadering.missing ? `Hij mist ${omkadering.missing.label.toLowerCase()}: ${omkadering.missing.hint}` : 'Alles wat hij nodig heeft, is aanwezig.',
-    ],
+  taskLog(state, 'ticketing', 'ticket price set', {
+    staff: s.id,
+    eff: Number(eff.toFixed(3)),
+    support: Number(supportFactor(state, 'ticketing').toFixed(3)),
+    division: DIVISIONS[state.league.divisionLevel].name,
+    ref,
+    cap,
+    baseline: Number(basis.toFixed(1)),
+    optimum: { price: beste.optie, value: Number(beste.waarde.toFixed(1)) },
+    picked: gekozen,
+    from: original,
+    to: state.ticketPrice,
   });
 }
 
@@ -601,23 +604,19 @@ function horecaTask(state: GameState): void {
     const vorige = item.price;
     item.price = Math.max(0.5, Math.round(gekozen * (1 + rng2(state).normal(0, err / 4)) * 10) / 10);
     const beste = opties.reduce((a, b) => (b.waarde > a.waarde ? b : a));
-    logDecision(state, {
-      task: 'horeca',
-      staff: s.name,
-      subject: `Prijs ${def.label.toLowerCase()}`,
-      from: `€${vorige.toFixed(2)}`,
-      to: `€${item.price.toFixed(2)}`,
-      changed: Math.abs(vorige - item.price) >= 0.05,
-      efficiency: eff,
-      steps: [
-        `Richtprijs is €${def.ref.toFixed(2)}, inkoop €${def.cost.toFixed(2)}, gerekend op ${bezoekers} bezoekers.`,
-        `Bij de richtprijs levert dit artikel €${opbrengst(def.ref).toFixed(0)} op.`,
-        `De beste prijs zou €${beste.optie.toFixed(2)} zijn, goed voor €${beste.waarde.toFixed(0)}.`,
-        `Met ${Math.round(eff * 100)}% efficiëntie mikt hij op €${gekozen.toFixed(2)}.`,
-        Math.abs(gekozen - item.price) >= 0.05
-          ? `Hij schat het niet tot op de cent en zet uiteindelijk €${item.price.toFixed(2)}.`
-          : `Hij zet €${item.price.toFixed(2)}.`,
-      ],
+    taskLog(state, 'horeca', 'canteen price set', {
+      staff: s.id,
+      item: item.id,
+      eff: Number(eff.toFixed(3)),
+      support: Number(supportFactor(state, 'horeca').toFixed(3)),
+      visitors: bezoekers,
+      ref: def.ref,
+      cost: def.cost,
+      baseline: Number(opbrengst(def.ref).toFixed(1)),
+      optimum: { price: beste.optie, value: Number(beste.waarde.toFixed(1)) },
+      picked: Number(gekozen.toFixed(2)),
+      from: vorige,
+      to: item.price,
     });
   }
   if ((state.eventCooldowns['auto-concessie'] ?? 0) > 0) return;

@@ -18,7 +18,7 @@ import { emptyCareer, emptyOwner } from './career';
 import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 32;
+export const SAVE_VERSION = 33;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -137,7 +137,6 @@ export function createNewGame(opts: NewGameOptions): GameState {
     sponsorCampaignWeeks: 0,
     sponsorAsk: {},
     starIds: [],
-    reasoning: [],
     emergencyLoanOffered: false,
     promotionsWithInvestor: 0,
     investorActive: true,

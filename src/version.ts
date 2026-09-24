@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.43.0';
+export const VERSION = '0.44.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,19 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.44.0',
+    date: '2026-09-24',
+    title: 'De log is een log, geen spelfeature',
+    items: [
+      'Het kader "Wat je personeel besliste" is van het scherm Personeel verdwenen',
+      'Er gaat ook niets meer naar de console van je browser',
+      'Wat je personeel uitrekent, staat nu alleen nog in een technische log: waarden, geen verhaaltjes',
+      'Per beslissing zie je de invoer, de tussenstappen en de uitkomst — efficiëntie, omkadering, elke optie met haar waarde, het optimum en wat er gezet werd',
+      'Zonder VCG_LOG loggen de tests en scripts niets, en kost het de motor ook niets',
+      'Het logboek zat in je opgeslagen spel; dat is eruit gehaald en oude spellen worden opgeruimd bij het laden',
+    ],
+  },
   {
     version: '0.43.0',
     date: '2026-09-24',

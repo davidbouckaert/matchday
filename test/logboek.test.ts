@@ -11,7 +11,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { addSink, clearSinks, formatRecord, log, logInfo, logging, type LogRecord } from '../src/log/logger';
 import { attachFileLog } from '../src/log/node';
-import { logDecision } from '../src/engine/reasoning';
 import { newTestGame } from './helpers';
 
 describe('Het logboek', () => {
@@ -107,27 +106,12 @@ describe('Het logboek', () => {
     rmSync(map, { recursive: true, force: true });
   });
 
-  it('stuurt elke beslissing van het brein mee naar de log', () => {
-    // Dit is de brug tussen de motor en het logboek: het scherm en het bestand moeten
-    // hetzelfde te zien krijgen, uit dezelfde bron.
-    const gezien: LogRecord[] = [];
-    addSink((r) => gezien.push(r));
+  it('logt niets zolang er niemand meeluistert, ook niet in de state', () => {
+    // Dit is het verschil met wat er eerst stond: de rekenkern hield zijn uitleg bij in de
+    // opgeslagen stand en zette hem op het scherm. Dat hoort niet in een log thuis.
+    clearSinks();
     const g = newTestGame();
-    logDecision(g, {
-      task: 'training',
-      staff: 'Jan Peeters',
-      subject: 'Trainingen per week',
-      from: '3',
-      to: '4',
-      changed: true,
-      efficiency: 0.92,
-      steps: ['Groep is fris.'],
-    });
-    expect(g.reasoning, 'het scherm kreeg de beslissing niet').to.have.length(1);
-    expect(gezien, 'de log kreeg de beslissing niet').to.have.length(1);
-    expect(gezien[0].scope).to.equal('brein');
-    expect(gezien[0].message).to.contain('Jan Peeters · Trainingen per week: 3 → 4');
-    expect(gezien[0].meta?.efficientie).to.equal('92%');
-    expect(gezien[0].meta?.stappen).to.deep.equal(['Groep is fris.']);
+    expect((g as unknown as Record<string, unknown>).reasoning, 'een logboek hoort niet in de state').to.equal(undefined);
+    expect(logging('debug')).to.equal(false);
   });
 });

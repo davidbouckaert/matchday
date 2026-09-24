@@ -1,5 +1,4 @@
 import { courseButton } from '../coursebutton';
-import { recentReasoning } from '../../engine/reasoning';
 import type { GameState, Staff } from '../../engine/types';
 import { COURSES, STAFF_ROLES, TASKS, roleDef } from '../../engine/data/catalog';
 import { DIVISIONS } from '../../engine/data/divisions';
@@ -56,41 +55,6 @@ function detailCard(s: GameState, m: Staff): string {
 function fitStars(s: GameState, taskId: Parameters<typeof taskSkill>[1], m: Staff): number {
   // dezelfde sterren als de engine gebruikt om zijn efficiëntie te bepalen
   return taskStars(s, taskId, m);
-}
-
-/**
- * Wat je personeel heeft uitgerekend, en wat er veranderde.
- *
- * Zonder dit zie je alleen het resultaat: er wordt vier keer getraind. Niet waarom, en niet
- * dat het vorige week nog drie was omdat je intussen een kinesist in dienst hebt. Hier staat
- * elke beslissing met de stappen erachter, uit dezelfde functies die daarna het werk doen.
- */
-function brainCard(s: GameState): string {
-  const regels = recentReasoning(s, 12);
-  if (!regels.length) {
-    return `<section class="card">
-      <h2>Wat je personeel besliste</h2>
-      <p class="muted small">Zodra je een taak uitbesteedt, staat hier elke week wat die persoon heeft uitgerekend en waarom. Speel een week om de eerste regels te zien.</p>
-    </section>`;
-  }
-  const items = regels
-    .map(
-      (e) => `<details class="brain"${e.changed ? ' open' : ''}>
-        <summary>
-          <span class="brain-when">${e.season}-${String(e.week).padStart(2, '0')}</span>
-          <strong>${esc(e.subject)}</strong>
-          <span class="brain-uitkomst ${e.changed ? 'changed' : ''}">${e.changed && e.from !== null ? `${esc(e.from)} → ${esc(e.to)}` : esc(e.to)}</span>
-          <span class="muted small">${esc(e.staff)} · ${Math.round(e.efficiency * 100)}%</span>
-        </summary>
-        <ol class="brain-steps">${e.steps.map((st) => `<li>${esc(st)}</li>`).join('')}</ol>
-      </details>`,
-    )
-    .join('');
-  return `<section class="card">
-    <h2>Wat je personeel besliste ${hint('Elke week rekent je personeel opnieuw. Verandert er iets aan je club — een kinesist erbij, een betere kantine, iemand die een ster hoger komt — dan verandert hun keuze mee. Een regel die openstaat, is een keuze die deze week veranderd is.')}</h2>
-    <p class="muted small">De stappen komen uit dezelfde berekening die daarna ook echt uitgevoerd wordt. Dezelfde regels gaan naar de console van je browser, en tijdens ontwikkelen ook naar <code>logs/voetbalclub.log</code> en de terminal.</p>
-    ${items}
-  </section>`;
 }
 
 export function staffScreen(s: GameState, selected: string | null): string {
@@ -183,7 +147,6 @@ export function staffScreen(s: GameState, selected: string | null): string {
       <tbody>${overview}</tbody>
     </table></div>
   </section>
-  ${brainCard(s)}
   <section class="card">
     <h2>Kandidaten</h2>
     <p class="muted small">De lijst vernieuwt elke 4 weken. Je hebt maximaal één persoon per functie.

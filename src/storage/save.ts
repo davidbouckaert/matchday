@@ -107,6 +107,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 29) migrateV29toV30(state);
   if (state.version === 30) migrateV30toV31(state);
   if (state.version === 31) migrateV31toV32(state);
+  if (state.version === 32) migrateV32toV33(state);
   repair(state);
   return state;
 }
@@ -451,10 +452,22 @@ function migrateV28toV29(state: GameState): void {
   state.version = 29;
 }
 
-/** Versie 32: het logboek van het brein begint leeg en vult zich vanaf je volgende week. */
+/** Versie 32: het logboek van het brein kwam erbij (en is in versie 33 weer verdwenen). */
 function migrateV31toV32(state: GameState): void {
-  state.reasoning ??= [];
   state.version = 32;
+}
+
+/**
+ * Versie 33: het logboek van het brein is uit het spel gehaald.
+ *
+ * Het stond op het scherm Personeel en in de console van je browser, met een uitleg in gewone
+ * taal bij elke beslissing. Dat was een spelfeature vermomd als logging. Wat je personeel
+ * uitrekent, hoort in een ontwikkelaarslog thuis — zie src/log — en niet in de opgeslagen
+ * stand. De regels die in je bestaande spel bewaard zaten, gaan hier weg.
+ */
+function migrateV32toV33(state: GameState): void {
+  delete (state as unknown as Record<string, unknown>).reasoning;
+  state.version = 33;
 }
 
 /** Versie 31: sterspelers. De lijst begint leeg, dus je huidige ster komt meteen in het nieuws. */
@@ -570,7 +583,7 @@ function repair(state: GameState): void {
   if (state.community) state.community.youthTeams ??= teamsFor(state);
   state.sponsorAsk ??= {};
   state.starIds ??= [];
-  state.reasoning ??= [];
+  delete (s as Record<string, unknown>).reasoning;
   // Het lidgeld had vroeger een vaste bovengrens van €800; die klimt nu mee met je reeks.
   // Een bestaand spel waarin je boven de nieuwe grens zat, zakt terug naar het maximum.
   if (typeof state.youthFee === 'number') state.youthFee = Math.max(0, Math.min(state.youthFee, maxYouthFee(state)));

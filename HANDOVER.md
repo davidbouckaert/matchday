@@ -5,7 +5,7 @@ levende logboek en git de waarheid.*
 
 Geschreven om een gesprek dat in een chatvenster liep, elders te kunnen voortzetten. Alles wat
 telt staat in de repo — de README beschrijft zeventien lagen met het waarom erbij, `version.ts`
-houdt de changelog bij, 678 tests leggen het gedrag vast. Wat hier staat is het enige dat
+houdt de changelog bij, 679 tests leggen het gedrag vast. Wat hier staat is het enige dat
 nergens anders in staat: de losse draden.
 
 ## Wat dit project is
@@ -84,14 +84,15 @@ geïsoleerd in code:
   aangepakt.
 - **Winston**: de logmodule (`src/log/`) heeft winston-vormige niveaus en records, maar geen
   afhankelijkheid. Wil je echt winston op een server, dan volstaat één bestemming van vijftien
-  regels; de motor hoeft niet aangeraakt te worden.
+  regels; de motor hoeft niet aangeraakt te worden. Browserspel levert sinds 0.44.0 bewust geen
+  logbestand meer op — dat hoort via een echte server te lopen.
 - `scripts/investor-value.ts` haakt als enige script het logboek niet aan.
 
 ## Hoe je hier werkt
 
 ```
-npm run dev          spelen; logs gaan naar logs/voetbalclub.log én de terminal
-npm test             678 tests (mocha + chai)
+npm run dev          spelen (de motor draait in de browser: geen logbestand)
+npm test             679 tests (mocha + chai)
 npm run typecheck    tsc --noEmit
 npm run autopilot    is uitbesteden nog risicoloos?   SEEDS=20 voor de echte lat
 npm run economie     inkomsten en kosten per seizoen, naast je reeks
