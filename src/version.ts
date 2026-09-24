@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.65.0';
+export const VERSION = '0.66.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.66.0',
+    date: '2026-09-24',
+    title: 'De seizoensopening ademt, en de keuze maakt zich bekend',
+    items: [
+      'De persconferentie staat nu in de clubkleur met de badge "kies om te starten" — het was even grijs als de achtergrondinfo erboven, terwijl het de enige weg vooruit is',
+      'Elke uitspraak heeft een echte knop "Dit zeg ik ▸", en de tekst zegt letterlijk dat je keuze het seizoen start',
+      'Meer lucht in het hele scherm: ruimere tussenafstanden, hogere regelafstand, kortere belofteregels',
+    ],
+  },
   {
     version: '0.65.0',
     date: '2026-09-24',

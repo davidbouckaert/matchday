@@ -63,10 +63,15 @@ export function openingOverlay(s: GameState): string {
           </ul>
         </section>
 
+        <!-- Dit blok is de enige weg vooruit, en dat mocht je vroeger zelf uitzoeken: het
+             stond even grijs en dicht op de rest als de achtergrondinfo erboven. Nu draagt
+             het de clubkleur, zegt de kop letterlijk dat je moet kiezen, en heeft elke
+             kaart een echte knop — drie keuzes, één klik, seizoen gestart. -->
         <section class="opening-mic">
-          <h3>🎙️ De persconferentie</h3>
-          <p class="small">De zaal zit vol. Iedereen wacht op één zin: waar gaat ${esc(s.clubName)} dit jaar voor?
-            Wat je zegt, bepaalt de stemming bij je supporters, je sponsors en je spelers — en je wordt erop afgerekend.</p>
+          <h3>🎙️ De persconferentie <span class="mic-stap">kies om te starten</span></h3>
+          <p class="small">De zaal zit vol en wacht op één zin: waar gaat ${esc(s.clubName)} dit jaar voor?
+            <strong>Kies één van de drie uitspraken — daarmee begint je seizoen.</strong>
+            Supporters, spelers en sponsors reageren meteen, en op je belofte word je afgerekend.</p>
           <div class="ambition-grid">
             ${AMBITIONS.map(
               (a) => `<button class="ambition" data-action="choose-ambition" data-id="${a.id}">
@@ -78,7 +83,8 @@ export function openingOverlay(s: GameState): string {
                   <span>${chip('Sponsors', a.satisfaction)}</span>
                 </span>
                 <span class="promise small">Belofte: <strong>${esc(a.belofte)}</strong><br/>
-                  lukt het → ${euro(Math.round(base * a.bonusFactor))} · lukt het niet → ${euro(-Math.round(base * a.malusFactor))} en een deuk in je reputatie</span>
+                  lukt → ${euro(Math.round(base * a.bonusFactor))} · mislukt → ${euro(-Math.round(base * a.malusFactor))} en een reputatiedeuk</span>
+                <span class="kies">Dit zeg ik ▸</span>
               </button>`,
             ).join('')}
           </div>

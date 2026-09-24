@@ -782,9 +782,10 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .opening-crest { flex: 0 0 auto; filter: drop-shadow(0 3px 8px rgba(0,0,0,.35)); }
 .opening-kicker { text-transform: uppercase; letter-spacing: .08em; font-size: .72rem; opacity: .85; }
 .opening-sub { margin: 0; font-size: .9rem; opacity: .9; }
-.opening-body { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 20px 24px 24px; }
-.opening-body h3 { margin: 0 0 8px; font-size: 1rem; }
-.opening-body h3 + h3 { margin-top: 14px; }
+.opening-body { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 32px; padding: 26px 30px 30px; }
+.opening-body h3 { margin: 0 0 10px; font-size: 1rem; }
+.opening-body h3 + h3 { margin-top: 18px; }
+.opening-body section { line-height: 1.5; }
 .opening-press blockquote {
   margin: 0; padding: 12px 14px; border-left: 4px solid var(--accent); background: var(--accent-soft);
   border-radius: 0 8px 8px 0; font-style: italic;
@@ -792,14 +793,31 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .opening-press cite { display: block; margin-top: 6px; font-style: normal; font-size: .8rem; color: var(--muted); }
 .opening-list { margin: 0; padding-left: 18px; }
 .opening-list.youth li { list-style: none; margin-left: -18px; }
-.opening-goals, .opening-mic { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 16px; }
+.opening-goals, .opening-mic { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 20px; }
+/* de persconferentie is de enige weg vooruit: die springt eruit in de clubkleur,
+   in plaats van even grijs te zijn als de achtergrondinfo erboven */
+.opening-mic {
+  border-top: none; background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 12px; padding: 18px 20px 20px; margin-top: 4px;
+}
+.mic-stap {
+  display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 99px;
+  background: var(--accent); color: var(--accent-ink); font-size: .72rem;
+  font-weight: 700; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px;
+}
+.ambition .kies {
+  margin-top: auto; align-self: flex-start; padding: 8px 16px; border-radius: 8px;
+  background: var(--accent); color: var(--accent-ink); font-weight: 650; font-size: .9rem;
+}
+.ambition:hover .kies { filter: brightness(1.08); }
 .goal-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
 .goal-list li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
 .goal-cat { font-size: .78rem; color: var(--muted); white-space: nowrap; }
 .goal-reward { font-weight: 700; color: var(--good); white-space: nowrap; }
-.ambition-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+.ambition-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
 .ambition {
-  display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 14px;
+  display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 16px;
   border: 2px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); cursor: pointer;
   transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
 }

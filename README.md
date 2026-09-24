@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.66.0 — De seizoensopening ademt, en de keuze maakt zich bekend
+
+**Het openingsscherm was druk, en de enige verplichte handeling — je ambitie uitspreken — stond er even grijs bij als de achtergrondinfo erboven.** Je had het uiteindelijk wel door, maar pas na te veel tekst. De persconferentie draagt nu de clubkleur: een getint paneel met een badge **"kies om te starten"** in de kop, een instructie die letterlijk zegt dat je keuze het seizoen start, en op elke uitspraakkaart een echte knop **"Dit zeg ik ▸"**. De rest van het scherm kreeg lucht: ruimere tussenafstanden (22 op 32 pixels in plaats van 18), hogere regelafstand, en de belofteregel ingekort tot "lukt → €X · mislukt → −€Y en een reputatiedeuk". Voor en na statisch gerenderd en vergeleken.
+
 ### 0.65.0 — Het bouwscherm in balans, en vier projecten in plaats van twee combi's
 
 **De groepen van 0.62.0 stonden er scheef bij**: het raster van het infrastructuurscherm telt op een breed scherm vier kolommen, en de bouwkaart stond op "twee kolommen breed" — halfbreed dus, hangend naast twee smalle kaartjes. Nu pakken Accommodatie en Onderhoud elk een halve rij, krijgen de bouwprojecten de volle breedte, en vult elke groep zijn rij gelijkmatig (twee projecten = twee helften, drie = drie derden, Ruwbouw = een rij van vier).
