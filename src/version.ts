@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.42.0';
+export const VERSION = '0.43.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,20 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.43.0',
+    date: '2026-09-24',
+    title: 'Een echt logboek: naar een bestand en naar de terminal',
+    items: [
+      'Het logboek van het brein schreef alleen naar het scherm en de console — nu gaat het ook naar logs/voetbalclub.log',
+      'Speel je via npm run dev, dan landen je regels in dat bestand én in de terminal waar de server draait',
+      'Tests en meetscripts schrijven naar hun eigen bestand, maar alleen als je erom vraagt: VCG_LOG=debug npx mocha',
+      'Vier niveaus, net als bij winston: error, warn, info en debug',
+      'Waar een regel heen gaat, beslist wie het spel opstart — de motor weet er niets van, want in een browser bestaat geen bestandssysteem',
+      'Een bestemming die stukgaat, legt het spel niet stil: de andere krijgen hun regel gewoon',
+      'Twee regels in het logboek spraken zichzelf tegen: er stond op welke prijs je medewerker mikte, niet welke hij uiteindelijk zette',
+    ],
+  },
   {
     version: '0.42.0',
     date: '2026-09-24',

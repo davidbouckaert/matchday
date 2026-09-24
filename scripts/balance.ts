@@ -10,12 +10,17 @@
 // doen vol te houden, terwijl die clubs gewoon in seizoen vier of vijf omvielen.
 import type { InvestorId } from '../src/engine/types';
 import { createNewGame } from '../src/engine/newGame';
+import { attachFileLogFromEnv } from '../src/log/node';
 import { advanceWeek } from '../src/engine/turn';
 
 const SEEDS = Number(process.env.SEEDS ?? 20);
 const SEASONS = Number(process.env.SEASONS ?? 6);
 const clubs = ['zuidrand', 'heidebeke'];
 const investors: InvestorId[] = ['aannemer', 'fonds', 'cooperatie'];
+
+
+// VCG_LOG=debug npm run balance schrijft het logboek van het brein mee weg.
+attachFileLogFromEnv('logs/balance.log');
 
 console.log(`Passief spelen: ${SEEDS} spellen per combinatie, ${SEASONS} seizoenen\n`);
 for (const clubId of clubs) {

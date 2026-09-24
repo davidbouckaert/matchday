@@ -88,7 +88,7 @@ function brainCard(s: GameState): string {
     .join('');
   return `<section class="card">
     <h2>Wat je personeel besliste ${hint('Elke week rekent je personeel opnieuw. Verandert er iets aan je club — een kinesist erbij, een betere kantine, iemand die een ster hoger komt — dan verandert hun keuze mee. Een regel die openstaat, is een keuze die deze week veranderd is.')}</h2>
-    <p class="muted small">De stappen komen uit dezelfde berekening die daarna ook echt uitgevoerd wordt. Wil je live meekijken terwijl je speelt, zet dan <code>vcgDebug = true</code> in de console van je browser.</p>
+    <p class="muted small">De stappen komen uit dezelfde berekening die daarna ook echt uitgevoerd wordt. Dezelfde regels gaan naar de console van je browser, en tijdens ontwikkelen ook naar <code>logs/voetbalclub.log</code> en de terminal.</p>
     ${items}
   </section>`;
 }

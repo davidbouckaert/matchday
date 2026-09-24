@@ -1,4 +1,5 @@
 import './style.css';
+import { attachBrowserLog } from '../log/browser';
 import type { Formation, GamePlan, GameState, Mentality, TaskId, TrainingFocus } from '../engine/types';
 import { createNewGame } from '../engine/newGame';
 import { advanceWeek } from '../engine/turn';
@@ -896,6 +897,10 @@ document.addEventListener('keydown', (e) => {
 // ---------- Start ----------
 
 (async () => {
+  // Het logboek van het brein gaat naar de console van je browser, en tijdens ontwikkelen ook
+  // naar logs/voetbalclub.log en de terminal waar `npm run dev` draait. In een gebouwde versie
+  // is er geen server om het naartoe te sturen; dan blijft het bij de console.
+  attachBrowserLog({ level: 'debug', endpoint: import.meta.env.DEV ? '/__log' : null });
   // eenmalig: tooltips en getalvelden werken met delegatie, dus ze overleven elke hertekening
   initTooltips();
   initNumFields();

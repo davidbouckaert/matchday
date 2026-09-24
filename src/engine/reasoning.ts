@@ -10,6 +10,7 @@
 // deze regels komen uit dezelfde functies die daarna ook echt het werk doen.
 
 import type { GameState, TaskId } from './types';
+import { logInfo } from '../log/logger';
 
 export interface ReasoningEntry {
   season: number;
@@ -33,25 +34,25 @@ export interface ReasoningEntry {
 
 const MAX_ENTRIES = 120;
 
-/**
- * Zet de browserconsole aan of uit. Handig om live mee te kijken terwijl je speelt:
- * `window.vcgDebug = true` en elke beslissing verschijnt in de console.
- */
-declare global {
-  // eslint-disable-next-line no-var
-  var vcgDebug: boolean | undefined;
+// Waar deze regels terechtkomen, staat niet hier. De motor schrijft ze naar de logkern in
+// src/log, en wie het spel opstart beslist waar ze heen gaan: de console van je browser, het
+// .log-bestand in de projectmap, de terminal, later een server. Zie src/log/logger.ts.
+
+/** De kopregel van een beslissing, zoals hij op het scherm en in de log staat. */
+export function decisionLine(e: ReasoningEntry): string {
+  const waarde = e.from !== null && e.changed ? `${e.from} → ${e.to}` : e.to;
+  return `[${e.season}-${String(e.week).padStart(2, '0')}] ${e.staff} · ${e.subject}: ${waarde}`;
 }
 
 export function logDecision(state: GameState, entry: Omit<ReasoningEntry, 'season' | 'week'>): void {
   const volledig: ReasoningEntry = { season: state.season, week: state.week, ...entry };
   state.reasoning = [volledig, ...(state.reasoning ?? [])].slice(0, MAX_ENTRIES);
-  if (typeof globalThis !== 'undefined' && globalThis.vcgDebug) {
-    const kop = `[${volledig.season}-${String(volledig.week).padStart(2, '0')}] ${volledig.staff} · ${volledig.subject}: ${
-      volledig.from !== null && volledig.changed ? `${volledig.from} → ${volledig.to}` : volledig.to
-    } (${Math.round(volledig.efficiency * 100)}%)`;
-    // eslint-disable-next-line no-console
-    console.debug(kop, '\n  ' + volledig.steps.join('\n  '));
-  }
+  logInfo('brein', decisionLine(volledig), {
+    taak: volledig.task,
+    efficientie: `${Math.round(volledig.efficiency * 100)}%`,
+    gewijzigd: volledig.changed,
+    stappen: volledig.steps,
+  });
 }
 
 /**

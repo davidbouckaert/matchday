@@ -1,5 +1,6 @@
 {
   "spec": ["test/**/*.test.ts"],
   "node-option": ["import=tsx"],
-  "reporter": "spec"
+  "reporter": "spec",
+  "require": ["./test/log-hook.ts"]
 }

@@ -459,7 +459,10 @@ function ticketTask(state: GameState, rng: Rng): void {
     steps: [
       `Richtprijs in ${DIVISIONS[state.league.divisionLevel].name} is €${ref}; bij die prijs brengt een thuismatch €${basis.toFixed(0)} op.`,
       `De beste prijs zou €${beste.optie} zijn, goed voor €${beste.waarde.toFixed(0)} — maar dat drukt de sfeer.`,
-      `Met ${Math.round(eff * 100)}% efficiëntie zet hij €${state.ticketPrice}.`,
+      `Met ${Math.round(eff * 100)}% efficiëntie mikt hij op €${gekozen}.`,
+      gekozen !== state.ticketPrice
+        ? `Hij schat het niet tot op de euro en zet uiteindelijk €${state.ticketPrice}.`
+        : `Hij zet €${state.ticketPrice}.`,
       omkadering.missing ? `Hij mist ${omkadering.missing.label.toLowerCase()}: ${omkadering.missing.hint}` : 'Alles wat hij nodig heeft, is aanwezig.',
     ],
   });
@@ -610,7 +613,10 @@ function horecaTask(state: GameState): void {
         `Richtprijs is €${def.ref.toFixed(2)}, inkoop €${def.cost.toFixed(2)}, gerekend op ${bezoekers} bezoekers.`,
         `Bij de richtprijs levert dit artikel €${opbrengst(def.ref).toFixed(0)} op.`,
         `De beste prijs zou €${beste.optie.toFixed(2)} zijn, goed voor €${beste.waarde.toFixed(0)}.`,
-        `Met ${Math.round(eff * 100)}% efficiëntie komt hij uit op €${gekozen.toFixed(2)}.`,
+        `Met ${Math.round(eff * 100)}% efficiëntie mikt hij op €${gekozen.toFixed(2)}.`,
+        Math.abs(gekozen - item.price) >= 0.05
+          ? `Hij schat het niet tot op de cent en zet uiteindelijk €${item.price.toFixed(2)}.`
+          : `Hij zet €${item.price.toFixed(2)}.`,
       ],
     });
   }

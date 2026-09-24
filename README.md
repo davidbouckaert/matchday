@@ -171,6 +171,53 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 17 (deze versie)
 
+### 0.43.0 — Een echt logboek: naar een bestand en naar de terminal
+
+**Wat er vorige laag stond, was geen log.** Ik had "logging toevoegen aan de code base" gelezen als "laat zien wat het brein uitrekent", en dat is ook gebeurd: elke beslissing komt met haar stappen op het scherm Personeel. Maar het ging verder alleen naar `console.debug`, en dat is geen logbestand. Je kunt er niet in grepen, je houdt er na het sluiten van je tabblad niets van over, en je kunt het later niet naar een server sturen. Dat is nu rechtgezet.
+
+**Waarom het niet gewoon winston is.** Winston is een Node-bibliotheek en kan geen bestand schrijven vanuit een browser — de motor van dit spel draait in je browser, dus daar kan winston niet eens geladen worden. De enige vorm die allebei aankan is deze:
+
+```
+  src/log/logger.ts    de kern: niveaus, regels, bestemmingen. Weet niet waar hij draait.
+  src/log/node.ts      bestemming: logs/voetbalclub.log + de terminal (node:fs)
+  src/log/browser.ts   bestemming: de console van je browser + doorsturen naar de server
+  vite.config.ts       het ontvangststuk: zet doorgestuurde regels in hetzelfde bestand
+```
+
+De motor roept `logInfo('brein', ...)` aan en weet verder van niets. Waar die regel terechtkomt, beslist degene die het spel opstart. Zonder aangehaakte bestemming doet loggen niets — dat is de veilige stand, zodat een testronde er niet trager van wordt.
+
+De niveaus en de vorm van een regel zijn met opzet dezelfde als die van winston: `error`, `warn`, `info`, `debug`. Wil je later echt winston op de server, dan schrijf je één bestemming van vijftien regels die het record doorgeeft aan `winston.log()`, en verandert er in de motor niets. Er staat nu geen enkele afhankelijkheid tegenover.
+
+**Hoe je eraan komt.**
+
+| wat je doet | waar je regels komen |
+|---|---|
+| `npm run dev` en spelen | `logs/voetbalclub.log`, de terminal van de server, en de console van je browser |
+| `VCG_LOG=debug npx mocha` | `logs/test.log` en de terminal |
+| `VCG_LOG=debug npm run balance` | `logs/balance.log` en de terminal |
+| een gebouwde versie op GitHub Pages | alleen de console — daar staat geen server om het naartoe te sturen |
+
+Zonder `VCG_LOG` schrijft een testronde niets weg. Een meting van zes seizoenen maakt duizenden regels, en dat hoef je meestal niet.
+
+Zo ziet een regel eruit:
+
+```
+2026-09-24T08:49:11.126Z info  [brein] [1-01] Bart Onanna · Prijs pils: €2.50 → €2.90
+    taak: horeca
+    efficientie: 58%
+    gewijzigd: true
+    stappen:
+      - Richtprijs is €2.50, inkoop €0.75, gerekend op 494 bezoekers.
+      - Bij de richtprijs levert dit artikel €706 op.
+      - De beste prijs zou €4.50 zijn, goed voor €747.
+      - Met 58% efficiëntie mikt hij op €3.00.
+      - Hij schat het niet tot op de cent en zet uiteindelijk €2.90.
+```
+
+De kopregel staat op één lijn, zodat `grep brein logs/voetbalclub.log` je alleen de beslissingen geeft; de uitleg staat eronder met inspringing.
+
+**En de log betrapte zichzelf op een leugen.** In dat voorbeeld hierboven stond eerst "komt hij uit op €3.00" terwijl de kop €2.90 zei. Dat verschil is de misgreep van een medewerker die het niet tot op de cent schat — de bedoeling van het spel — maar de log beweerde het ene en deed het andere. Nu staat er waar hij op mikte én wat hij uiteindelijk zette. Hetzelfde stond bij de ticketprijs.
+
 ### 0.42.0 — Een reeks hoger spelen kost ook meer
 
 **Je economie liep op één been.** Ik ging op zoek naar de reden waarom "de beste betaalbare staf aanwerven en alles uitbesteden" nooit failliet gaat, en ik verwachtte die bij het personeel te vinden. Ze zat ergens anders. Dit is de boekhouding van één club over zes seizoenen, met vier aangeworven personeelsleden en alles uitbesteed:
@@ -261,7 +308,7 @@ Trainingen per week: 3 → 4 (GEWIJZIGD) (70%)
 
 Dat is de week nadat er een kinesist en een verzorger in dienst kwamen: zijn efficiëntie ging van 47% naar 70%, zijn herstel van 0 naar 14,6 per week, en zijn keuze van drie naar vier trainingen. Hun beslissingen zijn dus niet statisch — ze rekenen elke week opnieuw, en wat verandert staat als wijziging aangeduid.
 
-De getallen komen uit dezelfde functies die daarna ook echt het werk doen, dus het logboek kan niet iets anders beweren dan er gebeurt. Wil je live meekijken terwijl je speelt: `vcgDebug = true` in de console van je browser, en elke beslissing verschijnt daar met haar stappen.
+De getallen komen uit dezelfde functies die daarna ook echt het werk doen, dus het logboek kan niet iets anders beweren dan er gebeurt. (Vanaf 0.43.0 gaan dezelfde regels ook naar `logs/voetbalclub.log` en de terminal; zie die laag.)
 
 **Eén regel staat bewust los van dit alles:** gas terugnemen bij een uitgeputte groep. Dat is geen optimalisatie maar gezond verstand, en dat ziet ook een trainer die verder niets om zich heen heeft.
 
