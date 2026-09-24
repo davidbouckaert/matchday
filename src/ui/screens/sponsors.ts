@@ -40,9 +40,11 @@ export function sponsorsScreen(s: GameState): string {
     return `<div class="tile slot ${lock ? 'locked' : vol ? 'filled' : ''}">
       <span class="slot-head">
         <span class="label has-tip" ${tipAttr(`${KIND_LABEL[k]}. ${KIND_INFO[k]}${lock ? ` ${lock}.` : ''}`)}>${KIND_SHORT[k]}</span>
-        <span class="slot-badge ${vol ? 'vol' : used > 0 ? '' : 'leeg'} has-tip" ${tipAttr(
-          `${used} van de ${KIND_MAX[k]} ${KIND_MAX[k] === 1 ? 'plaats' : 'plaatsen'} voor ${KIND_LABEL[k].toLowerCase()} ${used === 1 ? 'is' : 'zijn'} bezet${vol ? ' — vol. Zet een contract stop om plaats te maken' : ''}.`,
-        )}>${used}/${KIND_MAX[k]}</span>
+        <span class="slot-badge ${lock ? 'leeg' : vol ? 'vol' : 'vrij'} has-tip" ${tipAttr(
+          lock
+            ? `Deze plaats bestaat bij je club nog niet. ${lock}.`
+            : `${used} van de ${KIND_MAX[k]} ${KIND_MAX[k] === 1 ? 'plaats' : 'plaatsen'} voor ${KIND_LABEL[k].toLowerCase()} ${used === 1 ? 'is' : 'zijn'} bezet${vol ? '. Zet een contract stop om plaats te maken' : ''}.`,
+        )}>${lock ? 'op slot' : vol ? 'vol' : `nog ${KIND_MAX[k] - used} vrij`}</span>
       </span>
       ${
         lock

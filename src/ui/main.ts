@@ -716,6 +716,7 @@ const handlers: Record<string, Handler> = {
   'accept-offer': gameAction(actions.acceptPlayerOffer),
   'decline-offer': gameAction(actions.declinePlayerOffer),
   hire: gameAction(actions.hireStaff),
+  'hire-replace': gameAction(actions.replaceStaff),
   fire: gameAction(actions.fireStaff),
   course: gameAction((g, id) => actions.startCourse(g, id, 'diploma')),
   bijscholing: gameAction((g, id) => actions.startCourse(g, id, 'bijscholing')),

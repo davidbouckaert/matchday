@@ -309,6 +309,38 @@ export function fireStaff(state: GameState, staffId: string): ActionResult {
   return ok(`${s.name} is ontslagen (vergoeding €${payoff.toLocaleString('nl-BE')}).`);
 }
 
+/**
+ * Wissel je huidige man voor deze kandidaat, in één beslissing: opzegvergoeding voor wie
+ * vertrekt plus tekengeld voor wie komt, en de taken van de vertrekker gaan mee naar zijn
+ * opvolger voor zover die ze aankan. Dit bestond niet, en dan kon je in de kandidatenlijst
+ * op "Aanwerven" klikken en pas dáárna horen dat de plaats bezet was.
+ */
+export function replaceStaff(state: GameState, staffId: string): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  const c = state.staffMarket.find((x) => x.id === staffId);
+  if (!c) return fail('Kandidaat niet meer beschikbaar.');
+  const zittend = state.staff.find((x) => x.role === c.role);
+  if (!zittend) return hireStaff(state, staffId);
+  const lock = staffLock(state, c.role);
+  if (lock) return fail(lock);
+  const cost = zittend.wage * 8 + c.wage * 2;
+  if (state.cash < cost) return fail(tooExpensive(state, cost, `${zittend.name} vervangen door ${c.name}`));
+  // zijn taken verhuizen stil mee: anders meldt het ontslag "doe je zelf weer" over taken
+  // die vijf regels later gewoon bij zijn opvolger liggen
+  const taken = tasksOf(state, zittend.id);
+  for (const t of taken) delete state.delegation[t];
+  const naam = zittend.name;
+  fireStaff(state, zittend.id);
+  const hired = hireStaff(state, staffId);
+  if (!hired.ok) return hired;
+  const mee: string[] = [];
+  for (const t of taken) {
+    if (delegateTask(state, t, c.id).ok) mee.push(TASKS.find((x) => x.id === t)!.label.toLowerCase());
+  }
+  return ok(`${naam} vertrekt met een opzegvergoeding; ${c.name} neemt de functie over${mee.length ? ` en ook: ${mee.join(', ')}` : ''}.`);
+}
+
 /** Diploma-opleiding voor de hoofdtrainer en de assistent-trainer, of bijscholing voor iedereen. */
 export function startCourse(state: GameState, staffId: string, type: 'diploma' | 'bijscholing' = 'diploma'): ActionResult {
   const g = guard(state);

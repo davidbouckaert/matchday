@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.51.1';
+export const VERSION = '0.52.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,18 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.52.0',
+    date: '2026-09-24',
+    title: 'Je ziet vooraf wat vrij is',
+    items: [
+      'Sponsortegels zeggen het antwoord in plaats van de rekensom: "nog 6 vrij", "vol" of "op slot"',
+      'Bij elke personeelskandidaat staat vóór je klikt of zijn functie vrij is, bezet (door wie) of nog op slot',
+      'Een bezette functie heeft een eerlijke knop: "Vervang X" — opzegvergoeding plus tekengeld in één beslissing',
+      'De taken van wie vertrekt, gaan mee naar zijn opvolger',
+      'De melding "je hebt al iemand in die functie" kun je niet meer tegenkomen: de knop bestaat alleen waar hij kan',
+    ],
+  },
   {
     version: '0.51.1',
     date: '2026-09-24',

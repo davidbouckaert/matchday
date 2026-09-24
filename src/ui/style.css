@@ -1290,11 +1290,17 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .slot-note .link-btn { font-size: .72rem; }
 /* De bezetting als badge in de kop: label links, 3/16 rechts. Dit stond als voetnootje
    onder het invoerveld en werd daar door niemand gezien. */
-.slot-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
-.slot-head .label { min-height: 0; }
-.slot-badge { font-size: .82rem; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+.slot-head { display: flex; align-items: baseline; justify-content: space-between; gap: 4px var(--s2); flex-wrap: wrap; }
+.slot-head .label { min-height: 0; overflow-wrap: normal; }
+.slot-badge { font-size: .78rem; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.slot-badge.vrij { color: var(--accent); }
 .slot-badge.vol { color: var(--good); }
 .slot-badge.leeg { color: var(--muted); font-weight: 600; }
+
+/* de status van een functie in de kandidatenlijst: vrij, bezet of op slot */
+.seat-free { color: var(--accent); font-weight: 700; }
+.seat-taken { color: var(--muted); }
+.seat-lock { color: var(--muted); }
 .slot-lock { font-size: .72rem; color: var(--muted); }
 
 /* knoppen die onder elkaar horen in een smalle kolom */

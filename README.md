@@ -171,6 +171,14 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.52.0 — Je ziet vooraf wat vrij is
+
+**Twee schermen lieten je raden welke plaatsen nog vrij waren, en dat is de omgekeerde wereld.** Op Sponsors stond de bezetting als voetnootje van elf pixels onder het invoerveld ("9 van 16 bezet" — een rekensommetje dat niemand zag; het werd gemeld als "staat er niet meer", terwijl het er stond). En op Personeel kon je in de kandidatenlijst op "Aanwerven" klikken om pas dáárna te horen dat je die functie al ingevuld had.
+
+- **Sponsortegels zeggen het antwoord**: een badge in de kop met "nog 6 vrij", "vol" (groen) of "op slot" — het exacte aantal staat in de uitleg. Visueel gecontroleerd met een Playwright-schermafdruk vóór en na.
+- **Elke personeelskandidaat draagt zijn status**: "functie vrij", "bezet: Sofie Witsel-Maes (50)" of "🔒 op slot", vóór je iets aanklikt.
+- **Een bezette functie heeft een eerlijke knop**: "Vervang Sofie (€3.580)" — `replaceStaff` regelt opzegvergoeding plus tekengeld in één beslissing, en de taken van wie vertrekt gaan mee naar zijn opvolger (voor zover die ze aankan). De aanwerf-knop bestaat alleen nog waar hij kan; de foutmelding "je hebt al iemand" kun je niet meer tegenkomen.
+
 ### 0.51.0 — Stilstaan heeft gevolgen
 
 Laag 18 sloot de reeksladder, maar de eindmeting toonde twee nieuwe evenwichten die niet klopten. **Degradatie was een doodvonnis geworden**: de sponsorbedragen zakten mee naar de nieuwe reeks (−30 à −40% inkomsten) maar de lonen bleven op −10% hangen — "uitbesteden aan je bestaande staf" schoot daardoor van ~23% naar 60% faillissementen. En er stond een **eeuwige kampioen**: de club die elk jaar 3de Nationale wint, elk jaar de licentie geweigerd ziet, en wier sterren braaf blijven zitten tegen een stilstaande reeks — 10 à 16 punten boven het reeksgemiddelde, seizoen na seizoen, met €600.000 winst per jaar. Drie ingrepen, samen één antwoord: stilstaan — vallen, of blijven hangen — heeft gevolgen.

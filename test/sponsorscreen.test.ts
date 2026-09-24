@@ -53,14 +53,16 @@ describe('Het sponsorscherm', () => {
     expect(html).to.contain('sponsor-ask-reset');
   });
 
-  it('telt de bezette plaatsen per soort, als badge in de kop van elke tegel', () => {
+  it('zegt per plaats hoeveel er nog vrij is, als badge in de kop van elke tegel', () => {
     // de teller stond als voetnootje onder het invoerveld en werd daar door niemand
-    // gezien — gemeld als "zie ik niet meer staan", terwijl hij er stond
+    // gezien — gemeld als "zie ik niet meer staan", terwijl hij er stond. En "9 van 16
+    // bezet" is een rekensommetje; "nog 7 vrij" is het antwoord.
     const s = readyGame();
     const html = sponsorsScreen(s);
     const borden = s.sponsors.filter((d) => d.kind === 'bord').length;
-    expect(html).to.contain(`>${borden}/${KIND_MAX.bord}</span>`);
+    expect(html).to.contain(`nog ${KIND_MAX.bord - borden} vrij`);
     expect((html.match(/slot-badge/g) ?? []).length, 'elke plaats draagt een badge, ook wat op slot staat').to.equal(9);
     expect(html).to.contain(`${borden} van de ${KIND_MAX.bord} plaatsen voor reclamebord`);
+    expect(html, 'wat op slot staat, zegt dat ook in de badge').to.contain('op slot');
   });
 });

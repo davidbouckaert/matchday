@@ -107,22 +107,35 @@ export function staffScreen(s: GameState, selected: string | null): string {
       <td class="small muted">${esc(who ? t.delegated : t.owner)}</td></tr>`;
   }).join('');
 
+  // Bij elke kandidaat staat vóór je klikt of zijn functie vrij is, bezet (door wie, en
+  // wat vervangen kost) of op slot. Dat stond nergens: je klikte "Aanwerven" en kreeg
+  // pas dán te horen dat er geen plaats was.
   const candidates = s.staffMarket
-    .map(
-      (c) => `<tr>
-      <td data-v="${STAFF_ROLES.findIndex((r) => r.role === c.role)}">${roleDef(c.role).label}</td>
+    .map((c) => {
+      const lock = staffLock(s, c.role);
+      const zittend = s.staff.find((x) => x.role === c.role);
+      const status = lock
+        ? `<span class="seat-lock has-tip small" ${tipAttr(lock)}>🔒 op slot</span>`
+        : zittend
+          ? `<span class="seat-taken small has-tip" ${tipAttr(`Je hebt maar één ${roleDef(c.role).label.toLowerCase()}. Aanwerven kan alleen door ${zittend.name} te vervangen.`)}>bezet: ${esc(zittend.name)} (${zittend.skill})</span>`
+          : `<span class="seat-free small has-tip" ${tipAttr('Deze functie is nog niet ingevuld: aanwerven kan meteen.')}>functie vrij</span>`;
+      const actie = lock
+        ? ''
+        : zittend
+          ? `<button class="sm" data-action="hire-replace" data-id="${c.id}" ${tipAttr(
+              `${zittend.name} vertrekt met een opzegvergoeding van ${euro(zittend.wage * 8)}, ${c.name} tekent voor ${euro(c.wage * 2)} tekengeld. Zijn taken gaan mee naar de opvolger.`,
+            )}>Vervang ${esc(zittend.name.split(' ')[0])} (${euro(zittend.wage * 8 + c.wage * 2)})</button>`
+          : `<button class="sm primary" data-action="hire" data-id="${c.id}">Aanwerven (tekengeld ${euro(c.wage * 2)})</button>`;
+      return `<tr>
+      <td data-v="${STAFF_ROLES.findIndex((r) => r.role === c.role)}">${roleDef(c.role).label}<br/>${status}</td>
       <td>${esc(c.name)}<br/><span class="muted small">${c.trait}</span></td>
       <td data-v="${c.skill}">${bar(c.skill)} ${c.skill}</td>
       <td>${hasDiploma(c.role) ? c.diploma : '—'}</td>
       <td>${impactChips(staffImpact(s, c.role, c.skill))}</td>
       <td data-v="${c.wage}">${euro(c.wage)}</td>
-      <td>${
-        staffLock(s, c.role)
-          ? `<span class="muted small" data-tip="${esc(staffLock(s, c.role)!)}">🔒 nog niet mogelijk</span>`
-          : `<button class="sm primary" data-action="hire" data-id="${c.id}">Aanwerven (tekengeld ${euro(c.wage * 2)})</button>`
-      }</td>
-    </tr>`,
-    )
+      <td>${actie}</td>
+    </tr>`;
+    })
     .join('');
 
   return `
@@ -149,7 +162,7 @@ export function staffScreen(s: GameState, selected: string | null): string {
   </section>
   <section class="card">
     <h2>Kandidaten</h2>
-    <p class="muted small">De lijst vernieuwt elke 4 weken. Je hebt maximaal één persoon per functie.
+    <p class="muted small">De lijst vernieuwt elke 4 weken. Je hebt maximaal één persoon per functie: bij elke kandidaat staat of zijn functie vrij is, bezet (vervangen kan in één beslissing: opzegvergoeding plus tekengeld, zijn taken gaan mee) of nog op slot.
       "Wat het je oplevert" is het verschil met wie je nu op die plaats hebt — doorgerekend met dezelfde formules waarmee het spel rekent. Beweeg over een kaartje voor het volledige verhaal.</p>
     <div class="table-wrap"><table data-sort-id="kandidaten">
       <thead><tr><th>Functie</th><th>Naam</th><th>Vaardigheid</th><th>Diploma</th><th data-nosort>Wat het je oplevert</th><th data-tip="Wat hij je elke week kost">Loon per week</th><th data-nosort></th></tr></thead>
