@@ -217,8 +217,11 @@ export interface EventContext {
   fanBase: number;
   youthMembers: number;
   mood: number;
-  sponsorWeekly: number; // wat je sponsors samen per week betalen
   capacity: number; // plaatsen in je tribune
+  kantineLevel: number; // de zaal waar de meeste evenementen doorgaan
+  sponsorCount: number; // hoeveel bedrijven er bij je club zitten
+  /** Wat men op jouw niveau per gast betaalt: 1 in 3de Nationale, tot ~3 in de Pro Liga. */
+  prestige: number;
 }
 
 export interface ClubEventDef {
@@ -240,6 +243,17 @@ export interface ClubEventDef {
   minKantine?: number; // je kantine moet dit niveau halen
 }
 
+// De opbrengst van een evenement is gasten × wat een gast uitgeeft. De gasten zijn
+// begrensd door iets fysieks — je zaal, je tribune, je aanhang, het aantal bedrijven aan
+// tafel — en alleen het bedrag per gast stijgt met je niveau (prestige) en het prijspeil.
+//
+// Dat was anders: de opbrengst hing rechtstreeks aan je sponsorportefeuille en je
+// supportersnorm, die allebei met de reeks vermenigvuldigen, terwijl de kost alleen
+// inflatie plus 12% per reeks droeg. Gemeten (scripts/doorlichting-evenementen.ts): netto
+// €21.630 per seizoen in 3de Nationale, €714.410 in de Challenger Pro Liga, met een
+// opbrengst/kost tot 28,6× — de op één na grootste inkomstenpost van het spel, uit
+// dezelfde tien avonden per seizoen. Een lunch voor twaalf bedrijven kan geen €178.000
+// opbrengen; nu kan dat ook niet meer.
 export const CLUB_EVENTS: ClubEventDef[] = [
   {
     id: 'quiz',
@@ -250,7 +264,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 4,
     volunteers: 3,
     payoutWeeks: 1,
-    revenue: (c) => c.fanBase * 1.6,
+    revenue: (c) => Math.min(c.fanBase * 0.3, 60 + c.kantineLevel * 45) * 8 * c.prestige,
     spread: 0.3,
     moodBoost: 2,
     reputationBoost: 0,
@@ -265,7 +279,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 2,
     volunteers: 5,
     payoutWeeks: 4,
-    revenue: (c) => c.youthMembers * 12,
+    revenue: (c) => c.youthMembers * 11,
     spread: 0.35,
     moodBoost: 1,
     reputationBoost: 1,
@@ -280,7 +294,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 3,
     volunteers: 9,
     payoutWeeks: 2,
-    revenue: (c) => (c.fanBase * 3.5 + c.youthMembers * 3) * (0.7 + c.mood / 200),
+    revenue: (c) => Math.min(c.fanBase * 0.5, (80 + c.kantineLevel * 60) * 1.6) * 13 * (0.7 + c.mood / 200) * c.prestige,
     spread: 0.5,
     moodBoost: 2,
     reputationBoost: 0,
@@ -295,7 +309,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 1,
     volunteers: 14,
     payoutWeeks: 3,
-    revenue: (c) => (c.fanBase * 10 + c.youthMembers * 4) * (0.7 + c.mood / 200),
+    revenue: (c) => Math.min(c.fanBase * 0.6, 350 + c.capacity * 0.1) * 22 * (0.7 + c.mood / 200) * c.prestige,
     spread: 0.55,
     moodBoost: 3,
     reputationBoost: 1,
@@ -310,7 +324,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 2,
     volunteers: 7,
     payoutWeeks: 1,
-    revenue: (c) => c.fanBase * 2.5,
+    revenue: (c) => Math.min(c.fanBase * 0.6, c.capacity) * 3.5,
     spread: 0.3,
     moodBoost: 8,
     reputationBoost: 3,
@@ -325,7 +339,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 1,
     volunteers: 11,
     payoutWeeks: 2,
-    revenue: (c) => 1_000 + c.youthMembers * 13,
+    revenue: (c) => 1_000 + c.youthMembers * 11,
     spread: 0.35,
     moodBoost: 2,
     reputationBoost: 4,
@@ -342,7 +356,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 3,
     volunteers: 4,
     payoutWeeks: 1,
-    revenue: (c) => 1_200 + c.sponsorWeekly * 1.6,
+    revenue: (c) => Math.min(c.sponsorCount * 3, 12 + c.kantineLevel * 10) * 120 * c.prestige,
     spread: 0.3,
     moodBoost: 0,
     reputationBoost: 2,
@@ -359,7 +373,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 1,
     volunteers: 12,
     payoutWeeks: 3,
-    revenue: (c) => (c.fanBase * 9 + c.sponsorWeekly * 3) * (0.7 + c.mood / 200),
+    revenue: (c) => Math.min(c.fanBase * 0.25 + c.sponsorCount * 4, 120 + c.kantineLevel * 60) * 70 * (0.7 + c.mood / 200) * c.prestige,
     spread: 0.5,
     moodBoost: 4,
     reputationBoost: 5,
@@ -375,7 +389,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 1,
     volunteers: 16,
     payoutWeeks: 2,
-    revenue: (c) => c.fanBase * 16 + c.capacity * 4,
+    revenue: (c) => c.capacity * 0.9 * 20 * c.prestige,
     spread: 0.45,
     moodBoost: 8,
     reputationBoost: 6,
@@ -387,12 +401,12 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     id: 'businessclub',
     label: 'Businessclub-lunch',
     description: 'Twaalf bedrijven aan tafel, een gastspreker en een netwerkmoment. Levert geld én nieuwe sponsorcontacten op.',
-    cost: 6_000,
+    cost: 4_000,
     cooldown: 10,
     maxPerSeason: 4,
     volunteers: 5,
     payoutWeeks: 1,
-    revenue: (c) => 4_000 + c.sponsorWeekly * 3,
+    revenue: (c) => (12 + c.kantineLevel * 3) * 500 * c.prestige,
     spread: 0.25,
     moodBoost: 0,
     reputationBoost: 3,
@@ -409,7 +423,7 @@ export const CLUB_EVENTS: ClubEventDef[] = [
     maxPerSeason: 1,
     volunteers: 22,
     payoutWeeks: 3,
-    revenue: (c) => c.fanBase * 22 + c.capacity * 12,
+    revenue: (c) => c.capacity * 1.6 * 16 * c.prestige,
     spread: 0.4,
     moodBoost: 10,
     reputationBoost: 9,

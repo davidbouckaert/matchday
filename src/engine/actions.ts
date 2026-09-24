@@ -17,7 +17,7 @@ import { coursePlan } from './training-staff';
 import { FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, selectLineup, wageDemand } from './players';
 import { stepPremium, transferWillingness } from './appeal';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
-import { emergencyOffer, loanOffers, sponsorWeekly } from './loans';
+import { emergencyOffer, loanOffers } from './loans';
 import { acceptSponsorOffer } from './sponsors';
 export { SPONSOR_TERMS, sponsorTerm, termTotal } from './sponsors';
 import { hasDiploma, staffSkill } from './staff';
@@ -536,6 +536,15 @@ export function eventCost(state: GameState, def: ClubEventDef): number {
   return round(def.cost * state.inflation * (1 + state.league.divisionLevel * 0.12), 50);
 }
 
+/**
+ * Wat men op jouw niveau per gast betaalt. Eén in 3de Nationale; een galadiner in de Pro
+ * Liga mag per couvert een veelvoud opbrengen, maar de zaal wordt er niet groter van —
+ * de gasten zelf zijn overal begrensd door iets fysieks (zie CLUB_EVENTS in de catalogus).
+ */
+export function eventPrestige(state: GameState): number {
+  return Math.min(3.1, 0.7 + 0.3 * DIVISIONS[state.league.divisionLevel].sponsorFactor);
+}
+
 /** Prognose van een evenement: [minimum, maximum] opbrengst. */
 export function eventForecast(state: GameState, def: ClubEventDef): [number, number] {
   const c = state.community;
@@ -543,8 +552,10 @@ export function eventForecast(state: GameState, def: ClubEventDef): [number, num
     fanBase: c.fanBase,
     youthMembers: c.youthMembers,
     mood: c.fanMood,
-    sponsorWeekly: sponsorWeekly(state),
     capacity: state.infrastructure.capacity,
+    kantineLevel: state.infrastructure.kantineLevel,
+    sponsorCount: state.sponsors.length,
+    prestige: eventPrestige(state),
   };
   // net als je tickets en je kantine volgt ook de opbrengst van een evenement de prijzen van vandaag
   const mid = def.revenue(ctx) * (1 + staffSkill(state, 'kantine') / 400) * state.inflation;
