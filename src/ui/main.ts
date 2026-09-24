@@ -328,6 +328,7 @@ function render(): void {
       open: todos(g).length + (g.weekChoice && !g.weekChoice.answer ? 1 : 0),
       urgent: todos(g).some((t) => t.level === 'urgent'),
       tourLoop: ui.tourLoop && ui.screen !== 'overzicht' && !!tourChapter(g),
+      thuis: ui.screen === 'overzicht',
       tourReady: (() => {
         const t = tourChapter(g);
         return !!t && t.chapter.steps.every((st) => st.done(g));

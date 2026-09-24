@@ -1594,6 +1594,7 @@ tr.filtering td { background: var(--accent-soft); }
    Opstelling: het veld links, je kern rechts.
    ========================================================================== */
 .lineup-board { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(380px, 1fr); gap: var(--s5); align-items: start; }
+.veld-kolom { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
 @media (max-width: 1100px) { .lineup-board { grid-template-columns: 1fr; } }
 
 .formation-line { display: flex; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; margin-bottom: var(--s4); }
@@ -1826,14 +1827,16 @@ tr.filtering td { background: var(--accent-soft); }
 }
 .pb-arrow { opacity: .7; }
 @media (prefers-reduced-motion: reduce) { .pb-count::after { animation: none; } }
-/* de terugweg van de rondleiding: bracht een stap je naar een ander scherm, dan hangt
-   hier de weg terug naar het Bureau — tot je daar bent, dan lost hij vanzelf op */
-.pb-tour {
-  display: inline-flex; align-items: center; gap: var(--s1);
-  background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  color: var(--accent); font-weight: 650; font-size: .85rem; padding: 5px 13px; border-radius: 99px;
+/* De vaste weg naar huis: het Bureau is dé hoofdplek, dus de knop staat permanent naast
+   de speelknoppen (behalve op het Bureau zelf). Tijdens de rondleiding stuitert er een
+   vingertje boven — daar staat je volgende stap. */
+.bureau-wrap { position: relative; display: inline-flex; }
+.bureau-vinger {
+  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+  font-style: normal; font-size: 1.5rem; z-index: 21; pointer-events: none;
+  animation: tour-stuiter .85s ease-in-out infinite; filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
 }
-.pb-tour:hover { background: var(--accent-soft); filter: brightness(.96); }
+@media (prefers-reduced-motion: reduce) { .bureau-vinger { animation: none; } }
 .bench-btn.on, .bench.on { background: var(--mid); box-shadow: none; }
 .pb-clear { color: var(--faint); }
 .pb-block { color: var(--bad); font-weight: 600; }

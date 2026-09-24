@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.72.1';
+export const VERSION = '0.73.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.73.0',
+    date: '2026-09-24',
+    title: 'Een vaste weg naar het Bureau, en Selectie in balans',
+    items: [
+      'De tijdelijke terugknop van de rondleiding is een vaste "🏠 Bureau"-knop geworden, naast de speelknoppen (behalve op het Bureau zelf)',
+      'Tijdens de rondleiding stuitert het vingertje erboven — daar wacht je volgende stap',
+      'De sterkte-uitsplitsing en Spelersrollen staan nu ónder het veld: de lege vlakte naast de lange kernlijst is weg',
+    ],
+  },
   {
     version: '0.72.1',
     date: '2026-09-24',

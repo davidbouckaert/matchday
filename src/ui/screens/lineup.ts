@@ -307,9 +307,11 @@ function squadPanel(s: GameState, selected: string | null): string {
 /* -------------------------------------------------------------------- scherm */
 
 /** Het veld en de kern naast elkaar. */
-export function lineupBoard(s: GameState, selected: string | null): string {
+export function lineupBoard(s: GameState, selected: string | null, onderVeld = ''): string {
+  // de kernlijst rechts is lang; wat er onder het veld bij kan (sterkte-uitsplitsing,
+  // spelersrollen) hoort dus ín de linkerkolom — anders gaapt daar een leeg vlak
   return `<div class="lineup-board">
-    ${pitch(s, selected)}
+    <div class="veld-kolom">${pitch(s, selected)}${onderVeld}</div>
     ${squadPanel(s, selected)}
   </div>`;
 }

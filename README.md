@@ -171,6 +171,12 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.73.0 — Een vaste weg naar het Bureau, en Selectie in balans
+
+**De tijdelijke terugknop van de rondleiding bleek gewoon een goede knop.** David twijfelde er zelf al aan ("het Bureau is dé hoofdplek") — dus is hij permanent geworden: **🏠 Bureau** staat nu vast in de speelbalk naast de speelknoppen, op elk scherm behalve het Bureau zelf. Volg je een rondleidingsstap, dan stuitert het vingertje erboven: daar wacht je volgende stap. En de terugverdientijd van de kraampjes ging in 0.72.1 van twee seizoenen naar **22 weken** (gemeten: ±19) — te realistisch is te saai; investeren moet een rush geven, en dat principe geldt vanaf nu voor elke prijs in het spel.
+
+**De Selectie-kolommen staan eindelijk in evenwicht.** Na de opruiming van 0.71.0 bleef links onder het veld een lege vlakte gapen terwijl rechts de kernlijst doorliep. De sterkte-uitsplitsing ("Waar je sterkte vandaan komt") en Spelersrollen wonen nu ónder het veld in de linkerkolom — twee kolommen, allebei gevuld, geen scroll door witruimte meer.
+
 ### 0.72.0 — Kraampjesplaatsen bijbouwen
 
 **Drie kraam-eenheden was een harde muur**: alle vier de standhouders samen vragen er vijf, dus een frituur (2) plus één kraam en je horeca zat vol. Bij 💶 Investeringen staat nu **Kraampjesplaats (+1)** — verharding, stroom en water voor een extra standhouder, van drie naar maximaal zes eenheden. De prijs is dynamisch zoals bij de zonnepanelen: de verwachte opbrengst per plaats-eenheid (gemiddeld over de standtypes, aan hun gangbare marge, bij jouw verwachte opkomst) keer twee seizoenen. **Gemeten over acht seeds**: prijs ±€3.000 halverwege seizoen één, en een vierde stand levert ±€1.735 per seizoen extra concessie-inkomen op — terugverdientijd ±1,7 seizoen. Een degelijke investering die meegroeit met je club, geen gratis geld. Zit je horeca vol, dan wijst de foutmelding én het horecascherm je voortaan de weg naar de bouwkaart. Opslagbestanden migreren naar versie 38 met de vertrouwde drie plaatsen.

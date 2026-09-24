@@ -282,11 +282,7 @@ export function squadScreen(s: GameState, open: Record<string, boolean> = { basi
   // eronder, ingeklapt, voor wie wil sorteren op loon, waarde of contract.
   return `${taskPicker(s, ['opstelling', 'spelersrollen'])}
   ${offers ? `<section class="card attention"><h2>Biedingen op je spelers <span class="tag bad">${s.playerOffers.length}</span></h2><ul class="offers">${offers}</ul></section>` : ''}
-  ${lineupBoard(s, pick)}
-  <div class="cols-2">
-    <div class="col">${squadStats(s)}</div>
-    <div class="col">${rolesCard(s)}</div>
-  </div>
+  ${lineupBoard(s, pick, squadStats(s) + rolesCard(s))}
   <!-- Hier stond ook een kaarten-weergave van de kern, maar die toonde dezelfde spelers
        als het paneel naast het veld. Alleen de tabel bleef: die kan iets wat nergens
        anders kan — sorteren op loon, waarde en contract. -->
