@@ -53,6 +53,13 @@ function faq(): QA[] {
       a: 'Sommige functies hebben eerst infrastructuur of een werking nodig: een kinesist een recuperatieruimte, een data-analist wifi, een kantineverantwoordelijke een kantine van niveau 2, een jeugdcoördinator minstens 3 jeugdploegen. Je ziet de reden bij de kandidaat.',
     },
     {
+      q: 'Wat is een sterspeler?',
+      a: `Iemand die er op zijn positie duidelijk bovenuit steekt: minstens 20% beter dan je andere spelers op die plaats. Staat je verdediging gemiddeld op 55 en je nieuwe
+        verdediger op 67, dan is dat een sterspeler. Het is dus niet gewoon je beste speler — die heeft elke ploeg, ook de slechtste. De meeste clubs hebben er één, sommige geen.
+        Hij trekt volk naar het veld, en dat loopt door in je kantine en je clubwinkel; sponsors betalen ook wat meer voor een plaats. Je ziet op je bureau wie het is en wat hij
+        opbrengt. Verkoop je hem, dan ben je dat kwijt. Een uitgeleende speler telt niet mee, want hij speelt hier niet.`,
+    },
+    {
       q: 'Wat gebeurt er met een speler die ik uitleen?',
       a: `Hij speelt een seizoen bij een club uit de wereld en ontwikkelt zich daar gewoon verder — meestal beter dan wanneer hij bij jou op de bank was blijven zitten,
         want hij speelt er elke week. De andere club betaalt een deel van zijn loon. Terwijl hij weg is, zie je bij Ploeg › Transfers hoeveel wedstrijden hij speelde en

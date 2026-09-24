@@ -7,6 +7,7 @@ import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
 import { popularity } from './popularity';
 import { staffSkill } from './staff';
+import { starPlayers, starSponsorFactor } from './stars';
 import { volunteerCap } from './investors';
 
 export interface Factor {
@@ -34,6 +35,9 @@ export function sponsorFactors(state: GameState): Factor[] {
   if (state.infrastructure.scoreboardLevel) list.push(x('Scorebord', 1 + state.infrastructure.scoreboardLevel * 0.06, `niveau ${state.infrastructure.scoreboardLevel}/2`));
   const sales = staffSkill(state, 'commercieel');
   if (sales) list.push(x('Commercieel medewerker', 1 + sales / 250, `vaardigheid ${Math.round(sales)}`));
+  // een naam in je ploeg maakt een bord langs het veld aantrekkelijker
+  const sterren = starPlayers(state);
+  if (sterren.length) list.push(x(sterren.length === 1 ? 'Sterspeler' : 'Sterspelers', starSponsorFactor(state), sterren.map((p) => p.name).join(', ')));
   return list;
 }
 

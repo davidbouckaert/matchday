@@ -171,6 +171,28 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.36.0 — De man waar ze voor komen kijken
+
+**Elke ploeg heeft een beste speler. Niet elke ploeg heeft een sterspeler.** Dat verschil is de hele feature. Je beste speler is een rangschikking; een sterspeler is iemand die er op zijn positie duidelijk bovenuit steekt — je verdediging staat gemiddeld op 55 en hij op 67. Dán hebben de mensen het over hém.
+
+De grens ligt op 20% boven het gemiddelde van zijn positiegenoten, hijzelf niet meegeteld. Dat getal is niet gegokt maar gemeten, over achthonderdtachtig spelers in veertig kernen:
+
+| grens | sterspelers per kern |
+|---|---|
+| +15% | 2,02 |
+| +18% | 1,25 |
+| **+20%** | **1,02** |
+| +25% | 0,23 |
+| +30% | 0,07 |
+
+Op 15% heeft elke ploeg er twee en betekent het niets meer; op 25% kom je er nog maar bij één op de vier clubs een tegen. Op 20% heeft de meeste clubs er één, sommige geen en een goed samengestelde kern twee. De verdeling over de posities klopt ook: middenvelders 15, verdedigers 13, aanvallers 10, keepers 3 — evenredig met hoe groot die groepen in een kern zijn.
+
+**Wat hij doet, blijft op het niveau waar dit spel over gaat.** Hij trekt volk naar het veld, en dat loopt vanzelf door in je kantine en je clubwinkel; en een naam in je ploeg maakt een bord langs de lijn aantrekkelijker voor een sponsor. Geen aparte spelersmechaniek, geen leertrajecten — twee bestaande knoppen waar hij aan draait. Gemeten over dertig clubs met een ster: mediaan +4,2% publiek, een echte uitschieter +9,5%. Een tweede ster telt half mee en een derde een kwart, zodat een kern vol uitschieters je publiek niet verdubbelt.
+
+**En je hoort het.** Wordt iemand sterspeler, dan staat het in het nieuws met hoeveel hij boven de rest uitsteekt. Valt hij terug of leen je hem uit, dan ook. Om te voorkomen dat een speler die rond de 20% zweeft elke week in en uit het nieuws valt, ligt de grens om ster te wórden hoger dan die om het te blijven: erin op 20%, eruit pas onder 16%. Op je bureau staat één regel met wie het is en wat hij opbrengt, en op zijn spelerskaart draagt hij een eigen kaartje.
+
+**Ook bij de buren.** Een ambitieuze club in je reeks tast af en toe diep in de buidel en haalt er een sterspeler bij. Die club wordt er merkbaar sterker van, en je leest het in het nieuws — het is tenslotte de ploeg waar je over twee weken tegen speelt.
+
 ### 0.35.1 — Een laag eruit die hier niet thuishoorde
 
 **Wat ik in 0.35.0 bouwde, werkte — en hoorde hier niet.** De gastclub bepaalde hoeveel een uitgeleende speler groeide: hun trainer, hun jeugdwerking, of hij er wel in de ploeg paste. Een seizoen bij een club die een maat te groot was, leverde nul op. Dat is fijnmazig spelersmanagement, en dit spel gaat over het runnen van een club, niet over het uitstippelen van een leertraject per speler. Eruit.

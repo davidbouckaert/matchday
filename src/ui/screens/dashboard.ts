@@ -17,6 +17,7 @@ import { OPPONENT_STAFF_BONUS, OWN_TEAM_ID, nextDerby, ownPosition, rivalTeam, t
 import { clubRatings } from '../../engine/ratings';
 import { teamStrength } from '../../engine/players';
 import { attendanceFactors } from '../../engine/factors';
+import { starLabel, starPlayers, starPopularityFactor, starSponsorFactor } from '../../engine/stars';
 import { expectedAttendance } from '../../engine/finance';
 import { forecast } from '../../engine/forecast';
 import { esc, euro, resultIcon, signedEuro, sparkline, whenLabel } from '../format';
@@ -231,8 +232,26 @@ function meterCard(s: GameState): string {
         `Je clubscore op het veld: ${sport.parts.map((p) => `${p.label} ${p.score}/100`).join(', ')}. Hij bepaalt mee hoeveel volk er komt, wat sponsors willen betalen en hoe makkelijk je spelers aantrekt.`,
       )}
     </div>
+    ${starLine(s)}
     <p class="actions left"><button class="ghost sm" data-action="nav" data-id="invloeden">Wat beïnvloedt wat? →</button></p>
   </section>`;
+}
+
+/**
+ * Je sterspeler, met wat hij opbrengt.
+ *
+ * Hij zit al verwerkt in je populariteit en in wat sponsors betalen, maar dan zie je alleen
+ * het resultaat en niet waar het vandaan komt. Eén regel volstaat: wie het is en wat hij doet.
+ */
+function starLine(s: GameState): string {
+  const sterren = starPlayers(s);
+  if (!sterren.length) return '';
+  const publiek = Math.round((starPopularityFactor(s) - 1) * 100);
+  const sponsors = Math.round((starSponsorFactor(s) - 1) * 100);
+  return `<p class="star-line" ${tipAttr(
+    `${sterren.map((p) => `${p.name}: ${starLabel(s, p)}`).join('. ')}. Een speler die er zo bovenuit steekt trekt volk naar het veld — dat loopt door in je kantine en je clubwinkel — en maakt een plaats langs de lijn aantrekkelijker voor sponsors. Verkoop je hem, dan ben je dat kwijt.`,
+    sterren.length === 1 ? 'Je sterspeler' : 'Je sterspelers',
+  )}>⭐ <strong>${sterren.map((p) => esc(p.name)).join(', ')}</strong> ${sterren.length === 1 ? 'is je sterspeler' : 'zijn je sterspelers'}: <span class="pos">+${publiek}%</span> publiek en <span class="pos">+${sponsors}%</span> van je sponsors.</p>`;
 }
 
 /* ----------------------------------------------------- wat jou nu nodig heeft */

@@ -9,7 +9,7 @@ import type { ClubMove, GameState, World, WorldClub } from './types';
 import type { Rng } from './rng';
 import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
-import { DIVISION_CLUBS } from './data/names';
+import { DIVISION_CLUBS, FIRST_NAMES, LAST_NAMES } from './data/names';
 import { OPPONENT_STAFF_BONUS, OWN_TEAM_ID, sortedTable, teamLevel } from './league';
 
 /** Wat een club op dit niveau ruwweg per seizoen kan uitgeven. */
@@ -148,8 +148,16 @@ function applyMove(club: WorldClub, rng: Rng, move: ClubMove, base: number): str
     case 'versterken': {
       const spend = Math.round(base * COST.versterken * rng.range(0.9, 1.3));
       club.budget -= spend;
-      club.strength += rng.range(0.9, 2.6) * (0.6 + club.ambition / 120);
       club.trouble = clamp(club.trouble + 4, 0, 100);
+      // Soms is het geen rij aanwinsten maar één naam: een club die diep in de buidel tast
+      // en er een sterspeler bij haalt. Dat hoor je als die club in jouw reeks speelt, en
+      // je voelt het ook, want zo'n ploeg wordt er merkbaar sterker van.
+      const ster = club.ambition > 55 && rng.chance(0.3 + club.ambition / 400);
+      club.strength += (ster ? rng.range(2.2, 4.4) : rng.range(0.9, 2.6)) * (0.6 + club.ambition / 120);
+      if (ster) {
+        club.trouble = clamp(club.trouble + 5, 0, 100);
+        return `haalde sterspeler ${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)} binnen`;
+      }
       return 'versterkte de kern';
     }
     case 'bouwen': {

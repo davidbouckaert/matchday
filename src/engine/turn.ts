@@ -16,6 +16,7 @@ import {
   isWinter,
 } from './calendar';
 import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt } from './league';
+import { starLabel, weeklyStars } from './stars';
 import { LOAN_PLAY_SHARE, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
@@ -552,6 +553,16 @@ function weeklyPlayers(state: GameState, rng: Rng): void {
       addNews(state, 'slecht', `${p.name} klaagt in de pers over zijn speelgelegenheid.`);
     }
   }
+  // wie er sterspeler wordt of het niet meer is, hoor je meteen
+  const sterren = weeklyStars(state);
+  for (const p of sterren.nieuw) {
+    addNews(state, 'goed', `${p.name} is uitgegroeid tot de sterspeler van je ploeg: ${starLabel(state, p)}. Daar komen mensen voor kijken, en sponsors merken het ook.`);
+    remember(state, `${p.name} werd dé sterspeler van de ploeg.`);
+  }
+  for (const weg of sterren.weg) {
+    addNews(state, 'neutraal', `${weg.name} is niet langer je sterspeler: ${weg.reden}.`);
+  }
+
   if (state.week % 4 === 0) {
     const dev = developPlayers(state, rng);
     const top = [...dev.better].sort((a, b) => b.trend - a.trend)[0];

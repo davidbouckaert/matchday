@@ -105,6 +105,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 27) migrateV27toV28(state);
   if (state.version === 28) migrateV28toV29(state);
   if (state.version === 29) migrateV29toV30(state);
+  if (state.version === 30) migrateV30toV31(state);
   repair(state);
   return state;
 }
@@ -449,6 +450,12 @@ function migrateV28toV29(state: GameState): void {
   state.version = 29;
 }
 
+/** Versie 31: sterspelers. De lijst begint leeg, dus je huidige ster komt meteen in het nieuws. */
+function migrateV30toV31(state: GameState): void {
+  state.starIds ??= [];
+  state.version = 31;
+}
+
 /** Versie 30: huurspelers kun je verlengen of kopen, en daarvoor telt hun groei mee. */
 function migrateV29toV30(state: GameState): void {
   for (const p of state.players) p.startQuality ??= overall(p);
@@ -555,6 +562,7 @@ function repair(state: GameState): void {
   for (const [key, value] of fallback) if (s[key] === undefined || s[key] === null) (s as Record<string, unknown>)[key] = value;
   if (state.community) state.community.youthTeams ??= teamsFor(state);
   state.sponsorAsk ??= {};
+  state.starIds ??= [];
   // Het lidgeld had vroeger een vaste bovengrens van €800; die klimt nu mee met je reeks.
   // Een bestaand spel waarin je boven de nieuwe grens zat, zakt terug naar het maximum.
   if (typeof state.youthFee === 'number') state.youthFee = Math.max(0, Math.min(state.youthFee, maxYouthFee(state)));

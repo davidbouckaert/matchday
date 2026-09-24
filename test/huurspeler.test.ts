@@ -78,13 +78,12 @@ describe('Een huurspeler houden', () => {
     // dit is de spanning waar het om draait: speeltijd werkt de ene kant op en de andere kant af
     const speelt = metHuurspeler(4, { starts: 18, goals: 6, groei: 4 });
     const bank = metHuurspeler(4, { starts: 2, goals: 0, groei: 0 });
-    const vastBedrag = 400; // klein genoeg dat geen van beide kansen tegen haar plafond loopt
-    expect(loanRequestChance(speelt.s, speelt.p, 'verlengen', vastBedrag)).to.be.above(
-      loanRequestChance(bank.s, bank.p, 'verlengen', vastBedrag),
-    );
-    expect(loanRequestChance(speelt.s, speelt.p, 'kopen', vastBedrag)).to.be.below(
-      loanRequestChance(bank.s, bank.p, 'kopen', vastBedrag),
-    );
+    // We bieden bij allebei hetzelfde deel van wat zij vragen (60%), zodat alleen de
+    // prestaties het verschil maken en niet hoeveel die ene speler toevallig waard is.
+    const deel = (v: { s: GameState; p: Player }, soort: 'verlengen' | 'kopen') =>
+      loanRequestChance(v.s, v.p, soort, (soort === 'verlengen' ? extensionRef(v.s, v.p) : purchaseRef(v.s, v.p)) * 0.6);
+    expect(deel(speelt, 'verlengen'), 'wie speelt, mag makkelijker blijven').to.be.above(deel(bank, 'verlengen'));
+    expect(deel(speelt, 'kopen'), 'maar wie speelt, geven ze minder graag definitief af').to.be.below(deel(bank, 'kopen'));
   });
 
   it('zet je vraag op de lijst en geeft een week later antwoord', () => {

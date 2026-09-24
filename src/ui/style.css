@@ -1654,3 +1654,9 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .lk-kans { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); cursor: help; }
 .lk-kans.good { color: var(--good); }
 .lk-kans.bad { color: var(--bad); }
+
+/* Je sterspeler op het bureau: één regel met wie het is en wat hij opbrengt. */
+.star-line {
+  margin: var(--s3) 0 0; padding: var(--s2) var(--s3); background: var(--sunken);
+  border-radius: var(--radius-sm); font-size: .88rem; cursor: help;
+}

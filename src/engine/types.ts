@@ -670,6 +670,8 @@ export interface GameState {
    * dan is dát je vraagprijs — en bepaalt de markt of er iemand op ingaat.
    */
   sponsorAsk: Partial<Record<SponsorKind, number>>;
+  /** Wie vorige week je sterspeler was, zodat een nieuwe ster in het nieuws komt. */
+  starIds: string[];
   emergencyLoanOffered: boolean;
   promotionsWithInvestor: number;
   investorActive: boolean;

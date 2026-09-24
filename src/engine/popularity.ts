@@ -7,6 +7,7 @@ import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
 import { OWN_TEAM_ID, ownPosition } from './league';
 import { clubRatings } from './ratings';
+import { starPlayers, starPopularityFactor } from './stars';
 
 const x = (label: string, value: number, source: string): Factor => ({ label, value, source, kind: 'x' });
 
@@ -49,6 +50,17 @@ export function popularity(state: GameState): Popularity {
     x('Recente resultaten', 0.94 + form * 0.12, `${Math.round(form * 100)}% van de punten uit de laatste 5`),
     x('Reeks', division.sponsorFactor > 1 ? 1.05 : 1, division.name),
   ];
+  // een sterspeler trekt volk: mensen komen voor hém kijken
+  const sterren = starPlayers(state);
+  if (sterren.length) {
+    parts.push(
+      x(
+        sterren.length === 1 ? 'Sterspeler' : 'Sterspelers',
+        starPopularityFactor(state),
+        sterren.map((p) => p.name).join(', '),
+      ),
+    );
+  }
   return { score, factor: clamp(parts.reduce((f, p) => f * p.value, 1), 0.7, 1.45), parts };
 }
 

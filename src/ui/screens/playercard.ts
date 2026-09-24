@@ -18,6 +18,7 @@ import { delegate } from '../../engine/delegation';
 import { isTransferWindow } from '../../engine/calendar';
 import { esc, euro } from '../format';
 import { tipAttr } from '../tooltip';
+import { isStar, starLabel } from '../../engine/stars';
 
 /**
  * Wat een karakter doet, in één zin. Niet "leider" als los woord waar je zelf maar bij
@@ -65,6 +66,9 @@ function badges(s: GameState, p: Player): string {
   const out: string[] = [];
   const chip = (icon: string, text: string, tone: string, tip: string) =>
     `<span class="pc-badge ${tone}" ${tipAttr(tip)}><span aria-hidden="true">${icon}</span>${esc(text)}</span>`;
+
+  // de sterspeler eerst: dat is het enige kaartje dat over de hele club iets zegt
+  if (isStar(s, p)) out.push(chip('⭐', 'sterspeler', 'good', `Hij steekt er duidelijk bovenuit: ${starLabel(s, p)}. Daar komt volk voor naar het veld, het loopt door in je kantine en je clubwinkel, en sponsors betalen er meer voor een plaats.`));
 
   if (p.form > 1) out.push(chip('🔥', `vorm +${Math.round(p.form)}`, 'good', `Hij is in vorm: +${Math.round(p.form)} bovenop zijn kwaliteit zolang dat duurt.`));
   else if (p.form < -1) out.push(chip('🧊', `vorm ${Math.round(p.form)}`, 'bad', `Hij zit in een dip: ${Math.round(p.form)} op zijn kwaliteit.`));

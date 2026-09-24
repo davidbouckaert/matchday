@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.35.1';
+export const VERSION = '0.36.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,22 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.36.0',
+    date: '2026-09-24',
+    title: 'De man waar ze voor komen kijken',
+    items: [
+      'Nieuw: sterspelers. Iemand die 20% boven zijn positiegenoten uitsteekt, is dé man van je ploeg',
+      'Die 20% is nagemeten: het levert 1,02 sterspeler per kern op. Op 15% heeft elke ploeg er twee en betekent het niets; op 25% kom je er bijna nooit een tegen',
+      'Hij trekt volk naar het veld — dat loopt door in je kantine en je clubwinkel — en maakt een sponsorplaats aantrekkelijker',
+      'Gemeten: een gewone ster is goed voor 4% meer publiek, een echte uitschieter voor 9%',
+      'Een tweede ster telt half mee en een derde een kwart, zodat een kern vol uitschieters je publiek niet verdubbelt',
+      'Wie sterspeler wordt of het niet meer is, komt in het nieuws, met hoeveel hij boven de rest uitsteekt',
+      'Hij staat op je bureau met wat hij opbrengt, en draagt een eigen kaartje op zijn spelerskaart',
+      'Ook andere clubs halen sterspelers binnen: een ambitieuze club in je reeks tast soms diep in de buidel, en dat hoor je',
+      'Een uitgeleende speler telt niet mee: hij speelt hier niet, dus hij trekt hier geen volk',
+    ],
+  },
   {
     version: '0.35.1',
     date: '2026-09-24',
