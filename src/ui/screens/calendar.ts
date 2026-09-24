@@ -48,8 +48,8 @@ export function calendarScreen(s: GameState): string {
   add(
     SEASON_END_WEEK,
     'fixed',
-    `Einde competitie: kampioen, promotie en degradatie · premie ${euro(seasonPrize(s.league.divisionLevel, 'kampioen'))} bij de titel, ${euro(
-      seasonPrize(s.league.divisionLevel, 'promotie'),
+    `Einde competitie: kampioen, promotie en degradatie · premie ${euro(seasonPrize(s.league.divisionLevel, 'kampioen', s.inflation))} bij de titel, ${euro(
+      seasonPrize(s.league.divisionLevel, 'promotie', s.inflation),
     )} bij plaats 2`,
   );
   add(WINTER_BREAK.from, 'break', `Winterstop (tot week ${WINTER_BREAK.to})`);

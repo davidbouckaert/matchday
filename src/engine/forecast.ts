@@ -109,7 +109,7 @@ function weekLines(state: GameState, week: number, offset: number): { lines: For
 
   if (state.infrastructure.pitch === 'kunstgras') add('verhuur', 'Verhuur kunstgrasveld', 650);
   const tv = DIVISIONS[state.league.divisionLevel].tvRightsPerWeek;
-  if (tv > 0) add('tv-rechten', 'Tv- en radiorechten', tv);
+  if (tv > 0) add('tv-rechten', 'Tv- en radiorechten', Math.round(tv * state.inflation));
 
   // --- aflossingen: alleen zolang de lening loopt ---
   for (const loan of state.loans) {
@@ -147,7 +147,7 @@ function weekLines(state: GameState, week: number, offset: number): { lines: For
     add('lidgelden', `Lidgelden jeugd (ongeveer ${youthForecast(state)} leden aan €${state.youthFee})`, youthForecast(state) * state.youthFee, true);
   }
   if (week === SUBSIDY_WEEK) {
-    add('subsidies', 'Subsidie gemeente', (8000 + state.community.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12) * subsidyFactor(state));
+    add('subsidies', 'Subsidie gemeente', (8000 + state.community.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12) * subsidyFactor(state) * state.inflation);
   }
 
   // --- opbrengsten die al onderweg zijn ---

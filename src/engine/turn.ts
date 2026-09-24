@@ -384,7 +384,7 @@ function scheduledPayments(state: GameState, rng: Rng): void {
     }
   }
   if (state.week === SUBSIDY_WEEK) {
-    const subsidy = (8000 + c.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12) * subsidyFactor(state);
+    const subsidy = (8000 + c.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12) * subsidyFactor(state) * state.inflation;
     book(state, 'subsidies', subsidy, 'Subsidie gemeente (jeugdwerking en sportieve uitstraling)');
   }
 }
@@ -465,10 +465,12 @@ function weeklyCommunity(state: GameState): void {
   const c = state.community;
   const division = DIVISIONS[state.league.divisionLevel];
   if (c.volunteerLoyaltyWeeks > 0) c.volunteerLoyaltyWeeks--;
-  // supportersaantal groeit richting wat normaal is voor de reeks en je reputatie
+  // De reeksnorm is een plafond dat je moet verdienen, geen roltrap. Vroeger kroop elke
+  // club vanzelf naar de norm van haar reeks; nu komt de groei vooral uit resultaten,
+  // sfeer en wat je organiseert (fandag, promotie). Wie aanmoddert, blijft klein volk
+  // trekken in een grote reeks — en dan is een fandag ineens wél de moeite.
   const target = division.fanBaseNorm * (0.6 + c.reputation / 100) * (state.investor === 'cooperatie' ? 1.15 : 1) + staffSkill(state, 'commercieel') * 2;
-  // succes trekt volk: wie goed draait, groeit sneller naar zijn plafond dan wie aanmoddert
-  const pull = 0.008 + recentForm(state) * 0.022 + (c.fanMood > 70 ? 0.004 : 0);
+  const pull = 0.003 + recentForm(state) * 0.024 + (c.fanMood > 70 ? 0.005 : 0);
   c.fanBase = Math.round(c.fanBase + (target - c.fanBase) * pull);
   // de sfeer zakt of stijgt langzaam terug naar normaal
   c.fanMood = clamp(c.fanMood + (60 - c.fanMood) * 0.02, 0, 100);
@@ -513,7 +515,7 @@ function weeklyProgress(state: GameState): void {
       const voor = skillStars(s.skill);
       const doel = STAR_THRESHOLDS[Math.min(4, voor)] + ((state.week + s.skill) % 5);
       s.skill = Math.min(TRAINING_CAP, Math.max(s.skill + 3, doel));
-      if (s.trait === 'ambitieus') s.wage = Math.max(s.wage, staffWage(s.role, s.skill, s.trait, s.diploma));
+      if (s.trait === 'ambitieus') s.wage = Math.max(s.wage, staffWage(s.role, s.skill, s.trait, s.diploma, state.inflation));
       const na = skillStars(s.skill);
       addNews(
         state,
@@ -527,7 +529,7 @@ function weeklyProgress(state: GameState): void {
       if (course) {
         s.diploma = course.to;
         s.skill = Math.min(99, s.skill + 4);
-        const newWage = staffWage(s.role, s.skill, s.trait, s.diploma);
+        const newWage = staffWage(s.role, s.skill, s.trait, s.diploma, state.inflation);
         const raise = (s.trait === 'ambitieus' || s.trait === 'perfectionist') && newWage > s.wage;
         if (raise) s.wage = newWage;
         addNews(state, 'goed', `${s.name} behaalde het diploma ${course.to}.${raise ? ` Hij vraagt meteen opslag: €${s.wage}/week.` : ''}`);
@@ -691,9 +693,9 @@ export const PRIZE_TABLE: Array<{ kampioen: number; promotie: number }> = [
   { kampioen: 160_000, promotie: 95_000 }, // Challenger Pro League
 ];
 
-export function seasonPrize(level: number, result: 'kampioen' | 'promotie'): number {
+export function seasonPrize(level: number, result: 'kampioen' | 'promotie', inflation = 1): number {
   const row = PRIZE_TABLE[Math.min(Math.max(level, 0), PRIZE_TABLE.length - 1)];
-  return row[result];
+  return Math.round(row[result] * inflation);
 }
 
 function seasonEnd(state: GameState): void {
@@ -718,7 +720,7 @@ function seasonEnd(state: GameState): void {
     if (zone === 'kampioen') {
       c.reputation = clamp(c.reputation + 6, 0, 100);
       c.fanMood = clamp(c.fanMood + 6, 0, 100);
-      prize = seasonPrize(level, 'kampioen');
+      prize = seasonPrize(level, 'kampioen', state.inflation);
       book(state, 'premies', prize, `Kampioenenpremies van sponsors en supporters (${DIVISIONS[level].name})`);
       takePrizeShare(state, prize);
     }
@@ -738,7 +740,7 @@ function seasonEnd(state: GameState): void {
     c.reputation = clamp(c.reputation + 12, 0, 100);
     c.fanMood = clamp(c.fanMood + 20, 0, 100);
     c.fanBase = Math.round(c.fanBase * 1.25);
-    prize = seasonPrize(level, 'kampioen');
+    prize = seasonPrize(level, 'kampioen', state.inflation);
     book(state, 'premies', prize, level < 3 ? `Kampioenenpremies van sponsors en supporters (${DIVISIONS[level].name})` : `Prijzengeld en tv-premie voor de titel (${DIVISIONS[level].name})`);
     takePrizeShare(state, prize);
     addNews(state, 'goed', `KAMPIOEN! ${state.clubName} promoveert naar ${DIVISIONS[level + 1].name}. Kampioenenpremie: €${prize.toLocaleString('nl-BE')}.`);
@@ -750,7 +752,7 @@ function seasonEnd(state: GameState): void {
     c.reputation = clamp(c.reputation + 8, 0, 100);
     c.fanMood = clamp(c.fanMood + 12, 0, 100);
     c.fanBase = Math.round(c.fanBase * 1.15);
-    prize = seasonPrize(level, 'promotie');
+    prize = seasonPrize(level, 'promotie', state.inflation);
     book(state, 'premies', prize, level < 3 ? `Promotiepremies van sponsors (${DIVISIONS[level].name})` : `Promotiepremie en tv-geld (${DIVISIONS[level].name})`);
     takePrizeShare(state, prize);
     addNews(state, 'goed', `Tweede plaats en promotie naar ${DIVISIONS[level + 1].name}. Promotiepremie: €${prize.toLocaleString('nl-BE')}.`);

@@ -25,12 +25,30 @@ export interface AttendanceInput {
   positionFactor: number; // 0.85 (laag in klassement) .. 1.2 (bovenaan)
 }
 
-export function expectedAttendance(state: GameState, input: AttendanceInput): number {
+/**
+ * Hoeveel volk je bereikbaarheid comfortabel aankan: wie te voet of met de fiets komt,
+ * plus de parking. Onder die grens merk je niets; erboven komt van de rest maar een deel
+ * opdagen — mensen parkeren in het dorp, één keer, en de volgende keer blijven ze thuis.
+ * Een tribune van 2.000 met parking voor een dorpsclub raakt dus nooit vol: tribune en
+ * parking zijn verbonden, zonder harde lijn.
+ */
+export function parkingSupport(state: GameState): number {
+  return 600 + state.infrastructure.parkingLevel * 700;
+}
+
+/** De vraag: wie er zou willen komen, los van tribune en parking. */
+export function attendanceDemand(state: GameState, input: AttendanceInput): number {
   const base = state.community.fanBase * product(attendanceFactors(state));
   const derby = input.derby ? 1.75 : 1; // de derby: iedereen komt kijken
   const awayFans = 25 + state.league.divisionLevel * 30;
-  const total = base * WEATHER_FACTOR[input.weather] * derby * input.positionFactor + awayFans;
-  return Math.round(clamp(total, 30, state.infrastructure.capacity));
+  return Math.max(30, base * WEATHER_FACTOR[input.weather] * derby * input.positionFactor + awayFans);
+}
+
+export function expectedAttendance(state: GameState, input: AttendanceInput): number {
+  const capped = clamp(attendanceDemand(state, input), 30, state.infrastructure.capacity);
+  const support = parkingSupport(state);
+  const feasible = capped <= support ? capped : support + (capped - support) * 0.6;
+  return Math.round(feasible);
 }
 
 /**
@@ -43,6 +61,12 @@ export function attendanceOrigin(state: GameState, input: AttendanceInput): Fact
   if (input.derby) list.push({ label: 'Derby', value: 1.75, kind: 'x', source: 'tegen je aartsrivaal komt iedereen kijken' });
   if (Math.abs(input.positionFactor - 1) > 0.001) {
     list.push({ label: 'Klassement', value: input.positionFactor, kind: 'x', source: 'hoe je ervoor staat in de reeks' });
+  }
+  const capped = clamp(attendanceDemand(state, input), 30, state.infrastructure.capacity);
+  const support = parkingSupport(state);
+  if (capped > support) {
+    const feasible = support + (capped - support) * 0.6;
+    list.push({ label: 'Parking vol', value: feasible / capped, kind: 'x', source: 'wie nergens kwijt kan met zijn auto, blijft thuis — een grotere parking helpt' });
   }
   return list;
 }
@@ -92,6 +116,21 @@ function gateSplit(state: GameState, input: AttendanceInput): { attendance: numb
 export function bookHomeMatch(state: GameState, input: AttendanceInput, opponentName: string): number {
   const subscribers = holders(state);
   const { attendance, subscribersPresent, paying } = gateSplit(state, input);
+  // uitverkocht of vastgelopen op de parking: dat hoor je, want het is geld dat je laat liggen
+  const demand = Math.round(attendanceDemand(state, input));
+  const turnedAway = Math.max(0, demand - attendance);
+  const parkingBindt = Math.min(demand, state.infrastructure.capacity) > parkingSupport(state);
+  if (parkingBindt) state.community.fanMood = clamp(state.community.fanMood - 0.8, 0, 100);
+  if (turnedAway > 40 && (state.eventCooldowns['uitverkocht'] ?? 0) === 0) {
+    state.eventCooldowns['uitverkocht'] = 6;
+    addNews(
+      state,
+      'neutraal',
+      `Tegen ${opponentName} wilden ongeveer ${demand.toLocaleString('nl-BE')} mensen komen en geraakten er maar ${attendance.toLocaleString('nl-BE')} binnen. ${
+        parkingBindt ? 'De parking liep het eerst vol: wie zijn auto niet kwijt kon, blijft de volgende keer thuis.' : 'Een grotere tribune zou zichzelf terugbetalen.'
+      }`,
+    );
+  }
   const gross = paying * state.ticketPrice;
   book(
     state,
@@ -129,10 +168,9 @@ export function facilityCost(state: GameState): number {
   return Math.round(cost * state.inflation);
 }
 
-/** Kans dat er deze week iets stukgaat omdat je te weinig onderhoudt. */
-export function breakdownChance(state: GameState): number {
-  return state.infrastructure.maintenance === 'basis' ? 0.06 : state.infrastructure.maintenance === 'normaal' ? 0.015 : 0.004;
-}
+// Het defectrisico van zuinig onderhoud loopt via het content-event "defect"
+// (src/content/events.ts). Er stond hier ook nog een eigen kansfunctie die door niets in
+// de motor gebruikt werd — twee waarheden over hetzelfde risico. Die is opgeruimd.
 
 /** Vaste wekelijkse inkomsten en kosten. */
 export function bookWeeklyFlows(state: GameState): void {
@@ -171,7 +209,7 @@ export function bookWeeklyFlows(state: GameState): void {
   if (state.infrastructure.pitch === 'kunstgras') book(state, 'verhuur', 650, 'Verhuur kunstgrasveld');
 
   const tv = DIVISIONS[state.league.divisionLevel].tvRightsPerWeek;
-  if (tv > 0) book(state, 'tv-rechten', tv, 'Tv- en radiorechten');
+  if (tv > 0) book(state, 'tv-rechten', Math.round(tv * state.inflation), 'Tv- en radiorechten');
 
   // Meespelen op een hoger niveau kost geld, los van wat je zelf gebouwd hebt: duurdere
   // scheidsrechters, verplichte afgevaardigden en stewards, een licentiedossier, en

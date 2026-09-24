@@ -107,12 +107,14 @@ export function boardSaturation(state: GameState): number {
 }
 
 /** Verwachte bandbreedte (per week) voor een type sponsor, op het huidige niveau van de club.
- *  Hoe meer borden er al hangen, hoe minder een extra bord waard is (de lokale markt is beperkt). */
+ *  Hoe meer borden er al hangen, hoe minder een extra bord waard is (de lokale markt is beperkt).
+ *  De bedragen volgen ook het prijspeil: de doorlichting van september 2026 vond dat de
+ *  grootste inkomstenpost van het spel als enige buiten de inflatie stond. */
 export function kindRange(state: GameState, kind: Kind): [number, number] {
   const [min, max] = KIND_RANGE[kind];
   const saturation = kind === 'bord' ? boardSaturation(state) : 1;
   const events = kind === 'evenement' ? clamp(0.7 + state.eventLog.filter((e) => e.season === state.season).length * 0.15, 0.7, 1.6) : 1;
-  const m = sponsorMultiplier(state) * saturation * events;
+  const m = sponsorMultiplier(state) * saturation * events * state.inflation;
   return [round(min * m, 5), round(max * m, 5)];
 }
 
@@ -323,7 +325,11 @@ function satisfactionTarget(state: GameState): number {
   const played = state.league.table.find((r) => r.teamId === 'club')?.played ?? 0;
   const pos = played > 2 ? ownPosition(state.league) : 8;
   const results = pos <= 3 ? 10 : pos >= 14 ? -10 : 0;
-  return clamp(35 + c.fanMood * 0.25 + c.reputation * 0.25 + results, 0, 100);
+  // een bord langs een verwaarloosd veld is een slecht uithangbord; premium onderhoud
+  // is net het visitekaartje waar een sponsor graag naast hangt. Zo raakt de
+  // onderhoudsknop iets wat níet achter een volle tribune verstopt zit.
+  const onderhoud = state.infrastructure.maintenance === 'basis' ? -6 : state.infrastructure.maintenance === 'premium' ? 4 : 0;
+  return clamp(35 + c.fanMood * 0.25 + c.reputation * 0.25 + results + onderhoud, 0, 100);
 }
 
 // ---------- Wekelijkse verwerking ----------

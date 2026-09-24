@@ -7,11 +7,11 @@ import { nextId } from './util';
 
 const STAFF_TRAITS: StaffTrait[] = ['ambitieus', 'loyaal', 'gemakzuchtig', 'perfectionist', 'teamspeler'];
 
-export function staffWage(role: StaffRole, skill: number, trait: StaffTrait, diploma: Diploma): number {
+export function staffWage(role: StaffRole, skill: number, trait: StaffTrait, diploma: Diploma, inflation = 1): number {
   const base = roleDef(role).baseWage;
   const traitFactor = trait === 'ambitieus' ? 1.15 : trait === 'loyaal' ? 0.95 : trait === 'gemakzuchtig' ? 0.9 : 1;
   const diplomaFactor = hasDiploma(role) ? [0.7, 0.85, 1, 1.4, 2][['geen', 'EUFA C', 'EUFA B', 'EUFA A', 'EUFA Pro'].indexOf(diploma)] : 1;
-  return round(base * Math.pow(1.03, skill - 50) * traitFactor * diplomaFactor, 5);
+  return round(base * Math.pow(1.03, skill - 50) * traitFactor * diplomaFactor * inflation, 5);
 }
 
 export function generateStaff(state: GameState, rng: Rng, role: StaffRole, meanSkill: number): Staff {
@@ -29,7 +29,7 @@ export function generateStaff(state: GameState, rng: Rng, role: StaffRole, meanS
     role,
     skill,
     trait,
-    wage: staffWage(role, skill, trait, diploma),
+    wage: staffWage(role, skill, trait, diploma, state.inflation),
     diploma,
     courseWeeksLeft: 0,
     courseType: null,

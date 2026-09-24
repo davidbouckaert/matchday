@@ -61,7 +61,9 @@ export function currentBid(p: Player, marketIndex: number): number {
 export function wageDemand(state: GameState, p: Player): number {
   const traitFactor = p.trait === 'lastpak' ? 1.2 : p.trait === 'professioneel' ? 1.05 : 1;
   const level = DIVISIONS[state.league.divisionLevel]?.wageFactor ?? 1;
-  return round(170 * Math.pow(1.08, overall(p) - 52) * traitFactor * level, 5);
+  // lonen volgen het prijspeil, net als al je kosten — anders staat de grootste kostenpost
+  // als enige stil terwijl alles errond elk seizoen 7% duurder wordt
+  return round(170 * Math.pow(1.08, overall(p) - 52) * traitFactor * level * state.inflation, 5);
 }
 
 /**
