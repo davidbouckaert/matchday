@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import * as actions from '../src/engine/actions';
 import { CLUB_EVENTS, MERCH_START_COST, TASKS, merchDef } from '../src/engine/data/catalog';
 import { newTestGame, playWeeks } from './helpers';
+import { transferWillingness } from '../src/engine/appeal';
 import { FORMATIONS, POSITIONS, declineFactor, growthFactor, lineupGap, overall, pickScorers, playEffect, selectLineup, teamStrength, trainingEffect } from '../src/engine/players';
 import { bestPrice, expectedUnits, refPrice } from '../src/engine/merch';
 import { acceptedMargin, expectedCanteenUnits } from '../src/engine/canteen';
@@ -29,7 +30,8 @@ describe('Acties', () => {
   it('koopt een speler tijdens de transferperiode', () => {
     const s = newTestGame();
     s.cash = 1_000_000;
-    const target = s.transferList[0];
+    // sinds de spelerswil kan wie boven je niveau speelt weigeren: neem er een die wil
+    const target = s.transferList.find((p) => transferWillingness(s, p).kans >= 1) ?? s.transferList[0];
     const before = s.players.length;
     const result = actions.buyPlayer(s, target.id);
     expect(result.ok).to.equal(true);

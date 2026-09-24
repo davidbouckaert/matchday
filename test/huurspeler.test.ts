@@ -11,6 +11,7 @@ import {
   purchaseRef,
 } from '../src/engine/actions';
 import { marketValue } from '../src/engine/players';
+import { transferWillingness } from '../src/engine/appeal';
 import { migrate } from '../src/storage/save';
 import { readyGame, playWeeks } from './helpers';
 import type { GameState, Player } from '../src/engine/types';
@@ -18,12 +19,17 @@ import type { GameState, Player } from '../src/engine/types';
 /** Een partij met één huurspeler in de kern, klaar om over te praten. */
 function metHuurspeler(seed = 1, opts: { starts?: number; goals?: number; groei?: number } = {}): { s: GameState; p: Player } {
   const s = readyGame('zuidrand', 'aannemer', seed);
-  const kandidaat = s.loanMarket[0];
   s.cash = 500_000;
-  const result = loanIn(s, kandidaat.id); // huren kan alleen in de transferperiode, dus eerst
-  expect(result.ok, result.message).to.equal(true);
+  // sinds de spelerswil kan een kandidaat weigeren: neem wie het meest wil komen,
+  // en probeer door tot er één ja zegt (huren kan alleen in de transferperiode, dus eerst)
+  let binnen: Player | undefined;
+  while (!binnen && s.loanMarket.length) {
+    const kandidaat = [...s.loanMarket].sort((a, b) => transferWillingness(s, b, true).kans - transferWillingness(s, a, true).kans)[0];
+    if (loanIn(s, kandidaat.id).ok) binnen = s.players.find((x) => x.id === kandidaat.id);
+  }
+  expect(binnen, 'geen enkele huurspeler wilde komen').to.not.equal(undefined);
   s.week = LOAN_TALK_WEEK + 1; // en dan doorspoelen naar de terugronde
-  const p = s.players.find((x) => x.id === kandidaat.id)!;
+  const p = binnen!;
   // hij heeft een half seizoen achter de rug
   const row = s.league.table.find((r) => r.teamId === 'club')!;
   row.played = 20;

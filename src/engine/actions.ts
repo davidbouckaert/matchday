@@ -15,6 +15,7 @@ import {
 import { isTransferWindow } from './calendar';
 import { coursePlan } from './training-staff';
 import { FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, selectLineup, wageDemand } from './players';
+import { stepPremium, transferWillingness } from './appeal';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
 import { emergencyOffer, loanOffers, sponsorWeekly } from './loans';
 import { acceptSponsorOffer } from './sponsors';
@@ -63,11 +64,29 @@ export function buyPlayer(state: GameState, playerId: string): ActionResult {
   if (!isTransferWindow(state.week)) return fail('De transferperiode is gesloten.');
   if (state.players.length >= 30) return fail('Je kern zit vol: dertig spelers is het maximum. Verkoop of leen er eerst een uit.');
   if (p.purchasePrice > state.cash) return fail(tooExpensive(state, p.purchasePrice, `${p.name} kopen`));
+  // de speler beslist mee: geld alleen haalt geen speler binnen die jouw club te klein vindt
+  const wil = transferWillingness(state, p);
+  if (wil.kans < 1 && !createRng(state).chance(wil.kans)) {
+    state.transferList = state.transferList.filter((x) => x.id !== playerId);
+    addNews(state, 'neutraal', `${p.name} kiest voor een andere club: ${state.clubName} is nog geen ploeg van zijn niveau.`);
+    return fail(
+      `${p.name} wil niet komen: hij zoekt een club van zijn niveau, en daar hoort ook je stand, je accommodatie en je kleedkamer bij. Zijn makelaar kapt het gesprek af.`,
+    );
+  }
+  // wie boven jouw niveau tóch tekent, laat zich de stap betalen
+  const premie = stepPremium(wil);
+  if (premie > 1) p.wage = round(p.wage * premie, 5);
   if (state.avatar.background === 'exspeler') p.wage = round(p.wage * 0.95, 5);
   state.transferList = state.transferList.filter((x) => x.id !== playerId);
   if (p.purchasePrice > 0) book(state, 'transfers', -p.purchasePrice, `Aankoop ${p.name}`);
   state.players.push(p);
-  addNews(state, 'neutraal', `${p.name} tekent bij ${state.clubName}${p.purchasePrice ? ` voor €${p.purchasePrice.toLocaleString('nl-BE')}` : ' (transfervrij)'}.`);
+  addNews(
+    state,
+    'neutraal',
+    `${p.name} tekent bij ${state.clubName}${p.purchasePrice ? ` voor €${p.purchasePrice.toLocaleString('nl-BE')}` : ' (transfervrij)'}${
+      premie > 1 ? `. Hij liet zich de stap omlaag betalen: €${p.wage}/week` : ''
+    }.`,
+  );
   return ok(`${p.name} is aangeworven.`);
 }
 
@@ -999,6 +1018,13 @@ export function loanIn(state: GameState, playerId: string): ActionResult {
   if (!p) return fail('Die speler staat niet meer op de lijst — een andere club was je voor.');
   if (state.players.length >= 30) return fail('Je kern zit vol: dertig spelers is het maximum. Verkoop of leen er eerst een uit.');
   if (state.cash < p.purchasePrice) return fail(tooExpensive(state, p.purchasePrice, `${p.name} huren`));
+  // ook een huurspeler beslist mee, al aanvaardt hij sneller een stap omlaag: hij komt om te spelen
+  const wil = transferWillingness(state, p, true);
+  if (wil.kans < 1 && !createRng(state).chance(wil.kans)) {
+    state.loanMarket = state.loanMarket.filter((x) => x.id !== playerId);
+    addNews(state, 'neutraal', `${p.name} wil niet op uitleenbasis naar ${state.clubName}: hij vindt je club een maat te klein.`);
+    return fail(`${p.name} ziet de uitleenbeurt niet zitten: jouw club ligt te ver onder zijn niveau. Zijn club zoekt een andere bestemming.`);
+  }
   state.loanMarket = state.loanMarket.filter((x) => x.id !== playerId);
   if (p.purchasePrice) book(state, 'transfers', -p.purchasePrice, `Huurvergoeding ${p.name}`);
   p.loan = { type: 'in', club: p.loan?.club ?? 'profclub', untilSeason: state.season, wageShare: 1 };

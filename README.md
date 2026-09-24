@@ -171,7 +171,18 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
-### 0.45.0 — De loonlat kent geen achterpoortjes meer
+### 0.46.0 — De speler beslist mee
+
+**Geld was het enige criterium: wie het bedrag had, kreeg elke handtekening.** Een sterspeler tekende even vlot bij een hekkensluiter met een veldje van vijfhonderd plaatsen als bij een kampioen met een opleidingscentrum. Dat is de omgekeerde wereld, en het was ook een gat in de balans: niets dwong een club met veel geld om eerst een club te wórden waar zulke spelers willen spelen.
+
+Nu weegt de speler jouw club, zoals een bedrijf bij de sponsors jouw vraagprijs weegt (`clubAppeal` en `transferWillingness` in `appeal.ts`): in welke reeks speel je en waar sta je, klopt je accommodatie met het niveau, wie is de trainer, en welk niveau haalt de kleedkamer waar hij in stapt. Samen schuiven die de aantrekkingskracht een punt of tien op tegenover de reeks als basis.
+
+- **Tot twee punten boven jouw niveau tekent iedereen gewoon.** Een club haalt vaker wel dan niet spelers die nét beter zijn, en de noodaankoop onder de achttien-grens kan dus nooit vastlopen.
+- **Daarboven zakt de kans per punt.** Op Transfers staat de kolom "Wil hij komen?" — komt graag, staat ervoor open, twijfelt, ziet het amper zitten — met in de tooltip het echte percentage, uit dezelfde functie die zijn antwoord bepaalt. Zegt hij nee, dan kiest hij voor een andere club en verdwijnt hij van je lijst.
+- **Wie boven jouw niveau tóch tekent, laat zich de stap betalen:** zes procent loon extra per punt boven de grens. Een grote naam naar een kleine club halen kán, maar het is duur — zoals het hoort.
+- **Een huurling rekent anders.** Hij komt een seizoen spelen, niet carrière maken: zijn ambitie telt niet mee en hij aanvaardt een flinke stap omlaag. Alleen een club die er binnen haar eigen reeks niets van bakt, of een wel heel groot talent, krijgt nee te horen. Een jonge koopspeler kijkt wél naar wat hij kan worden: een achttienjarige met potentieel zeventig zoekt geen dorpsclub uit, ook al staat zijn kwaliteit vandaag op vijftig.
+
+Voor de klimmende club is dit de tweede poort op elke trede: wie promoveert met een accommodatie en een kleedkamer die achterblijven, ziet de spelers die hij nodig heeft "twijfelen" — en betaalt de premie, of bouwt eerst.
 
 **De doorlichting van september 2026 vond de motor achter "promoveren is gratis geld", en hij zat niet waar HANDOVER.md hem zocht.** Niet (alleen) in de tegenstand die van 52 naar 70 loopt, maar in twee lekken in de loonlat van 0.42.0. Gemeten met `scripts/doorlichting-loonlat.ts` (5 seeds × 6 seizoenen, beste betaalbare staf en alles uitbesteed): tegen seizoen zes bestond de kern voor 60% uit eigen jeugd aan €40 per week, betaalde de club 60 à 80% van wat haar reeks vraagt, en stond ze structureel 4 à 7 punten boven het reeksgemiddelde — zonder één euro transferbudget.
 

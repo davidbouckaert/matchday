@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.45.0';
+export const VERSION = '0.46.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,19 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.46.0',
+    date: '2026-09-24',
+    title: 'De speler beslist mee',
+    items: [
+      'Een speler weegt jouw club voor hij tekent: reeks, stand, accommodatie, trainer en het niveau van de kleedkamer',
+      'Tot twee punten boven jouw niveau tekent iedereen gewoon; daarboven zakt de kans, en wie weigert verdwijnt van je lijst',
+      'Wie boven jouw niveau tóch tekent, laat zich de stap betalen met een hoger loon',
+      'De kolom "Wil hij komen?" op Transfers toont het vooraf, met dezelfde rekensom die zijn antwoord bepaalt',
+      'Een huurling kijkt alleen naar wat hij vandaag is en aanvaardt een flinke stap omlaag: hij komt om te spelen',
+      'De noodaankoop onder de achttien-grens kan hier nooit op vastlopen: spelers op jouw niveau zeggen altijd ja',
+    ],
+  },
   {
     version: '0.45.0',
     date: '2026-09-24',

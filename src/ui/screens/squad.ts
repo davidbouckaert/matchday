@@ -8,6 +8,7 @@ import { weeks } from '../../engine/util';
 import * as actions from '../../engine/actions';
 import { available } from '../../engine/discipline';
 import { OPPONENT_STAFF_BONUS } from '../../engine/league';
+import { transferWillingness } from '../../engine/appeal';
 import { count, esc, euro, bar, starMark } from '../format';
 import { hint, tip, tipAttr } from '../tooltip';
 import { numField } from '../numfield';
@@ -428,8 +429,9 @@ export function transfersScreen(s: GameState): string {
   const offers = offersList(s);
 
   const buyRows = s.transferList
-    .map(
-      (p) => `<tr>
+    .map((p) => {
+      const wil = transferWillingness(s, p);
+      return `<tr>
       <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
       <td><strong>${esc(p.name)}</strong><br/><span class="muted small">${esc(p.trait)}</span></td>
       <td>${p.age}</td>
@@ -437,24 +439,37 @@ export function transfersScreen(s: GameState): string {
       <td class="small" data-v="${p.technique}" ${tipAttr(`Techniek ${Math.round(p.technique)}, fysiek ${Math.round(p.physical)}.`, p.name)}>${Math.round(p.technique)} / ${Math.round(p.physical)}</td>
       <td data-v="${p.wage}">${euro(p.wage)}</td>
       <td data-v="${p.purchasePrice}">${p.purchasePrice ? euro(p.purchasePrice) : '<span class="tag">transfervrij</span>'}</td>
+      <td data-v="${Math.round(wil.kans * 100)}" class="small ${wil.toon}" ${tipAttr(
+        wil.kans >= 1
+          ? 'Jouw club is een ploeg van zijn niveau: hij tekent als jij wil.'
+          : `Hij mikt hoger dan wat jouw club vandaag te bieden heeft: reeks, stand, accommodatie, trainer en kleedkamer wegen mee. Kans dat hij tekent: ${Math.round(wil.kans * 100)}%. Zegt hij nee, dan verdwijnt hij van je lijst — en tekent hij wél, dan vraagt hij een hoger loon voor de stap.`,
+        p.name,
+      )}>${wil.woord}</td>
       <td>${impactChips(playerImpact(s, p), 3)}</td>
       <td>${window ? `<button class="sm primary" data-action="buy" data-id="${p.id}">Aanwerven</button>` : ''}</td>
-    </tr>`,
-    )
+    </tr>`;
+    })
     .join('');
 
   const loanRows = s.loanMarket
-    .map(
-      (p) => `<tr>
+    .map((p) => {
+      const wil = transferWillingness(s, p, true);
+      return `<tr>
       <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
       <td><strong>${esc(p.name)}</strong><br/><span class="muted small">van ${esc(p.loan?.club ?? '')}</span></td>
       <td>${p.age}</td>
       <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
       <td data-v="${p.wage}">${euro(p.wage)}</td>
       <td data-v="${p.purchasePrice}">${euro(p.purchasePrice)}</td>
+      <td data-v="${Math.round(wil.kans * 100)}" class="small ${wil.toon}" ${tipAttr(
+        wil.kans >= 1
+          ? 'Een uitleenbeurt bij jou past in zijn plan: hij komt als jij wil.'
+          : `Zelfs voor een uitleenbeurt vindt hij jouw club aan de kleine kant. Kans dat hij komt: ${Math.round(wil.kans * 100)}%.`,
+        p.name,
+      )}>${wil.woord}</td>
       <td>${window ? `<button class="sm primary" data-action="loan-in" data-id="${p.id}">Huren</button>` : ''}</td>
-    </tr>`,
-    )
+    </tr>`;
+    })
     .join('');
 
   const ownRows = [...s.players]
@@ -515,7 +530,8 @@ export function transfersScreen(s: GameState): string {
     <h2>Transfermarkt: kopen</h2>
     <p class="muted small">${window ? 'De transferperiode is open. Elke week verdwijnen er spelers en komen er nieuwe bij.' : 'De transferperiode is gesloten. Je kunt al rondkijken; kopen, verkopen en huren kan van mei tot eind augustus en in januari.'}
     Een scout zorgt voor meer en betere spelers en lagere prijzen, een analist helpt hem.
-    In de kolom "wat hij toevoegt" staat wat hij met jouw beste elf doet — vaak is dat niets, en dan betaal je voor de bank.</p>
+    In de kolom "wat hij toevoegt" staat wat hij met jouw beste elf doet — vaak is dat niets, en dan betaal je voor de bank.
+    En de speler beslist zelf mee: wie duidelijk boven jouw niveau speelt, komt niet zomaar — de kolom "Wil hij komen?" toont hoe hij naar je club kijkt, met dezelfde rekensom die zijn antwoord bepaalt.</p>
     ${
       scout
         ? `<div class="inline-form"><label>Transferbudget voor ${esc(scout.name)}${numField({ value: s.transferBudget, min: 0, step: 1000, prefix: '€', change: 'transfer-budget', inputId: 'transfer-budget', label: 'Transferbudget', extra: 'narrow' })}</label><span class="muted small">wordt meteen toegepast</span></div>
@@ -523,16 +539,16 @@ export function transfersScreen(s: GameState): string {
         : ''
     }
     <div class="table-wrap"><table data-sort-id="transfers">
-      <thead><tr><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th>Techn/Fys</th><th>Loon/w</th><th>Prijs</th><th data-nosort>Wat hij toevoegt</th><th data-nosort></th></tr></thead>
-      <tbody>${buyRows || '<tr><td colspan="9" class="muted">Geen spelers beschikbaar.</td></tr>'}</tbody>
+      <thead><tr><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th>Techn/Fys</th><th>Loon/w</th><th>Prijs</th><th>Wil hij komen?</th><th data-nosort>Wat hij toevoegt</th><th data-nosort></th></tr></thead>
+      <tbody>${buyRows || '<tr><td colspan="10" class="muted">Geen spelers beschikbaar.</td></tr>'}</tbody>
     </table></div>
   </section>
   <section class="card">
     <h2>Huren van profclubs</h2>
     <p class="muted small">Jonge spelers die beter zijn dan je niveau, tot het einde van het seizoen. Je betaalt een huurvergoeding en een deel van hun loon; daarna keren ze terug. Nieuw aanbod in juli en januari.</p>
     <div class="table-wrap"><table data-sort-id="huur">
-      <thead><tr><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th>Jouw loondeel/w</th><th>Huurvergoeding</th><th data-nosort></th></tr></thead>
-      <tbody>${loanRows || `<tr><td colspan="7" class="muted">${window ? 'Geen huurspelers meer beschikbaar.' : 'Buiten de transferperiode is er geen huuraanbod.'}</td></tr>`}</tbody>
+      <thead><tr><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th>Jouw loondeel/w</th><th>Huurvergoeding</th><th>Wil hij komen?</th><th data-nosort></th></tr></thead>
+      <tbody>${loanRows || `<tr><td colspan="8" class="muted">${window ? 'Geen huurspelers meer beschikbaar.' : 'Buiten de transferperiode is er geen huuraanbod.'}</td></tr>`}</tbody>
     </table></div>
   </section>
   <section class="card">
