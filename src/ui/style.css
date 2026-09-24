@@ -1214,6 +1214,9 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
   gap: var(--s3) var(--s6); padding: var(--s4) var(--s5) var(--s3);
 }
+/* Een vleug clubkleur achter het logo: de kopbalk was netjes, maar zo netjes dat hij
+   kaal oogde. Zeven procent kleur die naar rechts wegloopt — warmte, geen behang. */
+.topbar { background: linear-gradient(100deg, color-mix(in srgb, var(--club-1-safe) 7%, transparent), transparent 38%); }
 /* De band met je clubkleuren. Ze gebruikt de bijgetrokken varianten: een club met wit
    in haar kleuren had anders een onzichtbare helft op een witte kopbalk. */
 .club-band {
@@ -1269,6 +1272,13 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .hbit.zone-kampioen .cap::after { content: ' ▲'; }
 .hbit.zone-promotie .cap::after { content: ' ▲'; }
 .hbit.zone-degradatie .cap::after { content: ' ▼'; }
+
+/* de vormstippen: je laatste vijf uitslagen, oudste links — groen, grijs, rood */
+.hbit .vorm-dots { display: inline-flex; gap: 4px; align-items: center; min-height: 1.2rem; }
+.vorm-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.vorm-dots i.w { background: var(--good); }
+.vorm-dots i.v { background: var(--bad); }
+.vorm-dots i.leeg { background: none; box-shadow: inset 0 0 0 1px var(--line); }
 
 .head-warn { color: var(--bad); font-weight: 600; cursor: help; flex: none; }
 

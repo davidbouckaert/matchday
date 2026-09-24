@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.59.0';
+export const VERSION = '0.60.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.60.0',
+    date: '2026-09-24',
+    title: 'De kopbalk is minder kaal',
+    items: [
+      'Een vleug clubkleur achter je logo, die naar rechts wegloopt — warmte, geen behang',
+      'Nieuw blokje Vorm: je laatste vijf uitslagen als stippen (groen gewonnen, grijs gelijk, rood verloren, hol nog te spelen), oudste links',
+      'De tooltip vertelt elke uitslag voluit, en klikken brengt je naar de competitiestand',
+    ],
+  },
   {
     version: '0.59.0',
     date: '2026-09-24',

@@ -11,11 +11,42 @@
 import type { GameState } from './../engine/types';
 import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, formatDateLong, inWinterBreak, isTransferWindow, seasonLabel } from '../engine/calendar';
 import { DIVISIONS } from '../engine/data/divisions';
-import { OWN_TEAM_ID, type Zone, ownPosition, zoneAt } from '../engine/league';
+import { OWN_TEAM_ID, type Zone, ownPosition, teamName, zoneAt } from '../engine/league';
 import { esc, euro } from './format';
 import { schemeById } from './theme';
 import { tipAttr } from './tooltip';
 import { type CrestShape, clubInitials, crestSvg } from './crest';
+
+/**
+ * De vorm van de ploeg: je laatste vijf uitslagen als stippen, oudste links.
+ *
+ * Elke voetbalapp toont dit rijtje, en het hoort in de kopbalk: het is het verhaal
+ * áchter je plaats in het klassement. Groen gewonnen, grijs gelijk, rood verloren;
+ * holle stippen zijn wedstrijden die nog moeten komen.
+ */
+function vormBit(g: GameState): string {
+  const gespeeld = g.league.fixtures
+    .filter((f) => (f.homeId === OWN_TEAM_ID || f.awayId === OWN_TEAM_ID) && f.homeGoals !== undefined)
+    .sort((a, b) => a.week - b.week)
+    .slice(-5)
+    .map((f) => {
+      const thuis = f.homeId === OWN_TEAM_ID;
+      const gf = thuis ? f.homeGoals! : f.awayGoals!;
+      const ga = thuis ? f.awayGoals! : f.homeGoals!;
+      return {
+        klasse: gf > ga ? 'w' : gf < ga ? 'v' : 'g',
+        tekst: `${gf > ga ? 'winst' : gf < ga ? 'verlies' : 'gelijk'} ${gf}-${ga} ${thuis ? 'thuis tegen' : 'uit bij'} ${teamName(g, thuis ? f.awayId : f.homeId)}`,
+      };
+    });
+  const stippen =
+    gespeeld.map((v) => `<i class="${v.klasse}"></i>`).join('') + '<i class="leeg"></i>'.repeat(5 - gespeeld.length);
+  const tip = gespeeld.length
+    ? `Je laatste ${gespeeld.length === 1 ? 'wedstrijd' : `${gespeeld.length} wedstrijden`}, oudste links: ${gespeeld.map((v) => v.tekst).join(' · ')}.`
+    : 'Nog geen wedstrijden gespeeld dit seizoen. Hier verschijnen je laatste vijf uitslagen.';
+  return `<button class="hbit vorm" data-action="nav" data-id="competitie" ${tipAttr(tip, 'Vorm')}>
+    <span class="cap">Vorm</span><span class="vorm-dots">${stippen}</span>
+  </button>`;
+}
 
 /** De transferperiodes, afgeleid uit dezelfde functie waarmee de engine rekent. */
 function windows(): { from: number; to: number }[] {
@@ -179,6 +210,7 @@ export function header(g: GameState): string {
       tip: st.tip,
       tone: `zone-${st.zone}`,
     }),
+    vormBit(g),
     match
       ? bit('Volgende match', match.weeks === 0 ? 'deze week' : `over ${match.weeks} ${match.weeks === 1 ? 'week' : 'weken'}`, {
           to: 'competitie',

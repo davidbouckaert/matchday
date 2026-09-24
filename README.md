@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.60.0 — De kopbalk is minder kaal
+
+**Netjes, rustig, minimalistisch — maar nét te kaal.** Twee toevoegingen die allebei iets zeggen in plaats van alleen maar versieren. Achter je clublogo ligt nu een vleug clubkleur die naar rechts wegloopt (zeven procent, via `color-mix` op de bijgetrokken clubkleur — warmte, geen behang). En tussen Klassement en Volgende match staat een nieuw blokje **Vorm**: je laatste vijf uitslagen als stippen, oudste links — groen gewonnen, grijs gelijk, rood verloren, en holle stippen voor wedstrijden die nog moeten komen. Het rijtje dat elke voetbalapp toont, want het is het verhaal áchter je plaats in het klassement. De tooltip vertelt elke uitslag voluit ("winst 3-1 thuis tegen SC Wielbeke"), en klikken brengt je naar de stand. In de draaiende app gecontroleerd: vijf holle stippen bij de start, na tien weken ●●◐ met twee keer winst en één verlies — kloppend met de gespeelde wedstrijden.
+
 ### 0.59.0 — De werklijst-pil valt nu echt op
 
 **"2 dingen wachten op jou" is de nuttigste knop van de speelbalk — en de onzichtbaarste.** Hij stond in dezelfde zachte accentkleur als de rest van de balk en viel volledig weg naast de grote groene weekknop. De pil draagt nu het aandacht-palet: amber, met het aantal in een echte gekleurde badge, en een rand die hem van de achtergrond tilt. Zit er iets dringends tussen (te weinig speelklare spelers, een deadline die vandaag valt), dan kleurt het geheel rood. Rond de badge klopt een trage polsslag — elke 2,8 seconden één zachte ring — die het oog trekt zonder te irriteren, en een pijltje maakt duidelijk dat de pil ergens heen gaat. Wie verminderde beweging instelde, krijgt geen polsslag. Voor en na met Playwright-schermafdrukken vergeleken, in beide staten.
