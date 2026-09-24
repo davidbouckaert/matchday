@@ -106,6 +106,8 @@ interface UiState {
    * verslag ze kon vertellen. De kopbalk loopt nu pas bij wanneer jij het verslag sluit.
    */
   held: GameState | null;
+  /** De bevestigingspopup voor een ingrijpende beslissing: welke actie, en met welke uitleg. */
+  confirmAction: { action: string; id: string; title: string; body: string; verb: string } | null;
   /** De versie die de server draait als die nieuwer is dan deze bundle: dan staat er een
    *  banner "ververs". Een open tabblad draait anders wekenlang stil een oude versie door. */
   updateAvailable: string | null;
@@ -136,6 +138,7 @@ const ui: UiState = {
   sorts: {},
   report: null,
   held: null,
+  confirmAction: null,
   updateAvailable: null,
   fastForward: null,
   animate: readPref('vcg-anim', true),
@@ -285,6 +288,20 @@ function render(): void {
     ${!ui.fastForward && ui.report ? (ui.report.phase === 'anim' ? animationOverlay(g, ui.report.prev) : reportOverlay(g, ui.report.prev)) : ''}
     ${!ui.report && !ui.fastForward && g.opening && !g.opening.done ? openingOverlay(g) : ''}
     ${!ui.report && !ui.fastForward && !(g.opening && !g.opening.done) && ui.moment !== 'dicht' && g.weekChoice ? momentOverlay(g, ui.moment === 'gevolg' ? 'gevolg' : 'vraag') : ''}
+    ${
+      ui.confirmAction
+        ? `<div class="overlay confirm-overlay" data-action="confirm-no">
+            <div class="confirm-card" role="alertdialog" aria-modal="true" aria-label="${esc(ui.confirmAction.title)}" data-action="noop">
+              <h2>${esc(ui.confirmAction.title)}</h2>
+              ${ui.confirmAction.body ? `<p class="small">${esc(ui.confirmAction.body)}</p>` : ''}
+              <div class="confirm-btns">
+                <button data-action="confirm-no">Annuleren</button>
+                <button class="danger-solid" data-action="confirm-yes">${esc(ui.confirmAction.verb)}</button>
+              </div>
+            </div>
+          </div>`
+        : ''
+    }
     ${toast}`;
   restoreFocus(focused);
   // Staat er een venster open, dan zit de tooltip rechtsonder precies voor de knop van dat
@@ -781,6 +798,16 @@ const handlers: Record<string, Handler> = {
   reload: () => {
     window.location.reload();
   },
+  'confirm-no': () => {
+    ui.confirmAction = null;
+  },
+  'confirm-yes': async () => {
+    const c = ui.confirmAction;
+    ui.confirmAction = null;
+    if (!c) return;
+    const handler = handlers[c.action];
+    return handler ? await handler(c.id) : undefined;
+  },
   'staff-filter': (id) => {
     ui.staffFilter = ui.staffFilter === id ? null : (id as StaffRole);
   },
@@ -867,33 +894,21 @@ const handlers: Record<string, Handler> = {
   },
 };
 
-/**
- * Ingrijpende knoppen — stopzetten, ontslaan, wegsturen, verkopen — vragen één klik
- * extra: de eerste klik "wapent" de knop (hij kleurt rood en zegt wat er gebeurt), pas de
- * tweede voert uit. Geen popup: hetzelfde patroon als "nieuw spel" al had, maar dan voor
- * elke knop met een data-confirm. Vier seconden niets doen, of ergens anders klikken, en
- * de knop staat weer gewoon terug.
- */
-let disarmTimer = 0;
-function armDanger(btn: HTMLElement): void {
-  for (const other of root.querySelectorAll<HTMLElement>('button.armed')) disarm(other);
-  btn.dataset.label = btn.innerHTML;
-  btn.textContent = btn.dataset.confirm!;
-  btn.classList.add('armed');
-  window.clearTimeout(disarmTimer);
-  disarmTimer = window.setTimeout(() => disarm(btn), 4000);
-}
-function disarm(btn: HTMLElement): void {
-  if (!btn.isConnected || !btn.classList.contains('armed')) return;
-  btn.classList.remove('armed');
-  if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
-}
-
 root.addEventListener('click', async (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
   if (!target) return;
-  if (target.dataset.confirm && !target.classList.contains('armed')) {
-    armDanger(target);
+  // Ingrijpende knoppen — stopzetten, ontslaan, wegsturen, verkopen — openen eerst een
+  // kleine bevestigingspopup met de vraag en de gevolgen. Dat is het patroon dat iedereen
+  // kent; een dubbelklik-op-dezelfde-knop bleek dat niet.
+  if (target.dataset.confirm) {
+    ui.confirmAction = {
+      action: target.dataset.action!,
+      id: target.dataset.id ?? '',
+      title: target.dataset.confirm,
+      body: (target.dataset.tip ?? '').replace(/^Ingrijpend: /, '').replace(/^./, (c) => c.toUpperCase()),
+      verb: (target.textContent ?? 'Doorgaan').trim(),
+    };
+    render();
     return;
   }
   const handler = handlers[target.dataset.action!];
@@ -965,6 +980,11 @@ root.addEventListener('change', async (e) => {
 // Sneltoets: spatie = volgende week (behalve in invoervelden)
 document.addEventListener('keydown', (e) => {
   if (!ui.game || (e.target as HTMLElement).closest('input, textarea, select')) return;
+  if (e.key === 'Escape' && ui.confirmAction) {
+    ui.confirmAction = null;
+    render();
+    return;
+  }
   if (e.key === 'Escape' && (ui.report || ui.fastForward)) {
     ui.report = null;
   ui.held = null;

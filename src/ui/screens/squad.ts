@@ -225,8 +225,8 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
     <td data-v="${marketValue(p, s.marketIndex)}">${euro(marketValue(p, s.marketIndex))}</td>
     <td class="btns">
       <button class="sm" data-action="goto-contracts" data-id="${p.id}" data-tip="Ga naar Contracten om met hem over een nieuw contract te praten">Contract verlengen</button>
-      ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" data-confirm="Zeker? Verkopen" data-tip="Ingrijpend: hij is meteen en definitief verkocht tegen het bod van deze week.">Verkoop ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
-      <button class="sm ghost danger" data-action="release" data-id="${p.id}" data-confirm="Zeker? Hij vertrekt meteen" data-tip="Ingrijpend: je betaalt zijn contract af en hij is meteen en definitief vertrokken — zonder overnamesom.">Wegsturen</button>
+      ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" data-confirm="${esc(p.name)} verkopen voor ${euro(currentBid(p, s.marketIndex))}?" data-tip="Ingrijpend: hij is meteen en definitief verkocht tegen het bod van deze week.">Verkoop ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
+      <button class="sm ghost danger" data-action="release" data-id="${p.id}" data-confirm="${esc(p.name)} wegsturen?" data-tip="Ingrijpend: je betaalt zijn contract af en hij is meteen en definitief vertrokken — zonder overnamesom.">Wegsturen</button>
     </td>
   </tr>`;
 }
@@ -480,7 +480,7 @@ export function transfersScreen(s: GameState): string {
       let actionsHtml = '';
       if (p.loan?.type === 'in') {
         status = `gehuurd van ${esc(p.loan.club)}`;
-        actionsHtml = `<button class="sm ghost danger" data-action="release" data-id="${p.id}" data-confirm="Zeker? Terug naar zijn club" data-tip="Ingrijpend: hij gaat meteen terug naar zijn club en komt dit seizoen niet meer voor je spelen.">Huur beëindigen</button>`;
+        actionsHtml = `<button class="sm ghost danger" data-action="release" data-id="${p.id}" data-confirm="Huur van ${esc(p.name)} beëindigen?" data-tip="Ingrijpend: hij gaat meteen terug naar zijn club en komt dit seizoen niet meer voor je spelen.">Huur beëindigen</button>`;
       } else if (p.loan?.type === 'uit') {
         // wat zijn uitleenbeurt tot nu toe opleverde: anders is hij een naam die verdwijnt
         const gespeeld = p.loan.matches ?? 0;
@@ -495,7 +495,7 @@ export function transfersScreen(s: GameState): string {
         if (block) status += `<br/><span class="muted small" data-tip="${esc(block)}">🔒 onmisbaar deze week</span>`;
         const share = Math.round(actions.loanWageShare(s, p) * 100);
         actionsHtml = `
-          ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" data-confirm="Zeker? Verkopen" ${block ? `disabled data-tip="${esc(block)}"` : 'data-tip="Ingrijpend: hij is meteen en definitief verkocht tegen het bod van deze week."'}>Nu verkopen ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
+          ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" data-confirm="${esc(p.name)} verkopen voor ${euro(currentBid(p, s.marketIndex))}?" ${block ? `disabled data-tip="${esc(block)}"` : 'data-tip="Ingrijpend: hij is meteen en definitief verkocht tegen het bod van deze week."'}>Nu verkopen ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
           ${
             p.listed
               ? `<button class="sm" data-action="unlist" data-id="${p.id}">Van de lijst</button>`

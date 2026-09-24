@@ -1346,7 +1346,14 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
    de vraag erin. De tweede klik voert pas uit. */
 button.danger { color: var(--bad); }
 button.danger:hover:not(:disabled) { background: var(--bad-soft, rgba(200,60,60,.12)); color: var(--bad); }
-button.armed, button.armed:hover { background: var(--bad); color: #fff; }
+
+/* de bevestigingspopup: klein, met de vraag als kop, de gevolgen eronder en de
+   ingrijpende knop in het rood. Ernaast klikken of Escape annuleert. */
+.confirm-card { background: var(--card); border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.35);
+  width: min(440px, calc(100% - 32px)); padding: 22px 26px; cursor: default; }
+.confirm-card h2 { margin: 0 0 8px; text-transform: none; letter-spacing: 0; font-size: 1.12rem; font-weight: 700; color: var(--text); }
+.confirm-btns { display: flex; justify-content: flex-end; gap: var(--s3); margin-top: var(--s4); }
+button.danger-solid, button.danger-solid:hover { background: var(--bad); color: #fff; }
 
 /* Filteren door aan te klikken: een functie op Personeel of een tegel-kop op Sponsors.
    De knop ziet eruit als de tekst die hij was; actief = accentkleur met een bolletje,

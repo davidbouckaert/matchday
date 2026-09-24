@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.57.1';
+export const VERSION = '0.57.2';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.57.2',
+    date: '2026-09-24',
+    title: 'Een gewone bevestigingspopup in plaats van de dubbelklik',
+    items: [
+      'De tweede-klik-op-dezelfde-knop van 0.57.0 bleek niet het patroon dat mensen kennen',
+      'Ingrijpende knoppen openen nu een kleine popup: de vraag met naam en bedrag, de gevolgen eronder, en Annuleren naast de rode actieknop',
+      'Escape of ernaast klikken annuleert ook',
+    ],
+  },
   {
     version: '0.57.1',
     date: '2026-09-24',

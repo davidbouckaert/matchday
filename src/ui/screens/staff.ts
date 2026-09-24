@@ -47,7 +47,7 @@ function detailCard(s: GameState, m: Staff): string {
     <div class="btn-row">
       ${course && !m.courseWeeksLeft ? `<button class="sm" data-action="course" data-id="${m.id}">Diploma ${course.to} (${euro(course.cost)}, ${course.weeks} weken)</button>` : ''}
       ${courseButton(s, m)}
-      <button class="sm ghost danger" data-action="fire" data-id="${m.id}" data-confirm="Zeker? Hij vertrekt meteen" ${tipAttr(`Ingrijpend: hij vertrekt meteen, je betaalt ${euro(m.wage * 8)} opzegvergoeding (acht weken loon) en al zijn taken vallen terug naar jou.`)}>Ontslaan (${euro(m.wage * 8)})</button>
+      <button class="sm ghost danger" data-action="fire" data-id="${m.id}" data-confirm="${esc(m.name)} ontslaan?" ${tipAttr(`Ingrijpend: hij vertrekt meteen, je betaalt ${euro(m.wage * 8)} opzegvergoeding (acht weken loon) en al zijn taken vallen terug naar jou.`)}>Ontslaan (${euro(m.wage * 8)})</button>
     </div>
   </section>`;
 }

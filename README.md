@@ -175,7 +175,7 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 **"Stopzetten" stond er even onschuldig bij als "Sluiten", en dat klopt niet.** Een sponsorcontract stopzetten, een personeelslid ontslaan, een speler wegsturen of verkopen, een huur beëindigen — dat zijn definitieve beslissingen met een grote impact, en één misklik was genoeg. Die knoppen kleuren nu rood, hun uitleg begint met "Ingrijpend:" en benoemt de gevolgen (wat het kost, wat er wegvalt, dat het definitief is).
 
-**En ze vragen een tweede klik.** De eerste klik wapent de knop: hij kleurt vol rood en zegt wat er gebeurt — "Zeker? €1.360/week stopt", "Zeker? Hij vertrekt meteen". Pas de tweede klik voert uit. Vier seconden niets doen, of ergens anders klikken, en de knop staat gewoon terug. Geen popup: dit is hetzelfde patroon dat "nieuw spel" al jaren had (`data-confirm` in `main.ts`), nu als één regel voor het hele spel. In de draaiende app nagespeeld: eerste klik verandert alleen de knop (14 sponsors vóór én na), tweede klik voert uit (13).
+**En ze vragen een bevestiging.** De eerste versie hiervan (0.57.0) wapende de knop voor een tweede klik — hetzelfde patroon als "nieuw spel" — maar dat bleek niet het patroon dat mensen kennen, en een bevestiging die je moet leren is geen bevestiging. Sinds 0.57.2 opent zo'n knop een kleine popup: de vraag mét naam en bedrag als kop ("Contract met Brouwerij Het Anker-Ei stopzetten?"), de gevolgen eronder, en Annuleren naast de rode actieknop. Escape of ernaast klikken annuleert ook. In de draaiende app nagespeeld: openen en annuleren verandert niets (14 sponsors), bevestigen voert uit (13).
 
 ### 0.56.0 — De wedstrijd duurt vijf tellen, met klok, rust en wissels
 
