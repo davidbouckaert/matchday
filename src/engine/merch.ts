@@ -1,7 +1,7 @@
 // Clubwinkel: supporters kopen sjaals, shirts en mokken. Jij kiest het assortiment en de prijzen.
 // Verkoop per week = vraag (supporters, sfeer, resultaten, thuiswedstrijd) × prijsgevoeligheid per artikel.
 
-import type { GameState, MerchItem } from './types';
+import type { GameState, MerchItem, Player } from './types';
 import type { Factor } from './factors';
 import { product } from './factors';
 import { recordOrigin } from './origins';
@@ -13,7 +13,8 @@ import { DIVISIONS } from './data/divisions';
 import { OWN_TEAM_ID, ownPosition } from './league';
 import { staffSkill } from './staff';
 import { popularity, willingnessToPay } from './popularity';
-import { book } from './util';
+import { isStar } from './stars';
+import { addNews, book } from './util';
 
 const x = (label: string, value: number, source: string): Factor => ({ label, value, source, kind: 'x' });
 
@@ -74,6 +75,84 @@ export function expectedUnits(state: GameState, item: MerchItem): number {
   return base * factors * merchPriceFactor(item.price, refPrice(state, item.id));
 }
 
+// ---------- Shirts met een naam ----------
+//
+// Wie een replicashirt koopt, wil er vaak een naam op — en welke naam, dat beslist de
+// tribune, niet het bestuur. Zo zie je zwart op wit wie je populairste speler is: de
+// ranglijst op het winkelscherm is de optelsom van echte drukorders, geen meter die wij
+// verzinnen. De bedrukking is een kleine meerprijs bovenop het shirt zelf.
+
+export const PRINT_PRICE = 12; // wat de supporter extra betaalt voor een naam en nummer
+export const PRINT_COST = 3; // wat de drukker jou per shirt rekent
+export const PRINT_SHARE = 0.6; // deel van de shirtkopers dat een naam wil
+
+/**
+ * Hoe graag supporters de naam van déze speler op hun rug willen.
+ *
+ * Basisplaatsen wegen mee (wie er elke week staat, kent iedereen), doelpunten wegen
+ * zwaarder (de spits verkoopt), een sterspeler verkoopt nog eens dubbel zo goed, en een
+ * jongen uit de eigen jeugd heeft streekwaarde. Wie uitgeleend is, hangt in een andere
+ * kleedkamer en verkoopt hier niets.
+ */
+export function shirtFame(state: GameState, p: Player): number {
+  if (p.loan?.type === 'uit') return 0;
+  let fame = 1 + p.starts * 1.5 + p.goals * 4;
+  if (isStar(state, p)) fame *= 2;
+  if (p.isYouth) fame *= 1.35;
+  return fame;
+}
+
+/** De spelers zoals de winkel ze zou uitstallen: populairste eerst. */
+export function shirtRanking(state: GameState): { p: Player; fame: number }[] {
+  return state.players
+    .map((p) => ({ p, fame: shirtFame(state, p) }))
+    .filter((x) => x.fame > 0)
+    .sort((a, b) => b.fame - a.fame);
+}
+
+/** De naam die dit seizoen het vaakst gedrukt werd (minstens één keer). */
+export function topShirtName(state: GameState): { id: string; name: string; aantal: number } | null {
+  const lijst = [...state.merch.shirtNames].sort((a, b) => b.aantal - a.aantal);
+  return lijst.length && lijst[0].aantal > 0 ? lijst[0] : null;
+}
+
+/** De drukorders van deze week: wie er verkocht, boekt zijn naam bij op de ranglijst. */
+function weeklyPrints(state: GameState, rng: Rng, shirtsVerkocht: number): void {
+  const m = state.merch;
+  m.lastPrints = { aantal: 0, omzet: 0 };
+  if (!shirtsVerkocht) return;
+  const ranking = shirtRanking(state);
+  if (!ranking.length) return;
+  const vorige = topShirtName(state);
+
+  const totaal = ranking.reduce((sum, x) => sum + x.fame, 0);
+  let aantal = 0;
+  for (let i = 0; i < shirtsVerkocht; i++) {
+    if (!rng.chance(PRINT_SHARE)) continue;
+    aantal++;
+    // gewogen loting: hoe beroemder, hoe vaker jouw naam onder de pers gaat
+    let r = rng.next() * totaal;
+    const keuze = ranking.find((x) => (r -= x.fame) <= 0) ?? ranking[0];
+    const rij = m.shirtNames.find((x) => x.id === keuze.p.id);
+    if (rij) {
+      rij.aantal++;
+      rij.name = keuze.p.name; // naam kan ooit wijzigen? goedkoop actueel houden
+    } else m.shirtNames.push({ id: keuze.p.id, name: keuze.p.name, aantal: 1 });
+  }
+  if (!aantal) return;
+
+  const omzet = aantal * PRINT_PRICE;
+  m.lastPrints = { aantal, omzet };
+  book(state, 'clubartikelen', omzet, `Bedrukking: ${aantal} ${aantal === 1 ? 'naam' : 'namen'} op shirts`);
+  book(state, 'inkoop winkel', -aantal * PRINT_COST, 'Drukwerk namen op shirts');
+
+  // een wissel aan de top is nieuws in het dorp — vanaf er echt iets verkocht is
+  const nieuwe = topShirtName(state);
+  if (nieuwe && nieuwe.aantal >= 5 && nieuwe.id !== vorige?.id) {
+    addNews(state, 'neutraal', `De tribune heeft gekozen: ${nieuwe.name} is nu de meest gedrukte naam op de shirts in de clubwinkel.`);
+  }
+}
+
 export interface MerchWeek {
   units: { id: MerchItem['id']; units: number; revenue: number }[];
   revenue: number;
@@ -121,6 +200,7 @@ export function weeklyMerch(state: GameState, rng: Rng): MerchWeek | null {
   result.fixed = MERCH_WEEK_COST * (1 - skill / 400) + m.items.length * MERCH_ITEM_WEEK_COST;
   m.lastUnits = result.units;
   m.seasonUnits += result.units.reduce((s, u) => s + u.units, 0);
+  weeklyPrints(state, rng, result.units.find((u) => u.id === 'shirt')?.units ?? 0);
 
   const sold = result.units.reduce((s, u) => s + u.units, 0);
   if (result.revenue > 0) {

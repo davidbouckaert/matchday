@@ -2,11 +2,11 @@
 
 import type { GameState } from '../../engine/types';
 import { MERCH_ITEMS, MERCH_ITEM_WEEK_COST, MERCH_START_COST, MERCH_WEEK_COST, merchDef } from '../../engine/data/catalog';
-import { bestPrice, buyPrice, expectedUnits, isHomeMatchWeek, margin, merchPriceFactor, refPrice } from '../../engine/merch';
+import { PRINT_PRICE, bestPrice, buyPrice, expectedUnits, isHomeMatchWeek, margin, merchPriceFactor, refPrice, shirtRanking } from '../../engine/merch';
 import { delegate } from '../../engine/delegation';
 import { staffSkill } from '../../engine/staff';
 import { esc, euro } from '../format';
-import { tip } from '../tooltip';
+import { hint, tip } from '../tooltip';
 import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
 
@@ -85,6 +85,7 @@ export function merchScreen(s: GameState): string {
       </div>
       <p class="muted small">Prijzen worden meteen toegepast, je hoeft niets op te slaan. Prijseffect: 100% = normale verkoop aan de richtprijs. Vraag je het dubbele, dan verkoop je ongeveer een derde.</p>
     </section>
+    ${shirtNamesCard(s)}
     <section class="card span2">
       <h2>Assortiment uitbreiden</h2>
       <p class="muted small">Je betaalt eenmalig drukwerk en de eerste voorraad. Populaire artikelen verkopen vaker, dure artikelen leveren meer per stuk op.</p>
@@ -101,4 +102,47 @@ export function merchScreen(s: GameState): string {
       </div>
     </section>
   </div>`;
+}
+
+/**
+ * De namen op de shirts: wie een replicashirt koopt, laat er vaak een naam op drukken —
+ * en welke naam, dat beslist de tribune. Deze ranglijst is dus geen meter die wij
+ * verzinnen maar de optelsom van echte drukorders: zo zie je zwart op wit wie je
+ * populairste speler is. Bovenaan prijkt de publiekslieveling met een kroontje.
+ */
+function shirtNamesCard(s: GameState): string {
+  const m = s.merch;
+  const shirtInWinkel = m.items.some((i) => i.id === 'shirt');
+  const verkocht = [...m.shirtNames].sort((a, b) => b.aantal - a.aantal);
+  const favoriet = verkocht.length && verkocht[0].aantal > 0 ? verkocht[0] : null;
+  // nog geen drukorders? toon dan alvast wie de winkel vooraan zou leggen
+  const verwacht = shirtRanking(s).slice(0, 5);
+  const omzet = m.shirtNames.reduce((sum, x) => sum + x.aantal, 0);
+
+  const rijen = (verkocht.length ? verkocht.slice(0, 5).map((x, i) => ({ naam: x.name, aantal: x.aantal, top: i === 0 && x === favoriet })) : verwacht.map((x) => ({ naam: x.p.name, aantal: 0, top: false })))
+    .map(
+      (r, i) => `<tr class="${r.top ? 'pos' : ''}">
+        <td class="num">${i + 1}</td>
+        <td>${r.top ? '👑 ' : ''}<strong>${esc(r.naam)}</strong>${r.top ? ' <span class="tag">publiekslieveling</span>' : ''}</td>
+        <td class="num">${r.aantal}</td>
+      </tr>`,
+    )
+    .join('');
+
+  return `<section class="card span2">
+    <h2>De namen op de shirts ${hint(`Wie een wedstrijdshirt koopt, betaalt €${PRINT_PRICE} extra voor een naam en nummer. Welke naam, dat beslist de tribune: basisplaatsen tellen, doelpunten tellen dubbel, een sterspeler verkoopt nog eens zo goed en een jongen uit de eigen jeugd heeft streekwaarde. De ranglijst herbegint elk seizoen.`)}</h2>
+    ${
+      shirtInWinkel
+        ? `<p class="muted small">${
+            omzet
+              ? `Dit seizoen al ${omzet} ${omzet === 1 ? 'naam' : 'namen'} gedrukt${m.lastPrints.aantal ? ` · vorige week ${m.lastPrints.aantal} (${euro(m.lastPrints.omzet)})` : ''}. De tribune kiest — dit is je populariteitspeiling in het echt.`
+              : 'Nog geen drukorders dit seizoen. Zodra er shirts verkopen, zie je hier wiens naam de supporters kiezen; dit is alvast wie de winkel vooraan zou leggen.'
+          }</p>
+          <div class="table-wrap"><table class="compact">
+            <thead><tr><th class="num">#</th><th>Speler</th><th class="num">Gedrukt</th></tr></thead>
+            <tbody>${rijen || '<tr><td colspan="3" class="muted">Nog geen spelers om te drukken.</td></tr>'}</tbody>
+          </table></div>`
+        : `<p class="muted small">Neem het <strong>wedstrijdshirt</strong> in je assortiment (hieronder) en supporters laten er tegen meerprijs een spelersnaam op drukken. De ranglijst verklapt wie je populairste speler is.</p>`
+    }
+  </section>`;
 }

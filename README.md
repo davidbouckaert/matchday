@@ -171,6 +171,14 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.63.0 — Shirts met spelersnamen: de tribune kiest haar lieveling
+
+**Wie een replicashirt koopt, wil er een naam op — en welke naam, dat beslist de tribune, niet het bestuur.** Ligt het wedstrijdshirt in je clubwinkel, dan betaalt ruim de helft van de kopers €12 extra voor een naam en rugnummer. Wiens naam onder de pers gaat, volgt uit echte populariteit: basisplaatsen tellen (wie er elke week staat, kent iedereen), doelpunten tellen dubbel (de spits verkoopt), een sterspeler verkoopt nog eens dubbel zo goed, en een jongen uit de eigen jeugd heeft streekwaarde. Een uitgeleende speler hangt in een andere kleedkamer en verkoopt niets.
+
+**Zo zie je zwart op wit wie je populairste speler is.** De winkel toont de top vijf van dit seizoen met het aantal gedrukte shirts, en een 👑 met het label *publiekslieveling* voor de nummer één — geen meter die het spel verzint, maar de optelsom van echte drukorders. Wisselt de koppositie, dan is dat dorpsnieuws; op het einde van het seizoen gaat de meest gedrukte naam het clubgeheugen in en herbegint de ranglijst. De omzet en het drukwerk lopen gewoon door de bestaande winkelboekhouding (clubartikelen en inkoop winkel).
+
+Zes nieuwe tests (763 totaal), opslagbestanden migreren naar versie 35, en in de draaiende app nagespeeld: winkel geopend, shirt in de rekken, tien weken gespeeld — twintig namen gedrukt en de kroon op de juiste kop.
+
 ### 0.62.0 — De bouwprojecten in vijf herkenbare groepen
 
 **Twaalf werven in één vlakke lijst las als een rommelmarkt**: beton naast wifi naast een tweedehands bus. Het bouwscherm deelt ze nu in zoals een bestuur erover praat: **🧱 Ruwbouw** (de tribune vooraan, kantine, toiletten en kleedkamers, parking), **⚽ Sportief** (kunstgras, verlichting), **🚪 Afdelingen** — ruimtes met een eigen werking — (jeugdopleidingscentrum, recuperatieruimte), **📡 Technologie** (wifi, scorebord) en **💶 Investeringen** die zichzelf terugverdienen (ploegbus, zonnepanelen). Elke groep opent met één zin die zegt wat je er koopt. De groep is een veld in de catalogus (`UPGRADE_GROUPS` in `catalog.ts`), dus een toekomstig project — een persruimte, kantoren, een fitness — moet bij het toevoegen meteen een plek kiezen. Voor en na met Playwright vastgelegd: zelfde elf kaarten plus de tribune, nu onder vijf koppen.

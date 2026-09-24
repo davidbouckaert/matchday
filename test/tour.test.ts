@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { TOUR_CHAPTERS, TOUR_PATIENCE, tourChapter, tourMarkSeen, repairTour } from '../src/engine/tour';
 import { migrate } from '../src/storage/save';
+import { SAVE_VERSION } from '../src/engine/newGame';
 import { readyGame, playWeeks } from './helpers';
 import type { GameState } from '../src/engine/types';
 
@@ -88,12 +89,12 @@ describe('rondleiding (tour)', () => {
     expect(vroeg.tour!.hidden).to.equal(false);
   });
 
-  it('migreert een v33-bestand naar v34 met rondleiding', () => {
+  it('migreert een v33-bestand met rondleiding mee tot de huidige versie', () => {
     const s = readyGame();
     delete s.tour;
     (s as { version: number }).version = 33;
     const na = migrate(JSON.parse(JSON.stringify(s)));
     expect(na.tour).to.not.equal(undefined);
-    expect(na.version).to.equal(34);
+    expect(na.version).to.equal(SAVE_VERSION);
   });
 });

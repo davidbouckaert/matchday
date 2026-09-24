@@ -110,6 +110,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 31) migrateV31toV32(state);
   if (state.version === 32) migrateV32toV33(state);
   if (state.version === 33) migrateV33toV34(state);
+  if (state.version === 34) migrateV34toV35(state);
   repair(state);
   return state;
 }
@@ -197,7 +198,7 @@ function migrateV5toV6(state: GameState): void {
 
 /** Versie 7: fanshop (merchandising). */
 function migrateV6toV7(state: GameState): void {
-  state.merch = { active: false, items: [], lastUnits: [], seasonUnits: 0 };
+  state.merch = { active: false, items: [], lastUnits: [], seasonUnits: 0, shirtNames: [], lastPrints: { aantal: 0, omzet: 0 } };
   state.version = 7;
 }
 
@@ -477,6 +478,13 @@ function migrateV32toV33(state: GameState): void {
 function migrateV33toV34(state: GameState): void {
   repairTour(state);
   state.version = 34;
+}
+
+/** Versie 35: shirts met spelersnamen. De ranglijst begint leeg. */
+function migrateV34toV35(state: GameState): void {
+  state.merch.shirtNames ??= [];
+  state.merch.lastPrints ??= { aantal: 0, omzet: 0 };
+  state.version = 35;
 }
 
 /** Versie 31: sterspelers. De lijst begint leeg, dus je huidige ster komt meteen in het nieuws. */

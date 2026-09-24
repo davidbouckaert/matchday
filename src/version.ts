@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.62.0';
+export const VERSION = '0.63.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.63.0',
+    date: '2026-09-24',
+    title: 'Shirts met spelersnamen: de tribune kiest haar lieveling',
+    items: [
+      'Wie een wedstrijdshirt koopt, laat er tegen €12 meerprijs een spelersnaam op drukken',
+      'Welke naam, dat beslist de tribune: basisplaatsen tellen, doelpunten dubbel, een sterspeler verkoopt dubbel zo goed, eigen jeugd heeft streekwaarde',
+      'De clubwinkel toont de top vijf met een 👑 voor de publiekslieveling — je populariteitspeiling in het echt, elk seizoen opnieuw',
+      'Een nieuwe nummer één is dorpsnieuws, en de topnaam van vorig seizoen blijft in het clubgeheugen hangen',
+    ],
+  },
   {
     version: '0.62.0',
     date: '2026-09-24',

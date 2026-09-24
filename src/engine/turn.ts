@@ -940,6 +940,12 @@ function newSeason(state: GameState, rng: Rng): void {
   state.season++;
   state.lastSeasonTotals = state.seasonTotals;
   state.seasonTotals = {};
+  const favoriet = [...state.merch.shirtNames].sort((a, b) => b.aantal - a.aantal)[0];
+  if (favoriet && favoriet.aantal >= 10) {
+    remember(state, `De naam die vorig seizoen het vaakst op een shirt gedrukt werd: ${favoriet.name} (${favoriet.aantal} keer).`);
+  }
+  state.merch.shirtNames = [];
+  state.merch.lastPrints = { aantal: 0, omzet: 0 };
   state.merch.seasonUnits = 0;
   // alles wordt elk seizoen wat duurder; wie niets aanpast, ziet zijn marge verdampen
   state.inflation = Math.round(state.inflation * 1.07 * 1000) / 1000;

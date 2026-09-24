@@ -18,7 +18,7 @@ import { emptyCareer, emptyOwner } from './career';
 import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 34;
+export const SAVE_VERSION = 35;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -86,7 +86,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
     },
     crest: opts.crest ?? 'schild',
     scheme: opts.scheme ?? 'groenwit',
-    merch: { active: false, items: [], lastUnits: [], seasonUnits: 0 },
+    merch: { active: false, items: [], lastUnits: [], seasonUnits: 0, shirtNames: [], lastPrints: { aantal: 0, omzet: 0 } },
     canteen: { items: CANTEEN_ITEMS.map((c) => ({ id: c.id, price: c.ref })), concessions: [], lastCanteen: [], lastConcessions: [] },
     stats: emptyStats(1),
     statsHistory: [],

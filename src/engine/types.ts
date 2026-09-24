@@ -320,6 +320,10 @@ export interface Merch {
   items: MerchItem[]; // wat je aanbiedt
   lastUnits: { id: MerchItemId; units: number; revenue: number }[]; // verkoop van de afgelopen week
   seasonUnits: number;
+  /** Bedrukking: wiens naam supporters dit seizoen op hun wedstrijdshirt lieten drukken.
+   *  Naam blijft bewaard naast het id, zodat de ranglijst een verkochte speler overleeft. */
+  shirtNames: { id: string; name: string; aantal: number }[];
+  lastPrints: { aantal: number; omzet: number }; // bedrukkingen van de afgelopen week
 }
 
 export type CanteenItemId = 'pils' | 'frisdrank' | 'water' | 'koffie' | 'chips' | 'soep';
