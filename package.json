@@ -12,7 +12,9 @@
     "test": "mocha",
     "test:watch": "mocha --watch",
     "balance": "tsx scripts/balance.ts",
-    "investors": "tsx scripts/investor-value.ts"
+    "investors": "tsx scripts/investor-value.ts",
+    "autopilot": "tsx scripts/autopilot.ts",
+    "economie": "tsx scripts/economie.ts"
   },
   "devDependencies": {
     "@types/chai": "^5.0.0",
