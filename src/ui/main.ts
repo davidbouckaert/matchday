@@ -93,6 +93,13 @@ interface UiState {
   selectedStaff: string | null;
   sorts: Record<string, { col: number; dir: 1 | -1 }>;
   report: { phase: 'anim' | 'report'; prev: WeekRef } | null;
+  /**
+   * De stand die de kopbalk nog toont zolang het weekverslag (of de animatie ervoor)
+   * openstaat. Zonder dit sprong je saldo in de kopbalk al naar het nieuwe bedrag op het
+   * moment dat je op "Volgende week" klikte — je las de uitkomst van de week vóór het
+   * verslag ze kon vertellen. De kopbalk loopt nu pas bij wanneer jij het verslag sluit.
+   */
+  held: GameState | null;
   fastForward: FastForwardResult | null; // wat er gebeurde toen je meerdere weken doorspeelde
   animate: boolean;
   lastScreen: Record<string, Screen>; // laatst bezochte subtab per groep
@@ -117,6 +124,7 @@ const ui: UiState = {
   selectedStaff: null,
   sorts: {},
   report: null,
+  held: null,
   fastForward: null,
   animate: readPref('vcg-anim', true),
   lastScreen: {},
@@ -230,7 +238,7 @@ function render(): void {
   const focused = grabFocus();
   root.innerHTML = `
     <div class="bars">
-    ${header(g)}
+    ${header(ui.report && ui.held ? ui.held : g)}
     <nav class="tabs">${GROUPS.filter((gr) => gr.id !== 'menu')
       .map((gr) => {
         const warn = gr.id === 'ploeg' && blocked ? '<span class="badge" data-tip="Er is een probleem met je selectie">!</span>' : '';
@@ -517,6 +525,7 @@ async function playWeek(): Promise<void> {
   if (ui.game.opening && !ui.game.opening.done) return;
   ui.busy = true;
   const prev = { week: ui.game.week, season: ui.game.season };
+  const voordien = ui.game; // de kopbalk blijft dit tonen tot het verslag gesloten is
   try {
     ui.game = advanceWeek(ui.game);
   } catch (err) {
@@ -530,6 +539,7 @@ async function playWeek(): Promise<void> {
   await persist();
   ui.moment = 'dicht';
   ui.report = { phase: ui.animate ? 'anim' : 'report', prev };
+  ui.held = voordien;
   if (ui.animate) {
     window.clearTimeout(animTimer);
     animTimer = window.setTimeout(() => {
@@ -562,6 +572,7 @@ async function playAhead(): Promise<void> {
   await persist();
   ui.moment = 'dicht';
   ui.report = null;
+  ui.held = null;
   ui.fastForward = result;
 }
 
@@ -626,10 +637,12 @@ const handlers: Record<string, Handler> = {
   // tweede knop geen bestaansreden. Wie midden in zijn selectie zat, wil daar terug.
   'close-report': () => {
     ui.report = null;
+  ui.held = null;
     if (ui.game?.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
   },
   'report-overview': () => {
     ui.report = null;
+  ui.held = null;
     ui.screen = 'overzicht';
     if (ui.game?.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
   },
@@ -869,6 +882,7 @@ document.addEventListener('keydown', (e) => {
   if (!ui.game || (e.target as HTMLElement).closest('input, textarea, select')) return;
   if (e.key === 'Escape' && (ui.report || ui.fastForward)) {
     ui.report = null;
+  ui.held = null;
     if (ui.fastForward) {
       ui.fastForward = null;
       if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
@@ -886,6 +900,7 @@ document.addEventListener('keydown', (e) => {
   else if (ui.report?.phase === 'anim') ui.report.phase = 'report';
   else if (ui.report) {
     ui.report = null;
+  ui.held = null;
     ui.screen = 'overzicht';
   }
   else {

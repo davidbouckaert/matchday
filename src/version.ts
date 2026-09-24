@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.52.0';
+export const VERSION = '0.52.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,15 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.52.1',
+    date: '2026-09-24',
+    title: 'De kopbalk verklapt de week niet meer',
+    items: [
+      'Je saldo (en je klassement) in de kopbalk sprongen al naar de nieuwe stand zodra je op "Volgende week" klikte, nog vóór het weekverslag in beeld was',
+      'De kopbalk toont nu de stand van vóór de week zolang de animatie of het verslag openstaat, en loopt pas bij wanneer jij het verslag sluit',
+    ],
+  },
   {
     version: '0.52.0',
     date: '2026-09-24',
