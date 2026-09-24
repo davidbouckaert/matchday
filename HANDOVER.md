@@ -59,27 +59,23 @@ uitbestedende club):
 Niets doen blijft de harde bodem: 20/20 failliet in alle zes de startcombinaties
 (`npm run balance`), omvallen rond seizoen 4 à 6.
 
-## De open knoop: de bodemreeks is nog te zacht
+## De open knoop: de laatste stap naar ~2 op 20 is tuning, geen systeem meer
 
-De reeksladder is dicht — de uitbestedende club zonder investeringen strandt in
-3de Nationale in plaats van door te klimmen naar de top. Maar de afspraak was **~2 op 20
-faillissementen** voor "de beste betaalbare staf aanwerven en doorklikken", en die staat er
-nog niet: die club wordt elk jaar kampioen van 3de Nationale (haar opgeleide jeugd tegen een
-stilstaande reeks), krijgt elk jaar de licentie geweigerd, en draait daar €600.000 à €700.000
-winst per seizoen. Het faillissementsrisico vraagt dat de **marge op de onderste treden**
-smaller wordt — en dat is precies het geplande gesprek over de moeilijkheidsinstelling, want
-dezelfde marge bepaalt hoe zwaar een beginnende, actieve speler het heeft.
+0.51.0 sloot de laatste drie systeemgaten: de degradatieschok is symmetrisch en progressief
+(uit de top vallen kost spelers, onderaan vooral loon), wie boven zijn club uitgroeit wil
+hogerop (verlengt niet, trekt biedingen, mort), en een reeks waarvan de kampioen blijft
+hangen vecht terug (rivalen +10 ambitie en budget). Gemeten effect: "bestaande staf" ging
+van 60% terug naar **14/48 (29%)** failliet, en de sterkte-voorsprong van de gestrande
+kampioen daalt nu na seizoen vier (+11,6 → +8,4) terwijl het reeksgemiddelde zichtbaar
+meestijgt — vóór 0.51.0 groeide die voorsprong door naar +16.
 
-Wat daarbij op tafel hoort:
-
-- **"Onbemand is veilig."** Wie taken niet delegeert (of niet kán delegeren door het
-  takenplafond), krijgt "niets doen" op die taak — en dat is op taakniveau bijna altijd
-  veilig. Een club die nooit bouwt, hamstert geld. De vraag is of onbemande taken sluipende
-  kosten horen te hebben.
-- **Dominantie in de bodemreeks**: een kern die elk seizoen +10 à +16 boven een stilstaande
-  reeks uitgroeit terwijl de licentie promotie blokkeert, wint alles zonder gevolg. Een
-  reeks die haar kampioen ziet blijven, zou sterker terug moeten vechten (de wereld-AI
-  investeert nu los van jou).
+Wat overblijft: "de beste betaalbare staf en doorklikken" staat nog op **0 op 48** — de
+gestrande kampioen wordt nu wel afgeknabbeld (sterren vertrekken, reeks haalt in), maar
+binnen zes seizoenen valt hij nog niet om, want 3de Nationale laat hem €500.000 à €650.000
+winst per seizoen. Dat is geen constructiefout meer maar een **marge op de onderste
+treden** — en die hoort in het geplande moeilijkheidsgesprek, want dezelfde marge bepaalt
+hoe zwaar een beginnende, actieve speler het heeft. Eén afspraak staat vast: eigen tijd en
+aandacht van de speler (zelf doen in plaats van delegeren) wordt nooit afgestraft.
 
 ## De moeilijkheidsinstelling (gepland, nog niet begonnen)
 
