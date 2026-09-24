@@ -86,11 +86,13 @@ geïsoleerd in code:
   afhankelijkheid. Wil je echt winston op een server, dan volstaat één bestemming van vijftien
   regels; de motor hoeft niet aangeraakt te worden.
 
-## Publiceren: Cloudflare Workers + statische assets (bezig)
+## Publiceren: Cloudflare Workers + statische assets (logendpoint live)
 
 David wil vrienden, familie en kennissen laten spelen — niet om geld te verdienen of populair te
 worden, gewoon om te delen. David heeft zelf een Cloudflare-account gemaakt en de GitHub-repo
-(genaamd `matchday`, andere naam dan de projectmap) via "Ship product" gekoppeld.
+(genaamd `matchday`, andere naam dan de projectmap) via "Ship product" gekoppeld. **Het spel staat
+sinds 24/09/2026 live op `https://matchday.falling-term-2bcc.workers.dev`** — dat is voorlopig het
+adres om te delen, tot er een eigen domeinnaam aan hangt.
 
 **Correctie op de vorige aanname.** Eerst was het plan "Cloudflare Pages" met een `functions/`
 map (Pages Functions). De echte eerste build faalde, en daaruit bleek dat Cloudflare's huidige
@@ -121,12 +123,20 @@ weg. In de plaats:
 - `src/log/parseRecords.ts`: de validatie van binnenkomende logregels, losgetrokken van het
   ontvangststuk zodat zowel `worker/index.ts` als de tests dezelfde regel gebruiken.
 
-**Gemeten, niet alleen beweerd:** `npm run build` slaagt met de nieuwe structuur, `npx wrangler
-deploy --dry-run` leest zonder fout de herschreven config uit `dist/matchday/wrangler.json` en
-vindt de 5 bestanden in `dist/client` — dat is het bewijs dat Cloudflare's eigen pipeline dit nu
-zou moeten kunnen deployen. 690 tests groen (11 in `test/log-server.test.ts`, twee routeringstests
-bijgekomen tegenover het vorige punt). **Nog niet gemeten:** een echte deploy op Cloudflare zelf,
-en of `/api/log` daar ook echt 204 teruggeeft — dat weten we pas na de volgende push.
+**Gemeten, niet alleen beweerd — nu ook op de echte infrastructuur.** Na de push deployde
+Cloudflare zelf zonder fouten. Live gecontroleerd met curl tegen
+`https://matchday.falling-term-2bcc.workers.dev`:
+
+| verzoek | verwacht | gemeten |
+|---|---|---|
+| `GET /` | 200, de site | 200 |
+| `POST /api/log` met een geldige regel | 204 | 204 |
+| `GET /api/log` (verkeerd werkwoord) | 405 | 405 |
+| `GET /een-onbestaand-pad` | 200, valt terug op de site (SPA) | 200 |
+
+690 tests groen (11 in `test/log-server.test.ts`). Dit is de eerste laag in dit project die niet
+alleen unit-getest is, maar ook echt op de doelinfrastructuur gemeten — dat hoort in het
+"meten, niet beweren"-rijtje.
 
 **Bewust nog niet gedaan:**
 
