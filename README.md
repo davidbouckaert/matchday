@@ -171,6 +171,16 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.58.0 — Kleine successen worden echt gevierd
+
+**Een speler die tekent, een sponsor die verlengt, een nieuw personeelslid: dat was een grijze regel, en dat voelt niet als winnen.** Directe successen — een contract verlengen, een speler of huurling binnenhalen, een sponsorvoorstel tekenen of tegen jouw prijs verlengen, personeel aanwerven of vervangen — krijgen nu een feesttoast: de melding kleurt in de clubkleur, met een groot icoon, de naam als kop en het bedrag eronder, en een seconde confettisnippers (goud, wit en de clubkleur — puur CSS). De motor geeft dat door via een optioneel `viering`-veld op het bestaande `ActionResult`; schermen die er niets mee doen, merken er niets van.
+
+**Successen die vanzelf gebeurden, vieren mee in het weekrapport.** Een diploma of afgeronde opleiding, een opgeleverd bouwproject, een sponsor die je commerciële man binnenhaalde, een extra bijdrage, doorstromers uit de eigen jeugd: dat nieuws draagt nu de soort `viering` en verschijnt in het weekrapport als gouden kaartjes onder een kop "🎉 Om te vieren" — ná de rollende cijfers, één voor één oppoppend, en maximaal drie (bij meer viert niemand nog iets; de rest blijft gewoon nieuws). In de nieuwsstroom op je bureau staan ze gewoon tussen de rest.
+
+**En de knoppen om aan nieuwe sponsornamen te raken staan nu bovenaan.** "Netwerkavond" en "Sponsorbureau" stonden onder de contactentabel: wie een lange lijst had zag ze pas na scrollen, en wie een lege lijst had zocht ze net. Ze staan nu direct onder de kop "Nieuwe namen vinden", bovenaan de Contacten-kaart.
+
+Wie animaties uitzette bij Opslaan krijgt dezelfde kaarten, zonder confetti en zonder pop-in. In de draaiende app nagespeeld: sponsorvoorstel tekenen gaf de feesttoast met 14 snippers, en na een opleiding van 20 weken stond "🎓 Nathalie Vandewalle behaalde het diploma EUFA A." als gouden kaartje in het rapport terwijl de nieuwslijst "Rustige week" toonde.
+
 ### 0.57.0 — Ingrijpende knoppen vragen een tweede klik
 
 **"Stopzetten" stond er even onschuldig bij als "Sluiten", en dat klopt niet.** Een sponsorcontract stopzetten, een personeelslid ontslaan, een speler wegsturen of verkopen, een huur beëindigen — dat zijn definitieve beslissingen met een grote impact, en één misklik was genoeg. Die knoppen kleuren nu rood, hun uitleg begint met "Ingrijpend:" en benoemt de gevolgen (wat het kost, wat er wegvalt, dat het definitief is).

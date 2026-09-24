@@ -348,7 +348,7 @@ export function weeklySponsors(state: GameState, rng: Rng): void {
       const deal = makeDeal(state, rng, kind, prijs, p.name, p.sector);
       state.sponsorOffers.push({ ...deal, expiresInWeeks: 3 });
       state.prospects = state.prospects.filter((x) => x.id !== p.id);
-      addNews(state, 'goed', `${p.name} (${p.sector.toLowerCase()}) gaat akkoord met je prijs: ${KIND_LABEL[kind].toLowerCase()} voor €${deal.weekly} per week. Zie Sponsors.`);
+      addNews(state, 'goed', `${p.name} (${p.sector.toLowerCase()}) gaat akkoord met je prijs: ${KIND_LABEL[kind].toLowerCase()} voor €${deal.weekly} per week. Zie Sponsors.`, 'viering');
     } else {
       p.interest = Math.max(5, p.interest - 15);
       p.cooldown = 8;
@@ -583,7 +583,7 @@ export function resolveRequests(state: GameState, rng: Rng): void {
       const amount = round(d.weekly * rng.range(4, 10), 50);
       book(state, 'sponsors', amount, `Extra bijdrage ${d.name}`);
       d.satisfaction = clamp(d.satisfaction - 10, 0, 100);
-      addNews(state, 'goed', `${d.name} stort een extra bijdrage van €${amount.toLocaleString('nl-BE')}.`);
+      addNews(state, 'goed', `${d.name} stort een extra bijdrage van €${amount.toLocaleString('nl-BE')}.`, 'viering');
       addLog(state, 'antwoord', `${d.name} gaat akkoord: €${amount.toLocaleString('nl-BE')} extra.`);
     } else {
       d.satisfaction = clamp(d.satisfaction - 20, 0, 100);
@@ -627,7 +627,11 @@ export function renewSponsor(state: GameState, dealId: string): ActionResult {
   d.weekly = weekly;
   d.weeksLeft += rng.int(52, 104);
   state.sponsorOffers = state.sponsorOffers.filter((o) => o.renewalOf !== d.id);
-  return ok(`${d.name} verlengt aan jouw prijs: €${d.weekly} per week, nog ${d.weeksLeft} weken.`);
+  return {
+    ok: true,
+    message: `${d.name} verlengt aan jouw prijs: €${d.weekly} per week, nog ${d.weeksLeft} weken.`,
+    viering: { icon: '🤝', kop: `${d.name} verlengt`, sub: `€${d.weekly}/week` },
+  };
 }
 
 
@@ -688,7 +692,11 @@ export function acceptSponsorOffer(state: GameState, offerId: string, seasons: 1
       : `${o.name} tekent voor ${term.seasons} seizoenen: €${deal.weekly}/week, samen €${termTotal(o.weekly, term.seasons).toLocaleString('nl-BE')}.`,
   );
   if (term.seasons > 1) remember(state, `${o.name} tekende een contract van ${term.seasons} seizoenen.`);
-  return ok(term.seasons === 1 ? 'Sponsorcontract getekend voor één seizoen.' : `Sponsorcontract getekend voor ${term.seasons} seizoenen.`);
+  return {
+    ok: true,
+    message: term.seasons === 1 ? 'Sponsorcontract getekend voor één seizoen.' : `Sponsorcontract getekend voor ${term.seasons} seizoenen.`,
+    viering: { icon: '🤝', kop: `${o.name} is sponsor`, sub: `${KIND_LABEL[o.kind]} · €${deal.weekly}/week` },
+  };
 }
 
 /**

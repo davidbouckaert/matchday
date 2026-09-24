@@ -87,7 +87,11 @@ export function buyPlayer(state: GameState, playerId: string): ActionResult {
       premie > 1 ? `. Hij liet zich de stap omlaag betalen: €${p.wage}/week` : ''
     }.`,
   );
-  return ok(`${p.name} is aangeworven.`);
+  return {
+    ok: true,
+    message: `${p.name} is aangeworven.`,
+    viering: { icon: '🖊️', kop: `${p.name} tekent`, sub: p.purchasePrice ? `voor ${euro(p.purchasePrice)}` : 'transfervrij' },
+  };
 }
 
 /** Huurlingen en uitgeleende spelers kun je niet verkopen of verlengen. */
@@ -223,7 +227,11 @@ export function extendContract(state: GameState, playerId: string, offer?: numbe
   p.negotiations = 0;
   p.morale = clamp(p.morale + 5 + morale, 0, 100);
   addNews(state, 'goed', `${p.name} verlengt tot einde seizoen ${p.contractUntil} aan €${p.wage}/week.`);
-  return ok(`${p.name} verlengt tot einde seizoen ${p.contractUntil} aan €${p.wage}/week.`);
+  return {
+    ok: true,
+    message: `${p.name} verlengt tot einde seizoen ${p.contractUntil} aan €${p.wage}/week.`,
+    viering: { icon: '🖊️', kop: `${p.name} verlengt`, sub: `tot einde seizoen ${p.contractUntil} · €${p.wage}/week` },
+  };
 }
 
 export function releasePlayer(state: GameState, playerId: string): ActionResult {
@@ -286,7 +294,11 @@ export function hireStaff(state: GameState, staffId: string): ActionResult {
   state.staff.push(s);
   addLog(state, 'beslissing', `${s.name} aangeworven als ${roleDef(s.role).label.toLowerCase()} (€${s.wage}/week).`);
   addNews(state, 'neutraal', `${s.name} is de nieuwe ${roleDef(s.role).label.toLowerCase()}.`);
-  return ok(`${s.name} aangeworven.`);
+  return {
+    ok: true,
+    message: `${s.name} aangeworven.`,
+    viering: { icon: '🤝', kop: `${s.name} is aan boord`, sub: roleDef(s.role).label },
+  };
 }
 
 export function fireStaff(state: GameState, staffId: string): ActionResult {
@@ -338,7 +350,11 @@ export function replaceStaff(state: GameState, staffId: string): ActionResult {
   for (const t of taken) {
     if (delegateTask(state, t, c.id).ok) mee.push(TASKS.find((x) => x.id === t)!.label.toLowerCase());
   }
-  return ok(`${naam} vertrekt met een opzegvergoeding; ${c.name} neemt de functie over${mee.length ? ` en ook: ${mee.join(', ')}` : ''}.`);
+  return {
+    ok: true,
+    message: `${naam} vertrekt met een opzegvergoeding; ${c.name} neemt de functie over${mee.length ? ` en ook: ${mee.join(', ')}` : ''}.`,
+    viering: hired.viering,
+  };
 }
 
 /** Diploma-opleiding voor de hoofdtrainer en de assistent-trainer, of bijscholing voor iedereen. */

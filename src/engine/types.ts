@@ -274,6 +274,10 @@ export interface SponsorOffer extends SponsorDeal {
 export interface ActionResult {
   ok: boolean;
   message: string;
+  /** Een klein succes dat gevierd mag worden: het scherm maakt er een feestje van
+   *  (vieringstoast met confetti). Alleen voor echte mijlpalen — een handtekening, een
+   *  contract — niet voor routinehandelingen: schaarste ís de beloning. */
+  viering?: { icon: string; kop: string; sub?: string };
 }
 
 export type UpgradeId = 'tribune' | 'kantine' | 'kunstgras' | 'verlichting' | 'opleidingscentrum' | 'recuperatie' | 'wifi' | 'sanitair' | 'parking' | 'scorebord' | 'ploegbus' | 'zonnepanelen';
@@ -466,7 +470,7 @@ export interface NewsItem {
    * weekmoment er nog eens in. Met dit merkje kan het rapport die twee overslaan, terwijl
    * ze in de nieuwsstroom op je bureau gewoon blijven staan.
    */
-  kind?: 'wedstrijd' | 'moment';
+  kind?: 'wedstrijd' | 'moment' | 'viering';
 }
 
 export interface WeekRecord {

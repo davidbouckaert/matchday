@@ -554,6 +554,7 @@ function weeklyProgress(state: GameState): void {
         : id === 'zonnepanelen'
           ? 'De zonnepanelen liggen op het dak: je energiefactuur daalt met 20%.'
           : `Bouwproject afgerond: ${label}.`,
+      'viering',
     );
     state.community.fanMood = clamp(state.community.fanMood + 3, 0, 100);
   }
@@ -577,6 +578,7 @@ function weeklyProgress(state: GameState): void {
         na > voor
           ? `${s.name} is klaar met zijn opleiding: van ${voor} naar ${na} sterren (vaardigheid ${s.skill}). Hij haalt nu meer uit elke taak die je hem geeft.`
           : `${s.name} rondt zijn opleiding af: vaardigheid ${s.skill}.`,
+        'viering',
       );
     } else {
       const course = COURSES.find((c) => c.from === s.diploma);
@@ -586,7 +588,7 @@ function weeklyProgress(state: GameState): void {
         const newWage = staffWage(s.role, s.skill, s.trait, s.diploma, state.inflation);
         const raise = (s.trait === 'ambitieus' || s.trait === 'perfectionist') && newWage > s.wage;
         if (raise) s.wage = newWage;
-        addNews(state, 'goed', `${s.name} behaalde het diploma ${course.to}.${raise ? ` Hij vraagt meteen opslag: €${s.wage}/week.` : ''}`);
+        addNews(state, 'goed', `${s.name} behaalde het diploma ${course.to}.${raise ? ` Hij vraagt meteen opslag: €${s.wage}/week.` : ''}`, 'viering');
       }
     }
     s.courseType = null;
@@ -1007,7 +1009,7 @@ function newSeason(state: GameState, rng: Rng): void {
   }
   state.players.push(...newcomers);
   linkFriends(newcomers.length > 1 ? newcomers : state.players, rng, newcomers.length);
-  addNews(state, 'goed', `Doorstromers uit de eigen jeugd naar de A-kern: ${newcomers.map((p) => p.name).join(', ')}.`);
+  addNews(state, 'goed', `Doorstromers uit de eigen jeugd naar de A-kern: ${newcomers.map((p) => p.name).join(', ')}.`, 'viering');
   poachYouth(state, rng, newcomers);
 
   // wat er deze zomer gebeurde, voor op de openingsaffiche

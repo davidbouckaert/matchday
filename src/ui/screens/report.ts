@@ -304,7 +304,26 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   // eens als nieuwsregel met dezelfde toeschouwers en dezelfde kaarten erin. Het weekmoment
   // stond twee keer. In de nieuwsstroom op je bureau horen ze wél thuis — daar is geen
   // scorebord — dus ze worden hier alleen overgeslagen.
-  const news = s.news.filter((n) => n.week === prev.week && n.season === prev.season && n.kind !== 'wedstrijd' && n.kind !== 'moment');
+  const weekNews = s.news.filter((n) => n.week === prev.week && n.season === prev.season && n.kind !== 'wedstrijd' && n.kind !== 'moment');
+
+  // De kleine successen die vanzelf gebeurden — een diploma, een opgeleverde bouw, een
+  // sponsor die je commerciële man binnenhaalde — verdwenen als grijze regel tussen het
+  // nieuws. Ze krijgen nu hun eigen gouden kaartjes, die na de cijfers één voor één
+  // oppoppen. Maximaal drie: bij meer viert niemand nog iets, de rest blijft gewoon nieuws.
+  const feest = weekNews.filter((n) => n.kind === 'viering').slice(0, 3);
+  const feestIcon = (t: string) =>
+    /diploma|opleiding/i.test(t) ? '🎓'
+    : /bouwproject|zonnepanelen|toeschouwers binnen/i.test(t) ? '🏗️'
+    : /doorstromers/i.test(t) ? '🌱'
+    : /sponsor|bijdrage|akkoord/i.test(t) ? '🤝'
+    : '🎉';
+  const feestHtml = feest.length
+    ? `<section class="wide"><h3>🎉 Om te vieren</h3><div class="vieringen">${feest
+        .map((n, i) => `<div class="viering-kaart" style="animation-delay:${(1.5 + i * 0.4).toFixed(1)}s"><span class="v-icon">${feestIcon(n.text)}</span><p>${esc(n.text)}</p></div>`)
+        .join('')}</div></section>`
+    : '';
+
+  const news = weekNews.filter((n) => !feest.includes(n));
   const newsHtml = news.length
     ? `<ul class="news reveal-lines">${news.map((n) => `<li class="${n.tone}">${esc(n.text)}</li>`).join('')}</ul>`
     : '<p class="muted">Rustige week.</p>';
@@ -366,6 +385,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
           ${records}
           <section class="wide"><h3>De wedstrijd</h3>${matchHtml}${othersHtml}</section>
           <section class="wide"><h3>Geld</h3>${financeHtml}</section>
+          ${feestHtml}
           ${s.lastChoice ? `<section class="wide moment-result"><h3>📌 Weekmoment — ${esc(s.lastChoice.title)}</h3><p class="small">${esc(s.lastChoice.outcome)}</p></section>` : ''}
           <section class="wide"><h3>Nieuws${news.length ? ` <span class="tag">${news.length}</span>` : ''}</h3>${newsHtml}</section>
           <section class="wide"><h3>Loopt nog${waiting.length ? ` <span class="tag">${waiting.length}</span>` : ''}</h3>${afwachtingHtml}</section>

@@ -218,17 +218,19 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
     <div class="col">
       <section class="card">
         <h2>Contacten <span class="tag">${gefilterdeProspects.length}${filter ? ` van ${s.prospects.length}` : ''}</span> ${filterChip}</h2>
+        <!-- de knoppen om aan nieuwe namen te raken stonden ónder de tabel: wie een lange
+             lijst had, zag ze pas na scrollen — en wie een lege lijst had, zocht ze net. -->
+        <h3>Nieuwe namen vinden</h3>
+        <p class="muted small">Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors. Wat ze vinden, komt in de lijst hieronder terecht.</p>
+        <div class="stack-btns">
+          <button data-action="network" ${netWait ? 'disabled' : ''}>Netwerkavond (${euro(NETWORK_EVENING.cost)})${netWait ? ` · nog ${weeks(netWait)}` : ''}</button>
+          <button data-action="campaign" ${s.sponsorCampaignWeeks ? 'disabled' : ''}>Sponsorbureau (${euro(CAMPAIGN.cost)}, ${CAMPAIGN.weeks} weken)${s.sponsorCampaignWeeks ? ` · nog ${weeks(s.sponsorCampaignWeeks)}` : ''}</button>
+        </div>
         <p class="muted small">Benader een bedrijf: volgende week hoor je of het een voorstel doet. De kans hangt af van hun interesse.</p>
         <div class="table-wrap"><table class="compact" data-sort-id="prospects">
           <thead><tr><th>Bedrijf</th><th>Interesse</th><th class="num" data-tip="Hoe vaak dit bedrijf ja zegt op de prijs die jij vraagt. Vraag je minder, dan stijgt de kans; vraag je meer, dan daalt ze.">Zegt ja</th><th data-nosort></th></tr></thead>
           <tbody>${prospects || `<tr><td colspan="4" class="muted">${filter ? `Geen contacten die op ${KIND_LABEL[filter].toLowerCase()} zouden tekenen. Haal de filter weg met het kruisje hierboven.` : 'Geen contacten. Hou een netwerkavond of schakel een bureau in.'}</td></tr>`}</tbody>
         </table></div>
-        <h3>Nieuwe namen vinden</h3>
-        <p class="muted small">Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors. Wat ze vinden, komt in deze lijst terecht.</p>
-        <div class="stack-btns">
-          <button data-action="network" ${netWait ? 'disabled' : ''}>Netwerkavond (${euro(NETWORK_EVENING.cost)})${netWait ? ` · nog ${weeks(netWait)}` : ''}</button>
-          <button data-action="campaign" ${s.sponsorCampaignWeeks ? 'disabled' : ''}>Sponsorbureau (${euro(CAMPAIGN.cost)}, ${CAMPAIGN.weeks} weken)${s.sponsorCampaignWeeks ? ` · nog ${weeks(s.sponsorCampaignWeeks)}` : ''}</button>
-        </div>
       </section>
     </div>
   </div>`;

@@ -85,7 +85,7 @@ interface UiState {
   game: GameState | null;
   screen: Screen;
   draft: SetupDraft;
-  toast: { text: string; ok: boolean } | null;
+  toast: { text: string; ok: boolean; viering?: { icon: string; kop: string; sub?: string } } | null;
   lastSaved: string;
   confirmNewGame: boolean;
   busy: boolean;
@@ -185,12 +185,24 @@ async function persist(): Promise<void> {
 // ---------- Weergave ----------
 
 function showToast(result: ActionResult): void {
-  ui.toast = { text: result.message, ok: result.ok };
+  ui.toast = { text: result.message, ok: result.ok, viering: result.ok ? result.viering : undefined };
   window.clearTimeout((showToast as unknown as { t?: number }).t);
+  // een feestje mag iets langer blijven hangen dan een gewone melding
   (showToast as unknown as { t?: number }).t = window.setTimeout(() => {
     ui.toast = null;
     render();
-  }, 3500);
+  }, ui.toast.viering ? 5000 : 3500);
+}
+
+/** Handtekeningen en contracten verdienen meer dan een grijze regel: een feesttoast met
+ *  een handvol confettisnippers. De snippers zijn pure CSS; wie animaties uitzette in
+ *  Opslaan krijgt dezelfde kaart zonder gedwarrel. */
+function toastHtml(): string {
+  if (!ui.toast) return '';
+  const v = ui.toast.viering;
+  if (!v) return `<div class="toast ${ui.toast.ok ? '' : 'bad'}" role="status">${esc(ui.toast.text)}</div>`;
+  const snippers = ui.animate ? `<span class="snippers" aria-hidden="true">${'<i></i>'.repeat(14)}</span>` : '';
+  return `<div class="toast feest" role="status">${snippers}<span class="feest-icon">${v.icon}</span><span class="feest-tekst"><b>${esc(v.kop)}</b>${v.sub ? `<small>${esc(v.sub)}</small>` : ''}</span></div>`;
 }
 
 function renderScreen(g: GameState): string {
@@ -222,7 +234,7 @@ function renderScreen(g: GameState): string {
 }
 
 function render(): void {
-  const toast = ui.toast ? `<div class="toast ${ui.toast.ok ? '' : 'bad'}" role="status">${esc(ui.toast.text)}</div>` : '';
+  const toast = toastHtml();
   const g = ui.game;
   // de clubkleuren staan in het opslagbestand, dus ze moeten bij elke tekening goed staan
   applyTheme(g ? schemeById(g.scheme).colors : schemeById(ui.draft.scheme).colors);
@@ -387,10 +399,14 @@ let revealedFor = '';
  */
 function revealLines(key: string): void {
   const lists = [...root.querySelectorAll<HTMLElement>('.report-grid .reveal-lines')];
-  if (!lists.length) return;
+  const kaarten = [...root.querySelectorAll<HTMLElement>('.report-grid .viering-kaart')];
+  if (!lists.length && !kaarten.length) return;
   const items = lists.flatMap((ul) => [...ul.querySelectorAll<HTMLElement>(':scope > li')]);
   if (!ui.animate || revealedFor === key) {
     for (const li of items) li.classList.add('shown');
+    // de feestkaartjes staan er dan meteen, zonder pop-in — ook bij een hertekening,
+    // anders vieren ze hetzelfde succes bij elke klik opnieuw
+    for (const k of kaarten) k.classList.add('meteen');
     return;
   }
   revealedFor = key;

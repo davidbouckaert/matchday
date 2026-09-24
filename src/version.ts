@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.57.2';
+export const VERSION = '0.58.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.58.0',
+    date: '2026-09-24',
+    title: 'Kleine successen worden echt gevierd',
+    items: [
+      'Een speler die tekent of verlengt, een sponsor die tekent of verlengt, een nieuw personeelslid: een feesttoast in de clubkleur met een seconde confetti',
+      'Successen die vanzelf gebeurden — een diploma, een afgerond bouwproject, een sponsor via je commerciële man, doorstromers uit de jeugd — krijgen gouden kaartjes in het weekrapport, maximaal drie, na de cijfers',
+      'De knoppen "Netwerkavond" en "Sponsorbureau" staan nu bovenaan de Contacten-kaart in plaats van onder de tabel, waar je ze pas na scrollen zag',
+      'Wie animaties uitzette, krijgt dezelfde kaarten zonder confetti en pop-in',
+    ],
+  },
   {
     version: '0.57.2',
     date: '2026-09-24',
