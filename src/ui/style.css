@@ -1265,6 +1265,19 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 /* De rondleidingswijzer: klik je op een stap, dan krijgt de plek waar je moet zijn een
    omlijning in de clubkleur en een stuiterend handje — bij het handje nemen, letterlijk.
    Elke volgende klik haalt hem weer weg (dat regelt de klik-afhandeling). */
+/* de rij van een aangeklikte speler licht even op — zo zie je meteen wie het bod betreft */
+.flits { animation: flits 2.4s ease-out; }
+@keyframes flits {
+  0%, 35% { box-shadow: inset 0 0 0 3px var(--accent), 0 0 18px -4px var(--accent); }
+  100% { box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) { .flits { animation: none; box-shadow: inset 0 0 0 3px var(--accent); } }
+.speler-link { font-weight: 650; }
+
+.bank-tag { background: var(--mid-soft); color: var(--mid); }
+.bank-tag.leeg { background: var(--sunken); color: var(--faint); }
+.bank-tel { color: var(--mid); font-weight: 650; }
+
 .tour-doel { position: relative; box-shadow: 0 0 0 3px var(--accent), 0 10px 30px -10px var(--accent); }
 .tour-doel::before {
   content: '👇'; position: absolute; top: -40px; left: 22px; font-size: 1.9rem; z-index: 6;

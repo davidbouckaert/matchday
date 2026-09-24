@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.74.3';
+export const VERSION = '0.75.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,15 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.75.0',
+    date: '2026-09-25',
+    title: 'Bankteller op Selectie, en van een bod rechtstreeks naar de speler',
+    items: [
+      'Naast "Je kern" staat nu 🔁 X/5: hoeveel bankplaatsen je hebt ingevuld, met per linie een teller in de kopjes — vier keepers op de bank valt meteen op',
+      'De spelersnaam in een bod is klikbaar: je springt naar zijn rij in de kernlijst, die even oplicht — zo schat je meteen in wie je zou kwijtraken',
+    ],
+  },
   {
     version: '0.74.3',
     date: '2026-09-25',

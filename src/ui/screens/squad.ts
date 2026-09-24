@@ -254,7 +254,7 @@ export function squadScreen(s: GameState, open: Record<string, boolean> = { basi
     .map((o) => {
       const p = s.players.find((x) => x.id === o.playerId);
       if (!p) return '';
-      return `<li><strong>${esc(o.club)}</strong> biedt <strong>${euro(o.amount)}</strong> voor ${esc(p.name)} (marktwaarde ${euro(marketValue(p, s.marketIndex))}, nog ${weeks(o.expiresInWeeks)})
+      return `<li><strong>${esc(o.club)}</strong> biedt <strong>${euro(o.amount)}</strong> voor <button class="link-btn speler-link" data-action="goto-speler" data-id="${p.id}" data-tip="Spring naar ${esc(p.name)} in je kernlijst: zo zie je meteen wie hij is.">${esc(p.name)}</button> (marktwaarde ${euro(marketValue(p, s.marketIndex))}, nog ${weeks(o.expiresInWeeks)})
         <span class="btns"><button class="primary sm" data-action="accept-offer" data-id="${o.id}">Aanvaarden</button><button class="sm" data-action="decline-offer" data-id="${o.id}">Weigeren</button></span></li>`;
     })
     .join('');
@@ -303,7 +303,7 @@ function offersList(s: GameState): string {
     .map((o) => {
       const p = s.players.find((x) => x.id === o.playerId);
       if (!p) return '';
-      return `<li><strong>${esc(o.club)}</strong> biedt <strong>${euro(o.amount)}</strong> voor ${esc(p.name)} (marktwaarde ${euro(marketValue(p, s.marketIndex))}, nog ${weeks(o.expiresInWeeks)})
+      return `<li><strong>${esc(o.club)}</strong> biedt <strong>${euro(o.amount)}</strong> voor <button class="link-btn speler-link" data-action="goto-speler" data-id="${p.id}" data-tip="Spring naar ${esc(p.name)} in je kernlijst: zo zie je meteen wie hij is.">${esc(p.name)}</button> (marktwaarde ${euro(marketValue(p, s.marketIndex))}, nog ${weeks(o.expiresInWeeks)})
         <span class="btns"><button class="primary sm" data-action="accept-offer" data-id="${o.id}">Aanvaarden</button><button class="sm" data-action="decline-offer" data-id="${o.id}">Weigeren</button></span></li>`;
     })
     .join('');

@@ -222,7 +222,7 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
           ? `Niet beschikbaar: ${p.injuryWeeks ? `geblesseerd, nog ${p.injuryWeeks} weken` : p.suspended ? `geschorst voor ${count(p.suspended, 'wedstrijd', 'wedstrijden')}` : `uitgeleend aan ${p.loan?.club}`}.`
           : 'Klik om hem vast in de basis te zetten.';
 
-  return `<div class="squad-row ${inXI ? 'in-xi' : ''} ${benched ? 'benched' : ''} ${blocked ? 'blocked' : ''} ${suggested ? 'suggested' : ''} ${swapping ? 'swappable' : ''}"
+  return `<div class="squad-row ${inXI ? 'in-xi' : ''} ${benched ? 'benched' : ''} ${blocked ? 'blocked' : ''} ${suggested ? 'suggested' : ''} ${swapping ? 'swappable' : ''}" data-speler="${p.id}"
     ${action} ${tipAttr(tipText, p.name)} ${action ? 'role="button" tabindex="0"' : ''}>
     <span class="sr-state">${inXI ? '<span class="dot-in" aria-label="in de basis"></span>' : benched ? '<span class="dot-bench" aria-label="op de wisselbank"></span>' : '<span class="dot-out" aria-label="in de kern"></span>'}</span>
     <span class="sr-name">
@@ -268,10 +268,11 @@ function squadPanel(s: GameState, selected: string | null): string {
     if (!list.length) return '';
     const starting = list.filter((p) => inXI.has(p.id)).length;
     const need = FORMATIONS[s.tactics.formation][pos];
+    const opBank = list.filter((p) => s.tactics.benched.includes(p.id)).length;
     return `<div class="squad-group ${selZone === pos ? 'highlight' : ''}">
       <div class="group-head">
         <span class="cap">${pos}</span>
-        <span class="muted small">${starting}/${need} in de basis · ${list.length} in de kern</span>
+        <span class="muted small">${starting}/${need} in de basis · ${list.length} in de kern${opBank ? ` · <span class="bank-tel">🔁 ${opBank}</span>` : ''}</span>
       </div>
       ${list.map((p) => squadRow(s, p, inXI.has(p.id), selected, selZone, locked)).join('')}
     </div>`;
@@ -280,8 +281,10 @@ function squadPanel(s: GameState, selected: string | null): string {
   const wages = s.players.reduce((sum, p) => sum + p.wage, 0);
   const value = s.players.reduce((sum, p) => sum + marketValue(p, s.marketIndex), 0);
 
+  const bankTotaal = s.tactics.benched.length;
   return `<section class="card squad-card" data-tour-doel="selectie">
     <h2>Je kern <span class="tag">${s.players.length}</span>
+      <span class="tag bank-tag ${bankTotaal ? '' : 'leeg'}" ${tipAttr(bankTotaal ? `${bankTotaal} van de 5 bankplaatsen ingevuld. De teller per linie staat in de kopjes hieronder.` : 'Nog niemand op de wisselbank: je trainer vult hem op wedstrijddag. Kies zelf met 🔁 wie er minuten pakt.', 'Wisselbank')}>🔁 ${bankTotaal}/5</span>
       ${hint('Alle spelers, per linie. Bovenaan elke linie staat wie er zondag begint. Klik iemand om hem vast in de basis te zetten; met 🔁 zet je hem op de wisselbank — invallers pakken speelminuten en groeien mee.')}
     </h2>
     ${

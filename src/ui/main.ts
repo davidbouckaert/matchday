@@ -367,6 +367,15 @@ function render(): void {
     window.scrollTo(0, 0);
     getekendScherm = ui.screen;
   }
+  // een sprong naar een speler: naar zijn rij scrollen en hem even laten oplichten
+  if (ui.highlight) {
+    const doel = root.querySelector(`[data-speler="${ui.highlight}"]`);
+    if (doel) {
+      doel.classList.add('flits');
+      doel.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
+      ui.highlight = '';
+    }
+  }
   if (ui.tourAim) root.querySelector(`[data-tour-doel="${ui.tourAim}"]`)?.classList.add('tour-doel');
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
@@ -864,6 +873,12 @@ const handlers: Record<string, Handler> = {
   'goto-contracts': (id) => {
     ui.screen = 'contracten';
     ui.lastScreen.ploeg = 'contracten';
+    ui.highlight = id;
+  },
+  // vanuit een bod (of waar ook) rechtstreeks naar de speler in je kernlijst springen
+  'goto-speler': (id) => {
+    ui.screen = 'ploeg';
+    ui.lastScreen.ploeg = 'ploeg';
     ui.highlight = id;
   },
   'open-concession': gameAction((g, id) => {
