@@ -1162,17 +1162,24 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .news-feed li.slecht .what::before { content: '▼'; color: var(--bad); font-size: .7em; margin-right: 6px; }
 
 /* de startlijst: een strook, niet een scherm */
-.card.onboard { padding: var(--s3) var(--s4); }
-.onboard-head {
-  display: flex; align-items: center; gap: var(--s3); width: 100%; text-align: left;
-  background: none; padding: 0; border-radius: 0;
+/* De rondleiding onderin de weekkaart. Bewust de kalmste hoek van de kaart: gedempte
+   kleuren, geen amber of rood, een stippellijn als grens met het echte werk erboven. */
+.tour-block { margin-top: var(--s4); padding-top: var(--s3); border-top: 1px dashed var(--line); }
+.attention-bar.empty .tour-block { margin-top: var(--s3); }
+.tour-head { display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap; }
+.tour-head .tour-hide { margin-left: auto; color: var(--faint); font-weight: 500; }
+.tour-head .tour-hide:hover { color: var(--muted); }
+.tour-steps { list-style: none; padding: 0; margin: var(--s2) 0 0; display: flex; flex-direction: column; gap: var(--s1); }
+.tour-steps li { display: flex; gap: var(--s3); align-items: baseline; }
+.tour-steps li.done { opacity: .5; }
+.tour-steps li.done .what { text-decoration: line-through; text-decoration-color: var(--faint); }
+.tour-steps .box {
+  flex: none; width: 18px; height: 18px; border-radius: 5px; background: var(--card); align-self: flex-start;
+  box-shadow: inset 0 0 0 1px var(--line); display: grid; place-items: center; font-size: .75rem; color: var(--good); margin-top: 2px;
 }
-.onboard-head:hover { background: none; }
-.onboard-head .cap { flex: none; }
-.onboard-bar { flex: none; width: 90px; height: 5px; border-radius: 99px; background: var(--sunken); overflow: hidden; }
-.onboard-bar span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
-.onboard-next { flex: 1 1 auto; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.onboard-head .chev { flex: none; color: var(--faint); }
+.tour-steps .what { color: var(--muted); }
+.tour-steps .link-btn { flex: none; white-space: nowrap; }
+
 .todo-list { list-style: none; padding: 0; margin-top: var(--s3); display: flex; flex-direction: column; gap: var(--s1); }
 .todo-list li { display: flex; gap: var(--s3); align-items: flex-start; padding: var(--s2) var(--s3); border-radius: var(--radius-sm); background: var(--sunken); }
 .todo-list li.done { opacity: .5; }

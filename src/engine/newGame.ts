@@ -18,7 +18,7 @@ import { emptyCareer, emptyOwner } from './career';
 import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 33;
+export const SAVE_VERSION = 34;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -60,6 +60,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
     weeksNegative: 0,
     gameOver: false,
     gameOverReason: '',
+    tour: { chapter: 0, weeksOpen: 0, seen: [], hidden: false },
     ticketPrice: DIVISIONS[START_DIVISION].refTicketPrice,
     players: [],
     staff: [],

@@ -22,7 +22,7 @@ import { expectedAttendance } from '../../engine/finance';
 import { forecast } from '../../engine/forecast';
 import { esc, euro, resultIcon, signedEuro, sparkline, whenLabel } from '../format';
 import { hint, tipAttr } from '../tooltip';
-import { onboardingCard } from './onboarding';
+import { tourChapter } from '../../engine/tour';
 import { weeks } from '../../engine/util';
 import { available } from '../../engine/discipline';
 
@@ -296,6 +296,37 @@ export function todos(s: GameState): Todo[] {
   return list;
 }
 
+/**
+ * De rondleiding, onderin de weekkaart: één hoofdstuk tegelijk, stappen van één thema
+ * bij elkaar. Bewust kalm — geen amber, geen rood, telt niet mee in "wat op je wacht":
+ * dit is hulp, geen huiswerk. De verbergknop opent de gewone bevestigingspopup.
+ */
+function tourBlock(s: GameState): string {
+  const t = tourChapter(s);
+  if (!t) return '';
+  return `<div class="tour-block">
+    <div class="tour-head">
+      <span class="cap">📚 Leer je club kennen</span>
+      <span class="muted small">hoofdstuk ${t.nr} van ${t.total} — ${esc(t.chapter.title)}</span>
+      <button class="link-btn tiny tour-hide" data-action="tour-hide"
+        data-confirm="De rondleiding verbergen?"
+        data-tip="Ingrijpend: de leerstappen verdwijnen definitief uit dit spel.">Ik ken het spel al</button>
+    </div>
+    <ul class="tour-steps">
+      ${t.chapter.steps
+        .map((st) => {
+          const af = st.done(s);
+          return `<li class="${af ? 'done' : ''}">
+            <span class="box">${af ? '✓' : ''}</span>
+            <span class="what">${esc(st.text)}</span>
+            ${af ? '' : `<button class="link-btn small" data-action="nav" data-id="${st.screen}">${esc(st.where)} →</button>`}
+          </li>`;
+        })
+        .join('')}
+    </ul>
+  </div>`;
+}
+
 /** De grote werklijst bovenaan het dashboard. */
 function attentionBar(s: GameState): string {
   const list = todos(s);
@@ -312,6 +343,7 @@ function attentionBar(s: GameState): string {
     return `<section class="card attention-bar empty">
       <h2>Deze week</h2>
       <p class="muted">Er ligt niets te wachten op jouw handtekening. Een goede week om vooruit te kijken: je prognose, je prijzen, of een bouwproject.</p>
+      ${tourBlock(s)}
     </section>`;
   }
 
@@ -343,6 +375,7 @@ function attentionBar(s: GameState): string {
         )
         .join('')}
     </ul>
+    ${tourBlock(s)}
   </section>`;
 }
 
@@ -374,9 +407,8 @@ function newsCard(s: GameState): string {
 
 /* --------------------------------------------------------------------- scherm */
 
-export function dashboardScreen(s: GameState, onboardOpen = false): string {
+export function dashboardScreen(s: GameState): string {
   return `
-  ${onboardingCard(s, onboardOpen)}
   ${attentionBar(s)}
   <div class="dash">
     <div class="dash-main">

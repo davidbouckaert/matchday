@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.60.3';
+export const VERSION = '0.61.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,18 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.61.0',
+    date: '2026-09-24',
+    title: 'Eén rondleiding in plaats van twee lijsten',
+    items: [
+      '"Eerste stappen" en "Deze week" zijn samengevoegd: de rondleiding woont nu rustig onderin de weekkaart',
+      'Zes hoofdstukken die elk één thema bundelen: je ploeg, de markt, je mensen, het geld (mét lidgeld en ticketprijzen), de clubzaken, vooruitkijken',
+      'Eén hoofdstuk tegelijk; af = volgende week het volgende, blijven liggen = na drie weken zachtjes door — hulp, geen huiswerk',
+      'Kijk-stappen (prijzen, bouwplannen, doelen, invloeden) vinken af zodra je het scherm bezoekt',
+      'De rondleiding telt niet mee in "wat op je wacht", en "Ik ken het spel al" haalt hem definitief weg',
+    ],
+  },
   {
     version: '0.60.3',
     date: '2026-09-24',

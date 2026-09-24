@@ -171,6 +171,16 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.61.0 — Eén rondleiding in plaats van twee lijsten
+
+**Er stonden twee begeleidingssystemen boven elkaar op het Bureau** — "Eerste stappen" (tien punten die je op dag één voor je kiezen kreeg) en "Deze week" — en samen overdonderden ze precies de nieuwe speler die ze moesten helpen. Wie in die stortvloed iets miste, het lidgeld bijvoorbeeld, werd daar stilletjes voor gestraft zonder ooit te horen dat het bestond.
+
+**Nu is er één rondleiding, in zes hoofdstukken die elk één thema bundelen**: eerst je ploeg (basiself, spelplan, kapitein), dan de markt, dan je mensen (personeel, taken, opleiding), dan het geld (tickets, abonnementen, lidgeld én sponsors), dan de clubzaken (winkel, kantine, evenementen), en tot slot vooruitkijken (doelen, bouwplannen, "wat beïnvloedt wat"). Je springt dus nooit meer van je opstelling naar je ticketprijs en weer terug. Het blok woont rustig onderin de weekkaart, onder een stippellijn: gedempte kleuren, geen amber, en het telt níet mee in "wat op je wacht" — hulp, geen huiswerk.
+
+**Het tempo regelt zichzelf.** Eén hoofdstuk tegelijk; is alles af, dan ligt er de week erna een nieuw hoofdstuk. Blijft het liggen, dan schuift het na drie weken vanzelf zachtjes door — niets doen kost je niets. Stappen vinken af op wat er echt in het spel gebeurde (wie al een kapitein had, is die stap gewoon kwijt), en kijk-stappen — "bekijk je prijzenscherm" — vinken af zodra je er geweest bent. Wie het spel al kent, klikt "Ik ken het spel al" en is er definitief vanaf (met bevestigingspopup). Oude opslagbestanden krijgen de rondleiding via een echte migratie: wie al diep in het spel zit, krijgt hem verborgen.
+
+Negen nieuwe motortests voor het tempo (757 in totaal), en in de draaiende app nagespeeld: hoofdstuk 1 met drie ploegstappen bij een vers spel, na vier weken nietsdoen hoofdstuk 2, de kijk-registratie, en verbergen dat na annuleren blijft en na bevestigen weg is.
+
 ### 0.60.0 — De kopbalk is minder kaal
 
 **Netjes, rustig, minimalistisch — maar nét te kaal.** Twee toevoegingen die allebei iets zeggen in plaats van alleen maar versieren. Achter je clublogo ligt nu een vleug clubkleur die naar rechts wegloopt (zeven procent, via `color-mix` op de bijgetrokken clubkleur — warmte, geen behang). En tussen Klassement en Volgende match staat een nieuw blokje **Vorm**: je laatste vijf uitslagen als stippen, oudste links — groen gewonnen, grijs gelijk, rood verloren, en holle stippen voor wedstrijden die nog moeten komen. Het rijtje dat elke voetbalapp toont, want het is het verhaal áchter je plaats in het klassement. De tooltip vertelt elke uitslag voluit ("winst 3-1 thuis tegen SC Wielbeke"), en klikken brengt je naar de stand. In de draaiende app gecontroleerd: vijf holle stippen bij de start, na tien weken ●●◐ met twee keer winst en één verlies — kloppend met de gespeelde wedstrijden.

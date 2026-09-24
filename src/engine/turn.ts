@@ -25,6 +25,7 @@ import { weeklyMerch } from './merch';
 import { bankruptcyCheck, rollInjuries, weeklyEvents } from './events';
 import { refreshLoanMarket, refreshStaffMarket, refreshTransferList, weeklyMarket } from './market';
 import { addNews, book } from './util';
+import { advanceTour } from './tour';
 import { STAR_THRESHOLDS, TRAINING_CAP, skillStars } from './training-staff';
 import { recordWeek, rolloverStats, snapshot } from './stats';
 import { clearOrigins } from './origins';
@@ -102,6 +103,7 @@ export function advanceWeek(previous: GameState): GameState {
     strategyTask(state, rng); // de trainer bereidt de volgende week voor
     state.weekChoice = makeWeekChoice(state, rng); // en er ligt iets op jouw bureau
   }
+  advanceTour(state); // de rondleiding bladert om: klaar hoofdstuk = volgende, blijven liggen = zachtjes door
   return state;
 }
 

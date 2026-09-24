@@ -618,6 +618,10 @@ export interface GameState {
   gameOver: boolean;
   gameOverReason: string;
 
+  /** De rondleiding voor een nieuwe eigenaar (zie engine/tour.ts). Oudere
+   *  opslagbestanden missen dit veld; repairTour geeft het er bij het laden bij. */
+  tour?: import('./tour').TourState;
+
   ticketPrice: number;
   players: Player[];
   staff: Staff[];

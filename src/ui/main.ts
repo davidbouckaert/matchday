@@ -5,6 +5,7 @@ import type { Formation, GamePlan, GameState, Mentality, SponsorDeal, StaffRole,
 type SponsorKind = SponsorDeal['kind'];
 import { createNewGame } from '../engine/newGame';
 import { advanceWeek } from '../engine/turn';
+import { tourMarkSeen } from '../engine/tour';
 import * as actions from '../engine/actions';
 import type { ActionResult } from '../engine/actions';
 import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, inWinterBreak } from '../engine/calendar';
@@ -116,7 +117,6 @@ interface UiState {
   lastScreen: Record<string, Screen>; // laatst bezochte subtab per groep
   openTables: Record<string, boolean>; // welke inklapbare tabellen openstaan
   moment: 'dicht' | 'vraag' | 'gevolg'; // popup van het weekmoment
-  onboardOpen: boolean; // staat de startlijst open?
   pitchPick: string | null; // wie je op het veld aanklikte om te vervangen
   squadView: 'tabel' | 'kaarten'; // hoe je je kern bekijkt
 }
@@ -145,7 +145,6 @@ const ui: UiState = {
   lastScreen: {},
   openTables: { basis: true, bank: false, out: false },
   moment: 'dicht',
-  onboardOpen: false,
   pitchPick: null,
   squadView: readPref('vcg-squad-cards', true) ? 'kaarten' : 'tabel',
 };
@@ -205,9 +204,14 @@ function toastHtml(): string {
   return `<div class="toast feest" role="status">${snippers}<span class="feest-icon">${v.icon}</span><span class="feest-tekst"><b>${esc(v.kop)}</b>${v.sub ? `<small>${esc(v.sub)}</small>` : ''}</span></div>`;
 }
 
+/** Kijk-stappen van de rondleiding: een bezoek aan het scherm is genoeg. */
+function markTourSeen(): void {
+  if (ui.game && tourMarkSeen(ui.game, ui.screen)) void persist();
+}
+
 function renderScreen(g: GameState): string {
   switch (ui.screen) {
-    case 'overzicht': return dashboardScreen(g, ui.onboardOpen);
+    case 'overzicht': return dashboardScreen(g);
     case 'doelen': return goalsScreen(g);
     case 'ploeg': return squadScreen(g, ui.openTables, ui.pitchPick, ui.squadView);
     case 'strategie': return strategyScreen(g);
@@ -712,12 +716,21 @@ const handlers: Record<string, Handler> = {
     ui.menuOpen = false;
     ui.lastScreen[groupOf(ui.screen).id] = ui.screen;
     ui.confirmNewGame = false;
+    markTourSeen();
   },
   'nav-group': (id) => {
     ui.menuOpen = false;
     const gr = GROUPS.find((x) => x.id === id)!;
     ui.screen = ui.lastScreen[gr.id] ?? gr.screens[0][0];
     ui.confirmNewGame = false;
+    markTourSeen();
+  },
+  // "Ik ken het spel al": komt hier via de bevestigingspopup, dus dit is al de ja-klik
+  'tour-hide': () => {
+    if (!ui.game?.tour) return;
+    ui.game.tour.hidden = true;
+    void persist();
+    return { ok: true, message: 'De rondleiding is weg. Veel plezier — je kent de weg.' };
   },
   'skip-anim': () => {
     if (ui.report) ui.report.phase = 'report';
@@ -787,7 +800,6 @@ const handlers: Record<string, Handler> = {
   'staff-open': (id) => void (ui.selectedStaff = ui.selectedStaff === id ? null : id),
   'stats-view': (id) => void (ui.statsView = id as 'seizoen' | 'week'),
   'toggle-menu': () => void (ui.menuOpen = !ui.menuOpen),
-  'toggle-onboard': () => void (ui.onboardOpen = !ui.onboardOpen),
   'squad-view': (id) => {
     ui.squadView = id === 'tabel' ? 'tabel' : 'kaarten';
     writePref('vcg-squad-cards', ui.squadView === 'kaarten'); // je keuze blijft staan

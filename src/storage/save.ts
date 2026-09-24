@@ -4,6 +4,7 @@
 
 import type { GameState, LedgerCategory, UpgradeId } from '../engine/types';
 import { SAVE_VERSION } from '../engine/newGame';
+import { repairTour } from '../engine/tour';
 import type { Rng } from '../engine/rng';
 import { createRng } from '../engine/rng';
 import { CANTEEN_ITEMS } from '../engine/data/catalog';
@@ -108,6 +109,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 30) migrateV30toV31(state);
   if (state.version === 31) migrateV31toV32(state);
   if (state.version === 32) migrateV32toV33(state);
+  if (state.version === 33) migrateV33toV34(state);
   repair(state);
   return state;
 }
@@ -468,6 +470,13 @@ function migrateV31toV32(state: GameState): void {
 function migrateV32toV33(state: GameState): void {
   delete (state as unknown as Record<string, unknown>).reasoning;
   state.version = 33;
+}
+
+/** Versie 34: de rondleiding verving de "Eerste stappen". Wie al diep in het spel zit,
+ *  krijgt ze verborgen — zelfde grens als waarop de oude lijst verdween. */
+function migrateV33toV34(state: GameState): void {
+  repairTour(state);
+  state.version = 34;
 }
 
 /** Versie 31: sterspelers. De lijst begint leeg, dus je huidige ster komt meteen in het nieuws. */
