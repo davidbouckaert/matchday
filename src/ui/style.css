@@ -1277,7 +1277,11 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .tiles.slots .numfield { width: 100%; }
 .tiles.slots .numrow { justify-content: center; max-width: 100%; }
 .tiles.slots .numbox { flex: 1 1 auto; min-width: 0; }
-.tiles.slots input.numinput { width: 100%; min-width: 0; }
+/* flex-basis 0 en krimpen toegestaan: de globale regel geeft het veld `flex: 1 0 auto`,
+   en met `width: 100%` als basis was het veld dan precies zo breed als het hele witte
+   vak — terwijl het €-teken daar ook al in staat. Het stak dus 25 pixels uit onder de
+   plusknop, en de cijfers plakten tegen de "+". Gemeten en gezien op de prijskaart. */
+.tiles.slots input.numinput { width: 100%; min-width: 0; flex: 1 1 0%; }
 .tiles.slots .numbtn { flex: 0 0 auto; }
 
 /* het oordeel in één woord: de enige plek waar de kleur iets betekent */
