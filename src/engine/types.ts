@@ -31,6 +31,9 @@ export interface Player {
   suspended: number; // aantal competitiewedstrijden geschorst
   starts: number; // basisplaatsen dit seizoen
   subIn: number; // invalbeurten dit seizoen
+  /** Jij besliste: dit aflopende contract verlengen we niet. Hij verdwijnt uit de
+   *  te-verlengen-lijst en vertrekt gewoon op het einde van het seizoen. */
+  nietVerlengen?: boolean;
   goals: number; // doelpunten dit seizoen
   careerGoals: number; // doelpunten voor deze club, over alle seizoenen
   periodStarts: number; // basisplaatsen sinds de laatste evolutie (om de 4 weken)
@@ -385,13 +388,16 @@ export interface WeekStats {
 /** Een vraag die je stelde en waarop je volgende week antwoord krijgt. */
 export interface PendingRequest {
   id: string;
-  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract' | 'lening' | 'huur-verlengen' | 'huur-kopen';
+  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract' | 'lening' | 'huur-verlengen' | 'huur-kopen' | 'transfer-koop' | 'transfer-huur';
   targetId: string;
   label: string;
   weeksLeft: number;
   /** Het bedrag dat je bood (bij een vraag over een huurspeler). */
   amount?: number;
   payload?: { key: string; principal: number; annualRate: number; weeklyPayment: number; weeks: number };
+  /** De gereserveerde speler bij een transfer- of huurgesprek: hij is al van de markt,
+   *  zodat "een andere club" hem niet wegkaapt terwijl hij nadenkt. */
+  speler?: Player;
 }
 
 /** Clubrecords: waar je het best ooit stond. */

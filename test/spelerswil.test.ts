@@ -7,7 +7,7 @@
 // daarboven zakt de kans, en wie tóch tekent laat zich de stap betalen.
 
 import { expect } from 'chai';
-import { readyGame } from './helpers';
+import { playWeeks, readyGame } from './helpers';
 import { clubAppeal, playerLevel, stepPremium, transferWillingness } from '../src/engine/appeal';
 import { buyPlayer } from '../src/engine/actions';
 import { overall } from '../src/engine/players';
@@ -58,9 +58,10 @@ describe('spelerswil', () => {
   });
 
   it('wie boven jouw niveau tóch tekent, vraagt een hogere vergoeding', () => {
-    // deterministisch: we proberen tot hij een keer ja zegt, en kijken dan naar zijn loon
+    // kopen is een gesprek (0.77.0): interesse, week spelen, antwoord. We proberen
+    // seeds tot hij een keer ja zegt, en kijken dan naar zijn loon.
     for (let seed = 1; seed <= 30; seed++) {
-      const s = readyGame('heidebeke', 'aannemer', seed);
+      let s = readyGame('heidebeke', 'aannemer', seed);
       s.cash = 1_000_000;
       const p = s.transferList[0];
       const boven = Math.round(clubAppeal(s) + 6);
@@ -71,14 +72,17 @@ describe('spelerswil', () => {
       const wil = transferWillingness(s, p);
       expect(wil.kans).to.be.below(1);
       const loonVooraf = p.wage;
-      if (buyPlayer(s, p.id).ok) {
-        const getekend = s.players.find((x) => x.id === p.id)!;
+      expect(buyPlayer(s, p.id).ok, 'interesse maken lukt altijd').to.equal(true);
+      expect(s.transferList.some((x) => x.id === p.id), 'hij is gereserveerd, van de markt').to.equal(false);
+      s = playWeeks(s, 1);
+      const getekend = s.players.find((x) => x.id === p.id);
+      if (getekend) {
         expect(getekend.wage).to.be.above(loonVooraf);
         expect(stepPremium(wil)).to.be.above(1);
         return;
       }
-      // geweigerd: hij is van de lijst — dat is het afgesproken gedrag
-      expect(s.transferList.some((x) => x.id === p.id)).to.equal(false);
+      // geweigerd: dan staat het antwoord in het nieuws — ook dat is het afgesproken gedrag
+      expect(s.news.some((n) => n.text.includes(p.name) && n.text.includes('andere club'))).to.equal(true);
     }
     throw new Error('in dertig pogingen zei geen enkele speler ja: de kans staat te laag');
   });

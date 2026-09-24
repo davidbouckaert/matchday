@@ -171,6 +171,14 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.77.0 — Kopen en huren is een gesprek, en "niet verlengen" bestaat
+
+**Een transfer was een hamerslag: klikken, tekenen, klaar.** Maar sinds de spelerswil beslist de spéler mee — en zo'n beslissing hoort niet in dezelfde seconde te vallen. Kopen en huren werkt nu zoals een club het meemaakt: jij maakt je interesse over, hij is gereserveerd (van de markt — geen andere club kaapt hem weg terwijl hij nadenkt), en een week later valt het antwoord. Tekent hij, dan is dat een **vieringskaart in je weekverslag** en goed nieuws op je Bureau; weigert hij, dan lees je dat daar ook. Intussen staat het gesprek bij "wacht op antwoord" op je Bureau en onder "Loopt nog" in het verslag. Ook je scout werkt zo: die "legt contact", het ja-woord volgt. Eén bewuste uitzondering: **zit je kern onder de elf speelklare spelers, dan tekent hij meteen** — hij weet dat hij direct mag spelen, en een wachtweek naast een dreigende forfait zou een onspeelbare klem zijn (de weekknop blokkeert dan immers).
+
+**En bij aflopende contracten kun je nu ook néé zeggen.** "Niet verlengen" haalt een speler bewust van je te-verlengen-lijst: weg uit de waarschuwing op je Bureau, weg uit het week-40-nieuws, en je uitbestede onderhandelaar blijft er vanaf. Hij staat nog wel onder "Laat je vertrekken" op het Contracten-scherm, met een terugweg ("Toch verlengen") zolang het seizoen loopt. Verleng je hem alsnog, dan wist dat de beslissing vanzelf.
+
+Vier nieuwe tests plus een herwerking van de bestaande koop- en huurtests naar het gesprek-model (783 in totaal), en de volledige lus in de draaiende app nagespeeld: interesse-toast → "wacht op antwoord" → vieringskaart "🖊️ Wannes Openda-Vos tekent bij KFC Zuidrand".
+
 ### 0.74.0 — Volwaardig op de iPad, zonder één pixel verschil op de pc
 
 **Eerst meten, dan pas raken.** Een Playwright-audit als echte iPad (touch aan, iPad Pro 11 liggend en iPad gen 7 staand) nam alle twintig schermen door en mat drie dingen: horizontale overflow, tikdoelen kleiner dan de duimmaat, en invoervelden onder de 16 pixels (die laten iPadOS de hele pagina inzoomen bij focus). De structuur bleek gezond — **nul overflow, overal** — maar er waren tientallen te kleine tikdoelen: subtabs van 31 pixels, vraagtekens van 17, linkknoppen van 23, en het sponsorscherm alleen al telde er 55 (de plus/min-knopjes en filterlabels van de prijstegels).

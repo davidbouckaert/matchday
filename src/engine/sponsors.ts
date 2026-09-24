@@ -4,13 +4,14 @@ import { clamp, createRng, round } from './rng';
 import { SECTORS, SPONSOR_COMPANIES, sectorKind } from './data/names';
 import { staffSkill } from './staff';
 import { wageDemand } from './players';
+import { transferWillingness } from './appeal';
 import { product, sponsorFactors } from './factors';
 import { ownPosition } from './league';
 import { popularity } from './popularity';
 import { addLog, addNews, book, nextId } from './util';
 import { remember } from './content';
 import { creditLimit } from './loans';
-import { grantLoan, loanRequestChance, loanStanding, tooExpensive } from './actions';
+import { completeLoanIn, completeSigning, grantLoan, loanRequestChance, loanStanding, tooExpensive } from './actions';
 import { sponsorBonus } from './career';
 
 type Kind = SponsorDeal['kind'];
@@ -572,6 +573,10 @@ export function resolveRequests(state: GameState, rng: Rng): void {
       }
       continue;
     }
+    if (r.kind === 'transfer-koop' || r.kind === 'transfer-huur') {
+      resolveTransferRequest(state, rng, r);
+      continue;
+    }
     if (r.kind === 'huur-verlengen' || r.kind === 'huur-kopen') {
       resolveLoanRequest(state, rng, r);
       continue;
@@ -771,6 +776,46 @@ function euroText(n: number): string {
  * Zij beslissen, niet jij: ze wegen hoeveel hij gespeeld heeft, of hij erop vooruitging en
  * wat je biedt. De kans die het scherm toonde toen je de vraag stelde, is exact deze.
  */
+/**
+ * Het antwoord op een transfer- of huurgesprek, een week na jouw interesse.
+ *
+ * De speler beslist met dezelfde wil-berekening als vroeger het directe kopen deed —
+ * alleen hoor je het nu op de manier waarop een club het hoort: een week later, in je
+ * nieuwsstroom en je weekverslag. Tekent hij, dan is dat een viering; weigert hij, dan
+ * is hij van de markt (zijn makelaar praat niet twee keer over dezelfde vraag).
+ */
+function resolveTransferRequest(state: GameState, rng: Rng, r: PendingRequest): void {
+  const p = r.speler;
+  if (!p) return;
+  const huur = r.kind === 'transfer-huur';
+  if (state.players.length >= 30) {
+    addNews(state, 'slecht', `Het gesprek met ${p.name} is stilgelegd: je kern zit vol (30 spelers).`);
+    addLog(state, 'antwoord', `Gesprek met ${p.name} afgebroken: kern vol.`);
+    return;
+  }
+  const wil = transferWillingness(state, p, huur);
+  if (wil.kans < 1 && !rng.chance(wil.kans)) {
+    addNews(
+      state,
+      'neutraal',
+      huur
+        ? `${p.name} wil niet op uitleenbasis naar ${state.clubName}: hij vindt je club een maat te klein.`
+        : `${p.name} kiest voor een andere club: ${state.clubName} is nog geen ploeg van zijn niveau.`,
+    );
+    addLog(state, 'antwoord', `${p.name} zegt nee.`);
+    return;
+  }
+  const prijs = p.purchasePrice ?? 0;
+  if (prijs > state.cash) {
+    addNews(state, 'slecht', `${p.name} wilde tekenen, maar je hebt €${prijs.toLocaleString('nl-BE')} niet meer op de rekening. De deal springt af.`);
+    addLog(state, 'antwoord', `Deal met ${p.name} gesprongen: geld ontbreekt.`);
+    return;
+  }
+  if (huur) completeLoanIn(state, p);
+  else completeSigning(state, p, wil);
+  addLog(state, 'antwoord', `${p.name} zegt ja.`);
+}
+
 function resolveLoanRequest(state: GameState, rng: Rng, r: PendingRequest): void {
   const p = state.players.find((x) => x.id === r.targetId);
   if (!p || p.loan?.type !== 'in') return;

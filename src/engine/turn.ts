@@ -716,7 +716,7 @@ function weeklyPlayers(state: GameState, rng: Rng): void {
     );
   }
   if (state.week === 40) {
-    const expiring = state.players.filter((p) => p.contractUntil <= state.season && p.loan?.type !== 'in');
+    const expiring = state.players.filter((p) => p.contractUntil <= state.season && p.loan?.type !== 'in' && !p.nietVerlengen);
     if (expiring.length) addNews(state, 'neutraal', `Aflopende contracten op het einde van het seizoen: ${expiring.map((p) => p.name).join(', ')}. Verleng bij Ploeg wie je wilt houden.`);
   }
 }

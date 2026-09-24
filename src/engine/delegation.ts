@@ -345,7 +345,7 @@ function contractTask(state: GameState, rng: Rng): void {
     state.players.filter((p) => p.position === pos).sort((a, b) => overall(b) - overall(a)).slice(0, n).forEach((p) => keep.add(p.id));
   }
   const extended: string[] = [];
-  for (const p of state.players.filter((x) => x.contractUntil <= state.season && x.loan?.type !== 'in')) {
+  for (const p of state.players.filter((x) => x.contractUntil <= state.season && x.loan?.type !== 'in' && !x.nietVerlengen)) {
     const talent = p.age <= 23 && p.potential >= level;
     if (!(keep.has(p.id) || talent) || p.age > 32) continue;
     if (rng.chance(errorChance(taskSkill(state, 'contracten', s)) / 2)) continue; // vergeten of slecht onderhandeld
@@ -421,8 +421,9 @@ function transferTask(state: GameState): void {
     const price = pick.purchasePrice;
     if (buyPlayer(state, pick.id).ok) {
       state.transferBudget = Math.max(0, state.transferBudget - price);
-      addNews(state, 'neutraal', `Scout ${s.name} haalde ${pick.name} (${pos}, ${overall(pick)}) binnen voor €${price.toLocaleString('nl-BE')}.`);
-      return; // één transfer per week
+      // kopen is een gesprek geworden: de scout legt contact, het ja-woord volgt volgende week
+      addNews(state, 'neutraal', `Scout ${s.name} legde contact met ${pick.name} (${pos}, ${overall(pick)}): €${price.toLocaleString('nl-BE')}. Volgende week uitsluitsel.`);
+      return; // één gesprek per week
     }
   }
 }

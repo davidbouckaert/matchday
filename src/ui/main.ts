@@ -870,6 +870,7 @@ const handlers: Record<string, Handler> = {
     const input = document.getElementById(`wage-${id}`) as HTMLInputElement | null;
     return actions.extendContract(g, id, input ? Number(input.value) : undefined);
   }),
+  'no-extend': gameAction(actions.toggleNoExtend),
   'goto-contracts': (id) => {
     ui.screen = 'contracten';
     ui.lastScreen.ploeg = 'contracten';

@@ -346,6 +346,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   // in afwachting
   const waiting: string[] = [];
   for (const p of s.pending) waiting.push(`${esc(p.label)}${p.amount ? `: ${euro(p.amount)}` : ''}, over ${weeks(p.weeksLeft)}`);
+  for (const r of s.requests) waiting.push(`${esc(r.label)}: antwoord over ${weeks(r.weeksLeft)}`);
   for (const o of s.sponsorOffers) waiting.push(`Sponsorvoorstel ${esc(o.name)} (${o.renewalOf ? 'verlenging' : KIND_LABEL[o.kind].toLowerCase()}, ${euro(o.weekly)}/week): beslis binnen ${weeks(o.expiresInWeeks)}`);
   for (const p of s.prospects.filter((x) => x.approached)) waiting.push(`Gesprek met ${esc(p.name)}: antwoord volgende week`);
   for (const o of s.playerOffers) {

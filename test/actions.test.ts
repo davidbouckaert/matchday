@@ -28,16 +28,30 @@ import { SAVE_VERSION } from '../src/engine/newGame';
 import { migrate } from '../src/storage/save';
 
 describe('Acties', () => {
-  it('koopt een speler tijdens de transferperiode', () => {
-    const s = newTestGame();
+  it('koopt een speler: interesse deze week, handtekening de volgende', () => {
+    let s = newTestGame();
     s.cash = 1_000_000;
-    // sinds de spelerswil kan wie boven je niveau speelt weigeren: neem er een die wil
+    // neem er een die zeker wil (kans 1): dan is het antwoord deterministisch ja
     const target = s.transferList.find((p) => transferWillingness(s, p).kans >= 1) ?? s.transferList[0];
     const before = s.players.length;
     const result = actions.buyPlayer(s, target.id);
     expect(result.ok).to.equal(true);
-    expect(s.players).to.have.lengthOf(before + 1);
-    expect(s.cash).to.equal(1_000_000 - target.purchasePrice);
+    expect(result.message).to.include('Volgende week'); // nog geen handtekening
+    expect(s.players).to.have.lengthOf(before, 'hij tekent pas na het gesprek');
+    expect(s.requests.some((r) => r.kind === 'transfer-koop' && r.targetId === target.id)).to.equal(true);
+    s = playWeeks(s, 1);
+    expect(s.players.some((p) => p.id === target.id), 'na een week is hij van jou').to.equal(true);
+    expect(s.seasonTotals.transfers ?? 0).to.be.at.most(-target.purchasePrice); // de som is geboekt
+    expect(s.news.some((n) => n.kind === 'viering' && n.text.includes(target.name)), 'het tekenen is een viering in het verslag').to.equal(true);
+  });
+
+  it('tekent meteen als je kern onder de elf zit (geen wachtweek naast een forfait)', () => {
+    const s = newTestGame();
+    s.cash = 1_000_000;
+    s.players = s.players.slice(0, 9); // spoed: geen elf meer
+    const target = s.transferList.find((p) => transferWillingness(s, p).kans >= 1) ?? s.transferList[0];
+    expect(actions.buyPlayer(s, target.id).ok).to.equal(true);
+    expect(s.players.some((p) => p.id === target.id), 'bij spoed geen gesprek maar een handtekening').to.equal(true);
   });
 
   it('weigert aankopen buiten de transferperiode', () => {
@@ -518,14 +532,17 @@ describe('Evolutie, verkopen en huren', () => {
     expect(wages).to.be.below(full);
   });
 
-  it('een huurspeler komt en vertrekt op het einde van het seizoen', () => {
+  it('een huurspeler komt (na het gesprek) en vertrekt op het einde van het seizoen', () => {
     let s = newTestGame();
     s.cash = 1_000_000;
     expect(s.loanMarket.length).to.be.above(0);
-    const target = s.loanMarket[0];
+    // huren is een gesprek: neem wie zeker wil, dan is het ja deterministisch
+    const target = s.loanMarket.find((p) => transferWillingness(s, p, true).kans >= 1) ?? s.loanMarket[0];
     expect(actions.loanIn(s, target.id).ok).to.equal(true);
-    expect(s.players.some((x) => x.id === target.id)).to.equal(true);
-    s = playWeeks(s, 52);
+    expect(s.players.some((x) => x.id === target.id), 'eerst het gesprek').to.equal(false);
+    s = playWeeks(s, 1);
+    expect(s.players.some((x) => x.id === target.id), 'na een week is hij er').to.equal(true);
+    s = playWeeks(s, 51);
     expect(s.players.some((x) => x.id === target.id)).to.equal(false);
   });
 

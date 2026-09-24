@@ -6,6 +6,7 @@ import { askingWage, wageOfferEffect } from '../../engine/actions';
 import { wantsAway } from '../../engine/appeal';
 import { delegate } from '../../engine/delegation';
 import { loanKeepCard } from './squad';
+import { tipAttr } from '../tooltip';
 import { esc, euro } from '../format';
 import { contractLabel } from './playercard';
 import { tip } from '../tooltip';
@@ -38,7 +39,11 @@ function row(s: GameState, p: Player, locked: boolean): string {
         : weg
           ? '<span class="muted small">hij wil hogerop: verlengen kan niet</span>'
           : `<span class="ask">${numField({ value: suggestion, min: 40, step: 5, prefix: '€', inputId: `wage-${p.id}`, label: `Loonvoorstel voor ${p.name}` })}
-           <button class="sm primary" data-action="extend" data-id="${p.id}">Dit bod doen</button></span>
+           <button class="sm primary" data-action="extend" data-id="${p.id}">Dit bod doen</button>${
+             p.contractUntil <= s.season
+               ? `<button class="sm ghost" data-action="no-extend" data-id="${p.id}" ${tipAttr('Bewust niet verlengen: hij vertrekt gratis op het einde van het seizoen en verdwijnt uit je waarschuwingen. Je kunt je bedenken zolang het seizoen loopt.')}>Niet verlengen</button>`
+               : ''
+           }</span>
            <br/><span class="muted small">bij ${euro(suggestion)}: ${Math.round(chance * 100)}% kans, hij is ${moodWord(morale)}</span>`
     }</td>
   </tr>`;
@@ -51,7 +56,8 @@ export function contractsScreen(s: GameState): string {
   const squad = [...s.players]
     .filter((p) => p.loan?.type !== 'in')
     .sort((a, b) => a.contractUntil - b.contractUntil || overall(b) - overall(a));
-  const expiring = squad.filter((p) => p.contractUntil <= s.season);
+  const expiring = squad.filter((p) => p.contractUntil <= s.season && !p.nietVerlengen);
+  const vertrekt = squad.filter((p) => p.contractUntil <= s.season && p.nietVerlengen);
   const rest = squad.filter((p) => p.contractUntil > s.season);
   const wages = s.players.reduce((sum, p) => sum + p.wage, 0);
 
@@ -67,6 +73,18 @@ export function contractsScreen(s: GameState): string {
         <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Contract</th><th>Loon nu</th><th>Vraagt</th><th data-nosort>Jouw voorstel</th></tr></thead>
         <tbody>${expiring.map((p) => row(s, p, !!agent)).join('') || '<tr><td colspan="7" class="muted">Geen aflopende contracten.</td></tr>'}</tbody>
       </table></div>
+      ${
+        vertrekt.length
+          ? `<h3>Laat je vertrekken (${vertrekt.length})</h3>
+      <p class="muted small">Deze contracten verleng je bewust niet: ze vertrekken gratis op het einde van het seizoen en tellen niet meer mee in je waarschuwingen.</p>
+      <ul class="small">${vertrekt
+        .map(
+          (p) => `<li><strong>${esc(p.name)}</strong> (${p.position}, ${overall(p)}) · ${euro(p.wage)}/week
+            <button class="link-btn small" data-action="no-extend" data-id="${p.id}">Toch verlengen →</button></li>`,
+        )
+        .join('')}</ul>`
+          : ''
+      }
     </section>
     <section class="card span2">
       <h3>Rest van de kern</h3>

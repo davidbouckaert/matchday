@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.76.0';
+export const VERSION = '0.77.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.77.0',
+    date: '2026-09-25',
+    title: 'Kopen en huren is een gesprek, en "niet verlengen" bestaat',
+    items: [
+      'Je maakt je interesse over en de spéler beslist: het antwoord komt een week later, in je nieuwsstroom en je weekverslag (tekenen = vieringskaart)',
+      'Zolang het gesprek loopt is hij gereserveerd — van de markt, zichtbaar bij "wacht op antwoord" op je Bureau en "Loopt nog" in het verslag',
+      'Uitzondering: zit je kern onder de elf, dan tekent hij meteen — geen wachtweek naast een dreigende forfait',
+      'Bij aflopende contracten kun je nu "Niet verlengen" kiezen: hij verdwijnt uit je waarschuwingen en lijstjes, en vertrekt op het einde van het seizoen (bedenken mag)',
+    ],
+  },
   {
     version: '0.76.0',
     date: '2026-09-25',

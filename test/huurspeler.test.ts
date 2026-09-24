@@ -18,14 +18,19 @@ import type { GameState, Player } from '../src/engine/types';
 
 /** Een partij met één huurspeler in de kern, klaar om over te praten. */
 function metHuurspeler(seed = 1, opts: { starts?: number; goals?: number; groei?: number } = {}): { s: GameState; p: Player } {
-  const s = readyGame('zuidrand', 'aannemer', seed);
+  let s = readyGame('zuidrand', 'aannemer', seed);
   s.cash = 500_000;
-  // sinds de spelerswil kan een kandidaat weigeren: neem wie het meest wil komen,
-  // en probeer door tot er één ja zegt (huren kan alleen in de transferperiode, dus eerst)
+  // huren is een gesprek geworden (0.77.0): interesse maken, week spelen, antwoord.
+  // Neem wie het meest wil komen en probeer door tot er één ja zegt.
   let binnen: Player | undefined;
   while (!binnen && s.loanMarket.length) {
     const kandidaat = [...s.loanMarket].sort((a, b) => transferWillingness(s, b, true).kans - transferWillingness(s, a, true).kans)[0];
-    if (loanIn(s, kandidaat.id).ok) binnen = s.players.find((x) => x.id === kandidaat.id);
+    if (loanIn(s, kandidaat.id).ok) {
+      s = playWeeks(s, 1);
+      binnen = s.players.find((x) => x.id === kandidaat.id);
+    } else {
+      break;
+    }
   }
   expect(binnen, 'geen enkele huurspeler wilde komen').to.not.equal(undefined);
   s.week = LOAN_TALK_WEEK + 1; // en dan doorspoelen naar de terugronde

@@ -26,6 +26,7 @@ import { boundVolunteers, freeVolunteers, youthCapacityFactor } from './youth';
 import { bestPrice, margin } from './merch';
 import { acceptedMargin, concessionForecast, concessionPartner } from './canteen';
 import { popularity } from './popularity';
+import { available } from './discipline';
 import { expectedAttendance, facilityCost } from './finance';
 import { addLog, addNews, book, euro, nextId, weeks } from './util';
 import { openStoryline, remember } from './content';
@@ -56,6 +57,13 @@ function guard(state: GameState): ActionResult | null {
 
 // ---------- Spelers ----------
 
+/**
+ * Kopen is geen hamerslag meer maar een gesprek: jij maakt je interesse over, en de
+ * spéler beslist — een week later hoor je of hij tekent (weekverslag én bureau).
+ * Eén uitzondering: staat je kern onder de elf speelklare spelers, dan tekent hij
+ * meteen — hij weet dat hij direct mag spelen, en jij mag niet vastlopen op een
+ * wachtweek terwijl de volgende wedstrijd een forfait dreigt te worden.
+ */
 export function buyPlayer(state: GameState, playerId: string): ActionResult {
   const g = guard(state);
   if (g) return g;
@@ -64,34 +72,65 @@ export function buyPlayer(state: GameState, playerId: string): ActionResult {
   if (!isTransferWindow(state.week)) return fail('De transferperiode is gesloten.');
   if (state.players.length >= 30) return fail('Je kern zit vol: dertig spelers is het maximum. Verkoop of leen er eerst een uit.');
   if (p.purchasePrice > state.cash) return fail(tooExpensive(state, p.purchasePrice, `${p.name} kopen`));
-  // de speler beslist mee: geld alleen haalt geen speler binnen die jouw club te klein vindt
-  const wil = transferWillingness(state, p);
-  if (wil.kans < 1 && !createRng(state).chance(wil.kans)) {
-    state.transferList = state.transferList.filter((x) => x.id !== playerId);
-    addNews(state, 'neutraal', `${p.name} kiest voor een andere club: ${state.clubName} is nog geen ploeg van zijn niveau.`);
-    return fail(
-      `${p.name} wil niet komen: hij zoekt een club van zijn niveau, en daar hoort ook je stand, je accommodatie en je kleedkamer bij. Zijn makelaar kapt het gesprek af.`,
-    );
+  state.transferList = state.transferList.filter((x) => x.id !== playerId);
+
+  const spoed = available(state.players).length < 11;
+  if (spoed) {
+    const wil = transferWillingness(state, p);
+    if (wil.kans < 1 && !createRng(state).chance(wil.kans)) {
+      addNews(state, 'neutraal', `${p.name} kiest voor een andere club: ${state.clubName} is nog geen ploeg van zijn niveau.`);
+      return fail(`${p.name} wil niet komen: hij zoekt een club van zijn niveau. Zijn makelaar kapt het gesprek af.`);
+    }
+    return completeSigning(state, p, wil);
   }
-  // wie boven jouw niveau tóch tekent, laat zich de stap betalen
+
+  state.requests.push({
+    id: nextId(state, 'tk'),
+    kind: 'transfer-koop',
+    targetId: p.id,
+    label: `Gesprek met ${p.name} (${p.purchasePrice ? euro(p.purchasePrice) : 'transfervrij'})`,
+    weeksLeft: 1,
+    amount: p.purchasePrice,
+    speler: p,
+  });
+  addLog(state, 'beslissing', `Interesse overgemaakt aan ${p.name}${p.purchasePrice ? ` (${euro(p.purchasePrice)})` : ' (transfervrij)'}.`);
+  return ok(`Je maakt je interesse over aan ${p.name}. Volgende week hoor je of hij tekent.`);
+}
+
+/** Het tekenen zelf: loonpremie voor de stap omlaag, boeking, nieuws (als viering). */
+export function completeSigning(state: GameState, p: Player, wil: ReturnType<typeof transferWillingness>): ActionResult {
   const premie = stepPremium(wil);
   if (premie > 1) p.wage = round(p.wage * premie, 5);
   if (state.avatar.background === 'exspeler') p.wage = round(p.wage * 0.95, 5);
-  state.transferList = state.transferList.filter((x) => x.id !== playerId);
   if (p.purchasePrice > 0) book(state, 'transfers', -p.purchasePrice, `Aankoop ${p.name}`);
   state.players.push(p);
   addNews(
     state,
-    'neutraal',
+    'goed',
     `${p.name} tekent bij ${state.clubName}${p.purchasePrice ? ` voor €${p.purchasePrice.toLocaleString('nl-BE')}` : ' (transfervrij)'}${
       premie > 1 ? `. Hij liet zich de stap omlaag betalen: €${p.wage}/week` : ''
     }.`,
+    'viering',
   );
   return {
     ok: true,
     message: `${p.name} is aangeworven.`,
     viering: { icon: '🖊️', kop: `${p.name} tekent`, sub: p.purchasePrice ? `voor ${euro(p.purchasePrice)}` : 'transfervrij' },
   };
+}
+
+/** "Niet verlengen": haal een aflopend contract bewust van je te-verlengen-lijst. */
+export function toggleNoExtend(state: GameState, playerId: string): ActionResult {
+  const p = state.players.find((x) => x.id === playerId);
+  if (!p) return fail('Speler niet gevonden.');
+  if (p.loan?.type === 'in') return fail(`${p.name} is gehuurd: hij heeft hier geen contract om te verlengen.`);
+  if (p.nietVerlengen) {
+    p.nietVerlengen = false;
+    return ok(`${p.name} staat weer op je te-verlengen-lijst.`);
+  }
+  p.nietVerlengen = true;
+  addLog(state, 'beslissing', `Contract van ${p.name} wordt niet verlengd: hij vertrekt op het einde van het seizoen.`);
+  return ok(`${p.name} verlaat de club op het einde van het seizoen. Bedenk je je, dan zet je hem hier terug.`);
 }
 
 /** Huurlingen en uitgeleende spelers kun je niet verkopen of verlengen. */
@@ -229,6 +268,7 @@ export function extendContract(state: GameState, playerId: string, offer?: numbe
   p.wage = wage;
   p.contractUntil += 1;
   p.negotiations = 0;
+  p.nietVerlengen = false;
   p.morale = clamp(p.morale + 5 + morale, 0, 100);
   addNews(state, 'goed', `${p.name} verlengt tot einde seizoen ${p.contractUntil} aan €${p.wage}/week.`);
   return {
@@ -1087,19 +1127,38 @@ export function loanIn(state: GameState, playerId: string): ActionResult {
   if (!p) return fail('Die speler staat niet meer op de lijst — een andere club was je voor.');
   if (state.players.length >= 30) return fail('Je kern zit vol: dertig spelers is het maximum. Verkoop of leen er eerst een uit.');
   if (state.cash < p.purchasePrice) return fail(tooExpensive(state, p.purchasePrice, `${p.name} huren`));
-  // ook een huurspeler beslist mee, al aanvaardt hij sneller een stap omlaag: hij komt om te spelen
-  const wil = transferWillingness(state, p, true);
-  if (wil.kans < 1 && !createRng(state).chance(wil.kans)) {
-    state.loanMarket = state.loanMarket.filter((x) => x.id !== playerId);
-    addNews(state, 'neutraal', `${p.name} wil niet op uitleenbasis naar ${state.clubName}: hij vindt je club een maat te klein.`);
-    return fail(`${p.name} ziet de uitleenbeurt niet zitten: jouw club ligt te ver onder zijn niveau. Zijn club zoekt een andere bestemming.`);
-  }
   state.loanMarket = state.loanMarket.filter((x) => x.id !== playerId);
+
+  const spoed = available(state.players).length < 11;
+  if (spoed) {
+    const wil = transferWillingness(state, p, true);
+    if (wil.kans < 1 && !createRng(state).chance(wil.kans)) {
+      addNews(state, 'neutraal', `${p.name} wil niet op uitleenbasis naar ${state.clubName}: hij vindt je club een maat te klein.`);
+      return fail(`${p.name} ziet de uitleenbeurt niet zitten. Zijn club zoekt een andere bestemming.`);
+    }
+    return completeLoanIn(state, p);
+  }
+
+  state.requests.push({
+    id: nextId(state, 'th'),
+    kind: 'transfer-huur',
+    targetId: p.id,
+    label: `Huurgesprek met ${p.name}`,
+    weeksLeft: 1,
+    amount: p.purchasePrice,
+    speler: p,
+  });
+  addLog(state, 'beslissing', `Huurvraag gesteld voor ${p.name} (${p.loan?.club ?? 'profclub'}).`);
+  return ok(`Je vraagt ${p.name} op huurbasis. Volgende week hoor je of hij komt.`);
+}
+
+/** De huurdeal zelf: vergoeding boeken, contract tot einde seizoen, nieuws (als viering). */
+export function completeLoanIn(state: GameState, p: Player): ActionResult {
   if (p.purchasePrice) book(state, 'transfers', -p.purchasePrice, `Huurvergoeding ${p.name}`);
   p.loan = { type: 'in', club: p.loan?.club ?? 'profclub', untilSeason: state.season, wageShare: 1 };
   p.contractUntil = state.season;
   state.players.push(p);
-  addNews(state, 'goed', `${p.name} wordt tot het einde van het seizoen gehuurd van ${p.loan.club}.`);
+  addNews(state, 'goed', `${p.name} wordt tot het einde van het seizoen gehuurd van ${p.loan.club}.`, 'viering');
   return {
     ok: true,
     message: `${p.name} gehuurd. Jij betaalt €${p.wage}/week, ${p.loan.club} de rest.`,
