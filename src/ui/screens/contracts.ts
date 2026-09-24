@@ -5,6 +5,7 @@ import { POSITIONS, isCorePlayer, overall } from '../../engine/players';
 import { askingWage, wageOfferEffect } from '../../engine/actions';
 import { wantsAway } from '../../engine/appeal';
 import { delegate } from '../../engine/delegation';
+import { loanKeepCard } from './squad';
 import { esc, euro } from '../format';
 import { contractLabel } from './playercard';
 import { tip } from '../tooltip';
@@ -45,7 +46,11 @@ function row(s: GameState, p: Player, locked: boolean): string {
 
 export function contractsScreen(s: GameState): string {
   const agent = delegate(s, 'contracten');
-  const squad = [...s.players].sort((a, b) => a.contractUntil - b.contractUntil || overall(b) - overall(a));
+  // een huurspeler heeft hier geen contract dat "afloopt": hij keert terug naar zijn
+  // club, en blijven of kopen regel je met zíjn eigenaar — die kaart staat hieronder
+  const squad = [...s.players]
+    .filter((p) => p.loan?.type !== 'in')
+    .sort((a, b) => a.contractUntil - b.contractUntil || overall(b) - overall(a));
   const expiring = squad.filter((p) => p.contractUntil <= s.season);
   const rest = squad.filter((p) => p.contractUntil > s.season);
   const wages = s.players.reduce((sum, p) => sum + p.wage, 0);
@@ -71,5 +76,6 @@ export function contractsScreen(s: GameState): string {
         <tbody>${rest.map((p) => row(s, p, !!agent)).join('')}</tbody>
       </table></div>
     </section>
+    ${loanKeepCard(s)}
   </div>`;
 }

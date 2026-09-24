@@ -288,7 +288,7 @@ export function todos(s: GameState): Todo[] {
   if (s.sponsorOffers.length) {
     add('info', s.sponsorOffers.length === 1 ? 'Er is een nieuw sponsoraanbod' : `Er zijn ${s.sponsorOffers.length} sponsoraanbiedingen`, 'sponsors', 'Sponsors');
   }
-  const expiring = s.players.filter((p) => p.contractUntil <= s.season).length;
+  const expiring = s.players.filter((p) => p.contractUntil <= s.season && p.loan?.type !== 'in').length;
   if (expiring && s.week > 30) add('warn', `${expiring} ${expiring === 1 ? 'contract loopt' : 'contracten lopen'} af`, 'contracten', 'Contracten', 'Wie je niet verlengt, vertrekt gratis op het einde van het seizoen.');
   if (s.requests.length) add('info', `Je wacht op antwoord: ${s.requests.map((r) => r.label).join(', ')}`, 'doelen', 'Logboek');
   if (isTransferWindow(s.week)) add('info', 'De transferperiode is open', 'transfers', 'Transfers', 'Alleen nu kun je kopen, verkopen of uitlenen.');

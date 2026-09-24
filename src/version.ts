@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.74.2';
+export const VERSION = '0.74.3';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.74.3',
+    date: '2026-09-25',
+    title: 'Huurspelers horen niet bij "contracten lopen af"',
+    items: [
+      'Een huurspeler stond in de waarschuwing en de aflooplijst, maar verlengen ketste af op "hij is gehuurd" — dubbel en verwarrend',
+      'Huurlingen staan nu nergens meer tussen de aflopende contracten (ook niet in het week-40-nieuws of bij je uitbestede onderhandelaar)',
+      'De kaart "huurspeler houden" (verlengen of kopen, met de eigenaar) staat voortaan óók op het Contracten-scherm',
+    ],
+  },
   {
     version: '0.74.2',
     date: '2026-09-25',

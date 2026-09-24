@@ -345,7 +345,7 @@ function contractTask(state: GameState, rng: Rng): void {
     state.players.filter((p) => p.position === pos).sort((a, b) => overall(b) - overall(a)).slice(0, n).forEach((p) => keep.add(p.id));
   }
   const extended: string[] = [];
-  for (const p of state.players.filter((x) => x.contractUntil <= state.season)) {
+  for (const p of state.players.filter((x) => x.contractUntil <= state.season && x.loan?.type !== 'in')) {
     const talent = p.age <= 23 && p.potential >= level;
     if (!(keep.has(p.id) || talent) || p.age > 32) continue;
     if (rng.chance(errorChance(taskSkill(state, 'contracten', s)) / 2)) continue; // vergeten of slecht onderhandeld
