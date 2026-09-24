@@ -1060,6 +1060,9 @@ describe('Promotie: inkomsten en kosten', () => {
   it('bij promotie stijgen de lonen van spelers en staff', () => {
     let s = newTestGame('zuidrand', 'fonds', 5);
     s = playWeeks(s, 43);
+    // sinds 0.48.0 gaat een promotie alleen door mét licentie voor de nieuwe reeks
+    s.infrastructure.lightingLevel = 2;
+    s.infrastructure.capacity = Math.max(s.infrastructure.capacity, 900);
     for (const r of s.league.table) if (r.teamId === 'club') r.points = 999;
     const wages = s.players.reduce((t, p) => t + p.wage, 0);
     const staff = s.staff.reduce((t, x) => t + x.wage, 0);
@@ -1073,6 +1076,8 @@ describe('Promotie: inkomsten en kosten', () => {
   it('de kampioenenpremie staat apart in de boekhouding en in de clubgeschiedenis', () => {
     let s = newTestGame('zuidrand', 'fonds', 5);
     s = playWeeks(s, 43);
+    s.infrastructure.lightingLevel = 2;
+    s.infrastructure.capacity = Math.max(s.infrastructure.capacity, 900);
     for (const r of s.league.table) if (r.teamId === 'club') r.points = 999;
     const level = s.league.divisionLevel;
     s = playWeeks(s, 1);

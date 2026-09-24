@@ -75,6 +75,7 @@ export function advanceWeek(previous: GameState): GameState {
   if (state.week === WINTER_BREAK.from) addNews(state, 'neutraal', `De winterstop begint: geen competitie tot week ${WINTER_BREAK.to + 1}. Geen tickets, geen wedstrijdkantine en geen kraampjes, maar de lonen en de vaste kosten lopen door.`);
   if (state.week === WINTER_BREAK.to + 1) addNews(state, 'goed', 'De competitie herbegint: de terugronde start dit weekend.');
   if (state.week === LICENCE_AUDIT_WEEK) licenceAudit(state);
+  if (state.week === 30 || state.week === 41) licencePromotionWarning(state);
   if (state.week === SEASON_END_WEEK) seasonEnd(state);
   weeklyMarket(state, rng);
   bankruptcyCheck(state);
@@ -609,14 +610,30 @@ function weeklyPlayers(state: GameState, rng: Rng): void {
 
 // ---------- Licentie ----------
 
-function licenceAudit(state: GameState): void {
-  const division = DIVISIONS[state.league.divisionLevel];
+/**
+ * Wat er aan je club ontbreekt voor een licentie op dit niveau.
+ *
+ * Eén lijst voor twee gebruikers: de jaarlijkse audit (boete op je huidige niveau) en het
+ * seizoenseinde (zonder licentie voor de hógere reeks gaat een promotie niet door). De
+ * doorlichting van september 2026 mat dat een club seizoenen lang 1ste Nationale speelde
+ * met 500 plaatsen en verlichting niveau 1: de boete haalde de top tien van de boekhouding
+ * niet eens. Een grens die alleen een kleine boete kost, is geen grens.
+ */
+export function licenceProblems(state: GameState, level: number): string[] {
+  const division = DIVISIONS[Math.min(level, DIVISIONS.length - 1)];
   const trainer = state.staff.find((s) => s.role === 'hoofdtrainer');
   const problems: string[] = [];
-  if (!trainer || diplomaRank(trainer.diploma) < diplomaRank(division.requiredDiploma)) problems.push(`hoofdtrainer zonder diploma ${division.requiredDiploma}`);
-  if (!hasStaff(state, 'afgevaardigde')) problems.push('geen ploegafgevaardigde');
-  if (state.infrastructure.lightingLevel < division.requiredLighting) problems.push(`je verlichting haalt niveau ${division.requiredLighting} niet`);
-  if (state.infrastructure.capacity < division.requiredCapacity) problems.push('te weinig plaatsen');
+  if (!trainer || diplomaRank(trainer.diploma) < diplomaRank(division.requiredDiploma)) problems.push(`een hoofdtrainer met diploma ${division.requiredDiploma}`);
+  if (!hasStaff(state, 'afgevaardigde')) problems.push('een ploegafgevaardigde');
+  if (state.infrastructure.lightingLevel < division.requiredLighting) problems.push(`verlichting van niveau ${division.requiredLighting}`);
+  if (state.infrastructure.capacity < division.requiredCapacity) {
+    problems.push(`${division.requiredCapacity.toLocaleString('nl-BE')} plaatsen (je hebt er ${state.infrastructure.capacity.toLocaleString('nl-BE')})`);
+  }
+  return problems;
+}
+
+function licenceAudit(state: GameState): void {
+  const problems = licenceProblems(state, state.league.divisionLevel);
   if (!problems.length) {
     addNews(state, 'goed', 'Licentie-audit van Voetbal Vlaanderland: alles in orde.');
     return;
@@ -625,7 +642,24 @@ function licenceAudit(state: GameState): void {
   const fine = problems.length * 2500 * state.licenceWarnings;
   book(state, 'boetes', -fine, 'Boete licentie-audit');
   state.community.reputation = clamp(state.community.reputation - 4, 0, 100);
-  addNews(state, 'slecht', `Licentie-audit: ${problems.join(', ')}. Boete: €${fine.toLocaleString('nl-BE')}. Herhaalde tekortkomingen worden duurder.`);
+  addNews(state, 'slecht', `Licentie-audit: het ontbreekt je aan ${problems.join(', ')}. Boete: €${fine.toLocaleString('nl-BE')}. Herhaalde tekortkomingen worden duurder.`);
+}
+
+/** Wie op een promotieplaats staat zonder licentie voor de hogere reeks, hoort dat op tijd. */
+function licencePromotionWarning(state: GameState): void {
+  const level = state.league.divisionLevel;
+  if (level >= DIVISIONS.length - 1) return;
+  const played = state.league.table.find((r) => r.teamId === OWN_TEAM_ID)?.played ?? 0;
+  if (played < 10) return;
+  const zone = zoneAt(state.league, ownPosition(state.league), level, DIVISIONS.length);
+  if (zone !== 'kampioen' && zone !== 'promotie') return;
+  const problems = licenceProblems(state, level + 1);
+  if (!problems.length) return;
+  addNews(
+    state,
+    'slecht',
+    `Je staat op een promotieplaats, maar zonder licentie voor ${DIVISIONS[level + 1].name} ga je niet omhoog. Je mist: ${problems.join(', ')}. Regel het voor het einde van het seizoen.`,
+  );
 }
 
 /** De week voor de derby weet het hele dorp het al. */
@@ -674,7 +708,29 @@ function seasonEnd(state: GameState): void {
   // dezelfde functie waarmee de kopbalk je plaats kleurt, zodat die twee nooit uiteenlopen
   const zone = zoneAt(state.league, pos, level, DIVISIONS.length);
 
-  if (zone === 'kampioen') {
+  // Zonder licentie voor de hogere reeks gaat een promotie niet door. De bond is geen
+  // boekhouder die achteraf een boete stuurt: wie de accommodatie, de verlichting, de
+  // trainer of de afgevaardigde niet heeft, blijft waar hij is — mét de eer en de premie
+  // als hij kampioen werd, zonder de sprong. Je bent het hele seizoen gewaarschuwd.
+  const geweigerd = zone === 'kampioen' || zone === 'promotie' ? licenceProblems(state, level + 1) : [];
+  if (geweigerd.length) {
+    state.nextDivisionLevel = level;
+    if (zone === 'kampioen') {
+      c.reputation = clamp(c.reputation + 6, 0, 100);
+      c.fanMood = clamp(c.fanMood + 6, 0, 100);
+      prize = seasonPrize(level, 'kampioen');
+      book(state, 'premies', prize, `Kampioenenpremies van sponsors en supporters (${DIVISIONS[level].name})`);
+      takePrizeShare(state, prize);
+    }
+    addNews(
+      state,
+      'slecht',
+      `${zone === 'kampioen' ? 'KAMPIOEN, maar' : 'Tweede plaats, maar'} Voetbal Vlaanderland weigert je licentie voor ${DIVISIONS[level + 1].name}: je mist ${geweigerd.join(
+        ', ',
+      )}. ${state.clubName} blijft in ${DIVISIONS[level].name}.`,
+    );
+    remember(state, `De licentie voor ${DIVISIONS[level + 1].name} werd geweigerd: de promotie ging niet door.`);
+  } else if (zone === 'kampioen') {
     result = 'kampioen';
     state.nextDivisionLevel = level + 1;
     state.promotionsWithInvestor++;

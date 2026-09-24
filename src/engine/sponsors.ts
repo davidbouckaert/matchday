@@ -692,8 +692,30 @@ export function acceptSponsorOffer(state: GameState, offerId: string, seasons: 1
 export function sponsorsAfterSeason(state: GameState, rng: Rng, result: 'kampioen' | 'promotie' | 'degradatie' | 'behoud', newLevel: number): void {
   const deals = state.sponsors.filter((d) => d.kind !== 'stadion');
   if (result === 'degradatie') {
-    for (const d of deals) d.satisfaction = clamp(d.satisfaction - 12, 0, 100);
-    addNews(state, 'slecht', 'Je sponsors zijn ontgoocheld door de degradatie. Reken op lastige gesprekken bij de verlenging.');
+    // De klap moet twee kanten op werken. Bij promotie boden sponsors spontaan meer; bij
+    // degradatie bleven hun bedragen gewoon staan, en de doorlichting van september 2026
+    // mat dat een degradatieseizoen daardoor €981.000 winst kon draaien. Nu herzien ze hun
+    // bijdrage naar het prijspeil van de nieuwe reeks — behalve wie voor meerdere seizoenen
+    // tekende: die betaalt gewoon door. Dát is waar een lang contract voor dient.
+    const previous = state.league.divisionLevel;
+    state.league.divisionLevel = newLevel;
+    const afgeprijsd: string[] = [];
+    for (const d of deals) {
+      d.satisfaction = clamp(d.satisfaction - 12, 0, 100);
+      const passend = fairPrice(state, d.kind) * 1.1;
+      if (d.weekly <= passend) continue;
+      if ((d.lockedSeasons ?? 1) > 1 && d.weeksLeft > 52) continue; // vast contract: hij zit eraan vast
+      afgeprijsd.push(`${d.name} (${euroText(d.weekly)} → ${euroText(passend)})`);
+      d.weekly = round(passend, 5);
+    }
+    state.league.divisionLevel = previous;
+    addNews(
+      state,
+      'slecht',
+      afgeprijsd.length
+        ? `Je sponsors herzien hun bijdrage na de degradatie: ${afgeprijsd.join(', ')}. Wie voor meerdere seizoenen tekende, betaalt gewoon door.`
+        : 'Je sponsors zijn ontgoocheld door de degradatie. Reken op lastige gesprekken bij de verlenging.',
+    );
     return;
   }
   if (result === 'behoud') return;

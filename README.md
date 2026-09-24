@@ -171,6 +171,22 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.48.0 — De bond en je sponsors reageren op stijgen en zakken
+
+**De licentie was een papieren grens.** De doorlichting mat een club die seizoenen lang 1ste Nationale speelde met vijfhonderd plaatsen en verlichting niveau 1; de boete (`problemen × €2.500 × waarschuwingen`) haalde de top tien van haar boekhouding niet. Nu is de licentie wat ze hoort te zijn: **zonder licentie voor de hogere reeks gaat een promotie niet door.** Word je kampioen zonder de accommodatie, de trainer of de afgevaardigde die de nieuwe reeks vraagt, dan hou je de eer en de premie — en blijf je waar je bent. De jaarlijkse audit en de promotieweigering rekenen met exact dezelfde lijst (`licenceProblems` in `turn.ts`), en wie in week 30 of 41 op een promotieplaats staat zonder licentie, leest in het nieuws precies wat er nog ontbreekt. Bouwen is daarmee een verplicht deel van klimmen — elke trede heeft nu een kostenkant die je niet kunt overslaan.
+
+**En de sponsorklap werkt eindelijk twee kanten op.** Bij promotie boden sponsors spontaan meer; bij degradatie bleven hun bedragen gewoon staan, en zo kon een degradatieseizoen €981.000 winst draaien (gemeten, seed 5 van de loonlat-meting). Nu herzien ze hun bijdrage naar het prijspeil van de nieuwe reeks — behalve wie voor méérdere seizoenen tekende: die betaalt gewoon door. Daarmee is de looptijdkeuze bij een sponsorcontract voor het eerst een echte afweging: kort tekenen pakt de promotiesprong mee, lang tekenen is je verzekering tegen de val. Precies wat de doorlichting als "bijna dode knop" aanwees.
+
+Het effect op de open knoop is meteen zichtbaar in de evenementen-meting hieronder: de uitbestedende club die nooit bouwt, raakt 3de Nationale niet meer uit.
+
+### 0.47.0 — Een zaal heeft muren
+
+**Evenementen waren de nieuwe gratis-geld-machine.** De doorlichting mat netto €21.630 per seizoen in 3de Nationale en **€714.410 in de Challenger Pro Liga**, uit dezelfde tien avonden per seizoen, met opbrengst/kost-verhoudingen tot 28,6×. De oorzaak was de fout van 0.42.0 in een nieuw jasje: de opbrengst hing rechtstreeks aan je sponsorportefeuille en je supportersnorm — allebei reeks-geïndexeerd — terwijl de kost alleen inflatie plus 12% per reeks droeg. Een lunch voor twaalf bedrijven "bracht" €178.000 op.
+
+De opbrengst is nu **gasten × wat een gast uitgeeft**, en de gasten zijn overal begrensd door iets fysieks: de zaal van je kantine (quiz, spaghetti, galabal), je tribune (oefenmatch, wintercup), je aanhang (mosselfeest, fandag) of het aantal bedrijven aan tafel (sponsorontbijt, businessclub). Alleen het bedrag per gast stijgt met je niveau — `eventPrestige`: ×1 in 3de Nationale tot ×3,1 in de Pro Liga — en met het prijspeil. Een galadiner in de top brengt per couvert dus nog altijd een veelvoud op van een spaghetti-avond in 2de Nationale, maar de zaal wordt er niet groter van.
+
+Gemeten na de ingreep: dezelfde club zit tussen €29.000 (3de Nationale) en €136.000 (2de Nationale, voor de licentielaag erbij kwam) netto per seizoen, met verhoudingen tussen 0,5 (de fandag, die koopt supporters en geen geld) en 7,6. `test/evenementen.test.ts` legt vast dat de zaal het plafond is, dat prestige begrensd blijft, en dat geen enkel evenement nog boven de 8× uitkomt.
+
 ### 0.46.0 — De speler beslist mee
 
 **Geld was het enige criterium: wie het bedrag had, kreeg elke handtekening.** Een sterspeler tekende even vlot bij een hekkensluiter met een veldje van vijfhonderd plaatsen als bij een kampioen met een opleidingscentrum. Dat is de omgekeerde wereld, en het was ook een gat in de balans: niets dwong een club met veel geld om eerst een club te wórden waar zulke spelers willen spelen.

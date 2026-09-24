@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.46.0';
+export const VERSION = '0.48.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,30 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.48.0',
+    date: '2026-09-24',
+    title: 'De bond en je sponsors reageren op stijgen en zakken',
+    items: [
+      'Zonder licentie voor de hogere reeks gaat een promotie niet door: je blijft, mét de eer en de premie als je kampioen werd',
+      'Wie op een promotieplaats staat zonder licentie, wordt in week 30 en 41 gewaarschuwd met wat er precies ontbreekt',
+      'De jaarlijkse audit en de promotieweigering rekenen met exact dezelfde lijst tekortkomingen',
+      'Bij degradatie herzien sponsors hun bijdrage naar het prijspeil van de nieuwe reeks',
+      'Wie voor meerdere seizoenen tekende, betaalt gewoon door — een lang contract is eindelijk ergens goed voor',
+    ],
+  },
+  {
+    version: '0.47.0',
+    date: '2026-09-24',
+    title: 'Een zaal heeft muren',
+    items: [
+      'De opbrengst van een evenement is gasten × wat een gast uitgeeft; de gasten zijn begrensd door je zaal, je tribune of je aanhang',
+      'Alleen het bedrag per gast stijgt met je niveau (prestige ×1 in 3de Nationale tot ×3,1 in de Pro Liga) en het prijspeil',
+      'De sponsorgebonden evenementen hangen aan het aantal bedrijven aan tafel, niet meer aan je hele sponsorportefeuille',
+      'De businessclub-lunch kost €4.000 in plaats van €6.000, en brengt geen €178.000 meer op',
+      'Gemeten: dezelfde uitbestedende club zakt van €714.000 netto per seizoen naar €30.000 à €136.000 naargelang haar reeks, met verhoudingen tussen 0,5 en 7,6 in plaats van tot 28,6',
+    ],
+  },
   {
     version: '0.46.0',
     date: '2026-09-24',
