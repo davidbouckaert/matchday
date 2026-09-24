@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.66.0';
+export const VERSION = '0.67.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.67.0',
+    date: '2026-09-24',
+    title: 'De rondleiding durft er te staan',
+    items: [
+      'Het blok was zo kalm dat het als optioneel voetnootje las: nu een paneel in de clubkleur, zelfde taal als de persconferentie',
+      'Elke open stap heeft een echte groene knop in plaats van een tekstlinkje',
+      'De routekaart onderaan toont wat nog komt (markt → mensen → geld → clubzaken → vooruitkijken) — de rondleiding gaat dus wél over de hele club, niet alleen de ploeg',
+      '"Ik ken het spel al" blijft, iets beter leesbaar',
+    ],
+  },
   {
     version: '0.66.0',
     date: '2026-09-24',

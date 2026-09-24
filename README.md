@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.67.0 — De rondleiding durft er te staan
+
+**De kalmte van 0.61.0 sloeg door**: het rondleidingsblok was zo gedempt dat het als een optioneel voetnootje las, en omdat hoofdstuk 1 over de ploeg gaat, leek de hele rondleiding "iets over de ploeg" — terwijl geld, clubzaken en bouwen gewoon volgen. Drie ingrepen: het blok is nu een **paneel in de clubkleur** (dezelfde visuele taal als de persconferentie op de seizoensopening), elke open stap heeft een **echte groene knop** in plaats van een tekstlinkje, en onderaan staat de **routekaart** van wat nog komt: "Daarna: De markt is open → Je mensen → Waar het geld binnenkomt → Meer dan voetbal → Vooruitkijken". Zo weet je dat wegklikken met "Ik ken het spel al" ook die hoofdstukken wegklikt — en die knop blijft, want wie het spel kent moet er in één klik vanaf kunnen.
+
 ### 0.66.0 — De seizoensopening ademt, en de keuze maakt zich bekend
 
 **Het openingsscherm was druk, en de enige verplichte handeling — je ambitie uitspreken — stond er even grijs bij als de achtergrondinfo erboven.** Je had het uiteindelijk wel door, maar pas na te veel tekst. De persconferentie draagt nu de clubkleur: een getint paneel met een badge **"kies om te starten"** in de kop, een instructie die letterlijk zegt dat je keuze het seizoen start, en op elke uitspraakkaart een echte knop **"Dit zeg ik ▸"**. De rest van het scherm kreeg lucht: ruimere tussenafstanden (22 op 32 pixels in plaats van 18), hogere regelafstand, en de belofteregel ingekort tot "lukt → €X · mislukt → −€Y en een reputatiedeuk". Voor en na statisch gerenderd en vergeleken.

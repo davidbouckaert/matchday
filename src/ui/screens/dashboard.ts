@@ -22,7 +22,7 @@ import { expectedAttendance } from '../../engine/finance';
 import { forecast } from '../../engine/forecast';
 import { esc, euro, resultIcon, signedEuro, sparkline, whenLabel } from '../format';
 import { hint, tipAttr } from '../tooltip';
-import { tourChapter } from '../../engine/tour';
+import { TOUR_CHAPTERS, tourChapter } from '../../engine/tour';
 import { weeks } from '../../engine/util';
 import { available } from '../../engine/discipline';
 
@@ -304,10 +304,13 @@ export function todos(s: GameState): Todo[] {
 function tourBlock(s: GameState): string {
   const t = tourChapter(s);
   if (!t) return '';
+  // de hoofdstukken die nog komen: zo zie je dat ook geld, clubzaken en bouwen aan bod
+  // komen — anders lijkt de rondleiding "iets over de ploeg" en klik je hem te vroeg weg
+  const verder = TOUR_CHAPTERS.slice(t.nr).map((c) => c.title);
   return `<div class="tour-block">
     <div class="tour-head">
-      <span class="cap">📚 Leer je club kennen</span>
-      <span class="muted small">hoofdstuk ${t.nr} van ${t.total} — ${esc(t.chapter.title)}</span>
+      <span class="tour-titel">📚 Leer je club kennen</span>
+      <span class="tour-hoofdstuk">hoofdstuk ${t.nr}/${t.total} · <strong>${esc(t.chapter.title)}</strong></span>
       <button class="link-btn tiny tour-hide" data-action="tour-hide"
         data-confirm="De rondleiding verbergen?"
         data-tip="Ingrijpend: de leerstappen verdwijnen definitief uit dit spel.">Ik ken het spel al</button>
@@ -319,11 +322,12 @@ function tourBlock(s: GameState): string {
           return `<li class="${af ? 'done' : ''}">
             <span class="box">${af ? '✓' : ''}</span>
             <span class="what">${esc(st.text)}</span>
-            ${af ? '' : `<button class="link-btn small" data-action="tour-go" data-id="${st.screen}:${st.wijs ?? ''}">${esc(st.where)} →</button>`}
+            ${af ? '' : `<button class="sm primary tour-ga" data-action="tour-go" data-id="${st.screen}:${st.wijs ?? ''}">${esc(st.where)} →</button>`}
           </li>`;
         })
         .join('')}
     </ul>
+    ${verder.length ? `<p class="tour-verder small">Daarna: ${verder.map((v) => esc(v)).join(' → ')}</p>` : ''}
   </div>`;
 }
 

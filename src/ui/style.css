@@ -1180,23 +1180,32 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .news-feed li.slecht .what::before { content: '▼'; color: var(--bad); font-size: .7em; margin-right: 6px; }
 
 /* de startlijst: een strook, niet een scherm */
-/* De rondleiding onderin de weekkaart. Bewust de kalmste hoek van de kaart: gedempte
-   kleuren, geen amber of rood, een stippellijn als grens met het echte werk erboven. */
-.tour-block { margin-top: var(--s4); padding-top: var(--s3); border-top: 1px dashed var(--line); }
+/* De rondleiding onderin de weekkaart. De eerste versie was bewust de kalmste hoek van
+   de kaart — zó kalm dat ze als optioneel voetnootje las en genegeerd werd. Nu is het
+   een paneel in de clubkleur (zelfde taal als de persconferentie op de seizoensopening):
+   duidelijk aanwezig, met echte knoppen per stap en de routekaart van wat nog komt. */
+.tour-block {
+  margin-top: var(--s4); padding: var(--s3) var(--s4) var(--s4);
+  background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 12px;
+}
 .attention-bar.empty .tour-block { margin-top: var(--s3); }
 .tour-head { display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap; }
-.tour-head .tour-hide { margin-left: auto; color: var(--faint); font-weight: 500; }
-.tour-head .tour-hide:hover { color: var(--muted); }
-.tour-steps { list-style: none; padding: 0; margin: var(--s2) 0 0; display: flex; flex-direction: column; gap: var(--s1); }
-.tour-steps li { display: flex; gap: var(--s3); align-items: baseline; }
-.tour-steps li.done { opacity: .5; }
+.tour-titel { font-weight: 750; }
+.tour-hoofdstuk { color: var(--muted); font-size: .9rem; }
+.tour-head .tour-hide { margin-left: auto; color: var(--muted); font-weight: 550; }
+.tour-head .tour-hide:hover { color: var(--text); }
+.tour-steps { list-style: none; padding: 0; margin: var(--s3) 0 0; display: flex; flex-direction: column; gap: var(--s2); }
+.tour-steps li { display: flex; gap: var(--s3); align-items: center; }
+.tour-steps li.done { opacity: .55; }
 .tour-steps li.done .what { text-decoration: line-through; text-decoration-color: var(--faint); }
 .tour-steps .box {
   flex: none; width: 18px; height: 18px; border-radius: 5px; background: var(--card); align-self: flex-start;
   box-shadow: inset 0 0 0 1px var(--line); display: grid; place-items: center; font-size: .75rem; color: var(--good); margin-top: 2px;
 }
-.tour-steps .what { color: var(--muted); }
-.tour-steps .link-btn { flex: none; white-space: nowrap; }
+.tour-steps .what { flex: 1 1 auto; }
+.tour-steps .tour-ga { flex: none; white-space: nowrap; }
+.tour-verder { margin: var(--s3) 0 0; color: var(--muted); border-top: 1px dashed color-mix(in srgb, var(--accent) 30%, transparent); padding-top: var(--s2); }
 
 .todo-list { list-style: none; padding: 0; margin-top: var(--s3); display: flex; flex-direction: column; gap: var(--s1); }
 .todo-list li { display: flex; gap: var(--s3); align-items: flex-start; padding: var(--s2) var(--s3); border-radius: var(--radius-sm); background: var(--sunken); }
