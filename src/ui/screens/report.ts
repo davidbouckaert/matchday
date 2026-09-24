@@ -23,7 +23,9 @@ export interface WeekRef {
  * animatievertraging) en de lopende klok (main.ts) moeten exact dezelfde tijd rekenen.
  */
 export const ANIM_T = { start: 0.3, h1: 2.2, rust: 2.4, h2: 2.95, end: 4.6, fin: 4.85 };
-export const ANIM_MATCH_MS = 5600;
+/** Na het affluiten blijft de uitslag nog anderhalve seconde staan voor het rapport opent:
+ *  even nagenieten (of vloeken) vóór de cijfers beginnen te rollen. */
+export const ANIM_MATCH_MS = 6400;
 export const ANIM_WEEK_MS = 3600;
 
 /** Wanneer een wedstrijdminuut in beeld komt, op de klok van de animatie. */

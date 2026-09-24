@@ -416,7 +416,7 @@ td.mu-1 { color: var(--bad); font-weight: 600; }
 
 .overlay { position: fixed; inset: 0; background: rgba(10, 16, 12, 0.55); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .anim-card, .report-card { background: var(--card); border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.35); width: min(920px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
-.anim-card { padding: 28px 36px; text-align: center; width: min(600px, 100%); cursor: pointer; }
+.anim-card { padding: 32px 44px; text-align: center; width: min(780px, 100%); cursor: pointer; }
 .anim-card h2 { margin: 4px 0 12px; }
 .pitch { width: 100%; height: auto; }
 .pitch .field { fill: #2f8a4c; }
@@ -1303,19 +1303,24 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 
 /* De wedstrijd als tijdlijn in de animatie: elk hoogtepunt verschijnt op het moment in
    de wedstrijd waarop het viel, en pas op het einde klinkt het affluiten met de uitslag. */
-.match-ticker { list-style: none; margin: var(--s3) 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; min-height: 260px; font-size: 1rem; }
+/* De regels staan op één verticale lijn — minuut rechts uitgelijnd in zijn eigen kolom,
+   de gebeurtenis links ernaast, de tussenstand rechts op de regel — in plaats van
+   gecentreerde regels die per lengte verspringen. Dat leest als een wedstrijdverslag. */
+.match-ticker { list-style: none; margin: var(--s4) auto 0; padding: 0; display: flex; flex-direction: column; gap: 9px;
+  min-height: 300px; font-size: 1.05rem; max-width: 560px; text-align: left; }
 /* de klok: groot en tabulair, en hij kleurt bij het affluiten */
 .match-clock { font-size: 1.9rem; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.01em; margin-top: 4px; min-height: 1.2em; }
 .match-clock.af { color: var(--accent); }
 .match-ticker li.rust { color: var(--muted); font-weight: 700; margin: 2px 0; }
-.match-ticker li.sub { color: var(--muted); font-size: .9rem; }
+.match-ticker li.sub { color: var(--muted); font-size: .95rem; }
 .match-ticker li.sub.us .who { font-weight: 650; color: var(--text); }
 .match-ticker li { opacity: 0; transform: translateY(6px); animation: ticker-in .28s ease-out forwards;
-  display: flex; gap: 8px; align-items: baseline; justify-content: center; }
-.match-ticker .min { color: var(--faint); font-variant-numeric: tabular-nums; min-width: 2.4em; text-align: right; flex: none; }
+  display: flex; gap: 10px; align-items: baseline; }
+.match-ticker .min { color: var(--faint); font-variant-numeric: tabular-nums; min-width: 2.6em; text-align: right; flex: none; }
+.match-ticker .mini { margin-left: auto; }
 .match-ticker li.us .who { font-weight: 700; }
 .match-ticker .mini { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--muted); }
-.match-ticker li.fin { margin-top: 4px; font-weight: 750; font-size: 1.05rem; }
+.match-ticker li.fin { margin-top: 6px; font-weight: 750; font-size: 1.18rem; }
 @keyframes ticker-in { to { opacity: 1; transform: none; } }
 
 /* De banner die zegt dat er een nieuwe versie klaarstaat. Boven alles, in de accentkleur:

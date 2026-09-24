@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.56.1';
+export const VERSION = '0.56.2';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.56.2',
+    date: '2026-09-24',
+    title: 'Even nagenieten na het affluiten',
+    items: [
+      'Na het affluiten blijft de uitslag nog anderhalve seconde staan voor het weekrapport opent',
+      'Het kader is nog een derde groter, en die ruimte gaat naar leesbaarheid',
+      'De tijdlijn leest als een wedstrijdverslag: minuten rechts uitgelijnd in hun kolom, gebeurtenissen links, tussenstanden in een eigen kolom aan de rechterrand',
+    ],
+  },
   {
     version: '0.56.1',
     date: '2026-09-24',
