@@ -171,6 +171,12 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.57.0 — Ingrijpende knoppen vragen een tweede klik
+
+**"Stopzetten" stond er even onschuldig bij als "Sluiten", en dat klopt niet.** Een sponsorcontract stopzetten, een personeelslid ontslaan, een speler wegsturen of verkopen, een huur beëindigen — dat zijn definitieve beslissingen met een grote impact, en één misklik was genoeg. Die knoppen kleuren nu rood, hun uitleg begint met "Ingrijpend:" en benoemt de gevolgen (wat het kost, wat er wegvalt, dat het definitief is).
+
+**En ze vragen een tweede klik.** De eerste klik wapent de knop: hij kleurt vol rood en zegt wat er gebeurt — "Zeker? €1.360/week stopt", "Zeker? Hij vertrekt meteen". Pas de tweede klik voert uit. Vier seconden niets doen, of ergens anders klikken, en de knop staat gewoon terug. Geen popup: dit is hetzelfde patroon dat "nieuw spel" al jaren had (`data-confirm` in `main.ts`), nu als één regel voor het hele spel. In de draaiende app nagespeeld: eerste klik verandert alleen de knop (14 sponsors vóór én na), tweede klik voert uit (13).
+
 ### 0.56.0 — De wedstrijd duurt vijf tellen, met klok, rust en wissels
 
 **De tijdlijn van 0.54.0 kreeg lucht.** Drie seconden was te gejaagd en het kader te krap; het is nu vijf seconden in een ruimer kader (600 in plaats van 420 pixels), en een week zónder wedstrijd houdt de korte animatie — die hoeft niet langer te duren.

@@ -167,7 +167,7 @@ function card(s: GameState, p: Player, inLineup: boolean, pinned: boolean, windo
       </div>
       ${
         window
-          ? `<button class="pc-btn sell" data-action="sell" data-id="${p.id}" ${tipAttr(
+          ? `<button class="pc-btn sell" data-action="sell" data-id="${p.id}" data-confirm="Zeker? Verkopen" ${tipAttr(
               `Verkoop hem nu voor ${euro(currentBid(p, s.marketIndex))}. Dat bod verandert elke week en geldt alleen tijdens de transferperiode.`,
               'Verkopen',
             )}><span aria-hidden="true">💶</span>${euro(currentBid(p, s.marketIndex))}</button>`

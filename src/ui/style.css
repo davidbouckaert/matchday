@@ -1328,6 +1328,12 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .update-banner { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; justify-content: center; gap: var(--s3);
   padding: 8px var(--s4); background: var(--accent-soft); color: var(--accent); font-weight: 650; font-size: .9rem; }
 
+/* Ingrijpende knoppen: rood op de rand, en eenmaal gewapend (eerste klik) vol rood met
+   de vraag erin. De tweede klik voert pas uit. */
+button.danger { color: var(--bad); }
+button.danger:hover:not(:disabled) { background: var(--bad-soft, rgba(200,60,60,.12)); color: var(--bad); }
+button.armed, button.armed:hover { background: var(--bad); color: #fff; }
+
 /* Filteren door aan te klikken: een functie op Personeel of een tegel-kop op Sponsors.
    De knop ziet eruit als de tekst die hij was; actief = accentkleur met een bolletje,
    en bij de gefilterde lijst staat een chip met een kruisje om hem weg te halen. */

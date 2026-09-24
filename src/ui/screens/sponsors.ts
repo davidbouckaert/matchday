@@ -126,7 +126,7 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
             ? '<span class="muted small">hoort bij je investeerder</span>'
             : `<button class="sm" data-action="sponsor-extra" data-id="${d.id}" ${askedNow ? 'disabled data-tip="Dit seizoen al gevraagd"' : 'data-tip="Hij denkt erover na: je hoort het antwoord volgende week in het weekrapport. De kans hangt af van zijn tevredenheid."'}>Extra bijdrage vragen</button>
                ${d.weeksLeft <= 26 ? `<button class="sm" data-action="sponsor-renew" data-id="${d.id}">Verlengen</button>` : ''}
-               <button class="sm ghost" data-action="sponsor-cancel" data-id="${d.id}">Stopzetten</button>`
+               <button class="sm ghost danger" data-action="sponsor-cancel" data-id="${d.id}" data-confirm="Zeker? ${euro(d.weekly)}/week stopt" data-tip="Ingrijpend: het contract stopt meteen en ${euro(d.weekly)} per week valt weg. De plaats komt vrij, maar je andere sponsors kijken op (−2 tevredenheid) en je reputatie krijgt een tik.">Stopzetten</button>`
         }</td>
       </tr>`;
     })

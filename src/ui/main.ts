@@ -867,9 +867,35 @@ const handlers: Record<string, Handler> = {
   },
 };
 
+/**
+ * Ingrijpende knoppen — stopzetten, ontslaan, wegsturen, verkopen — vragen één klik
+ * extra: de eerste klik "wapent" de knop (hij kleurt rood en zegt wat er gebeurt), pas de
+ * tweede voert uit. Geen popup: hetzelfde patroon als "nieuw spel" al had, maar dan voor
+ * elke knop met een data-confirm. Vier seconden niets doen, of ergens anders klikken, en
+ * de knop staat weer gewoon terug.
+ */
+let disarmTimer = 0;
+function armDanger(btn: HTMLElement): void {
+  for (const other of root.querySelectorAll<HTMLElement>('button.armed')) disarm(other);
+  btn.dataset.label = btn.innerHTML;
+  btn.textContent = btn.dataset.confirm!;
+  btn.classList.add('armed');
+  window.clearTimeout(disarmTimer);
+  disarmTimer = window.setTimeout(() => disarm(btn), 4000);
+}
+function disarm(btn: HTMLElement): void {
+  if (!btn.isConnected || !btn.classList.contains('armed')) return;
+  btn.classList.remove('armed');
+  if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
+}
+
 root.addEventListener('click', async (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
   if (!target) return;
+  if (target.dataset.confirm && !target.classList.contains('armed')) {
+    armDanger(target);
+    return;
+  }
   const handler = handlers[target.dataset.action!];
   if (!handler) return;
   const result = await handler(target.dataset.id ?? '');

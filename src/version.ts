@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.56.2';
+export const VERSION = '0.57.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.57.0',
+    date: '2026-09-24',
+    title: 'Ingrijpende knoppen vragen een tweede klik',
+    items: [
+      'Stopzetten, ontslaan, wegsturen, huur beëindigen en verkopen kleuren rood en zeggen in de uitleg wat de gevolgen zijn',
+      'De eerste klik wapent de knop — hij kleurt vol rood en zegt wat er gebeurt ("Zeker? €1.360/week stopt") — pas de tweede klik voert uit',
+      'Vier seconden niets doen of ergens anders klikken, en de knop staat gewoon terug',
+      'Geen popup: hetzelfde patroon dat "nieuw spel" al had, nu overal waar een beslissing definitief is',
+    ],
+  },
   {
     version: '0.56.2',
     date: '2026-09-24',
