@@ -11,6 +11,7 @@ import { forcedSaleCandidate } from './investors';
 import { acceptPlayerOffer } from './actions';
 import type { Focus } from './content';
 import { generatePlayer, marketValue, overall } from './players';
+import { wantsAway } from './appeal';
 import { staffSkill } from './staff';
 import { injuryFactors, overFatigueFactor, product } from './factors';
 import { addNews, nextId, weeks as weeksLabel } from './util';
@@ -72,7 +73,9 @@ function rollPlayerOffers(state: GameState, rng: Rng): void {
     }
     const talent = p.potential - level + (overall(p) - level) * 0.5;
     const young = p.age <= 23 ? 1 : 0.3;
-    const chance = clamp(talent / 400, 0, 0.12) * young + 0.004;
+    let chance = clamp(talent / 400, 0, 0.12) * young + 0.004;
+    // wie weg wil, laat zijn makelaar rondbellen: er komen duidelijk vaker biedingen
+    if (wantsAway(state, p)) chance = clamp(chance * 3 + 0.03, 0, 0.35);
     if (!rng.chance(chance)) continue;
     const isPro = talent > 12 && p.age <= 23;
     const club = isPro ? rng.pick(PRO_CLUBS) : rng.pick(state.league.teams).name;

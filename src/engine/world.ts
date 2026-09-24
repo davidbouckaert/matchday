@@ -241,6 +241,21 @@ export function runWorldSeason(state: GameState, rng: Rng): { club: string; move
   const ownLevel = state.league.divisionLevel;
   const positions = tablePositions(state);
 
+  // De reeks vecht terug. Blijft dezelfde club — de jouwe — bovenaan hangen zonder te
+  // stijgen (een geweigerde licentie, of de top van de piramide), dan pikken de rivalen
+  // dat niet: besturen verhogen hun ambitie en er komt geld vrij voor de kern. Zo kruipt
+  // de reeks naar je toe en kun je een reeks niet eindeloos afromen. De doorlichting van
+  // september 2026 mat een gestrande kampioen die zes seizoenen lang 10 à 16 punten boven
+  // een stilstaande reeks uitstak; dít is de rem die daar ontbrak.
+  const last = state.history[state.history.length - 1];
+  const blijftBovenaan = last && last.season === state.season - 1 && last.position <= 2 && state.nextDivisionLevel === ownLevel;
+  if (blijftBovenaan) {
+    for (const club of clubsAtLevel(world, ownLevel)) {
+      club.ambition = clamp(club.ambition + 10, 10, 95);
+      club.budget += Math.round(budgetOf(ownLevel) * 0.35);
+    }
+  }
+
   for (const club of world.clubs) {
     if (club.defunct) continue;
     const teams = clubsPerDivision(club.divisionLevel) + 1;

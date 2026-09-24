@@ -3,6 +3,7 @@
 import type { GameState, Player } from '../../engine/types';
 import { POSITIONS, isCorePlayer, overall } from '../../engine/players';
 import { askingWage, wageOfferEffect } from '../../engine/actions';
+import { wantsAway } from '../../engine/appeal';
 import { delegate } from '../../engine/delegation';
 import { esc, euro } from '../format';
 import { contractLabel } from './playercard';
@@ -19,9 +20,12 @@ function row(s: GameState, p: Player, locked: boolean): string {
   const seasonsLeft = p.contractUntil - s.season;
   const suggestion = Math.round(ask / 5) * 5;
   const { chance, morale } = wageOfferEffect(s, p, suggestion);
+  const weg = wantsAway(s, p);
   return `<tr class="${seasonsLeft <= 0 ? 'expiring' : ''}">
     <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" ${tip('Kernspeler: bij je beste elf of een groot talent. Hem kwijtspelen doet pijn.')}>★</span>` : ''}
+    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" ${tip('Kernspeler: bij je beste elf of een groot talent. Hem kwijtspelen doet pijn.')}>★</span>` : ''}${
+      weg ? ` <span class="tag bad" ${tip('Hij is uitgegroeid tot een speler voor een hogere reeks en wil die stap zetten: hij verlengt niet, tegen geen enkel loon. Verkoop hem, of word zelf de club die bij hem past.')}>wil hogerop</span>` : ''
+    }
       <br/><span class="muted small">${p.age} jaar · ${esc(p.trait)} · moraal ${Math.round(p.morale)}</span></td>
     <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
     <td data-v="${p.contractUntil}" class="${seasonsLeft <= 0 ? 'neg' : ''}">${contractLabel(s, p).kort}<br/><span class="muted small">${seasonsLeft <= 0 ? 'hij mag gratis weg' : 'daarna mag hij gratis weg'}</span></td>
@@ -30,7 +34,9 @@ function row(s: GameState, p: Player, locked: boolean): string {
     <td>${
       locked
         ? '<span class="muted small">je personeel regelt dit</span>'
-        : `<span class="ask">${numField({ value: suggestion, min: 40, step: 5, prefix: '€', inputId: `wage-${p.id}`, label: `Loonvoorstel voor ${p.name}` })}
+        : weg
+          ? '<span class="muted small">hij wil hogerop: verlengen kan niet</span>'
+          : `<span class="ask">${numField({ value: suggestion, min: 40, step: 5, prefix: '€', inputId: `wage-${p.id}`, label: `Loonvoorstel voor ${p.name}` })}
            <button class="sm primary" data-action="extend" data-id="${p.id}">Dit bod doen</button></span>
            <br/><span class="muted small">bij ${euro(suggestion)}: ${Math.round(chance * 100)}% kans, hij is ${moodWord(morale)}</span>`
     }</td>

@@ -15,7 +15,7 @@ import {
 import { isTransferWindow } from './calendar';
 import { coursePlan } from './training-staff';
 import { FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, selectLineup, wageDemand } from './players';
-import { stepPremium, transferWillingness } from './appeal';
+import { stepPremium, transferWillingness, wantsAway } from './appeal';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
 import { emergencyOffer, loanOffers } from './loans';
 import { acceptSponsorOffer } from './sponsors';
@@ -195,6 +195,9 @@ export function extendContract(state: GameState, playerId: string, offer?: numbe
   if (p.loan?.type === 'in') return fail(`${p.name} is gehuurd van ${p.loan.club}. Zijn contract ligt daar.`);
   if (p.contractUntil >= state.season + 3) return fail('Het contract loopt al lang genoeg.');
   if (p.morale < 35) return fail(`${p.name} is ontevreden en wil niet verlengen.`);
+  if (wantsAway(state, p)) {
+    return fail(`${p.name} wil niet verlengen: hij is uitgegroeid tot een speler voor een hogere reeks en wil die stap zetten. Verkoop hem nu hij geld waard is, of word zelf de club die bij hem past.`);
+  }
   if (p.negotiations >= MAX_NEGOTIATIONS) {
     return fail(`${p.name} wil dit seizoen niet meer onderhandelen: je bood al ${p.negotiations} keer te weinig. Zijn makelaar neemt pas volgend seizoen weer op.`);
   }

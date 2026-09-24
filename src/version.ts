@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.50.0';
+export const VERSION = '0.51.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,19 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.51.0',
+    date: '2026-09-24',
+    title: 'Stilstaan heeft gevolgen',
+    items: [
+      'Degradatie beweegt de kleedkamer, progressief: uit 2de Nationale vallen kost vooral loon, uit de Pro Liga vallen kost spelers',
+      'Wie blijft, levert in richting de lat van de nieuwe reeks — de klap is nu symmetrisch met de sponsors',
+      'Wie boven zijn club is uitgegroeid, wil hogerop: hij verlengt niet (tegen geen enkel loon), trekt vaker biedingen en zakt in moraal',
+      'Na een geweigerde licentie zien je sterkhouders dat als een breekpunt',
+      'De reeks vecht terug: blijft dezelfde club bovenaan hangen, dan verhogen rivalen hun ambitie en budget',
+      'Op Contracten zie je wie hogerop wil, met de reden erbij',
+    ],
+  },
   {
     version: '0.50.0',
     date: '2026-09-24',

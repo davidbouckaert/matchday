@@ -17,7 +17,7 @@ import {
 } from './calendar';
 import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt } from './league';
 import { starLabel, weeklyStars } from './stars';
-import { LOAN_PLAY_SHARE, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength, wagePressure } from './players';
+import { LOAN_PLAY_SHARE, departureBlock, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength, wageDemand, wagePressure } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
 import { resolveRequests, sponsorsAfterSeason, weeklySponsors } from './sponsors';
@@ -47,6 +47,7 @@ import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
 import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from './factors';
 import { available, cardsForOpponent, cardsForOwnTeam, serveOpponentSuspensions, serveOwnSuspensions } from './discipline';
 import { YOUTH_FEE_WEEK, youthFeeGrumble, youthFeeRef, youthForecast } from './actions';
+import { clubAppeal, wantsAway } from './appeal';
 
 export function advanceWeek(previous: GameState): GameState {
   if (previous.gameOver) return previous;
@@ -546,6 +547,7 @@ function weeklyProgress(state: GameState): void {
 function weeklyPlayers(state: GameState, rng: Rng): void {
   const leaders = state.players.filter((p) => p.trait === 'leider').length;
   const trainingMood = weeklyMoraleEffect(state);
+  const appeal = clubAppeal(state);
   const build = trainingLoad(state);
   const extra = recovery(state);
   const kine = staffSkill(state, 'kinesist');
@@ -564,8 +566,9 @@ function weeklyPlayers(state: GameState, rng: Rng): void {
     if (p.injuryWeeks > 0 && state.tactics.focus === 'herstel' && rng.chance(0.3)) p.injuryWeeks--;
     if (p.injuryWeeks > 0 && kine && rng.chance(kine / 150)) p.injuryWeeks--;
     // moraal zakt terug naar een basisniveau; leiders en een mentale coach houden de groep
-    // samen, en wie ver onder de loonlat van de reeks betaald wordt, zit lager (wagePressure)
-    const base = 55 + Math.min(3, leaders) * 3 + (state.avatar.background === 'exspeler' ? 5 : 0) + mental / 20 - wagePressure(state, p);
+    // samen; wie ver onder de loonlat betaald wordt (wagePressure) of hogerop wil maar
+    // vastzit (wantsAway) zit lager
+    const base = 55 + Math.min(3, leaders) * 3 + (state.avatar.background === 'exspeler' ? 5 : 0) + mental / 20 - wagePressure(state, p) - (wantsAway(state, p, appeal) ? 4 : 0);
     p.morale = clamp(p.morale + (base - p.morale) * (p.trait === 'professioneel' ? 0.15 : 0.08) + trainingMood * (p.trait === 'feestbeest' ? 1.5 : 1), 0, 100);
     if (p.trait === 'lastpak' && rng.chance(0.03)) {
       p.morale = clamp(p.morale - 15, 0, 100);
@@ -732,6 +735,17 @@ function seasonEnd(state: GameState): void {
       )}. ${state.clubName} blijft in ${DIVISIONS[level].name}.`,
     );
     remember(state, `De licentie voor ${DIVISIONS[level + 1].name} werd geweigerd: de promotie ging niet door.`);
+    // en je sterkhouders pikken dat niet: wie boven de reeks uitgegroeid is, wil weg
+    const appeal = clubAppeal(state);
+    const mokkers = state.players.filter((p) => wantsAway(state, p, appeal));
+    if (mokkers.length) {
+      for (const p of mokkers) p.morale = clamp(p.morale - 8, 0, 100);
+      addNews(
+        state,
+        'slecht',
+        `${mokkers.map((p) => p.name).join(', ')} ${mokkers.length === 1 ? 'wil' : 'willen'} hogerop spelen en ${mokkers.length === 1 ? 'ziet' : 'zien'} de geweigerde licentie als een breekpunt. Reken op biedingen, en op nee bij elke verlenging.`,
+      );
+    }
   } else if (zone === 'kampioen') {
     result = 'kampioen';
     state.nextDivisionLevel = level + 1;
@@ -773,7 +787,7 @@ function seasonEnd(state: GameState): void {
   state.lastSeasonSettlement = settleSeason(state, pos);
 
   if (state.nextDivisionLevel !== level) {
-    adjustWagesForDivision(state, level, state.nextDivisionLevel);
+    adjustWagesForDivision(state, level, state.nextDivisionLevel, createRng(state));
     // de naamsponsor volgt in newSeason, zodra de nieuwe reeks en het nieuwe prijspeil vastliggen
   }
   sponsorsAfterSeason(state, createRng(state), result, state.nextDivisionLevel);
@@ -791,20 +805,63 @@ function seasonEnd(state: GameState): void {
 
 /**
  * Een andere reeks betekent andere lonen. Bij promotie vragen spelers en staff meer
- * (ze spelen hoger, en andere clubs bellen), bij degradatie wordt er neerwaarts onderhandeld.
+ * (ze spelen hoger, en andere clubs bellen); bij degradatie beweegt de kleedkamer.
  */
-function adjustWagesForDivision(state: GameState, from: number, to: number): void {
-  const up = to > from;
-  const players = up ? 1.14 : 0.9;
-  const staff = up ? 1.1 : 0.93;
-  for (const p of state.players) p.wage = Math.round((p.wage * players) / 5) * 5;
-  for (const m of state.staff) m.wage = Math.round((m.wage * staff) / 5) * 5;
+function adjustWagesForDivision(state: GameState, from: number, to: number, rng: Rng): void {
+  if (to > from) {
+    for (const p of state.players) p.wage = Math.round((p.wage * 1.14) / 5) * 5;
+    for (const m of state.staff) m.wage = Math.round((m.wage * 1.1) / 5) * 5;
+    addNews(state, 'neutraal', 'Hogere reeks, hogere lonen: spelers vragen ongeveer 14% meer, staff 10%.');
+    return;
+  }
+  relegationShake(state, from, to, rng);
+  for (const m of state.staff) m.wage = Math.round((m.wage * 0.93) / 5) * 5;
+}
+
+/**
+ * Hoe hard een degradatie de kleedkamer beweegt, per reeks die je verlaat.
+ *
+ * Dit was ×0,9 op elk loon, en dat maakte degradatie na laag 18 een doodvonnis: de
+ * sponsorbedragen zakken naar het prijspeil van de nieuwe reeks (−30 à −40% inkomsten),
+ * maar de lonen bleven op −10% hangen. Nu is de klap symmetrisch — en progressief: wie
+ * uit 2de Nationale valt, houdt zijn groep grotendeels samen tegen een lager loon; wie
+ * uit de Pro Liga zakt, ziet de helft van zijn goedbetaalde spelers vertrekken, want die
+ * hebben elders opties. Eigen jeugd tot en met negentien en huurlingen blijven erbuiten,
+ * en de kern zakt nooit onder de ondergrens: wie niet weg mág, blijft — mokkend — tegen
+ * het loon van de nieuwe reeks.
+ */
+const RELEGATION_MOVE = [0.06, 0.08, 0.12, 0.25, 0.42, 0.6]; // index = de reeks die je verlaat
+export function relegationShake(state: GameState, from: number, to: number, rng: Rng): void {
+  const severity = RELEGATION_MOVE[clamp(from, 0, RELEGATION_MOVE.length - 1)];
+  const oldLevel = state.league.divisionLevel;
+  state.league.divisionLevel = to; // de lat van de nieuwe reeks
+  const vertrokken: string[] = [];
+  let ingeleverd = 0;
+  for (const p of [...state.players]) {
+    if (p.loan || (p.isYouth && p.age <= 19)) continue;
+    const lat = wageDemand(state, p);
+    if (p.wage <= lat * 1.15) {
+      p.wage = Math.round((p.wage * 0.95) / 5) * 5; // iedereen levert een beetje in
+      continue;
+    }
+    const gap = clamp(p.wage / Math.max(1, lat) - 1, 0.3, 1);
+    if (rng.chance(severity * gap) && !departureBlock(state, p, 'vertrekken')) {
+      state.players = state.players.filter((x) => x.id !== p.id);
+      for (const other of state.players) other.friends = other.friends.filter((f) => f !== p.id);
+      vertrokken.push(p.name);
+      continue;
+    }
+    p.wage = Math.round(lat * rng.range(1, 1.15) / 5) * 5;
+    p.morale = clamp(p.morale - 6, 0, 100);
+    ingeleverd++;
+  }
+  state.league.divisionLevel = oldLevel;
   addNews(
     state,
-    up ? 'neutraal' : 'neutraal',
-    up
-      ? `Hogere reeks, hogere lonen: spelers vragen ongeveer ${Math.round((players - 1) * 100)}% meer, staff ${Math.round((staff - 1) * 100)}%.`
-      : `Na de degradatie wordt er neerwaarts onderhandeld: spelerslonen ${Math.round((1 - players) * 100)}% lager, staff ${Math.round((1 - staff) * 100)}%.`,
+    vertrokken.length ? 'slecht' : 'neutraal',
+    vertrokken.length
+      ? `De degradatie beweegt de kleedkamer: ${vertrokken.join(', ')} ${vertrokken.length === 1 ? 'vertrekt' : 'vertrekken'} transfervrij, en ${ingeleverd} ${ingeleverd === 1 ? 'speler levert' : 'spelers leveren'} in richting het loon van ${DIVISIONS[to].name}.`
+      : `Na de degradatie wordt er neerwaarts onderhandeld: de lonen schuiven richting wat ${DIVISIONS[to].name} betaalt.`,
   );
 }
 
@@ -915,8 +972,16 @@ function newSeason(state: GameState, rng: Rng): void {
   const oldRival = state.league.teams.find((t) => t.isRival)?.name;
   const sameDivision = state.nextDivisionLevel === state.league.divisionLevel;
   // eerst beslist de rest van de wereld: wie investeert, wie bespaart, wie promoveert
+  const vorigSeizoen = state.history[state.history.length - 1];
   state.lastWorldMoves = runWorldSeason(state, rng);
   announceWorldMoves(state, rng);
+  if (vorigSeizoen && vorigSeizoen.season === state.season - 1 && vorigSeizoen.position <= 2 && state.nextDivisionLevel === state.league.divisionLevel) {
+    addNews(
+      state,
+      'neutraal',
+      `Je bleef bovenaan hangen in ${DIVISIONS[state.league.divisionLevel].name}, en de reeks pikt dat niet: rivalen verhogen hun budgetten en halen versterking. Reken op een sterkere competitie.`,
+    );
+  }
   const rivalClub = oldRival ? clubByName(state.world, oldRival) : undefined;
   const rivalFollows = rivalClub ? rivalClub.divisionLevel === state.nextDivisionLevel : rng.chance(0.35);
   const carry = oldRival && (sameDivision || rivalFollows) ? [oldRival] : [];

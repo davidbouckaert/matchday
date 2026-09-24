@@ -102,3 +102,18 @@ export function transferWillingness(state: GameState, p: Player, huur = false): 
 export function stepPremium(w: Willingness): number {
   return 1 + Math.max(0, w.gap - 2) * 0.06;
 }
+
+/**
+ * Wil hij weg? De spiegel van de spelerswil bij het komen: wie duidelijk boven het niveau
+ * van zijn club is uitgegroeid — de sterkhouder van een kampioen die zijn promotie
+ * geweigerd zag, de parel van een ploeg die blijft hangen — wil die stap zelf zetten.
+ * Hij tekent niet meer bij (verkoop hem, of word de club die bij hem past), er komen
+ * vaker biedingen, en zijn moraal zakt zolang hij vastzit. Tot en met negentien blijft
+ * iedereen gewoon thuis spelen.
+ */
+export const WANTS_AWAY_GAP = 5;
+
+export function wantsAway(state: GameState, p: Player, appeal = clubAppeal(state)): boolean {
+  if (p.loan || p.age <= 19) return false;
+  return playerLevel(p) - appeal > WANTS_AWAY_GAP;
+}

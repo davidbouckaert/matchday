@@ -171,6 +171,16 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.51.0 — Stilstaan heeft gevolgen
+
+Laag 18 sloot de reeksladder, maar de eindmeting toonde twee nieuwe evenwichten die niet klopten. **Degradatie was een doodvonnis geworden**: de sponsorbedragen zakten mee naar de nieuwe reeks (−30 à −40% inkomsten) maar de lonen bleven op −10% hangen — "uitbesteden aan je bestaande staf" schoot daardoor van ~23% naar 60% faillissementen. En er stond een **eeuwige kampioen**: de club die elk jaar 3de Nationale wint, elk jaar de licentie geweigerd ziet, en wier sterren braaf blijven zitten tegen een stilstaande reeks — 10 à 16 punten boven het reeksgemiddelde, seizoen na seizoen, met €600.000 winst per jaar. Drie ingrepen, samen één antwoord: stilstaan — vallen, of blijven hangen — heeft gevolgen.
+
+- **De degradatieschok is symmetrisch en progressief** (`relegationShake` in `turn.ts`). Wie blijft, levert in richting de lat van de nieuwe reeks; wie duidelijk boven die lat verdient, kan vertrekken — en hoe hoger de reeks die je verlaat, hoe meer er bewegen (van ~6% onderaan tot 60% uit de Pro Liga: die spelers hebben elders opties). Eigen jeugd en huurlingen blijven erbuiten, en de kern zakt nooit onder de ondergrens. Uit 2de Nationale vallen kost je dus vooral loonbudget en één vertrekker; uit de top vallen breekt je ploeg — precies het verschil dat het hoort te zijn.
+- **Wie boven zijn club is uitgegroeid, wil hogerop** (`wantsAway` in `appeal.ts` — de spiegel van de spelerswil bij het komen). Hij verlengt niet, tegen geen enkel loon; zijn makelaar belt rond (driemaal zoveel biedingen); zijn moraal zakt zolang hij vastzit; en een geweigerde licentie is voor hem een breekpunt. Op Contracten staat het kaartje "wil hogerop" met de uitleg. De eeuwige kampioen verliest zo elk seizoen zijn top: verkopen nu het geld waard is, of de club worden die bij hem past.
+- **De reeks vecht terug** (`runWorldSeason` in `world.ts`). Blijft dezelfde club bovenaan hangen zonder te stijgen, dan verhogen alle rivalen hun ambitie (+10) en komt er budget vrij: zij kopen sterspelers, de reeks kruipt naar je toe. Gemeten: de sterkte-voorsprong van de gestrande kampioen daalt nu na seizoen vier (+11,6 → +8,4) in plaats van door te groeien naar +16, en het reeksgemiddelde stijgt zichtbaar mee.
+
+Wat er bewust níet in zit: een straf op onbemande taken. Niet delegeren betekent dat de eigenaar het zelf doet — eigen tijd en aandacht van de speler mag het spel nooit afstraffen.
+
 ### 0.50.0 — Knoppen die de goede kant op wijzen
 
 De doorlichting vond een rij knoppen die dood stonden of de verkeerde kant op wezen, met als hoofdoorzaak één clamp: 99% van de thuiswedstrijden van een klimmende club was uitverkocht, en dan doet álles wat de opkomst vermenigvuldigt niets meer. Deze laag zet ze recht:
