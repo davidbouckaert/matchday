@@ -5,7 +5,7 @@ import type { Formation, GamePlan, GameState, Mentality, SponsorDeal, StaffRole,
 type SponsorKind = SponsorDeal['kind'];
 import { createNewGame } from '../engine/newGame';
 import { advanceWeek } from '../engine/turn';
-import { TOUR_CHAPTERS, tourChapter, tourFlags, tourMarkSeen } from '../engine/tour';
+import { TOUR_CHAPTERS, rememberDoneSteps, tourChapter, tourFlags, tourMarkSeen, tourStepDone } from '../engine/tour';
 import * as actions from '../engine/actions';
 import type { ActionResult } from '../engine/actions';
 import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, inWinterBreak } from '../engine/calendar';
@@ -331,7 +331,7 @@ function render(): void {
       thuis: ui.screen === 'overzicht',
       tourReady: (() => {
         const t = tourChapter(g);
-        return !!t && t.chapter.steps.every((st) => st.done(g));
+        return !!t && t.chapter.steps.every((_, i) => tourStepDone(g, t.nr - 1, i));
       })(),
     })}
     <footer class="app-footer"><span class="muted small">Clubeigenaar ${VERSION} · ${esc(g.clubName)} · seizoen ${g.season}, week ${g.week}</span></footer>
@@ -997,6 +997,7 @@ root.addEventListener('click', async (e) => {
   if (target.dataset.action !== 'tour-go') ui.tourAim = null; // elke andere klik haalt de wijzer weg
   const tourVoor = ui.game ? tourFlags(ui.game) : null;
   const result = await handler(target.dataset.id ?? '');
+  if (ui.game) rememberDoneSteps(ui.game);
   const melding = tourMelding(tourVoor);
   if (result) {
     // een feesttoast laten we met rust; een gewone toast krijgt de vooruitgang erbij
@@ -1047,6 +1048,7 @@ root.addEventListener('change', async (e) => {
   if (key && changeHandlers[key] && ui.game) {
     const tourVoor = tourFlags(ui.game);
     const result = changeHandlers[key](ui.game, el.value, el.dataset.id ?? '');
+    rememberDoneSteps(ui.game);
     const melding = tourMelding(tourVoor);
     showToast(melding && result.ok ? { ...result, message: `${result.message} ${melding}` } : result);
     if (result.ok) await persist();

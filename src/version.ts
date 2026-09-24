@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.74.1';
+export const VERSION = '0.74.2';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,15 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.74.2',
+    date: '2026-09-25',
+    title: 'Een rondleidingsstap blijft afgevinkt',
+    items: [
+      'De sponsorstap sprong weer open als het benaderde bedrijf een week later weigerde — alsof je niets gedaan had',
+      'Eenmaal afgevinkte stappen blijven nu afgevinkt, vastgelegd op het moment van je actie',
+    ],
+  },
   {
     version: '0.74.1',
     date: '2026-09-24',

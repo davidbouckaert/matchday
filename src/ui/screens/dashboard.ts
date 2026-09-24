@@ -22,7 +22,7 @@ import { expectedAttendance } from '../../engine/finance';
 import { forecast } from '../../engine/forecast';
 import { esc, euro, resultIcon, signedEuro, sparkline, whenLabel } from '../format';
 import { hint, tipAttr } from '../tooltip';
-import { TOUR_CHAPTERS, tourChapter } from '../../engine/tour';
+import { TOUR_CHAPTERS, tourChapter, tourStepDone } from '../../engine/tour';
 import { weeks } from '../../engine/util';
 import { available } from '../../engine/discipline';
 
@@ -307,7 +307,7 @@ function tourBlock(s: GameState): string {
   // de hoofdstukken die nog komen: zo zie je dat ook geld, clubzaken en bouwen aan bod
   // komen — anders lijkt de rondleiding "iets over de ploeg" en klik je hem te vroeg weg
   const verder = TOUR_CHAPTERS.slice(t.nr).map((c) => c.title);
-  const openStappen = t.chapter.steps.some((st) => !st.done(s));
+  const openStappen = t.chapter.steps.some((_, i) => !tourStepDone(s, t.nr - 1, i));
   return `<div class="tour-block ${openStappen ? 'wacht' : ''}">
     <div class="tour-head">
       <span class="tour-titel">📚 Leer je club kennen</span>
@@ -318,8 +318,8 @@ function tourBlock(s: GameState): string {
     </div>
     <ul class="tour-steps">
       ${t.chapter.steps
-        .map((st) => {
-          const af = st.done(s);
+        .map((st, stapIndex) => {
+          const af = tourStepDone(s, t.nr - 1, stapIndex);
           return `<li class="${af ? 'done' : ''}">
             <span class="box">${af ? '✓' : ''}</span>
             <span class="what">${esc(st.text)}</span>

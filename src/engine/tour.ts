@@ -33,6 +33,10 @@ export interface TourState {
   seen: string[];
   /** "Ik ken het spel al": de hele rondleiding weg, definitief voor dit spel. */
   hidden: boolean;
+  /** Eenmaal afgevinkte stappen ("hoofdstuk:stap"). Sommige condities kunnen terugvallen
+   *  — een benaderde sponsor die de week erna weigert, wist zijn "benaderd"-vlag — en
+   *  een stap die weer open springt voelt als een straf voor iets dat je wél deed. */
+  voltooid: string[];
 }
 
 export interface TourStep {
@@ -209,11 +213,30 @@ export function tourMarkSeen(s: GameState, screen: string): boolean {
   return true;
 }
 
+/** Is deze stap af? Plakkend: eenmaal waar blijft waar, ook als de conditie terugvalt. */
+export function tourStepDone(s: GameState, hoofdstuk: number, stap: number): boolean {
+  const st = TOUR_CHAPTERS[hoofdstuk]?.steps[stap];
+  if (!st) return true;
+  return st.done(s) || (s.tour?.voltooid?.includes(`${hoofdstuk}:${stap}`) ?? false);
+}
+
+/** Vink alles wat nú waar is blijvend af. Aanroepen na elke actie en bij de weekwissel:
+ *  zo overleeft "sponsor benaderd" ook een weigering die de vlag weer wist. */
+export function rememberDoneSteps(s: GameState): void {
+  const t = s.tour;
+  if (!t || t.hidden || t.chapter >= TOUR_CHAPTERS.length) return;
+  t.voltooid ??= [];
+  TOUR_CHAPTERS[t.chapter].steps.forEach((st, i) => {
+    const sleutel = `${t.chapter}:${i}`;
+    if (!t.voltooid.includes(sleutel) && st.done(s)) t.voltooid.push(sleutel);
+  });
+}
+
 /** De afvinkstand van het actieve hoofdstuk — om na een klik te zien of er iets bij kwam. */
 export function tourFlags(s: GameState): { nr: number; flags: boolean[] } | null {
   const t = tourChapter(s);
   if (!t) return null;
-  return { nr: t.nr, flags: t.chapter.steps.map((st) => st.done(s)) };
+  return { nr: t.nr, flags: t.chapter.steps.map((_, i) => tourStepDone(s, t.nr - 1, i)) };
 }
 
 /**
@@ -227,9 +250,10 @@ export function tourFlags(s: GameState): { nr: number; flags: boolean[] } | null
 export function advanceTour(s: GameState): void {
   const t = s.tour;
   if (!t || t.hidden) return;
+  rememberDoneSteps(s);
   while (t.chapter < TOUR_CHAPTERS.length) {
     const ch = TOUR_CHAPTERS[t.chapter];
-    const klaar = ch.steps.every((st) => st.done(s));
+    const klaar = ch.steps.every((_, i) => tourStepDone(s, t.chapter, i));
     if (klaar || t.weeksOpen >= TOUR_PATIENCE) {
       t.chapter++;
       t.weeksOpen = 0;
@@ -246,5 +270,6 @@ export function repairTour(s: GameState): void {
   if (s.tour) return;
   // wie al diep in het spel zit, heeft geen rondleiding meer nodig — zelfde grens als de
   // oude "Eerste stappen" (die verdween na week 20 van seizoen 1)
-  s.tour = { chapter: 0, weeksOpen: 0, seen: [], hidden: s.season > 1 || s.week > 20 };
+  s.tour = { chapter: 0, weeksOpen: 0, seen: [], hidden: s.season > 1 || s.week > 20, voltooid: [] };
+  s.tour.voltooid ??= [];
 }

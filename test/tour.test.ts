@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { TOUR_CHAPTERS, TOUR_PATIENCE, tourChapter, tourMarkSeen, repairTour } from '../src/engine/tour';
+import { TOUR_CHAPTERS, TOUR_PATIENCE, rememberDoneSteps, tourChapter, tourMarkSeen, tourStepDone, repairTour } from '../src/engine/tour';
 import { migrate } from '../src/storage/save';
 import { SAVE_VERSION } from '../src/engine/newGame';
 import { readyGame, playWeeks } from './helpers';
@@ -73,6 +73,19 @@ describe('rondleiding (tour)', () => {
     let s = readyGame();
     s = playWeeks(s, TOUR_CHAPTERS.length * (TOUR_PATIENCE + 1));
     expect(tourChapter(s)).to.equal(null);
+  });
+
+  it('houdt een stap afgevinkt ook als de conditie terugvalt (sponsor weigert)', () => {
+    // "benader een bedrijf" wist zijn vlag zodra het bedrijf antwoordt; weigert het, dan
+    // sprong hoofdstuk 4 stap 2 weer open — alsof je niets gedaan had
+    const s = readyGame();
+    s.tour!.chapter = 3; // Waar het geld binnenkomt
+    const stap = TOUR_CHAPTERS[3].steps.findIndex((st) => st.where.includes('Sponsors'));
+    s.prospects[0].approached = true;
+    rememberDoneSteps(s);
+    expect(tourStepDone(s, 3, stap)).to.equal(true);
+    s.prospects[0].approached = false; // het bedrijf weigerde: vlag gewist, geen aanbod
+    expect(tourStepDone(s, 3, stap), 'eenmaal gedaan blijft gedaan').to.equal(true);
   });
 
   it('geeft een oud opslagbestand een verborgen rondleiding als het al diep in het spel zit', () => {

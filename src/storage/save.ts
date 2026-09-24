@@ -114,6 +114,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 35) migrateV35toV36(state);
   if (state.version === 36) migrateV36toV37(state);
   if (state.version === 37) migrateV37toV38(state);
+  if (state.version === 38) migrateV38toV39(state);
   repair(state);
   return state;
 }
@@ -492,6 +493,13 @@ function migrateV34toV35(state: GameState): void {
 
 /** Versie 36: sanitair gesplitst in toiletten en kleedkamers, de groene combi in
  *  zonnepanelen en ledverlichting. Wie de combi had, krijgt beide helften. */
+/** Versie 39: rondleidingsstappen blijven afgevinkt (plakkend), ook als de
+ *  onderliggende conditie terugvalt — zoals een sponsor die na benaderen weigert. */
+function migrateV38toV39(state: GameState): void {
+  if (state.tour) state.tour.voltooid ??= [];
+  state.version = 39;
+}
+
 /** Versie 38: uitbreidbare kraampjesplaatsen. Iedereen begint op de oude drie. */
 function migrateV37toV38(state: GameState): void {
   state.infrastructure.concessionSpace ??= 3;
