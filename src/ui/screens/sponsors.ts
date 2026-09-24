@@ -195,9 +195,13 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
   </section>
 
   ${
+    // Op tafel is dé operationele plek van dit scherm: hier liggen de handtekeningen die op
+    // jou wachten. Daarom staat hij áltijd op dezelfde plaats — vol breed, direct onder de
+    // prijskaart — of er nu iets ligt of niet. Een kaart die van plek wisselt naargelang
+    // haar inhoud, vind je nooit terug op automatisme.
     offers
       ? `<section class="card attention"><h2>Op tafel <span class="tag bad">${s.sponsorOffers.length}</span></h2><ul class="offers">${offers}</ul></section>`
-      : ''
+      : '<section class="card"><h2>Op tafel</h2><p class="muted small">Geen voorstellen op dit moment. Benader een contact hieronder of hou een netwerkavond.</p></section>'
   }
 
   <div class="cols-2">
@@ -212,7 +216,6 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
       </section>
     </div>
     <div class="col">
-      ${offers ? '' : '<section class="card"><h2>Op tafel</h2><p class="muted small">Geen voorstellen op dit moment. Benader een contact of hou een netwerkavond.</p></section>'}
       <section class="card">
         <h2>Contacten <span class="tag">${gefilterdeProspects.length}${filter ? ` van ${s.prospects.length}` : ''}</span> ${filterChip}</h2>
         <p class="muted small">Benader een bedrijf: volgende week hoor je of het een voorstel doet. De kans hangt af van hun interesse.</p>
@@ -220,10 +223,8 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
           <thead><tr><th>Bedrijf</th><th>Interesse</th><th class="num" data-tip="Hoe vaak dit bedrijf ja zegt op de prijs die jij vraagt. Vraag je minder, dan stijgt de kans; vraag je meer, dan daalt ze.">Zegt ja</th><th data-nosort></th></tr></thead>
           <tbody>${prospects || `<tr><td colspan="4" class="muted">${filter ? `Geen contacten die op ${KIND_LABEL[filter].toLowerCase()} zouden tekenen. Haal de filter weg met het kruisje hierboven.` : 'Geen contacten. Hou een netwerkavond of schakel een bureau in.'}</td></tr>`}</tbody>
         </table></div>
-      </section>
-      <section class="card">
-        <h2>Nieuwe namen vinden</h2>
-        <p class="muted small">Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors.</p>
+        <h3>Nieuwe namen vinden</h3>
+        <p class="muted small">Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors. Wat ze vinden, komt in deze lijst terecht.</p>
         <div class="stack-btns">
           <button data-action="network" ${netWait ? 'disabled' : ''}>Netwerkavond (${euro(NETWORK_EVENING.cost)})${netWait ? ` · nog ${weeks(netWait)}` : ''}</button>
           <button data-action="campaign" ${s.sponsorCampaignWeeks ? 'disabled' : ''}>Sponsorbureau (${euro(CAMPAIGN.cost)}, ${CAMPAIGN.weeks} weken)${s.sponsorCampaignWeeks ? ` · nog ${weeks(s.sponsorCampaignWeeks)}` : ''}</button>

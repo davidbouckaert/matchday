@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.56.0';
+export const VERSION = '0.56.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.56.1',
+    date: '2026-09-24',
+    title: '"Op tafel" heeft een vaste plek',
+    items: [
+      'De voorstellen die op je wachten staan altijd op dezelfde plaats: vol breed, direct onder de prijskaart — of er nu iets ligt of niet',
+      'Een kaart die van plek wisselt naargelang haar inhoud, vind je nooit terug op automatisme',
+      '"Nieuwe namen vinden" zit nu in de Contacten-kaart: wat het bureau vindt, komt in die lijst terecht',
+    ],
+  },
   {
     version: '0.56.0',
     date: '2026-09-24',
