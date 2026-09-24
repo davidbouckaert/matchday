@@ -5,7 +5,7 @@ import type { Formation, GamePlan, GameState, Mentality, SponsorDeal, StaffRole,
 type SponsorKind = SponsorDeal['kind'];
 import { createNewGame } from '../engine/newGame';
 import { advanceWeek } from '../engine/turn';
-import { TOUR_CHAPTERS, tourFlags, tourMarkSeen } from '../engine/tour';
+import { TOUR_CHAPTERS, tourChapter, tourFlags, tourMarkSeen } from '../engine/tour';
 import * as actions from '../engine/actions';
 import type { ActionResult } from '../engine/actions';
 import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, inWinterBreak } from '../engine/calendar';
@@ -111,6 +111,9 @@ interface UiState {
    *  krijgt: een stuiterend handje plus een omlijning op de plek waar je moet zijn.
    *  Elke andere klik haalt hem weer weg. */
   tourAim: string | null;
+  /** Ben je via een rondleidingsstap naar een scherm gebracht? Dan hangt er in de
+   *  speelbalk een terugweg naar het Bureau, tot je daar weer bent. */
+  tourLoop: boolean;
   /** De bevestigingspopup voor een ingrijpende beslissing: welke actie, en met welke uitleg. */
   confirmAction: { action: string; id: string; title: string; body: string; verb: string } | null;
   /** De versie die de server draait als die nieuwer is dan deze bundle: dan staat er een
@@ -143,6 +146,7 @@ const ui: UiState = {
   report: null,
   held: null,
   tourAim: null,
+  tourLoop: false,
   confirmAction: null,
   updateAvailable: null,
   fastForward: null,
@@ -325,6 +329,7 @@ function render(): void {
       busy: ui.busy,
       open: todos(g).length + (g.weekChoice && !g.weekChoice.answer ? 1 : 0),
       urgent: todos(g).some((t) => t.level === 'urgent'),
+      tourLoop: ui.tourLoop && ui.screen !== 'overzicht' && !!tourChapter(g),
     })}
     <footer class="app-footer"><span class="muted small">Clubeigenaar ${VERSION} · ${esc(g.clubName)} · seizoen ${g.season}, week ${g.week}</span></footer>
     ${ui.fastForward ? fastForwardOverlay(g, ui.fastForward) : ''}
@@ -737,6 +742,7 @@ const handlers: Record<string, Handler> = {
     ui.menuOpen = false;
     ui.lastScreen[groupOf(ui.screen).id] = ui.screen;
     ui.confirmNewGame = false;
+    if (ui.screen === 'overzicht') ui.tourLoop = false;
     markTourSeen();
   },
   'nav-group': (id) => {
@@ -744,6 +750,7 @@ const handlers: Record<string, Handler> = {
     const gr = GROUPS.find((x) => x.id === id)!;
     ui.screen = ui.lastScreen[gr.id] ?? gr.screens[0][0];
     ui.confirmNewGame = false;
+    if (ui.screen === 'overzicht') ui.tourLoop = false;
     markTourSeen();
   },
   // een rondleidingsstap: navigeren én de wijzer zetten op de plek waar je moet zijn
@@ -753,12 +760,14 @@ const handlers: Record<string, Handler> = {
     ui.menuOpen = false;
     ui.lastScreen[groupOf(ui.screen).id] = ui.screen;
     ui.tourAim = aim || null;
+    ui.tourLoop = true;
     markTourSeen();
   },
   // "Ik ken het spel al": komt hier via de bevestigingspopup, dus dit is al de ja-klik
   'tour-hide': () => {
     if (!ui.game?.tour) return;
     ui.game.tour.hidden = true;
+    ui.tourLoop = false;
     void persist();
     return { ok: true, message: 'De rondleiding is weg. Veel plezier — je kent de weg.' };
   },

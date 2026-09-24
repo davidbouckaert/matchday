@@ -1800,6 +1800,14 @@ tr.filtering td { background: var(--accent-soft); }
 }
 .pb-arrow { opacity: .7; }
 @media (prefers-reduced-motion: reduce) { .pb-count::after { animation: none; } }
+/* de terugweg van de rondleiding: bracht een stap je naar een ander scherm, dan hangt
+   hier de weg terug naar het Bureau — tot je daar bent, dan lost hij vanzelf op */
+.pb-tour {
+  display: inline-flex; align-items: center; gap: var(--s1);
+  background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent); font-weight: 650; font-size: .85rem; padding: 5px 13px; border-radius: 99px;
+}
+.pb-tour:hover { background: var(--accent-soft); filter: brightness(.96); }
 .pb-clear { color: var(--faint); }
 .pb-block { color: var(--bad); font-weight: 600; }
 .playbar .next-group { flex-direction: row; align-items: center; gap: var(--s2); }
