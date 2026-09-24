@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.60.2';
+export const VERSION = '0.60.3';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.60.3',
+    date: '2026-09-24',
+    title: 'Ook een verkoop en een huurspeler zijn een feestje',
+    items: [
+      'Een speler verkopen (op de markt of via een bod) geeft nu de feesttoast: 💰 met naam en bedrag',
+      'Een huurspeler die akkoord gaat komt binnen met 🖊️, zijn club en zijn loon',
+      'Zegt de eigenaar een week later ja op verlengen of definitief kopen, dan staat dat als gouden kaartje in het weekrapport',
+    ],
+  },
   {
     version: '0.60.2',
     date: '2026-09-24',

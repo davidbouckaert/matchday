@@ -806,7 +806,7 @@ function resolveLoanRequest(state: GameState, rng: Rng, r: PendingRequest): void
     p.loan = { ...p.loan, untilSeason: state.season + 1 };
     p.contractUntil = state.season + 1;
     p.loanTalks = { season: state.season, weeksLeft: 0, bought: p.loanTalks?.bought };
-    addNews(state, 'goed', `${club} gaat akkoord: ${p.name} blijft nog een seizoen bij je club.`);
+    addNews(state, 'goed', `${club} gaat akkoord: ${p.name} blijft nog een seizoen bij je club.`, 'viering');
     addLog(state, 'antwoord', `${club} verlengt de huur van ${p.name} voor €${bod.toLocaleString('nl-BE')}.`);
     return;
   }
@@ -818,7 +818,7 @@ function resolveLoanRequest(state: GameState, rng: Rng, r: PendingRequest): void
   p.wage = round(wageDemand(state, p), 5);
   p.loanTalks = { season: state.season, weeksLeft: 0, bought: true };
   p.morale = clamp(p.morale + 8, 0, 100);
-  addNews(state, 'goed', `${p.name} is definitief van jou: ${club} verkoopt hem voor €${bod.toLocaleString('nl-BE')}. Hij tekent voor twee seizoenen aan €${p.wage} per week.`);
+  addNews(state, 'goed', `${p.name} is definitief van jou: ${club} verkoopt hem voor €${bod.toLocaleString('nl-BE')}. Hij tekent voor twee seizoenen aan €${p.wage} per week.`, 'viering');
   addLog(state, 'antwoord', `${p.name} gekocht van ${club} voor €${bod.toLocaleString('nl-BE')}.`);
   remember(state, `${p.name} kwam als huurspeler en bleef: je kocht hem van ${club}.`);
 }

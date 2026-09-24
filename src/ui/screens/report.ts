@@ -329,6 +329,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
     /diploma|opleiding/i.test(t) ? '🎓'
     : /bouwproject|zonnepanelen|toeschouwers binnen/i.test(t) ? '🏗️'
     : /doorstromers/i.test(t) ? '🌱'
+    : /definitief|tekent/i.test(t) ? '🖊️'
     : /sponsor|bijdrage|akkoord/i.test(t) ? '🤝'
     : '🎉';
   const feestHtml = feest.length

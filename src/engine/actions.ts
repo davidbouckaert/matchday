@@ -122,7 +122,11 @@ function removePlayerWithFee(state: GameState, playerId: string, amount: number,
   remember(state, `${p.name} vertrok naar ${buyer} voor ${euro(amount)}.`);
   // een verkochte speler verdwijnt niet uit je leven: je komt hem nog tegen
   openStoryline(state, 'oudspeler', 78, { speler: p.name, oudeclub: buyer, bedrag: euro(amount) });
-  return ok(`${p.name} is verkocht voor €${amount.toLocaleString('nl-BE')}.`);
+  return {
+    ok: true,
+    message: `${p.name} is verkocht voor €${amount.toLocaleString('nl-BE')}.`,
+    viering: { icon: '💰', kop: `${p.name} verkocht`, sub: `voor ${euro(amount)}${buyer === 'een andere club' ? '' : ` aan ${buyer}`}` },
+  };
 }
 
 /** Verkoop op de open markt tegen het bod van deze week. */
@@ -1093,7 +1097,11 @@ export function loanIn(state: GameState, playerId: string): ActionResult {
   p.contractUntil = state.season;
   state.players.push(p);
   addNews(state, 'goed', `${p.name} wordt tot het einde van het seizoen gehuurd van ${p.loan.club}.`);
-  return ok(`${p.name} gehuurd. Jij betaalt €${p.wage}/week, ${p.loan.club} de rest.`);
+  return {
+    ok: true,
+    message: `${p.name} gehuurd. Jij betaalt €${p.wage}/week, ${p.loan.club} de rest.`,
+    viering: { icon: '🖊️', kop: `${p.name} komt op huurbasis`, sub: `van ${p.loan.club} · €${p.wage}/week` },
+  };
 }
 
 /* ---------- Een huurspeler houden: verlengen of kopen ----------
