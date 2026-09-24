@@ -54,6 +54,35 @@ export function logDecision(state: GameState, entry: Omit<ReasoningEntry, 'seaso
   }
 }
 
+/**
+ * De wekelijkse doorlichting van de club.
+ *
+ * Voor je personeel aan het werk gaat, kijkt het eerst rond: wie is er in dienst, wat staat
+ * er, hoe ligt de groep erbij. Dat is wat "hun keuzes zijn niet statisch" concreet betekent,
+ * en daarom staat het als eerste regel in het logboek — ook als er niets veranderd is. Zo
+ * kun je nakijken dat de analyse écht elke week gebeurt en niet alleen als het toevallig
+ * opvalt.
+ */
+export interface ClubScan {
+  staf: string;
+  omkadering: string;
+  groep: string;
+  wijzigingen: string[];
+}
+
+export function logScan(state: GameState, scan: ClubScan): void {
+  logDecision(state, {
+    task: 'training',
+    staff: 'Doorlichting',
+    subject: 'Wekelijkse analyse van de club',
+    from: null,
+    to: scan.wijzigingen.length ? `${scan.wijzigingen.length} ${scan.wijzigingen.length === 1 ? 'wijziging' : 'wijzigingen'}` : 'niets veranderd',
+    changed: scan.wijzigingen.length > 0,
+    efficiency: 1,
+    steps: [scan.staf, scan.omkadering, scan.groep, ...scan.wijzigingen.map((w) => `Veranderd: ${w}`)],
+  });
+}
+
 /** De beslissingen van de laatste weken, nieuwste eerst. */
 export function recentReasoning(state: GameState, limit = 20): ReasoningEntry[] {
   return (state.reasoning ?? []).slice(0, limit);

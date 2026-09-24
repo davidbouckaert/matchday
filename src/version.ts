@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.40.0';
+export const VERSION = '0.41.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,21 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.41.0',
+    date: '2026-09-24',
+    title: 'Achttien spelers, en personeel dat elke week rondkijkt',
+    items: [
+      'Je kern moet minstens achttien spelers tellen: dat is de marge die je nodig hebt voor blessures en schorsingen',
+      'Je kunt nooit ongewild onder die grens zakken — verkopen, uitlenen én vrijgeven kan enkel tijdens de transferperiode',
+      'Daarmee is de noodoplossing van vorige versie weg: er zijn geen transfervrije spelers meer buiten de transferperiode',
+      'Elke week licht je personeel eerst de club door vóór het iets beslist, en dat staat als eerste regel in het logboek',
+      'Verandert er iets — een kinesist erbij, iemand haalt een ster — dan zie je in diezelfde regel wat er veranderd is en wat de beslissing daardoor werd',
+      'Eén medewerker kan minder taken tegelijk aan: drie bij tachtig punten of meer, twee vanaf vijfenveertig, anders één',
+      'Buiten zijn vakgebied werken kost meer: een tweede keuze haalt 75% van zijn punten, een derde 58%',
+      'Wie meerdere taken doet, verliest per extra taak een tiende van zijn slagkracht',
+    ],
+  },
   {
     version: '0.40.0',
     date: '2026-09-24',

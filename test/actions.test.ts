@@ -928,10 +928,14 @@ describe('Taken en specialisatie', () => {
 
   it('hoe beter het staflid, hoe meer taken hij aankan', () => {
     const s = newTestGame();
+    // Een topper doet er drie, niet vier: met vier hield je met drie goede mensen je hele
+    // club draaiende en was delegeren een eenmalige aankoop in plaats van een afweging.
     const weak = { ...s.staff[0], skill: 30 };
+    const middle = { ...s.staff[0], skill: 60 };
     const strong = { ...s.staff[0], skill: 90 };
     expect(taskCapacity(weak)).to.equal(1);
-    expect(taskCapacity(strong)).to.equal(4);
+    expect(taskCapacity(middle)).to.equal(2);
+    expect(taskCapacity(strong)).to.equal(3);
   });
 });
 

@@ -1,12 +1,11 @@
 import { expect } from 'chai';
 import { MIN_SQUAD, squadBlock } from '../src/engine/players';
-import { buyPlayer, delegateTask, hireStaff, startCourse } from '../src/engine/actions';
+import { delegateTask, hireStaff, loanOut, releasePlayer, sellPlayer, startCourse } from '../src/engine/actions';
 import { STAR_EFFICIENCY, pickByEfficiency, runDelegatedTasks, strategyTask, taskEfficiency, taskSkill } from '../src/engine/delegation';
 import { MIN_SUPPORT, supportReport } from '../src/engine/support';
 import { recentReasoning } from '../src/engine/reasoning';
 import { spendPerHeadCanteen } from '../src/engine/canteen';
 import { recovery } from '../src/engine/factors';
-import { advanceWeek } from '../src/engine/turn';
 import { createRng } from '../src/engine/rng';
 import { coursePlan, skillStars } from '../src/engine/training-staff';
 import { readyGame, playWeeks } from './helpers';
@@ -32,26 +31,22 @@ describe('Je kern heeft een harde ondergrens', () => {
     expect(squadBlock(s)).to.contain(String(MIN_SQUAD));
   });
 
-  it('laat je nooit muurvast zitten: er zijn altijd transfervrije spelers', () => {
-    // Zonder dit kon het spel doodlopen: te weinig spelers om verder te gaan, en buiten de
-    // transferperiode mocht je niets halen. Dan was er geen enkele zet meer mogelijk.
-    let s = readyGame();
-    s.week = 20; // midden in het seizoen, transferperiode gesloten
-    s.players = s.players.slice(0, MIN_SQUAD - 2);
-    s = advanceWeek(s);
-    const vrij = s.transferList.filter((p) => p.purchasePrice === 0);
-    expect(vrij.length, 'er hoort zich iemand zonder club te melden').to.be.at.least(2);
-    for (const p of vrij.slice(0, 2)) expect(buyPlayer(s, p.id).ok, 'transfervrij halen mag ook buiten de periode').to.equal(true);
-    expect(squadBlock(s)).to.equal(null);
+  it('kan nooit ongewild onder dat minimum zakken', () => {
+    // Buiten de transferperiode verandert je kern niet: verkopen, uitlenen en iemand laten
+    // gaan kan alleen tijdens de periode. Daarom is er geen nooduitgang nodig — je komt hier
+    // alleen terecht door zelf spelers weg te doen, en dan is de periode nog open.
+    const s = readyGame();
+    s.week = 20; // midden in het seizoen
+    const speler = s.players[0];
+    expect(sellPlayer(s, speler.id).ok, 'verkopen kan niet buiten de periode').to.equal(false);
+    expect(loanOut(s, speler.id).ok, 'uitlenen evenmin').to.equal(false);
+    expect(releasePlayer(s, speler.id).ok, 'en laten gaan ook niet').to.equal(false);
+    expect(s.players.length, 'je kern blijft dus even groot').to.be.at.least(MIN_SQUAD);
   });
 
-  it('laat buiten de transferperiode alleen transfervrije spelers toe', () => {
-    const s = readyGame();
-    s.week = 20;
-    s.players = s.players.slice(0, MIN_SQUAD - 2);
-    s.cash = 1_000_000;
-    const betaald = s.transferList.find((p) => p.purchasePrice > 0);
-    if (betaald) expect(buyPlayer(s, betaald.id).ok, 'een dure transfer blijft geblokkeerd').to.equal(false);
+  it('houdt genoeg marge voor blessures en schorsingen', () => {
+    // achttien en niet elf: die zeven extra zijn je bank, want bijhalen kan niet altijd
+    expect(MIN_SQUAD).to.be.at.least(18);
   });
 
   it('laat je medewerker de kern zelf aanvullen als je transfers uitbesteedt', () => {

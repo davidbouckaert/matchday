@@ -14,7 +14,8 @@ import { expectedAttendance, spendPerHead } from './finance';
 import { acceptedMargin, expectedCanteenUnits } from './canteen';
 import { staffSkill } from './staff';
 import { supportFactor, supportReport } from './support';
-import { logDecision } from './reasoning';
+import { logDecision, logScan } from './reasoning';
+import { skillStars } from './training-staff';
 import { acceptSponsorOffer, approachProspect, renewSponsor } from './sponsors';
 import {
   YOUTH_FEE_WEEK, addMerchItem, buyPlayer, canOrganise, canUpgrade, eventForecast, extendContract, openConcession, organiseEvent,
@@ -98,11 +99,15 @@ function errorChance(skill: number): number {
 }
 
 /**
- * Hoeveel taken iemand aankan. Een zwak personeelslid doet er één, een topper vier.
- * Wie te veel op zijn bord krijgt, zou toch beginnen te knoeien.
+ * Hoeveel taken iemand aankan.
+ *
+ * Dit stond op vier voor een topper, en daarmee hield je met drie goede mensen je hele club
+ * draaiende: vijftien taken, vier mensen, klaar. Delegeren werd zo een eenmalige aankoop in
+ * plaats van een afweging die blijft terugkomen. Nu doet een topper er drie, en de meesten
+ * twee — je hebt dus meer mensen nodig, en elk van hen kost elke week loon.
  */
 export function taskCapacity(staff: Staff): number {
-  return staff.skill >= 85 ? 4 : staff.skill >= 65 ? 3 : staff.skill >= 40 ? 2 : 1;
+  return staff.skill >= 80 ? 3 : staff.skill >= 45 ? 2 : 1;
 }
 
 /**
@@ -112,15 +117,72 @@ export function taskCapacity(staff: Staff): number {
 export function taskSkill(state: GameState, taskId: TaskId, staff: Staff): number {
   const task = TASKS.find((t) => t.id === taskId)!;
   const rank = task.roles.indexOf(staff.role);
-  const fit = rank === 0 ? 1 : rank === 1 ? 0.82 : 0.68;
-  const load = 1 - Math.max(0, tasksOf(state, staff.id).length - 1) * 0.06;
+  // Zijn vakgebied weegt zwaarder dan vroeger. Een kantineverantwoordelijke die je op de
+  // ticketprijs zet, doet dat nu merkbaar minder goed dan de commercieel medewerker — zo is
+  // "de juiste man op de juiste plaats" een echte keuze en niet alleen een detail.
+  const fit = rank === 0 ? 1 : rank === 1 ? 0.75 : 0.58;
+  // en elke extra taak drukt harder, zodat stapelen een prijs heeft
+  const load = 1 - Math.max(0, tasksOf(state, staff.id).length - 1) * 0.1;
   const course = staff.courseWeeksLeft > 0 ? 0.6 : 1;
   return clamp(staff.skill * fit * load * course, 5, 100);
 }
 
 
 
+/**
+ * De wekelijkse doorlichting: wat is er veranderd aan de club sinds vorige week?
+ *
+ * Dit is wat "hun keuzes zijn niet statisch" concreet maakt. Voor iemand aan het werk gaat,
+ * wordt de club doorgelicht en vergeleken met de vorige week. Verandert er iets — een
+ * kinesist erbij, een kantine verbouwd, iemand die een ster hoger komt — dan rekenen ze
+ * daarna met die nieuwe werkelijkheid, en zie je in het logboek waaróm hun keuze verschoof.
+ */
+function scanClub(state: GameState, rng: Rng): void {
+  const bezet = TASKS.filter((t) => delegate(state, t.id));
+  if (!bezet.length) return;
+  void rng;
+
+  const nu = {
+    staf: state.staff.map((m) => `${m.role}:${skillStars(m.skill)}`).sort().join(','),
+    omkadering: bezet.map((t) => `${t.id}:${Math.round(supportFactor(state, t.id) * 100)}`).join(','),
+  };
+  const vorige = state.clubScan;
+  const wijzigingen: string[] = [];
+
+  if (vorige) {
+    if (vorige.staf !== nu.staf) {
+      const was = new Map(vorige.staf.split(',').filter(Boolean).map((x) => x.split(':') as [string, string]));
+      const is = new Map(nu.staf.split(',').filter(Boolean).map((x) => x.split(':') as [string, string]));
+      for (const [rol, sterren] of is) {
+        if (!was.has(rol)) wijzigingen.push(`${rol} in dienst (${sterren} sterren)`);
+        else if (was.get(rol) !== sterren) wijzigingen.push(`${rol} van ${was.get(rol)} naar ${sterren} sterren`);
+      }
+      for (const [rol] of was) if (!is.has(rol)) wijzigingen.push(`${rol} uit dienst`);
+    }
+    if (vorige.omkadering !== nu.omkadering) {
+      for (const t of bezet) {
+        const oud = vorige.omkadering.split(',').find((x) => x.startsWith(`${t.id}:`))?.split(':')[1];
+        const nieuw = Math.round(supportFactor(state, t.id) * 100);
+        if (oud !== undefined && Number(oud) !== nieuw) wijzigingen.push(`omkadering ${t.label.toLowerCase()} van ${oud}% naar ${nieuw}%`);
+      }
+    }
+  }
+  state.clubScan = nu;
+
+  logScan(state, {
+    staf: `${state.staff.length} personeelsleden in dienst, ${bezet.length} van de ${TASKS.length} taken uitbesteed.`,
+    omkadering: bezet
+      .map((t) => `${t.label.split(' (')[0].toLowerCase()} ${Math.round(supportFactor(state, t.id) * 100)}%`)
+      .join(', '),
+    groep: `Groep op vermoeidheid ${Math.round(avgFatigue(state.players.filter((p) => p.injuryWeeks === 0)))}, ${
+      state.players.filter((p) => p.injuryWeeks > 0).length
+    } geblesseerd.`,
+    wijzigingen,
+  });
+}
+
 export function runDelegatedTasks(state: GameState, rng: Rng): void {
+  scanClub(state, rng);
   contractTask(state, rng);
   transferTask(state);
   sponsorTask(state);
@@ -289,9 +351,7 @@ const MIN_DEPTH: Record<Position, number> = { DOEL: 2, VERD: 6, MIDD: 6, AANV: 4
 
 function transferTask(state: GameState): void {
   const s = delegate(state, 'transfers');
-  if (!s) return;
-  // de kern rond krijgen mag ook buiten de transferperiode, met transfervrije spelers
-  if (!isTransferWindow(state.week) && !squadBlock(state)) return;
+  if (!s || !isTransferWindow(state.week)) return;
 
   /*
    * Eerst de kern rond krijgen.
@@ -305,9 +365,8 @@ function transferTask(state: GameState): void {
    * transfervrij is, want dat kost geen overnamesom, en anders de goedkoopste die past.
    */
   if (squadBlock(state)) {
-    const buiten = !isTransferWindow(state.week);
     const vrij = state.transferList
-      .filter((p) => (buiten ? p.purchasePrice === 0 : p.purchasePrice <= Math.max(0, state.cash - 5_000)))
+      .filter((p) => p.purchasePrice <= Math.max(0, state.cash - 5_000))
       .sort((a, b) => a.purchasePrice - b.purchasePrice || overall(b) - overall(a));
     const pick = vrij[0];
     if (pick && buyPlayer(state, pick.id).ok) {

@@ -540,7 +540,7 @@ export function developPlayers(state: GameState, rng: Rng): DevelopmentSummary {
 
 // ---------- Kern van de ploeg en veilige selectie ----------
 
-export const MIN_SQUAD = 16;
+export const MIN_SQUAD = 18;
 
 /**
  * De harde ondergrens van je kern. Geeft terug waarom de week niet verder kan, of null.
@@ -549,6 +549,11 @@ export const MIN_SQUAD = 16;
  * ondergrens kon je je club gewoon leeg laten lopen. Contracten liepen af, spelers gingen
  * transfervrij weg en je loonlast zakte mee — hoe minder je deed, hoe goedkoper het werd.
  * Een club die zondag moet aantreden kan dat niet, dus jij moet spelers halen.
+ *
+ * Achttien en niet elf: je hebt reserves nodig voor blessures en schorsingen, en buiten de
+ * transferperiode kun je niets bijhalen. Die marge ís de bank. Je kunt hier ook nooit
+ * ongewild onder zakken: verkopen, uitlenen en iemand laten gaan kan alleen in de
+ * transferperiode, en daarbuiten verandert er niets aan je kern.
  */
 export function squadBlock(state: GameState): string | null {
   const kern = state.players.filter((p) => p.loan?.type !== 'uit').length;

@@ -155,7 +155,7 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 8
 
-- **Kern beschermen:** je kunt je laatste doelman niet verkopen of uitlenen, elke linie houdt minstens één reserve en je zakt nooit onder 16 spelers. Ook de scout houdt zich daaraan. In Transfers zie je met een ★ wie tot je kern hoort en met een slotje wie deze week niet weg mag
+- **Kern beschermen:** je kunt je laatste doelman niet verkopen of uitlenen, elke linie houdt minstens één reserve en je zakt nooit onder 18 spelers. Ook de scout houdt zich daaraan. In Transfers zie je met een ★ wie tot je kern hoort en met een slotje wie deze week niet weg mag
 - **Contracten (Ploeg › Contracten):** aflopende contracten op één plek, met wat de speler vraagt, jouw loonvoorstel, de kans op een akkoord en het effect op zijn moraal
 - **Spelersrollen:** kapitein, strafschop- en hoekschopnemer, elk met een effect op de ploeg
 - **Delegeren per deeltaak:** trainingen, opstelling, wedstrijdtactiek en spelersrollen staan los van elkaar, en ook transfers en de kantine kun je uitbesteden
@@ -169,7 +169,37 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 16 (deze versie)
+## Laag 17 (deze versie)
+
+### 0.41.0 — Achttien spelers, en personeel dat elke week rondkijkt
+
+**De ondergrens gaat van zestien naar achttien, en het ventiel gaat dicht.** Vorige versie zette een harde ondergrens op zestien spelers en gaf daar een uitweg bij: met een te kleine kern mocht je ook buiten de transferperiode transfervrije spelers halen, want anders zou je vastzitten. Dat ventiel was niet nodig, en de reden waarom is de moeite waard om op te schrijven.
+
+Mijn redenering was: je kunt onder de grens zakken zonder dat je het wilt — een speler raakt geblesseerd, een contract loopt af — en buiten de transferperiode kun je er niemand bij halen, dus dan staat het spel stil. De eerste helft klopte niet. Verkopen kan alleen tijdens de transferperiode, uitlenen ook. De enige manier om buiten die periode spelers kwijt te raken was ze vrijgeven, en dáár zat geen controle op. Dat was de echte fout: niet dat er een uitweg ontbrak, maar dat er een lek zat. Vrijgeven is nu ook aan de transferperiode gebonden, en daarmee kun je buiten de transferperiode niet meer onder je eigen ondergrens zakken. Het ventiel is weg.
+
+Achttien in plaats van zestien, omdat dat de marge is die je in het echt nodig hebt: elf op het veld, en genoeg volk op de bank om een blessure en een schorsing tegelijk op te vangen zonder dat je een doelman op de flank moet zetten.
+
+**Elke week licht je personeel eerst de club door.** "Hun keuzes zijn niet statisch" is makkelijk gezegd; dit maakt het zichtbaar. Voor er ook maar iets beslist wordt, kijkt je staf rond — wie is er in dienst, wat staat er, hoe ligt de groep erbij — en die doorlichting is de eerste regel in het logboek, ook in een week waarin er niets verandert. Zo kun je nakijken dat de analyse écht elke week gebeurt.
+
+Verandert er wel iets, dan staat in diezelfde regel wat er veranderd is en wat de beslissing daardoor werd:
+
+```
+Wekelijkse analyse van de club: niets veranderd
+   3 personeelsleden in dienst, 1 van de 15 taken uitbesteed.
+   trainingen 62%
+   Groep op vermoeidheid 0, 0 geblesseerd.
+
+--- de week erna, met een kinesist en een verzorger erbij ---
+
+Wekelijkse analyse van de club: 3 wijzigingen (GEWIJZIGD)
+   trainingen 92%
+   Veranderd: kinesist in dienst (4 sterren)
+   Veranderd: verzorger in dienst (4 sterren)
+   Veranderd: omkadering trainingen van 62% naar 92%
+  → Trainingen per week: 3 → 4 (GEWIJZIGD)
+```
+
+**Eén medewerker kan minder tegelijk.** Drie toppers konden samen de hele club draaien, en dat maakte "de beste betaalbare aanwerven" een eindpunt in plaats van een begin. Een medewerker neemt nu drie taken aan vanaf tachtig punten, twee vanaf vijfenveertig, anders één — en buiten zijn vakgebied werken kost meer dan vroeger: een tweede keuze haalt 75% van zijn punten in plaats van 82%, een derde 58% in plaats van 68%. Elke extra taak kost hem bovendien een tiende van zijn slagkracht.
 
 ### 0.40.0 — Wat je personeel nodig heeft, en waarom het doet wat het doet
 
@@ -254,7 +284,7 @@ Zo is het personeelsspel iets voor je eerste seizoen én voor je vijfde: in prov
 | de beste betaalbare aanwerven en dan uitbesteden | 0 op 12 |
 | elke rol kopen wat er te koop is | 0 op 12 |
 
-**Een harde ondergrens van zestien spelers.** Zak je eronder, dan gaat de week niet verder. Het bestuur vult je kern niet meer zelf aan — die beslissing hoort bij jou, en het was ook de laatste manier waarop je je club stilletjes kon laten leeglopen. Daar hoort één ventiel bij, anders loopt het spel dood: met een te kleine kern mag je ook búiten de transferperiode transfervrije spelers halen, en er meldt zich dan altijd iemand die zonder club zit. Goed is hij meestal niet.
+**Een harde ondergrens van zestien spelers.** Zak je eronder, dan gaat de week niet verder. Het bestuur vult je kern niet meer zelf aan — die beslissing hoort bij jou, en het was ook de laatste manier waarop je je club stilletjes kon laten leeglopen. (In 0.41.0 werd dit achttien, en verviel het ventiel dat hier eerst bij hoorde.)
 
 **De kantineverantwoordelijke rekent nu echt.** Hij nam de richtprijs met een vaste opslag, hoe goed of slecht hij ook was. Nu loopt hij per artikel de prijzen af en rekent hij met het vraagmodel van het spel uit wat er overblijft: duurder betekent minder pinten, goedkoper meer volk aan de toog maar minder marge. Hoe beter hij is, hoe verder hij vooruitkijkt en hoe dichter hij bij de top uitkomt.
 

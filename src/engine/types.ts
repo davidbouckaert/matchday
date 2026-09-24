@@ -676,6 +676,8 @@ export interface GameState {
   starIds: string[];
   /** Het logboek van het brein: wat je personeel uitrekende voor het iets deed. */
   reasoning: ReasoningEntry[];
+  /** De club zoals ze er vorige week bij stond, om wijzigingen te kunnen zien. */
+  clubScan?: { staf: string; omkadering: string };
   emergencyLoanOffered: boolean;
   promotionsWithInvestor: number;
   investorActive: boolean;
