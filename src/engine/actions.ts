@@ -3,7 +3,7 @@
 
 import type {
   ActionResult, CanteenItemId, ConcessionId, Formation, GamePlan, GameState, Infrastructure, Mentality, MerchItemId,
-  Player, PlayerLoan, PlayerRoles, Position, StaffRole, TaskId, TrainingFocus, UpgradeId, WorldClub,
+  Player, PlayerLoan, PlayerRoles, Position, StaffRole, TaskId, TrainingFocus, UpgradeId,
 } from './types';
 import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
@@ -925,31 +925,21 @@ export function unlistPlayer(state: GameState, playerId: string): ActionResult {
   return ok(`${p.name} staat niet langer te koop.`);
 }
 
-export const LOAN_YOUTH_WORDS = ['zwakke', 'bescheiden', 'degelijke', 'sterke'];
-
 /**
- * Waar je uitgeleende speler terechtkomt.
+ * Waar je uitgeleende speler terechtkomt: een echte club uit de wereld.
  *
- * Dit was `rng.pick(state.league.teams)`: een willekeurige naam uit je eigen reeks, zonder
- * enig gevolg. Waar hij speelt hoort er juist toe te doen — dat is het stuk levende wereld
- * dat hier ontbrak. Clubs die hem willen, zijn clubs waar hij in de ploeg past: niet te
- * zwak (dan leert hij niets) en niet te sterk (dan zit hij daar op de bank). Een goede
- * jeugdwerking geeft de doorslag, want daar komt een jonge speler om te groeien.
+ * Dit was een willekeurige naam uit je eigen reeks, die verder nergens bestond. Een club uit
+ * de wereld is wél een club die meedoet, promoveert en degradeert, en dat is precies genoeg.
+ * Het scheelde niet veel of hier stond een heel rekenwerk over welke club hem hoeveel beter
+ * maakt — maar dat is spelersmanagement tot op het bot, en daar gaat dit spel niet over.
+ * Hij speelt, hij groeit, hij komt terug. Waar hij precies zat, is een naam bij het verhaal.
  */
-export function loanHost(state: GameState, p: Player, rng: Rng): WorldClub {
-  const kwaliteit = overall(p);
-  const kandidaten = (state.world?.clubs ?? []).filter((c) => !c.defunct);
-  if (!kandidaten.length) {
-    // geen wereld (een heel oud opgeslagen spel): dan blijft het bij een naam uit je reeks
-    const naam = rng.pick(state.league.teams);
-    return { id: '', name: naam.name, divisionLevel: state.league.divisionLevel, strength: naam.strength, budget: 0, ambition: 50, momentum: 0, stadium: 1, youth: 1, trouble: 0, defunct: false, lastMove: null, seasons: [] };
-  }
-  const score = (c: WorldClub) => {
-    // hij past het best bij een club waar hij net aan de maat is: rond zijn eigen niveau
-    const kloof = Math.abs(c.strength - kwaliteit);
-    return -kloof + c.youth * 1.2 + (c.ambition - 50) / 40 + rng.range(0, 3);
-  };
-  return [...kandidaten].sort((a, b) => score(b) - score(a))[0];
+export function loanHost(state: GameState, rng: Rng): { id: string; name: string; divisionLevel: number } {
+  const nabij = (state.world?.clubs ?? []).filter((c) => !c.defunct && Math.abs(c.divisionLevel - state.league.divisionLevel) <= 1);
+  const kandidaten = nabij.length ? nabij : (state.world?.clubs ?? []).filter((c) => !c.defunct);
+  if (kandidaten.length) return rng.pick(kandidaten);
+  // geen wereld (een heel oud opgeslagen spel): dan blijft het bij een naam uit je reeks
+  return { id: '', name: rng.pick(state.league.teams).name, divisionLevel: state.league.divisionLevel };
 }
 
 /** Welk deel van het loon betaalt een andere club als je deze speler uitleent? */
@@ -969,7 +959,7 @@ export function loanOut(state: GameState, playerId: string): ActionResult {
   const lblock = departureBlock(state, p, 'uitlenen');
   if (lblock) return fail(lblock);
   const rng = createRng(state);
-  const gastclub = loanHost(state, p, rng);
+  const gastclub = loanHost(state, rng);
   const share = loanWageShare(state, p);
   p.loan = {
     type: 'uit',
@@ -982,14 +972,13 @@ export function loanOut(state: GameState, playerId: string): ActionResult {
   };
   p.listed = false;
   state.tactics.manualXI = state.tactics.manualXI.filter((id) => id !== playerId);
-  const werking = LOAN_YOUTH_WORDS[gastclub.youth] ?? 'gewone';
   addNews(
     state,
     'neutraal',
-    `${p.name} wordt tot het einde van het seizoen uitgeleend aan ${gastclub.name} (${DIVISIONS[gastclub.divisionLevel].name}, ${werking} werking). Zij betalen ${Math.round(share * 100)}% van zijn loon.`,
+    `${p.name} wordt tot het einde van het seizoen uitgeleend aan ${gastclub.name} (${DIVISIONS[gastclub.divisionLevel].name}). Zij betalen ${Math.round(share * 100)}% van zijn loon.`,
   );
   return ok(
-    `${p.name} uitgeleend aan ${gastclub.name} (${Math.round(share * 100)}% van zijn loon betaald). Hij speelt daar en groeit mee met hún werking — je ziet op het einde van het seizoen wat het opleverde.`,
+    `${p.name} uitgeleend aan ${gastclub.name} (${Math.round(share * 100)}% van zijn loon betaald). Hij speelt daar elke week en komt sterker terug — je ziet onderweg hoeveel.`,
   );
 }
 

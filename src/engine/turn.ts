@@ -16,7 +16,7 @@ import {
   isWinter,
 } from './calendar';
 import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt } from './league';
-import { developPlayers, fatigueAgeFactor, generatePlayer, hostClub, hostPlayShare, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
+import { LOAN_PLAY_SHARE, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
 import { resolveRequests, sponsorsAfterSeason, weeklySponsors } from './sponsors';
@@ -166,13 +166,11 @@ function playMatchWeek(state: GameState, rng: Rng): void {
   // kleine schommelingen in de vorm van tegenstanders
   for (const t of state.league.teams) t.strength = Math.round(clamp(t.strength + rng.normal(0, 0.4), 30, 95) * 10) / 10;
 
-  // ook je uitgeleende spelers spelen deze week ergens: hoe vaak hangt af van of ze bij hun
-  // gastclub in de ploeg passen. Zo heb je bij zijn terugkeer een echt verhaal in plaats van
-  // alleen een naam die weer opduikt.
+  // ook je uitgeleende spelers spelen deze week ergens, zodat je bij hun terugkeer een
+  // verhaal hebt in plaats van alleen een naam die weer opduikt
   for (const p of state.players) {
     if (p.loan?.type !== 'uit') continue;
-    const club = hostClub(state, p);
-    if (club && rng.chance(hostPlayShare(club, p))) p.loan.matches = (p.loan.matches ?? 0) + 1;
+    if (rng.chance(LOAN_PLAY_SHARE)) p.loan.matches = (p.loan.matches ?? 0) + 1;
   }
 
   for (const f of fixtures) {

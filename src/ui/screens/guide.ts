@@ -54,10 +54,9 @@ function faq(): QA[] {
     },
     {
       q: 'Wat gebeurt er met een speler die ik uitleen?',
-      a: `Hij speelt een seizoen bij een echte club uit de wereld, en die club kiest het spel voor je: eentje waar hij in de ploeg past en waar de jeugdwerking iets voorstelt.
-        Daar groeit hij mee met hún trainer en hún werking, en met hoeveel hij er speelt. Bij een club die een maat te groot is, zit hij daar ook op de bank en levert het seizoen
-        vrijwel niets op; bij een club op zijn maat speelt hij bijna elke week en komt hij drie tot vijf punten sterker terug. Terwijl hij weg is, zie je bij Ploeg › Transfers
-        hoeveel wedstrijden hij speelde en hoeveel hij vooruitging, en bij zijn terugkeer staat het in het nieuws.`,
+      a: `Hij speelt een seizoen bij een club uit de wereld en ontwikkelt zich daar gewoon verder — meestal beter dan wanneer hij bij jou op de bank was blijven zitten,
+        want hij speelt er elke week. De andere club betaalt een deel van zijn loon. Terwijl hij weg is, zie je bij Ploeg › Transfers hoeveel wedstrijden hij speelde en
+        hoeveel hij vooruitging, en bij zijn terugkeer staat het in het nieuws. Uitlenen kan alleen tijdens de transferperiode.`,
     },
     {
       q: 'Kan ik een huurspeler houden?',

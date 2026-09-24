@@ -52,7 +52,7 @@ function state(s: GameState, p: Player, inLineup: boolean): { kind: 'in' | 'bank
       label: 'uitgeleend',
       tip: `Uitgeleend aan ${p.loan.club} tot het einde van het seizoen. Hij speelde er ${gespeeld} ${
         gespeeld === 1 ? 'wedstrijd' : 'wedstrijden'
-      } en werd er ${groei > 0 ? `${groei} punten sterker` : 'nog niet beter'} van. Hoe hij daar groeit, hangt af van hún trainer en jeugdwerking en van hoeveel hij er speelt.`,
+      } en werd er ${groei > 0 ? `${groei} punten sterker` : 'nog niet beter'} van. Hij speelt daar elke week en ontwikkelt zich gewoon verder.`,
     };
   }
   if (inLineup) return { kind: 'in', label: 'in de basis', tip: 'Hij staat zondag in de basiself.' };

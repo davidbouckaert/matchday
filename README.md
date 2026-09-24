@@ -171,22 +171,27 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.35.1 — Een laag eruit die hier niet thuishoorde
+
+**Wat ik in 0.35.0 bouwde, werkte — en hoorde hier niet.** De gastclub bepaalde hoeveel een uitgeleende speler groeide: hun trainer, hun jeugdwerking, of hij er wel in de ploeg paste. Een seizoen bij een club die een maat te groot was, leverde nul op. Dat is fijnmazig spelersmanagement, en dit spel gaat over het runnen van een club, niet over het uitstippelen van een leertraject per speler. Eruit.
+
+Een uitgeleende speler speelt nu gewoon elke week en ontwikkelt zich verder. Gemeten over een seizoen:
+
+| | groei |
+|---|---|
+| uitgeleend | +5,5 |
+| in je eigen basiself | +6,0 |
+| op je eigen bank | +2,5 |
+
+Dat is de hele regel: uitlenen is beter dan hem laten zitten, iets minder dan hem zelf opstellen, en het kost je de helft van zijn loon. Daar hoef je niets voor uit te rekenen.
+
+Wat blijft staan uit 0.35.0: hij gaat naar een echte club uit de wereld in plaats van een naam die nergens bestaat, je ziet terwijl hij weg is hoeveel wedstrijden hij speelde en hoeveel hij vooruitging, en bij zijn terugkeer staat er een bericht met het verhaal in plaats van alleen zijn naam.
+
 ### 0.35.0 — Een uitgeleende speler speelt ergens echt
 
-**Je leende hem uit aan een naam.** `rng.pick(state.league.teams).name` — een willekeurige club uit je eigen reeks, zonder enig gevolg. Waar hij naartoe ging maakte niets uit, en zijn ontwikkeling liep intussen gewoon door op jóuw trainer en jouw trainingsschema, terwijl hij een heel seizoen honderd kilometer verderop speelde.
+**Je leende hem uit aan een naam.** `rng.pick(state.league.teams).name` — een willekeurige club uit je eigen reeks, zonder enig gevolg. Zijn ontwikkeling liep intussen gewoon door op jóuw trainer en jouw trainingsschema, terwijl hij een heel seizoen honderd kilometer verderop speelde.
 
-Hij komt nu terecht bij een echte club uit de wereld, en die wordt gekozen zoals een club dat zou doen: eentje waar hij in de ploeg past — niet te zwak, want dan leert hij niets, en niet te sterk, want daar zit hij ook op de bank — met een goede jeugdwerking als doorslag. Bij het uitlenen zie je meteen waar hij heen gaat, in welke reeks en wat die club met jeugd doet.
-
-**Daar hangt zijn groei nu van af.** Hun trainer, hun jeugdwerking, en hoeveel hij er speelt. Gemeten over tien partijen, een jong talent dat een volledig seizoen weg is:
-
-| gastclub | groei over het seizoen | wedstrijden gespeeld |
-|---|---|---|
-| zoals het spel zelf kiest | **+4,8** | 27 |
-| topwerking, maar een maat te sterk | +4,3 | 8 |
-| gewone club op zijn maat | +3,0 | 23 |
-| zwakke werking, veel te sterk | **+0,0** | 6 |
-
-Een seizoen bij een club die hem niet nodig heeft, is dus een verloren seizoen — en dat hoort ook zo. Ter vergelijking: bij jou op de bank groeit diezelfde speler +2,5, in jouw basiself +6,0.
+Hij komt nu terecht bij een echte club uit de wereld: eentje die meedoet, promoveert en degradeert. Hij speelt daar elke week en komt een stuk sterker terug dan wanneer hij bij jou op de bank was blijven zitten.
 
 **En je ziet het.** Terwijl hij weg is, staat bij Ploeg › Transfers hoeveel wedstrijden hij daar speelde en hoeveel hij erop vooruitging. Bij zijn terugkeer stond er vroeger alleen "Terug van uitleenbeurt: Kobe Deprez." Nu staat er wat het opleverde: hoeveel hij speelde, hoeveel sterker hij werd, of juist dat hij er nauwelijks aan spelen toekwam.
 

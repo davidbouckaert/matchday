@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.35.0';
+export const VERSION = '0.35.1';
 
 export interface ChangeEntry {
   version: string;
@@ -12,15 +12,25 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.35.1',
+    date: '2026-09-24',
+    title: 'Een laag eruit die hier niet thuishoorde',
+    items: [
+      'In 0.35.0 bepaalde de gastclub hoeveel een uitgeleende speler groeide: hun trainer, hun jeugdwerking, of hij er wel in de ploeg paste',
+      'Dat werkte, maar het hoort niet in dit spel: je bent eigenaar van een club, geen jeugdcoördinator die per speler een leertraject uitstippelt',
+      'Een uitgeleende speler speelt nu gewoon elke week en ontwikkelt zich verder, zonder dat jij ergens iets over moet uitrekenen',
+      'Wat blijft: hij gaat naar een echte club uit de wereld, je ziet onderweg hoeveel hij speelde en vooruitging, en bij zijn terugkeer staat het verhaal in het nieuws',
+      'Gemeten: een seizoen uitgeleend levert +5,5 op, een seizoen op jouw bank +2,5 en een seizoen in je basiself +6,0',
+    ],
+  },
+  {
     version: '0.35.0',
     date: '2026-09-24',
     title: 'Een uitgeleende speler speelt ergens echt',
     items: [
       'Je uitgeleende speler ging naar een willekeurige naam uit je eigen reeks, en die club deed verder niets met hem',
-      'Hij komt nu terecht bij een echte club uit de wereld, gekozen op waar hij in de ploeg past en waar de jeugdwerking iets voorstelt',
-      'Zijn groei hangt voortaan af van hún trainer, hún jeugdwerking en hoeveel hij er speelt — niet meer van jouw trainer, terwijl hij honderd kilometer verderop zit',
-      'Bij een club die een maat te groot is zit hij daar ook op de bank: een seizoen bij zo een club levert vrijwel niets op',
-      'Bij een club op zijn maat speelt hij bijna elke week en komt hij drie tot vijf punten sterker terug',
+      'Hij komt nu terecht bij een echte club uit de wereld: eentje die meedoet, promoveert en degradeert',
+      'Hij speelt daar elke week en komt een stuk sterker terug dan wanneer hij bij jou op de bank was blijven zitten',
       'Je ziet nu wat een uitleenbeurt doet: hoeveel wedstrijden hij speelde en hoeveel hij erop vooruitging, terwijl hij weg is',
       'En bij zijn terugkeer staat er een bericht met het verhaal in plaats van alleen zijn naam',
     ],
