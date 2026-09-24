@@ -13,7 +13,7 @@ import {
   canteenDef, concessionDef, merchDef, roleDef, type ClubEventDef,
 } from './data/catalog';
 import { isTransferWindow } from './calendar';
-import { FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, selectLineup, wageDemand } from './players';
+import { FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, selectLineup, squadBlock, wageDemand } from './players';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
 import { emergencyOffer, loanOffers, sponsorWeekly } from './loans';
 import { acceptSponsorOffer } from './sponsors';
@@ -57,9 +57,19 @@ function guard(state: GameState): ActionResult | null {
 export function buyPlayer(state: GameState, playerId: string): ActionResult {
   const g = guard(state);
   if (g) return g;
-  if (!isTransferWindow(state.week)) return fail('De transferperiode is gesloten.');
   const p = state.transferList.find((x) => x.id === playerId);
   if (!p) return fail('Die speler staat niet meer op de lijst — een andere club was je voor.');
+  // Buiten de transferperiode ligt alles stil, met één uitzondering: zak je onder de zestien
+  // spelers, dan mag je transfervrije spelers halen. Zonder die uitzondering kon je muurvast
+  // komen te zitten — te weinig spelers om verder te spelen, en geen periode om er te halen.
+  const nood = squadBlock(state) !== null && p.purchasePrice === 0;
+  if (!isTransferWindow(state.week) && !nood) {
+    return fail(
+      squadBlock(state)
+        ? 'De transferperiode is gesloten. Met een te kleine kern mag je wel transfervrije spelers halen: die staan in de lijst zonder overnamesom.'
+        : 'De transferperiode is gesloten.',
+    );
+  }
   if (state.players.length >= 30) return fail('Je kern zit vol: dertig spelers is het maximum. Verkoop of leen er eerst een uit.');
   if (p.purchasePrice > state.cash) return fail(tooExpensive(state, p.purchasePrice, `${p.name} kopen`));
   if (state.avatar.background === 'exspeler') p.wage = round(p.wage * 0.95, 5);

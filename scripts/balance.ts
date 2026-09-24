@@ -1,11 +1,19 @@
-// Balanstest: speelt per club/investeerder een aantal seizoenen zonder in te grijpen
+// Balanstest: speelt per club/investeerder een aantal seizoenen zonder ook maar iets te doen
 // en toont hoe het financieel en sportief afloopt. Gebruik: npm run balance
+//
+// "Passief" is hier letterlijk: een nieuw spel en dan 52 keer per seizoen op volgende week
+// klikken. Geen ambitie uitgesproken, niets gedelegeerd, geen prijs gezet, geen sponsor
+// benaderd. Alleen de opstelling kiest de engine zelf. Dit is dus de bodem, niet een
+// speelstijl — wie alles uitbesteedt aan personeel doet het een stuk beter.
+//
+// Zes seizoenen en niet drie, want dat was precies de fout: over drie seizoenen leek niets
+// doen vol te houden, terwijl die clubs gewoon in seizoen vier of vijf omvielen.
 import type { InvestorId } from '../src/engine/types';
 import { createNewGame } from '../src/engine/newGame';
 import { advanceWeek } from '../src/engine/turn';
 
 const SEEDS = Number(process.env.SEEDS ?? 20);
-const SEASONS = Number(process.env.SEASONS ?? 3);
+const SEASONS = Number(process.env.SEASONS ?? 6);
 const clubs = ['zuidrand', 'heidebeke'];
 const investors: InvestorId[] = ['aannemer', 'fonds', 'cooperatie'];
 

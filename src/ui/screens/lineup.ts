@@ -14,7 +14,8 @@ import { FORMATIONS, POSITIONS, isCorePlayer, marketValue, overall, selectLineup
 import { DIVISIONS } from '../../engine/data/divisions';
 import { OPPONENT_STAFF_BONUS } from '../../engine/league';
 import { delegate } from '../../engine/delegation';
-import { count, esc, euro } from '../format';
+import { count, esc, euro, starMark } from '../format';
+import { isStar } from '../../engine/stars';
 import { hint, tipAttr } from '../tooltip';
 
 /** De volle naam van een linie, voor waar de afkorting te kort is. */
@@ -78,7 +79,7 @@ function pitchChip(s: GameState, p: Player, zone: Position, selected: string | n
       <span class="chip-rating">${overall(p)}</span>
       ${pinned ? '<span class="chip-pin" aria-label="vastgezet">★</span>' : ''}
     </span>
-    <span class="chip-name">${esc(p.name.split(' ').at(-1) ?? p.name)}</span>
+    <span class="chip-name">${isStar(s, p) ? '<span class="star-mark" aria-label="sterspeler">⭐</span>' : ''}${esc(p.name.split(' ').at(-1) ?? p.name)}</span>
     <span class="chip-foot">${fitness(p)}${roleMark(s, p.id)}${wrong ? `<span class="chip-wrong" ${tipAttr(`${p.name} is ${p.position}, maar staat hier als ${zone}. Dat kost hem punten.`, 'Buiten positie')}>${zone}</span>` : ''}</span>
   </button>`;
 }
@@ -225,7 +226,7 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
     ${action} ${tipAttr(tipText, p.name)} ${action ? 'role="button" tabindex="0"' : ''}>
     <span class="sr-state">${inXI ? '<span class="dot-in" aria-label="in de basis"></span>' : benched ? '<span class="dot-bench" aria-label="op de bank"></span>' : '<span class="dot-out" aria-label="in de kern"></span>'}</span>
     <span class="sr-name">
-      <strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ' <span class="core" ' + tipAttr('Kernspeler: hij hoort bij je beste elf of is een groot talent.') + '>★</span>' : ''}${roleMark(s, p.id)}
+      <strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ' <span class="core" ' + tipAttr('Kernspeler: hij hoort bij je beste elf of is een groot talent.') + '>★</span>' : ''}${roleMark(s, p.id)}
       <span class="sr-sub">${p.age}j · ${esc(p.trait)}${p.isYouth ? ' · eigen jeugd' : ''}${p.loan?.type === 'in' ? ` · gehuurd van ${esc(p.loan.club)}` : ''}${p.listed ? ' · te koop' : ''}</span>
     </span>
     <span class="sr-rating"><strong>${overall(p)}</strong><span class="muted">/${Math.round(p.potential)}</span></span>

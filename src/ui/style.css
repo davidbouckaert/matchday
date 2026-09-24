@@ -1660,3 +1660,8 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
   margin: var(--s3) 0 0; padding: var(--s2) var(--s3); background: var(--sunken);
   border-radius: var(--radius-sm); font-size: .88rem; cursor: help;
 }
+
+/* Het sterretje bij een sterspeler. Een ander teken dan de ★ voor kernspelers: die zegt
+   "niet verkopen", deze zegt "hier komen ze voor". */
+.star-mark { font-size: .82em; cursor: help; }
+.chip-name .star-mark { font-size: .72em; margin-right: 1px; }

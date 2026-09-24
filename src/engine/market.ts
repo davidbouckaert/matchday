@@ -3,7 +3,7 @@ import type { Rng } from './rng';
 import { clamp, round } from './rng';
 import { DIVISIONS } from './data/divisions';
 import { STAFF_ROLES } from './data/catalog';
-import { generatePlayer, marketValue, wageDemand } from './players';
+import { generatePlayer, marketValue, squadBlock, wageDemand } from './players';
 import { PRO_CLUBS } from './data/names';
 import { generateStaff, staffSkill } from './staff';
 import { isTransferWindow } from './calendar';
@@ -45,6 +45,28 @@ export function refreshTransferList(state: GameState, rng: Rng, full = false): v
     p.purchasePrice = freeAgent ? 0 : round(marketValue(p, state.marketIndex) * rng.range(1.0, 1.35) * scoutDiscount, 100);
     state.transferList.push(p);
   }
+  ensureFreeAgents(state, rng);
+}
+
+/**
+ * Er staan altijd transfervrije spelers op de lijst als je kern te klein is.
+ *
+ * Zonder dit kon je muurvast komen te zitten: minder dan zestien spelers, dus de week gaat
+ * niet verder, en buiten de transferperiode mag je alleen transfervrije spelers halen — maar
+ * die stonden er toevallig niet. Dan was er geen enkele zet meer die je kon doen. Nu meldt
+ * zich altijd wel iemand die zonder club zit; goed is hij meestal niet, maar hij vult je kern.
+ */
+export function ensureFreeAgents(state: GameState, rng: Rng): void {
+  if (!squadBlock(state)) return;
+  const division = DIVISIONS[state.league.divisionLevel];
+  const vrij = state.transferList.filter((p) => p.purchasePrice === 0).length;
+  for (let i = vrij; i < 3; i++) {
+    // wie in het seizoen nog zonder club zit, is doorgaans geen toptalent
+    const p = generatePlayer(state, rng, { quality: division.opponentStrength - rng.range(4, 12), age: rng.int(24, 33), season: state.season });
+    p.contractUntil = state.season + 1;
+    p.purchasePrice = 0;
+    state.transferList.push(p);
+  }
 }
 
 export function refreshStaffMarket(state: GameState, rng: Rng): void {
@@ -75,6 +97,8 @@ export function refreshLoanMarket(state: GameState, rng: Rng): void {
 export function weeklyMarket(state: GameState, rng: Rng): void {
   updateMarket(state, rng);
   if (isTransferWindow(state.week)) refreshTransferList(state, rng);
+  // ook buiten de transferperiode: zit je onder de kernondergrens, dan meldt zich iemand
+  ensureFreeAgents(state, rng);
   // huurmarkt: nieuw aanbod bij de start van elke transferperiode (juli en januari)
   const next = (state.week % 52) + 1;
   if (next === 28) refreshLoanMarket(state, rng);

@@ -1,3 +1,5 @@
+import type { GameState, Player } from '../engine/types';
+import { isStar, starLabel } from '../engine/stars';
 export function esc(value: unknown): string {
   return String(value)
     .replace(/&/g, '&amp;')
@@ -73,4 +75,15 @@ export function whenLabel(season: number, week: number, currentSeason?: number):
  */
 export function count(n: number, enkelvoud: string, meervoud = `${enkelvoud}s`): string {
   return `${n} ${n === 1 ? enkelvoud : meervoud}`;
+}
+
+/**
+ * Het sterretje bij de naam van een sterspeler.
+ *
+ * Bewust een ander teken dan de ★ die "kernspeler" betekent: dat is een lijstje van spelers
+ * die je liever niet kwijtspeelt, dit is de man waar ze voor komen kijken.
+ */
+export function starMark(s: GameState, p: Player): string {
+  if (!isStar(s, p)) return '';
+  return ` <span class="star-mark" title="Sterspeler" data-tip="Sterspeler: ${esc(starLabel(s, p))}. Hij trekt volk naar het veld en maakt een sponsorplaats meer waard.">⭐</span>`;
 }

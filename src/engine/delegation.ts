@@ -3,14 +3,15 @@
 
 import type { GameState, Mentality, Position, Staff, TaskId, TrainingFocus, UpgradeId } from './types';
 import { PLANS, nextOpponent } from './strategy';
-import { avgFatigue } from './factors';
+import { NATURAL_RECOVERY, avgFatigue, matchLoad, recovery, trainingLoad } from './factors';
 import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
 import { DIVISIONS } from './data/divisions';
 import { CANTEEN_ITEMS, CLUB_EVENTS, CONCESSIONS, CONCESSION_SPACE, MERCH_ITEMS, TASKS, UPGRADES } from './data/catalog';
 import { isTransferWindow } from './calendar';
-import { FORMATIONS, POSITIONS, bestForRole, bestFormation, departureBlock, isCorePlayer, overall, teamStrength } from './players';
+import { FORMATIONS, POSITIONS, bestForRole, bestFormation, departureBlock, isCorePlayer, overall, squadBlock, teamStrength } from './players';
 import { expectedAttendance, spendPerHead } from './finance';
+import { acceptedMargin, expectedCanteenUnits } from './canteen';
 import { staffSkill } from './staff';
 import { acceptSponsorOffer, approachProspect, renewSponsor } from './sponsors';
 import {
@@ -18,7 +19,7 @@ import {
   sellPlayer, setMaintenance, setYouthFee, startUpgrade, upgradeCost, volunteerAction, youthFeeRef, youthTarget,
 } from './actions';
 import { bestPrice } from './merch';
-import { acceptedMargin } from './canteen';
+
 import { MAX_PROJECTS, usedConcessionSpace } from './actions';
 import { addNews } from './util';
 
@@ -30,6 +31,11 @@ export function delegate(state: GameState, task: TaskId): Staff | undefined {
 
 export function tasksOf(state: GameState, staffId: string): TaskId[] {
   return TASKS.filter((t) => state.delegation[t.id] === staffId).map((t) => t.id);
+}
+
+/** Een toevalsbron voor taken die er zelf geen meekrijgen. */
+function rng2(state: GameState): Rng {
+  return createRng(state);
 }
 
 /** Kans op een minder goede keuze: 0 bij een topper, ~0,35 bij een zwak personeelslid. */
@@ -106,14 +112,36 @@ export function strategyTask(state: GameState, rng: Rng = createRng(state)): voi
     }
   }
 
-  // training
+  // Training.
+  //
+  // Dit koos vroeger uit een handvol vuistregels: drie trainingen bij blessures, anders vier
+  // of vijf. Een echte trainer kijkt naar wat de groep aankan, en dat hangt niet alleen af
+  // van hoe moe ze zijn maar ook van wat je club eraan kan doen: een kinesist, een verzorger,
+  // een voedingsdeskundige en een recuperatieruimte halen er elke week vermoeidheid af. Met
+  // dat apparaat achter zich kan hij zwaarder trainen zonder de groep op te branden.
+  //
+  // Hij rekent het nu uit met dezelfde functies waarmee het spel de vermoeidheid boekt:
+  // hoeveel elke training erbij legt, hoeveel de wedstrijd kost en hoeveel er vanzelf en
+  // door je staf af gaat. Dan kiest hij het zwaarste schema dat de groep volgende week nog
+  // fris genoeg houdt. Hoe beter hij is, hoe scherper hij die grens durft op te zoeken.
   const injured = state.players.filter((p) => p.injuryWeeks > 0).length;
   const tired = avgFatigue(state.players.filter((p) => p.injuryWeeks === 0));
-  const fitnessCoach = staffSkill(state, 'conditietrainer') > 0;
   if (trainingStaff) {
-    t.trainings = injured >= 3 || tired > 30 ? 3 : skill >= 65 ? (fitnessCoach ? 5 : 4) : 3;
-    if (injured >= 3) t.focus = 'herstel';
-    else if (analyst) t.focus = 'tactiek';
+    const grens = 26 + (skill / 100) * 12; // een zwakke trainer houdt meer marge aan
+    let gekozen = 2;
+    for (let n = 5; n >= 2; n--) {
+      const proef = { ...state, tactics: { ...t, trainings: n } };
+      // wat er volgende week overblijft: wat ze nu hebben, plus training en wedstrijd, min herstel
+      const volgende = tired * (1 - NATURAL_RECOVERY) + trainingLoad(proef) + matchLoad(proef) - recovery(proef);
+      if (volgende <= grens || n === 2) {
+        gekozen = n;
+        break;
+      }
+    }
+    t.trainings = injured >= 3 ? Math.min(gekozen, 3) : gekozen;
+
+    if (injured >= 3 || tired > 45) t.focus = 'herstel';
+    else if (analyst && skill >= 55) t.focus = 'tactiek';
     else {
       const tech = state.players.reduce((sum, p) => sum + p.technique, 0);
       const phys = state.players.reduce((sum, p) => sum + p.physical, 0);
@@ -180,7 +208,36 @@ const MIN_DEPTH: Record<Position, number> = { DOEL: 2, VERD: 6, MIDD: 6, AANV: 4
 
 function transferTask(state: GameState): void {
   const s = delegate(state, 'transfers');
-  if (!s || !isTransferWindow(state.week)) return;
+  if (!s) return;
+  // de kern rond krijgen mag ook buiten de transferperiode, met transfervrije spelers
+  if (!isTransferWindow(state.week) && !squadBlock(state)) return;
+
+  /*
+   * Eerst de kern rond krijgen.
+   *
+   * Hier zat een gat: besteedde je je transfers uit, dan kocht je scout wel versterking per
+   * linie, maar keek niemand naar het totaal. Gemeten over zes seizoenen stonden die clubs
+   * tientallen weken onder de zestien spelers — in het spel zelf zou je daar vastlopen en
+   * zélf spelers moeten halen. Een medewerker die je transfers doet, hoort dat te zien.
+   *
+   * Hij pakt het aan zoals jij zou doen als het snel moet: eerst kijken of er iemand
+   * transfervrij is, want dat kost geen overnamesom, en anders de goedkoopste die past.
+   */
+  if (squadBlock(state)) {
+    const buiten = !isTransferWindow(state.week);
+    const vrij = state.transferList
+      .filter((p) => (buiten ? p.purchasePrice === 0 : p.purchasePrice <= Math.max(0, state.cash - 5_000)))
+      .sort((a, b) => a.purchasePrice - b.purchasePrice || overall(b) - overall(a));
+    const pick = vrij[0];
+    if (pick && buyPlayer(state, pick.id).ok) {
+      addNews(
+        state,
+        'neutraal',
+        `Je kern was te klein. ${s.name} haalde ${pick.name} (${pick.position}, ${overall(pick)}) binnen${pick.purchasePrice ? ` voor €${pick.purchasePrice.toLocaleString('nl-BE')}` : ' zonder overnamesom'}.`,
+      );
+    }
+    return; // dit gaat voor op alles
+  }
   // opruimen: overtollige spelers die geen kernspeler zijn, mogen weg (nooit onder de veilige grens)
   if (state.players.length > 24) {
     const surplus = state.players
@@ -354,11 +411,35 @@ function facilityTask(state: GameState): void {
 function horecaTask(state: GameState): void {
   const s = delegate(state, 'horeca');
   if (!s) return;
-  const err = errorChance(taskSkill(state, 'horeca', s));
+  const vaardigheid = taskSkill(state, 'horeca', s);
+  const err = errorChance(vaardigheid);
+
+  // Hij zoekt nu echt de beste prijs in plaats van de richtprijs met een vaste opslag te
+  // nemen. Per artikel loopt hij de prijzen af en rekent hij met het echte vraagmodel van
+  // het spel uit wat er overblijft: duurder betekent minder pinten, goedkoper meer volk aan
+  // de toog maar minder marge per glas. Ergens daartussen ligt de top, en waar die ligt
+  // hangt af van je kantine, je vrijwilligers en je populariteit — dus ze verschuift.
+  //
+  // Hoe beter hij is, hoe dichter hij bij die top uitkomt. Een zwakke kracht kijkt maar een
+  // paar stappen ver en mikt ernaast; een topper haalt er alles uit.
+  const bezoekers = Math.max(50, Math.round(expectedAttendance(state, { weather: 'bewolkt', derby: false, positionFactor: 1 })));
+  const blik = clamp(vaardigheid / 100, 0.25, 1); // hoe ver hij vooruit kijkt
   for (const item of state.canteen.items) {
     const def = CANTEEN_ITEMS.find((c) => c.id === item.id)!;
-    // de beste prijs ligt iets boven de richtprijs; een zwakker personeelslid mikt ernaast
-    item.price = Math.round(def.ref * (1.12 - err) * 10) / 10;
+    const origineel = item.price;
+    let beste = origineel;
+    let besteOpbrengst = -Infinity;
+    const onder = def.ref * (1 - 0.35 * blik);
+    const boven = def.ref * (1 + 0.6 * blik);
+    for (let prijs = Math.round(onder * 10) / 10; prijs <= boven; prijs = Math.round((prijs + 0.1) * 10) / 10) {
+      item.price = prijs;
+      const opbrengst = expectedCanteenUnits(state, item.id, bezoekers) * (prijs - def.cost);
+      if (opbrengst > besteOpbrengst) {
+        besteOpbrengst = opbrengst;
+        beste = prijs;
+      }
+    }
+    item.price = Math.max(0.5, Math.round(beste * (1 + rng2(state).normal(0, err / 2.5)) * 10) / 10);
   }
   if ((state.eventCooldowns['auto-concessie'] ?? 0) > 0) return;
   const open = CONCESSIONS.filter((c) => !state.canteen.concessions.some((x) => x.id === c.id) && usedConcessionSpace(state) + c.space <= CONCESSION_SPACE);

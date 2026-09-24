@@ -22,7 +22,7 @@ import { horecaScreen } from './screens/horeca';
 import { numbersScreen } from './screens/numbers';
 import { contractsScreen } from './screens/contracts';
 import { VERSION } from '../version';
-import { lineupGap } from '../engine/players';
+import { lineupGap, squadBlock } from '../engine/players';
 import { animationOverlay, reportOverlay, type WeekRef } from './screens/report';
 import { fastForwardOverlay } from './screens/fastforward';
 import { canFastForward, playAhead as playAheadEngine, type FastForwardResult } from '../engine/fastforward';
@@ -217,11 +217,12 @@ function render(): void {
     .filter(([, n]) => (n ?? 0) > 0)
     .map(([pos, n]) => `${n}× ${ZONES[pos] ?? pos}`);
   const blocked =
-    gap.available < 11
+    squadBlock(g) ??
+    (gap.available < 11
       ? `Je kunt geen elf opstellen: nog maar ${gap.available} speelklare spelers. Ga naar Ploeg › Selectie en haal spelers bij Transfers.`
       : openLines.length
         ? `Je liet plaatsen open in je basiself (${openLines.join(', ')}). Duid bij Ploeg › Selectie zelf iemand aan met de ster, of klik op "Alles loslaten" om je trainer te laten aanvullen.`
-        : '';
+        : '');
   const fastWeeks = blocked ? 0 : canFastForward(g);
   // onthouden waar de cursor stond: elke wijziging tekent het scherm opnieuw, en wie net
   // een prijs aan het intikken is mag daar niet uit geduwd worden

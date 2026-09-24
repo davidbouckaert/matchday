@@ -8,7 +8,7 @@ import { weeks } from '../../engine/util';
 import * as actions from '../../engine/actions';
 import { available } from '../../engine/discipline';
 import { OPPONENT_STAFF_BONUS } from '../../engine/league';
-import { count, esc, euro, bar } from '../format';
+import { count, esc, euro, bar, starMark } from '../format';
 import { hint, tip, tipAttr } from '../tooltip';
 import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
@@ -208,7 +208,7 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
         zone && zone !== p.position ? ` <span class="tag bad" ${tipAttr(`Hij speelt op ${zone} terwijl hij ${p.position} is. Dat kost een stuk van zijn kwaliteit.`)}>${zone}</span>` : ''
       }</td>
     <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">${p.injuryWeeks}w geblesseerd</span>` : ''}${p.suspended ? ` <span class="tag bad">${p.suspended} ${p.suspended === 1 ? 'wedstrijd' : 'wedstrijden'} geschorst</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
+    <td><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">${p.injuryWeeks}w geblesseerd</span>` : ''}${p.suspended ? ` <span class="tag bad">${p.suspended} ${p.suspended === 1 ? 'wedstrijd' : 'wedstrijden'} geschorst</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
     <td>${p.age}</td>
     <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
     <td data-v="${p.trend}" class="small ${p.trend > 0 ? 'pos' : p.trend < 0 ? 'neg' : 'muted'}" data-tip="Verandering bij de laatste evolutie (om de 4 weken)">${p.trend > 0 ? `▲ +${p.trend}` : p.trend < 0 ? `▼ ${p.trend}` : '–'}</td>
@@ -490,7 +490,7 @@ export function transfersScreen(s: GameState): string {
       }
       return `<tr>
         <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-        <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: hij hoort bij je beste elf of is een groot talent. Verkoop je hem, dan verzwak je meteen.">★</span>` : ''}<br/><span class="muted small">${p.age} jaar · ${p.starts} basisplaatsen</span></td>
+        <td><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: hij hoort bij je beste elf of is een groot talent. Verkoop je hem, dan verzwak je meteen.">★</span>` : ''}<br/><span class="muted small">${p.age} jaar · ${p.starts} basisplaatsen</span></td>
         <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
         <td data-v="${value}">${euro(value)}</td>
         <td data-v="${p.wage}">${euro(p.wage)}</td>

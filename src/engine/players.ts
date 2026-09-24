@@ -138,7 +138,7 @@ export const FORMATION_MOD: Record<Formation, { att: number; def: number }> = {
 export const OUT_OF_POSITION_PENALTY = 8;
 
 /** Hoe zwaar staff, sfeer en vorm doorwegen tegenover de pure kwaliteit van je spelers. */
-export const BONUS_WEIGHT = 0.55;
+export const BONUS_WEIGHT = 0.7;
 
 export interface LineupSlot {
   player: Player;
@@ -541,6 +541,21 @@ export function developPlayers(state: GameState, rng: Rng): DevelopmentSummary {
 // ---------- Kern van de ploeg en veilige selectie ----------
 
 export const MIN_SQUAD = 16;
+
+/**
+ * De harde ondergrens van je kern. Geeft terug waarom de week niet verder kan, of null.
+ *
+ * Dit is de enige regel in het spel die je écht tegenhoudt, en dat is met opzet: zonder
+ * ondergrens kon je je club gewoon leeg laten lopen. Contracten liepen af, spelers gingen
+ * transfervrij weg en je loonlast zakte mee — hoe minder je deed, hoe goedkoper het werd.
+ * Een club die zondag moet aantreden kan dat niet, dus jij moet spelers halen.
+ */
+export function squadBlock(state: GameState): string | null {
+  const kern = state.players.filter((p) => p.loan?.type !== 'uit').length;
+  if (kern >= MIN_SQUAD) return null;
+  const tekort = MIN_SQUAD - kern;
+  return `Je kern telt nog maar ${kern} spelers en er moeten er minstens ${MIN_SQUAD} zijn. Haal er ${tekort} bij via Ploeg › Transfers — transfervrije spelers kosten je geen overnamesom — of verleng aflopende contracten bij Ploeg › Contracten.`;
+}
 
 /** Spelers die je liever niet kwijtspeelt: veel gespeeld, sterk of veel potentieel. */
 export function isCorePlayer(state: GameState, p: Player): boolean {

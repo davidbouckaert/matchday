@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { OWN_TEAM_ID, ownPosition, seasonWear, sortedTable, teamWear } from '../src/engine/league';
 import { autoLineup, hireStaff, setPlayerRole, setTrainings } from '../src/engine/actions';
-import { overall, teamStrength } from '../src/engine/players';
+import { MIN_SQUAD, overall, squadBlock, teamStrength } from '../src/engine/players';
 import { advanceWeek } from '../src/engine/turn';
-import { readyGame } from './helpers';
+import { newTestGame, readyGame } from './helpers';
 import type { GameState } from '../src/engine/types';
 
 /** Het reeksgemiddelde van je tegenstanders. */
@@ -108,5 +108,58 @@ describe('Je klassement hoort bij je ploeg te passen', () => {
     expect(gemiddeld, `eindplaatsen: ${plaatsen.join(', ')}`).to.be.below(7);
     expect(actiefPunten / seeds.length, 'gemeten rond 50 punten uit 30 wedstrijden').to.be.above(44);
     expect(actiefPunten, 'opvolgen hoort duidelijk meer op te leveren dan niets doen').to.be.above(luiPunten);
+  });
+});
+
+describe('Niets doen loopt altijd slecht af', () => {
+  /** Een eigenaar die het spel opent en alleen maar op "volgende week" klikt. */
+  function nietsDoen(clubId: string, investor: 'aannemer' | 'fonds' | 'cooperatie', seed: number, seizoenen: number): GameState {
+    let s = newTestGame(clubId, investor, seed);
+    for (let i = 0; i < seizoenen * 52 && !s.gameOver; i++) s = advanceWeek(s);
+    return s;
+  }
+
+  it('laat elke club omvallen die zes seizoenen lang niets beslist', function () {
+    this.timeout(60_000); // zes seizoenen doorspelen duurt even
+    // Dit is de bodem van het spel en die hoort dodelijk te zijn: je lonen, je onderhoud en
+    // je verzekering lopen door, je sponsorcontracten lopen af en niemand vervangt ze.
+    // Het lekte weg doordat een club die niets deed zichzelf goedkoper maakte — contracten
+    // liepen af, spelers vertrokken gratis en de loonlast zakte mee. Nu vult het bestuur de
+    // kern aan zodra ze te klein wordt, en dat kost geld.
+    for (const [club, investeerder, seed] of [
+      ['zuidrand', 'aannemer', 1],
+      ['zuidrand', 'cooperatie', 2],
+      ['heidebeke', 'aannemer', 3],
+    ] as const) {
+      const eind = nietsDoen(club, investeerder, seed, 6);
+      expect(eind.gameOver, `${club} met de ${investeerder}, seed ${seed}: nog altijd niet failliet`).to.equal(true);
+    }
+  });
+
+  it('houdt een rijke start langer op de been, maar niet eindeloos', function () {
+    this.timeout(60_000);
+    // wie met een fonds start heeft een buffer van zes cijfers; die hoort je een paar
+    // seizoenen te kopen en niet meer dan dat
+    const drie = nietsDoen('heidebeke', 'fonds', 1, 3);
+    expect(drie.gameOver, 'na drie seizoenen mag de buffer er nog zijn').to.equal(false);
+    expect(nietsDoen('heidebeke', 'fonds', 1, 7).gameOver).to.equal(true);
+  });
+
+  it('zet de week op slot zodra je kern onder het minimum zakt', () => {
+    // Niet het bestuur dat het voor je oplost: jij moet spelers halen. Dat is de enige manier
+    // waarop "niets doen" ook echt niet meer kán — je komt letterlijk niet verder.
+    const s = newTestGame('zuidrand', 'aannemer', 4);
+    s.players = s.players.slice(0, MIN_SQUAD - 1);
+    expect(squadBlock(s), 'met te weinig spelers hoort de week geblokkeerd te zijn').to.be.a('string');
+    s.players = newTestGame('zuidrand', 'aannemer', 4).players;
+    expect(squadBlock(s), 'met een volle kern gaat de week gewoon verder').to.equal(null);
+  });
+
+  it('telt een uitgeleende speler niet mee voor dat minimum', () => {
+    const s = newTestGame('zuidrand', 'aannemer', 5);
+    s.players = s.players.slice(0, MIN_SQUAD);
+    expect(squadBlock(s)).to.equal(null);
+    s.players[0].loan = { type: 'uit', club: 'FC Elders', untilSeason: s.season, wageShare: 0.5 };
+    expect(squadBlock(s), 'hij speelt ergens anders, dus hij telt niet mee').to.be.a('string');
   });
 });

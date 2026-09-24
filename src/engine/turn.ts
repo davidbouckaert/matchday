@@ -451,6 +451,10 @@ function weeklyStagnation(state: GameState, rng: Rng): void {
   c.fanMood = decay(c.fanMood, 41, bite * 0.32);
   c.reputation = decay(c.reputation, 20, bite * 0.1);
   for (const d of state.sponsors) d.satisfaction = decay(d.satisfaction, 30, bite * 0.2);
+  // Ook de jeugd loopt leeg bij een club waar niets gebeurt. Dit ontbrak, en daardoor was het
+  // lidgeld een inkomen dat vanzelf bleef groeien terwijl je niets deed — bij een club die
+  // stilstaat het grootste gat in de redenering dat niets doen toch vol te houden was.
+  c.youthMembers = Math.round(decay(c.youthMembers, 40, bite * c.youthMembers * 0.004));
   if (idle === STAGNATION_WEEKS || (idle - STAGNATION_WEEKS) % 16 === 0) {
     news(state, rng, NIEUWS.stagnatie, { weken: String(idle) });
   }
@@ -721,6 +725,19 @@ function adjustWagesForDivision(state: GameState, from: number, to: number): voi
       : `Na de degradatie wordt er neerwaarts onderhandeld: spelerslonen ${Math.round((1 - players) * 100)}% lager, staff ${Math.round((1 - staff) * 100)}%.`,
   );
 }
+
+/**
+ * De harde ondergrens van je kern.
+ *
+ * Hier zat een uitweg die niet klopt: liet je alles lopen, dan liepen contracten af, ging
+ * iedereen transfervrij weg en zakte je loonlast mee. Je club kromp zichzelf uit de
+ * problemen — hoe minder je deed, hoe goedkoper het werd.
+ *
+ * Een tijdlang vulde het bestuur je kern dan zelf aan. Dat loste de boekhouding op maar nam
+ * je de beslissing uit handen, en net dát is waar dit spel over gaat. Nu blokkeert de week:
+ * zak je onder de zestien, dan ga je niet verder tot je zelf spelers haalt. De regel staat
+ * in `MIN_SQUAD` en wordt op het scherm afgedwongen, zodat je ziet waarom je vastzit.
+ */
 
 function newSeason(state: GameState, rng: Rng): void {
   state.week = 1;

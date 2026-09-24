@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.36.0';
+export const VERSION = '0.38.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,37 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.38.0',
+    date: '2026-09-24',
+    title: 'Je personeel denkt na, en je kern heeft een ondergrens',
+    items: [
+      'Harde ondergrens: zak je onder de zestien spelers, dan gaat de week niet verder tot je er zelf bij haalt',
+      'Je kunt daardoor nooit muurvast komen te zitten: bij een te kleine kern mag je ook buiten de transferperiode transfervrije spelers halen, en er meldt zich altijd iemand',
+      'Het bestuur vult je kern niet langer zelf aan — die beslissing hoort bij jou',
+      'De kantineverantwoordelijke zoekt nu echt de prijs die het meeste opbrengt, per artikel, met het vraagmodel van het spel',
+      'Gemeten: een zwakke kracht haalt €3,21 per bezoeker, een topper €3,94 — en hij zet bier duurder en koffie goedkoper',
+      'De trainer kijkt naar wat je club aan vermoeidheid kan wegwerken: met kine, verzorger en recuperatieruimte traint hij vijf keer, zonder drie keer',
+      'Bij een uitgeputte groep neemt hij gas terug en schakelt hij over op herstel',
+      'Wie zijn transfers uitbesteedt, krijgt een medewerker die de kern zelf op peil houdt in plaats van alleen per linie te versterken',
+      'Gemeten: alles uitbesteden aan de staf die je al hebt eindigt in 3 tot 12 van de 12 partijen in een faillissement — autopilot is niet langer gratis',
+      'Een sterspeler draagt nu een sterretje bij zijn naam, in je kern én op het veld',
+    ],
+  },
+  {
+    version: '0.37.0',
+    date: '2026-09-24',
+    title: 'Niets doen loopt nu altijd slecht af',
+    items: [
+      'Een club die niets deed, kromp zichzelf uit de problemen: contracten liepen af, spelers vertrokken gratis en de loonlast zakte mee van €214.000 naar €132.000',
+      'Het bestuur vult je kern nu aan zodra ze te klein wordt om een ploeg op te stellen — met tekengeld en een loon dat jij niet onderhandeld hebt',
+      'Ook je jeugd loopt leeg bij een club waar niets gebeurt: het lidgeld groeide vroeger vanzelf door terwijl je stilzat',
+      'Gemeten: zes seizoenen lang niets beslissen eindigt nu in alle zes de startcombinaties in 20 van de 20 partijen failliet',
+      'Je werk aan je ploeg weegt zwaarder: chemie, trainer, moraal, vorm, scherpte, rollen en spelplan tellen voor 70% in plaats van 55%',
+      'Gemeten over 24 seizoenen: wie zijn ploeg opvolgt eindigt gemiddeld 6e met top vijf in bijna de helft van de seizoenen; wie alleen opstelt blijft rond de 9e plaats',
+      'De balanstest speelde maar drie seizoenen en verborg daarmee dat die clubs gewoon in seizoen vier of vijf omvielen; ze speelt er nu zes',
+    ],
+  },
   {
     version: '0.36.0',
     date: '2026-09-24',

@@ -171,6 +171,69 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.38.0 — Je personeel denkt na, en je kern heeft een ondergrens
+
+**Autopilot was gratis.** Alles uitbesteden aan personeel en dan doorklikken gaf nul faillissementen op twintig partijen. Dat hoort niet: het verschil tussen een zwakke en een sterke medewerker moet je in je boekhouding voelen. Nu wel:
+
+| speelstijl over zes seizoenen | failliet |
+|---|---|
+| niets doen | 20 op 20 |
+| alles uitbesteden aan de staf die je al hebt | 3 tot 12 op 12 |
+| de beste betaalbare aanwerven en dan uitbesteden | 0 op 12 |
+| elke rol kopen wat er te koop is | 0 op 12 |
+
+**Een harde ondergrens van zestien spelers.** Zak je eronder, dan gaat de week niet verder. Het bestuur vult je kern niet meer zelf aan — die beslissing hoort bij jou, en het was ook de laatste manier waarop je je club stilletjes kon laten leeglopen. Daar hoort één ventiel bij, anders loopt het spel dood: met een te kleine kern mag je ook búiten de transferperiode transfervrije spelers halen, en er meldt zich dan altijd iemand die zonder club zit. Goed is hij meestal niet.
+
+**De kantineverantwoordelijke rekent nu echt.** Hij nam de richtprijs met een vaste opslag, hoe goed of slecht hij ook was. Nu loopt hij per artikel de prijzen af en rekent hij met het vraagmodel van het spel uit wat er overblijft: duurder betekent minder pinten, goedkoper meer volk aan de toog maar minder marge. Hoe beter hij is, hoe verder hij vooruitkijkt en hoe dichter hij bij de top uitkomt.
+
+| kantineverantwoordelijke | opbrengst per bezoeker | pils | koffie |
+|---|---|---|---|
+| vaardigheid 25 | €3,21 | €2,80 | €2,40 |
+| vaardigheid 55 | €3,56 | €3,30 | €2,20 |
+| vaardigheid 90 | €3,94 | €3,80 | €1,90 |
+
+Let op wat de topper doet: bier duurder, koffie goedkoper. Dat is geen vuistregel maar het resultaat van de berekening per artikel.
+
+**En de trainer kijkt naar wat je club aankan.** Hij koos vroeger uit een handvol vuistregels. Nu rekent hij met dezelfde functies waarmee het spel vermoeidheid boekt: wat een training erbij legt, wat de wedstrijd kost, en wat er vanzelf én door je staf af gaat. Dan kiest hij het zwaarste schema dat de groep volgende week nog fris genoeg houdt.
+
+| groep op vermoeidheid 35 | herstel per week | trainingen |
+|---|---|---|
+| geen medische staf | 0,0 | 3× |
+| kine, verzorger en recuperatieruimte | 14,9 | 5× |
+
+Precies zoals het hoort: wie in opvang investeert, kan zwaarder trainen. Bij een uitgeputte groep neemt hij gas terug en zet hij de focus op herstel. Een zwakke trainer houdt meer marge aan en durft die grens niet op te zoeken.
+
+**Nog niet af.** De middelste trede — de beste betaalbare staf aanwerven en alles uitbesteden — is nog altijd 0 op 12. Dat hoort volgens de afspraak zo'n 2 op 20 te zijn, en de knop daarvoor is hoeveel taken één iemand aankan: nu vier voor een topper, waardoor je met drie goede mensen heel je club draaiende houdt. Dat is de volgende stap.
+
+### 0.37.0 — Niets doen loopt nu altijd slecht af
+
+**Eerst een correctie op mezelf.** Ik rapporteerde dat passief spelen steeds milder werd, met cijfers als "4 van de 20 failliet". Die cijfers klopten, maar ze kwamen uit een balanstest die maar drie seizoenen speelde. Over acht seizoenen ging elke club alsnog kopje-onder. De test verborg dus niet dat het te makkelijk was, maar dat het langzaam ging. Ze speelt er nu zes, en de kop erboven zegt wat "passief" betekent: een nieuw spel openen en alleen maar op "volgende week" klikken — geen ambitie uitgesproken, niets gedelegeerd, geen prijs gezet, geen sponsor benaderd.
+
+**En er zat een echte fout onder.** Een club die niets deed, kromp zichzelf uit de problemen. Contracten liepen af, spelers vertrokken transfervrij, en de loonlast zakte mee:
+
+| seizoen | inkomsten | spelerslonen | sponsors |
+|---|---|---|---|
+| 1 | €484.007 | €214.114 | €188.800 (9 contracten) |
+| 2 | €464.956 | €175.975 | €153.780 (3 contracten) |
+| 3 | €340.840 | €131.846 | €64.590 (1 contract) |
+
+Zijn sponsors liepen weg — dat hoorde zo — maar zijn grootste kost liep in hetzelfde tempo weg. Hoe minder je deed, hoe goedkoper het werd. Daar kwam bij dat het jeugdlidgeld intussen vanzelf groeide, van €71.300 naar €100.050, bij een club waar helemaal niets gebeurde.
+
+Twee dingen rechtgezet. Het bestuur vult je kern nu aan zodra die te klein wordt om zondag elf man op het veld te zetten — met tekengeld en een loon dat jij niet onderhandeld hebt, want wie in juni nog vrij rondloopt laat zich betalen. En de stilstandregel raakt nu ook je jeugd: bij een club waar niets gebeurt, haken ouders af. Resultaat: **zes seizoenen niets beslissen eindigt in alle zes de startcombinaties 20 keer op 20 in een faillissement**, ook met de rijkste start.
+
+**Tegelijk weegt je werk zwaarder.** Chemie, trainer, moraal, vorm, scherpte, spelersrollen en spelplan tellen nu voor 70% mee in plaats van 55%. Gemeten over 24 seizoenen:
+
+| speelstijl | gemiddelde eindplaats | punten | top vijf |
+|---|---|---|---|
+| alleen je beste elf opstellen | 8,9 | 40 | 2 op 12 |
+| ploeg opvolgen: trainingen, staf, rollen, opstelling | **6,0** | **48** | **11 op 24** |
+
+(Mijn eerdere cijfer van 5,3 kwam uit twaalf partijen en was een gelukkige steekproef; over 24 ligt het op 6,0.)
+
+**Wat niet veranderd is:** je sterspeler, het gewicht van je sponsors en de wedstrijdmotor blijven precies zoals ze waren. Het verschil zit in wat er gebeurt als je níets doet.
+
+**Wat nog openstaat:** alles uitbesteden aan personeel en dan doorklikken is nog altijd risicoloos — 0 faillissementen op 20 over acht seizoenen. Dat is een echte speelstijl en geen bodem, dus daar hoort een keuze gemaakt te worden: mag autopilot veilig zijn, of hoort ook dat mis te kunnen gaan?
+
 ### 0.36.0 — De man waar ze voor komen kijken
 
 **Elke ploeg heeft een beste speler. Niet elke ploeg heeft een sterspeler.** Dat verschil is de hele feature. Je beste speler is een rangschikking; een sterspeler is iemand die er op zijn positie duidelijk bovenuit steekt — je verdediging staat gemiddeld op 55 en hij op 67. Dán hebben de mensen het over hém.
