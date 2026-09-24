@@ -1,11 +1,11 @@
 # Waar we staan
 
-*Momentopname van 24 september 2026, versie 0.43.0. Dit bestand veroudert; de README is het
+*Momentopname van 24 september 2026, versie 0.50.0. Dit bestand veroudert; de README is het
 levende logboek en git de waarheid.*
 
 Geschreven om een gesprek dat in een chatvenster liep, elders te kunnen voortzetten. Alles wat
-telt staat in de repo — de README beschrijft zeventien lagen met het waarom erbij, `version.ts`
-houdt de changelog bij, 679 tests leggen het gedrag vast. Wat hier staat is het enige dat
+telt staat in de repo — de README beschrijft achttien lagen met het waarom erbij, `version.ts`
+houdt de changelog bij, 726 tests leggen het gedrag vast. Wat hier staat is het enige dat
 nergens anders in staat: de losse draden.
 
 ## Wat dit project is
@@ -26,43 +26,60 @@ over balans wordt er gemeten, en als de meting iets anders zegt dan ik beweerde,
 correctie in de README. Er staan meerdere van mijn eigen foute conclusies in, met de meting die
 ze onderuithaalde. Dat hoort zo.
 
-## De open knoop: uitbesteden is nog te veilig
+## De doorlichting van september 2026, en wat ermee gebeurd is
 
-Dit is de draad waar we middenin zitten.
+Een externe doorlichting van de rekenkern vond de motor achter "promoveren is gratis geld":
+alle inkomsten hingen aan de reeks, terwijl de twee grootste kwaliteitsbronnen van een
+uitbestedende club — eigen jeugd (kwaliteit "reeksniveau − 12" aan €40/week) en zittende
+contracten (+14% per promotie tegen een lat van +45 à 62%) — buiten de loonlat vielen.
+Daarbovenop: evenementen erfden de volledige reeksschaal in hun opbrengst (netto €714.000 per
+seizoen in de Challenger Pro Liga), de licentie was een papieren grens (boete, geen blokkade),
+degradatie liet sponsorbedragen staan (een degradatieseizoen draaide €981.000 winst), en 99%
+van de thuiswedstrijden was uitverkocht zodat alle publieksknoppen dood stonden. De vier
+meetscripts (`scripts/doorlichting-*.ts`) dragen die cijfers en zijn herbruikbaar.
 
-De afspraak: **alles uitbesteden mag niet risicoloos zijn.** Wie de perfecte staf heeft en zelf
-goed inschat, mag 18 op 20 halen en nooit failliet gaan — maar dat moet moeilijk en duur zijn.
-Wie de beste betaalbare mensen aanwerft en dan doorklikt, hoort er af en toe onderuit te gaan:
-ongeveer **2 op 20**.
+Laag 18 (0.45.0 t/m 0.50.0) heeft dat omgebouwd naar **poorten per trede**: jeugd volgt je
+jeugdwerking in plaats van je reeks; onderbetaalde spelers morren tot je bijbetaalt; een
+speler beslist mee of hij wil komen (en wie boven zijn stand tekent, betaalt een premie);
+evenementen zijn gasten × bedrag per gast, fysiek begrensd; zonder licentie voor de hogere
+reeks gaat een promotie niet door; bij degradatie zakken sponsorbedragen mee (en beschermt
+een lang contract); inflatie geldt voor sponsors, lonen, tv, premies en subsidies tegelijk;
+en parking, onderhoud, supportersnorm en scoutbudget wijzen eindelijk de goede kant op.
 
-Gemeten met `npm run autopilot` (8 partijen, 6 seizoenen, 48 partijen per stijl):
+**Gemeten na de ombouw** (`scripts/doorlichting-loonlat.ts`, 5 seeds × 6 seizoenen,
+uitbestedende club):
 
-| speelstijl | failliet |
-|---|---|
-| uitbesteden aan de staf die je al hebt | 11/48 — dit werkt |
-| de beste betaalbare aanwerven, dan doorklikken | **0/48** — dit is de knoop |
-| elke rol kopen die er te koop is | 0/48 |
+| | voor laag 18 | na laag 18 |
+|---|---|---|
+| loon t.o.v. de lat, seizoen 6 | 76% | 100% |
+| reeks in seizoen 6 | Challenger Pro Liga | 3de Nationale (licentie geweigerd) |
+| winst per seizoen, seizoen 6 | ~€2,2M | ~€600k |
+| evenementen netto per seizoen | tot €714.000 | €29.000 à €53.000 |
 
-Wat ik al geprobeerd heb en wat het opleverde:
+Niets doen blijft de harde bodem: 20/20 failliet in alle zes de startcombinaties
+(`npm run balance`), omvallen rond seizoen 4 à 6.
 
-- **Personeel zwakker maken** (0.41.0: minder taken per persoon, zwaardere straf buiten het
-  vakgebied). Hielp, maar niet genoeg. De oorzaak zit er niet.
-- **De kostenkant indexeren op je reeks** (0.42.0). Dit was een echte fout die ik bij toeval
-  vond: op de inkomstenkant was álles geïndexeerd op je niveau — sponsorbedragen ×0,6 tot ×8,
-  tv-geld van niets naar €30.000/week, publiek van 250 naar 10.000 — en op de kostenkant stond
-  niets. Elke promotie was gratis geld. Nu hebben reeksen een loonlat en een weekkost. Niets
-  doen gaat daardoor rond seizoen 4 failliet in plaats van 6, en de kosten van een
-  uitbestedende club verdubbelden. Maar de middelste kolom bleef 0.
+## De open knoop: de bodemreeks is nog te zacht
 
-**Wat er overblijft.** Die club blijft winnen met een goedkope kern. De tegenstand loopt van
-sterkte 52 in 3de Nationale naar 70 in de Challenger Pro Liga, en dat is te weinig om een
-goedkope ploeg tegen te houden. Dat cijfer is precies de knop die eerder bewust de andere kant
-op is gedraaid, toen wedstrijden winnen te moeilijk voelde bij actief spelen.
+De reeksladder is dicht — de uitbestedende club zonder investeringen strandt in
+3de Nationale in plaats van door te klimmen naar de top. Maar de afspraak was **~2 op 20
+faillissementen** voor "de beste betaalbare staf aanwerven en doorklikken", en die staat er
+nog niet: die club wordt elk jaar kampioen van 3de Nationale (haar opgeleide jeugd tegen een
+stilstaande reeks), krijgt elk jaar de licentie geweigerd, en draait daar €600.000 à €700.000
+winst per seizoen. Het faillissementsrisico vraagt dat de **marge op de onderste treden**
+smaller wordt — en dat is precies het geplande gesprek over de moeilijkheidsinstelling, want
+dezelfde marge bepaalt hoe zwaar een beginnende, actieve speler het heeft.
 
-**Daar zit de spanning, en die is echt:** "actief spelen moet lonen" en "uitbesteden mag niet
-risicoloos zijn" bijten in hetzelfde getal. Dat hoort in het gesprek over de
-moeilijkheidsinstelling, niet in een stille tuning. Dat gesprek staat gepland met één
-samenhangende meting over alle speelstijlen tegelijk.
+Wat daarbij op tafel hoort:
+
+- **"Onbemand is veilig."** Wie taken niet delegeert (of niet kán delegeren door het
+  takenplafond), krijgt "niets doen" op die taak — en dat is op taakniveau bijna altijd
+  veilig. Een club die nooit bouwt, hamstert geld. De vraag is of onbemande taken sluipende
+  kosten horen te hebben.
+- **Dominantie in de bodemreeks**: een kern die elk seizoen +10 à +16 boven een stilstaande
+  reeks uitgroeit terwijl de licentie promotie blokkeert, wint alles zonder gevolg. Een
+  reeks die haar kampioen ziet blijven, zou sterker terug moeten vechten (de wereld-AI
+  investeert nu los van jou).
 
 ## De moeilijkheidsinstelling (gepland, nog niet begonnen)
 
@@ -77,6 +94,9 @@ geïsoleerd in code:
 | `WEAR_PEAK` | `league.ts` | hoe hard tegenstanders doorheen een seizoen verslijten |
 | `STAR_RATIO` en de sterfactoren | `stars.ts` | hoeveel een sterspeler opbrengt |
 | `STAR_EFFICIENCY`, `MIN_SUPPORT` | `delegation.ts`, `support.ts` | hoe goed uitbesteed werk is |
+| `eventPrestige` | `actions.ts` | wat men per gast betaalt op jouw niveau |
+| licentievereisten per reeks | `data/divisions.ts` | wat een trede kost om te mogen nemen |
+| de spelerswil-curve | `appeal.ts` | hoe streng spelers jouw club wegen |
 
 ## Andere open draden
 
@@ -165,16 +185,21 @@ alleen unit-getest is, maar ook echt op de doelinfrastructuur gemeten — dat ho
   Pages. Moet omgebouwd worden zodra Cloudflare de echte hosting is, anders bestaan er twee
   "live" adressen naast elkaar.
 - `scripts/investor-value.ts` haakt als enige script het logboek niet aan.
+- De spelerswil staat op Transfers (kolom "Wil hij komen?"), maar de aantrekkingskracht van
+  je club als geheel (`clubAppeal`) staat nog nergens als cijfer op een scherm. Wie wil weten
+  waaróm spelers twijfelen, moet het uit de tooltip halen.
 
 ## Hoe je hier werkt
 
 ```
 npm run dev          spelen (de motor draait in de browser: geen logbestand)
-npm test             679 tests (mocha + chai)
+npm test             726 tests (mocha + chai)
 npm run typecheck    tsc --noEmit
 npm run autopilot    is uitbesteden nog risicoloos?   SEEDS=20 voor de echte lat
 npm run economie     inkomsten en kosten per seizoen, naast je reeks
 npm run balance      niets doen: gaat elke partij failliet?
+npm exec tsx scripts/doorlichting-loonlat.ts       loon t.o.v. de lat, sterkte t.o.v. de reeks
+npm exec tsx scripts/doorlichting-evenementen.ts   evenementen: netto en verhoudingen per reeks
 VCG_LOG=debug ...    zet het logboek aan voor tests en scripts
 ```
 
