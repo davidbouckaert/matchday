@@ -280,7 +280,7 @@ export interface ActionResult {
   viering?: { icon: string; kop: string; sub?: string };
 }
 
-export type UpgradeId = 'tribune' | 'kantine' | 'kunstgras' | 'verlichting' | 'opleidingscentrum' | 'recuperatie' | 'wifi' | 'sanitair' | 'parking' | 'scorebord' | 'ploegbus' | 'zonnepanelen';
+export type UpgradeId = 'tribune' | 'kantine' | 'kunstgras' | 'verlichting' | 'opleidingscentrum' | 'recuperatie' | 'wifi' | 'toiletten' | 'kleedkamers' | 'parking' | 'scorebord' | 'ploegbus' | 'zonnepanelen' | 'ledverlichting';
 
 export interface Construction {
   upgrade: UpgradeId;
@@ -297,12 +297,14 @@ export interface Infrastructure {
   academyLevel: number; // 0-3: jeugdopleidingscentrum
   recoveryLevel: number; // 0-2: recuperatieruimte (ijsbad, sauna)
   wifiLevel: number; // 0-2: wifi en mobiel bereik op het complex
-  sanitairLevel: number; // 0-2: toiletten en kleedkamers
+  toiletLevel: number; // 0-2: nette toiletten voor het publiek
+  kleedkamerLevel: number; // 0-2: degelijke kleedkamers voor spelers en jeugd
   parkingLevel: number; // 0-2: parkeerplaatsen
   scoreboardLevel: number; // 0-2: scorebord met reclame
   teamBus: boolean; // eigen ploegbus
   maintenance: 'basis' | 'normaal' | 'premium'; // hoeveel je aan onderhoud en energie besteedt
-  greenEnergy: boolean; // zonnepanelen en led: lagere energiefactuur
+  solarPanels: boolean; // zonnepanelen op de daken: lagere energiefactuur
+  ledLighting: boolean; // ledverlichting binnen en rond het veld: idem, kleiner
   constructions: Construction[]; // maximaal twee tegelijk
 }
 

@@ -58,7 +58,8 @@ export function attendanceFactors(state: GameState): Factor[] {
     x('Populariteit', popularity(state).factor, `rating, klassement en recente resultaten`),
   ];
   if (i.wifiLevel) list.push(x('Wifi op het complex', 1 + i.wifiLevel * 0.03, `niveau ${i.wifiLevel}/2`));
-  if (i.sanitairLevel) list.push(x('Toiletten en kleedkamers', 1 + i.sanitairLevel * 0.05, `niveau ${i.sanitairLevel}/2`));
+  if (i.toiletLevel) list.push(x('Toiletten', 1 + i.toiletLevel * 0.03, `niveau ${i.toiletLevel}/2`));
+  if (i.kleedkamerLevel) list.push(x('Kleedkamers', 1 + i.kleedkamerLevel * 0.02, `niveau ${i.kleedkamerLevel}/2`));
   if (i.parkingLevel) list.push(x('Parking', 1 + i.parkingLevel * 0.045, `niveau ${i.parkingLevel}/2`));
   if (i.scoreboardLevel) list.push(x('Scorebord', 1 + i.scoreboardLevel * 0.03, `niveau ${i.scoreboardLevel}/2`));
   if (i.maintenance === 'premium') list.push(x('Onderhoud', 1.04, 'premium onderhoud: alles ligt er piekfijn bij'));

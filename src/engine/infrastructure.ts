@@ -24,9 +24,11 @@ export function applyUpgrade(i: Infrastructure, id: UpgradeId, seats?: number): 
   if (id === 'opleidingscentrum') i.academyLevel = Math.min(3, i.academyLevel + 1);
   if (id === 'recuperatie') i.recoveryLevel = Math.min(2, i.recoveryLevel + 1);
   if (id === 'wifi') i.wifiLevel = Math.min(2, i.wifiLevel + 1);
-  if (id === 'sanitair') i.sanitairLevel = Math.min(2, i.sanitairLevel + 1);
+  if (id === 'toiletten') i.toiletLevel = Math.min(2, i.toiletLevel + 1);
+  if (id === 'kleedkamers') i.kleedkamerLevel = Math.min(2, i.kleedkamerLevel + 1);
   if (id === 'parking') i.parkingLevel = Math.min(2, i.parkingLevel + 1);
   if (id === 'scorebord') i.scoreboardLevel = Math.min(2, i.scoreboardLevel + 1);
   if (id === 'ploegbus') i.teamBus = true;
-  if (id === 'zonnepanelen') i.greenEnergy = true;
+  if (id === 'zonnepanelen') i.solarPanels = true;
+  if (id === 'ledverlichting') i.ledLighting = true;
 }

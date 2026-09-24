@@ -28,7 +28,7 @@ export function canteenFactors(state: GameState): Factor[] {
   ];
   const k = staffSkill(state, 'kantine');
   if (k) list.push(x('Kantineverantwoordelijke', 1 + k / 300, `vaardigheid ${Math.round(k)}`));
-  if (state.infrastructure.sanitairLevel) list.push(x('Sanitair', 1 + state.infrastructure.sanitairLevel * 0.04, `niveau ${state.infrastructure.sanitairLevel}/2`));
+  if (state.infrastructure.toiletLevel) list.push(x('Toiletten', 1 + state.infrastructure.toiletLevel * 0.04, `niveau ${state.infrastructure.toiletLevel}/2`));
   return list;
 }
 

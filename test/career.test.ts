@@ -253,7 +253,7 @@ describe('Wat een niveau ontgrendelt', () => {
     const s = at(3);
     s.cash = 2_000_000;
     expect(actions.startUpgrade(s, 'wifi').ok).to.equal(true);
-    expect(actions.startUpgrade(s, 'sanitair').ok).to.equal(true);
+    expect(actions.startUpgrade(s, 'toiletten').ok).to.equal(true);
     const third = actions.startUpgrade(s, 'parking');
     expect(third.ok, third.message).to.equal(true);
     expect(s.infrastructure.constructions.length).to.equal(3);
@@ -264,7 +264,7 @@ describe('Wat een niveau ontgrendelt', () => {
     const s = at(2);
     s.cash = 2_000_000;
     expect(actions.startUpgrade(s, 'wifi').ok).to.equal(true);
-    expect(actions.startUpgrade(s, 'sanitair').ok).to.equal(true);
+    expect(actions.startUpgrade(s, 'toiletten').ok).to.equal(true);
     expect(actions.startUpgrade(s, 'parking').ok).to.equal(false);
   });
 

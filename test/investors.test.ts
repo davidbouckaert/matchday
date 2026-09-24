@@ -108,7 +108,7 @@ describe('De aannemer: bouwen is zijn ding', () => {
     s.cash = 3_000_000;
     expect(actions.projectLimit(s)).to.equal(3);
     expect(actions.startUpgrade(s, 'wifi').ok).to.equal(true);
-    expect(actions.startUpgrade(s, 'sanitair').ok).to.equal(true);
+    expect(actions.startUpgrade(s, 'toiletten').ok).to.equal(true);
     expect(actions.startUpgrade(s, 'parking').ok, 'de derde werf hoort te mogen').to.equal(true);
     expect(actions.startUpgrade(s, 'scorebord').ok, 'een vierde niet').to.equal(false);
   });

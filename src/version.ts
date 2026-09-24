@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.64.0';
+export const VERSION = '0.65.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.65.0',
+    date: '2026-09-24',
+    title: 'Het bouwscherm in balans, en vier projecten in plaats van twee combi\'s',
+    items: [
+      'De bouwkaart hing halfbreed en scheef naast twee smalle kaartjes: nu twee halve kaarten bovenaan en de projecten over de volle breedte, per groep gelijkmatig gevuld',
+      'Toiletten (€30.000) en kleedkamers (€38.000) zijn aparte projecten: toiletten trekken gezinnen en kantineomzet, kleedkamers maken het complex verzorgd en je vrijwilligers trots',
+      'Zonnepanelen (−14% vaste kosten) en ledverlichting (−6%, klaar in twee weken) zijn ook gesplitst: je kunt nu klein groen beginnen',
+      'Wie de oude combi\'s al had, krijgt bij het laden gewoon beide helften',
+    ],
+  },
   {
     version: '0.64.0',
     date: '2026-09-24',

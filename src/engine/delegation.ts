@@ -567,7 +567,7 @@ function facilityTask(state: GameState): void {
   if (i.capacity < next.requiredCapacity) wish.push('tribune');
   if (i.lightingLevel < next.requiredLighting) wish.push('verlichting');
   if (i.capacity < division.requiredCapacity) wish.unshift('tribune');
-  wish.push('kantine', 'wifi', 'scorebord', 'sanitair', 'recuperatie', 'parking');
+  wish.push('kantine', 'wifi', 'scorebord', 'toiletten', 'kleedkamers', 'ledverlichting', 'recuperatie', 'parking');
   for (const id of wish) {
     if (canUpgrade(state, id)) continue;
     const cost = upgradeCost(state, id);

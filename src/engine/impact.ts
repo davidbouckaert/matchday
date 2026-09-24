@@ -253,7 +253,10 @@ export function upgradeImpact(state: GameState, id: UpgradeId, seats?: number): 
     add('🤝', 'Sponsorplaats', '+1', 'good', 'Een bedrijf kan zijn naam op de bus zetten: dat is een extra sponsorplaats die je anders niet hebt.');
   }
   if (id === 'zonnepanelen') {
-    add('⚡', 'Energie', '−18%', 'good', 'Je energiekosten zakken met 18%, elke week, en dat loopt door zolang de club bestaat.');
+    add('⚡', 'Energie', '−14%', 'good', 'Je vaste kosten zakken met 14%, elke week, en dat loopt door zolang de club bestaat.');
+  }
+  if (id === 'ledverlichting') {
+    add('⚡', 'Energie', '−6%', 'good', 'Je vaste kosten zakken met 6%, elke week — de kleinste groene stap, zo terugverdiend.');
   }
   if (id === 'opleidingscentrum') {
     add('🧒', 'Jeugdopleiding', 'beter', 'good', 'Je eigen jongeren groeien sneller en er komen meer beloften uit je jeugdwerking naar de A-kern.');

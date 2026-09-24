@@ -18,7 +18,7 @@ import { emptyCareer, emptyOwner } from './career';
 import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 35;
+export const SAVE_VERSION = 36;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -76,12 +76,14 @@ export function createNewGame(opts: NewGameOptions): GameState {
       academyLevel: 0,
       recoveryLevel: 0,
       wifiLevel: 0,
-      sanitairLevel: 0,
+      toiletLevel: 0,
+      kleedkamerLevel: 0,
       parkingLevel: 0,
       scoreboardLevel: 0,
       teamBus: false,
       maintenance: 'normaal',
-      greenEnergy: false,
+      solarPanels: false,
+      ledLighting: false,
       constructions: [],
     },
     crest: opts.crest ?? 'schild',

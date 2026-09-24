@@ -150,7 +150,7 @@ describe('Wat levert dit bouwproject op', () => {
 
   it('meet toiletten en parking af aan het publiek', () => {
     const s = game();
-    for (const id of ['sanitair', 'parking', 'wifi'] as const) {
+    for (const id of ['toiletten', 'kleedkamers', 'parking', 'wifi'] as const) {
       const publiek = upgradeImpact(s, id).find((i) => i.label === 'Toeschouwers');
       expect(publiek, `${id} trekt geen volk`).to.not.equal(undefined);
       expect(publiek!.value.startsWith('+'), id).to.equal(true);

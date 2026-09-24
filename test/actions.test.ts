@@ -738,11 +738,11 @@ describe('Populariteit en onderhoud', () => {
     s.cash = 1_000_000;
     const before = facilityCost(s);
     expect(actions.investGreenEnergy(s).ok).to.equal(true);
-    expect(s.infrastructure.greenEnergy).to.equal(false); // eerst bouwen
+    expect(s.infrastructure.solarPanels).to.equal(false); // eerst bouwen
     expect(facilityCost(s)).to.equal(before);
     s = playWeeks(s, actions.upgradeWeeks(s, 'zonnepanelen'));
-    expect(s.infrastructure.greenEnergy).to.equal(true);
-    expect(facilityCost(s)).to.be.below(facilityCost({ ...s, infrastructure: { ...s.infrastructure, greenEnergy: false } }));
+    expect(s.infrastructure.solarPanels).to.equal(true);
+    expect(facilityCost(s)).to.be.below(facilityCost({ ...s, infrastructure: { ...s.infrastructure, solarPanels: false } }));
   });
 });
 

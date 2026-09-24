@@ -2,7 +2,7 @@
 // zodat we later een online opslag (bv. een API met MongoDB erachter) kunnen toevoegen
 // zonder de game zelf aan te passen.
 
-import type { GameState, LedgerCategory, UpgradeId } from '../engine/types';
+import type { GameState, Infrastructure, LedgerCategory, UpgradeId } from '../engine/types';
 import { SAVE_VERSION } from '../engine/newGame';
 import { repairTour } from '../engine/tour';
 import type { Rng } from '../engine/rng';
@@ -111,6 +111,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 32) migrateV32toV33(state);
   if (state.version === 33) migrateV33toV34(state);
   if (state.version === 34) migrateV34toV35(state);
+  if (state.version === 35) migrateV35toV36(state);
   repair(state);
   return state;
 }
@@ -204,7 +205,7 @@ function migrateV6toV7(state: GameState): void {
 
 /** Versie 8: kantine en concessies, cijfers, spelersrollen, logboek, nieuwe infrastructuur, gesplitste taken. */
 function migrateV7toV8(state: GameState): void {
-  const i = state.infrastructure;
+  const i = state.infrastructure as Infrastructure & { sanitairLevel?: number; greenEnergy?: boolean };
   i.wifiLevel = 0;
   i.sanitairLevel = 0;
   i.parkingLevel = 0;
@@ -487,6 +488,22 @@ function migrateV34toV35(state: GameState): void {
   state.version = 35;
 }
 
+/** Versie 36: sanitair gesplitst in toiletten en kleedkamers, de groene combi in
+ *  zonnepanelen en ledverlichting. Wie de combi had, krijgt beide helften. */
+function migrateV35toV36(state: GameState): void {
+  const i = state.infrastructure as Infrastructure & { sanitairLevel?: number; greenEnergy?: boolean };
+  i.toiletLevel ??= i.sanitairLevel ?? 0;
+  i.kleedkamerLevel ??= i.sanitairLevel ?? 0;
+  i.solarPanels ??= i.greenEnergy ?? false;
+  i.ledLighting ??= i.greenEnergy ?? false;
+  delete i.sanitairLevel;
+  delete i.greenEnergy;
+  for (const c of i.constructions) {
+    if ((c.upgrade as string) === 'sanitair') c.upgrade = 'toiletten';
+  }
+  state.version = 36;
+}
+
 /** Versie 31: sterspelers. De lijst begint leeg, dus je huidige ster komt meteen in het nieuws. */
 function migrateV30toV31(state: GameState): void {
   state.starIds ??= [];
@@ -627,7 +644,7 @@ function repair(state: GameState): void {
     state.weekChoice.focusPlayerId ??= null;
     state.weekChoice.focusSponsorId ??= null;
   }
-  const i = state.infrastructure;
+  const i = state.infrastructure as Infrastructure & { sanitairLevel?: number; greenEnergy?: boolean };
   if (i) {
     i.constructions ??= [];
     i.wifiLevel ??= 0;

@@ -88,16 +88,25 @@ export const UPGRADES: UpgradeDef[] = [
     group: 'afdeling',
   },
   { id: 'wifi', label: 'Wifi en mobiel bereik (+1 niveau)', description: 'Supporters delen alles live, bestellen sneller aan de toog en blijven langer hangen. Meer toeschouwers en meer consumpties. Maximaal niveau 2.', cost: 28_000, weeks: 3, group: 'technologie' },
-  { id: 'sanitair', label: 'Toiletten en kleedkamers (+1 niveau)', description: 'Nette toiletten houden gezinnen langer op het complex: meer toeschouwers en meer kantineomzet. Maximaal niveau 2.', cost: 55_000, weeks: 6, group: 'ruwbouw' },
+  { id: 'toiletten', label: 'Toiletten (+1 niveau)', description: 'Nette toiletten houden gezinnen langer op het complex: meer toeschouwers en meer kantineomzet. Maximaal niveau 2.', cost: 30_000, weeks: 4, group: 'ruwbouw' },
+  { id: 'kleedkamers', label: 'Kleedkamers (+1 niveau)', description: 'Degelijke kleedkamers voor je spelers, de jeugd en de bezoekers. Het complex oogt verzorgd: meer toeschouwers, en je vrijwilligers zijn er trots op. Maximaal niveau 2.', cost: 38_000, weeks: 5, group: 'ruwbouw' },
   { id: 'scorebord', label: 'Scorebord (+1 niveau)', description: 'Een echt scorebord maakt er een wedstrijd van: meer sfeer, en sponsors betalen meer voor een bord dat iedereen ziet. Niveau 2 is een ledscherm met reclameblokken. Maximaal niveau 2.', cost: 42_000, weeks: 4, group: 'technologie' },
   { id: 'ploegbus', label: 'Eigen ploegbus', description: 'Een tweedehands bus met de clubkleuren. Je betaalt nog enkel brandstof en een chauffeur (55% goedkoper per verplaatsing) en een bedrijf kan zijn naam op de bus zetten (nieuwe sponsorplaats).', cost: 32_000, weeks: 2, group: 'investering' },
   { id: 'parking', label: 'Parking uitbreiden (+1 niveau)', description: 'Bezoekers van verder af geraken vlot tot aan het veld. Meer toeschouwers, vooral bij een derby. Maximaal niveau 2.', cost: 70_000, weeks: 7, group: 'ruwbouw' },
   {
     id: 'zonnepanelen',
-    label: 'Zonnepanelen en ledverlichting',
-    description: 'Panelen op het dak van de tribune en de kantine, led overal. Daarna betaal je elke week 20% minder vaste kosten. De prijs hangt af van hoe groot je complex is.',
+    label: 'Zonnepanelen',
+    description: 'Panelen op het dak van de tribune en de kantine. Daarna betaal je elke week 14% minder vaste kosten. De prijs hangt af van hoe groot je complex is.',
     cost: 0, // dynamisch: zie greenEnergyCost()
     weeks: 5,
+    group: 'investering',
+  },
+  {
+    id: 'ledverlichting',
+    label: 'Ledverlichting',
+    description: 'Led in de kantine, de gangen en rond het veld. Elke week 6% minder vaste kosten, en de klus is zo geklaard. De prijs hangt af van hoe groot je complex is.',
+    cost: 0, // dynamisch: zie greenEnergyCost()
+    weeks: 2,
     group: 'investering',
   },
   {

@@ -161,10 +161,11 @@ export const MAINTENANCE_FACTOR: Record<Infrastructure['maintenance'], number> =
 export function facilityCost(state: GameState): number {
   const i = state.infrastructure;
   let cost = 726 + i.capacity * 0.34 + (i.pitch === 'natuurgras' ? 430 : 160) + i.kantineLevel * 70 + i.academyLevel * 400;
-  cost += i.wifiLevel * 60 + i.sanitairLevel * 80 + i.parkingLevel * 45 + i.recoveryLevel * 90 + i.scoreboardLevel * 55 + (i.teamBus ? 95 : 0);
+  cost += i.wifiLevel * 60 + i.toiletLevel * 45 + i.kleedkamerLevel * 45 + i.parkingLevel * 45 + i.recoveryLevel * 90 + i.scoreboardLevel * 55 + (i.teamBus ? 95 : 0);
   if (isWinter(state.week)) cost += 180 * i.lightingLevel + 150;
   cost *= MAINTENANCE_FACTOR[i.maintenance];
-  if (i.greenEnergy) cost *= 0.8; // zonnepanelen en ledverlichting
+  if (i.solarPanels) cost *= 0.86; // zonnepanelen op de daken
+  if (i.ledLighting) cost *= 0.94; // led binnen en rond het veld
   return Math.round(cost * state.inflation);
 }
 

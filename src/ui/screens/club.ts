@@ -3,7 +3,8 @@ import { CLUB_EVENTS, UPGRADES, UPGRADE_GROUPS, VOLUNTEER_ACTIONS } from '../../
 import { DIVISIONS } from '../../engine/data/divisions';
 import { BACKGROUNDS, INVESTORS } from '../../engine/data/setup';
 import {
-  GREEN_ENERGY_SAVING, TRIBUNE_MAX, TRIBUNE_MIN, TRIBUNE_STEP,
+  LED_SAVING,
+  SOLAR_SAVING, TRIBUNE_MAX, TRIBUNE_MIN, TRIBUNE_STEP,
   canOrganise, canUpgrade, eventForecast, projectLimit, eventsThisSeason, tribuneCost, tribunePerSeat, tribuneWeeks, upgradeCost, upgradeWeeks, youthForecast,
 } from '../../engine/actions';
 import { MAINTENANCE_FACTOR, facilityCost } from '../../engine/finance';
@@ -61,7 +62,7 @@ export function infraScreen(s: GameState): string {
   const next = DIVISIONS[Math.min(DIVISIONS.length - 1, s.league.divisionLevel + 1)];
 
   return `${taskPicker(s, ['infrastructuur'])}<div class="grid">
-    <section class="card">
+    <section class="card span2">
       <h2>Accommodatie</h2>
       <dl class="facts">
         <dt>Tribune</dt><dd>${i.capacity} plaatsen <span class="muted small">(nodig: ${division.requiredCapacity}, volgende reeks ${next.requiredCapacity})</span></dd>
@@ -79,7 +80,7 @@ export function infraScreen(s: GameState): string {
           : ''
       }
     </section>
-    <section class="card">
+    <section class="card span2">
       <h2>Onderhoud en energie ${hint('Dit is de post "onderhoud & energie" op je weekrekening: gras, verwarming, verlichting, poetsen en klein herstel. Minder onderhouden is goedkoper, maar het complex ziet er slechter uit (minder toeschouwers) en er gaat vaker iets stuk.')}</h2>
       <p>Nu: <strong>${euro(facilityCost(s))} per week</strong>.</p>
       <div class="choice-grid three">
@@ -93,12 +94,11 @@ export function infraScreen(s: GameState): string {
           )
           .join('')}
       </div>
-      <p class="muted small">☀️ Zonnepanelen en led drukken deze factuur met ${Math.round(GREEN_ENERGY_SAVING * 100)}%
-      (${euro(Math.round(facilityCost(s) * GREEN_ENERGY_SAVING))} per week). ${
-        i.greenEnergy ? 'Ze liggen er al.' : 'Je vindt ze bij de bouwprojecten hieronder.'
-      }</p>
+      <p class="muted small">☀️ Zonnepanelen drukken deze factuur met ${Math.round(SOLAR_SAVING * 100)}% (${euro(Math.round(facilityCost(s) * SOLAR_SAVING))}/week)${i.solarPanels ? ' — ze liggen er al' : ''};
+      💡 ledverlichting met ${Math.round(LED_SAVING * 100)}% (${euro(Math.round(facilityCost(s) * LED_SAVING))}/week)${i.ledLighting ? ' — die hangt er al' : ''}.
+      ${i.solarPanels && i.ledLighting ? '' : 'Je vindt ze bij de investeringen hieronder.'}</p>
     </section>
-    <section class="card span2">
+    <section class="card span-all">
       <h2>Bouwprojecten ${hint(`Er mogen ${projectLimit(s)} werven tegelijk lopen. Elk project wordt meteen betaald en is klaar na de vermelde bouwtijd.`)}</h2>
       <p class="muted small">Maximaal ${projectLimit(s)} projecten tegelijk — nu bezig: <strong>${i.constructions.length}</strong>.
         Te weinig geld? Neem een lening bij Financiën.${s.investor === 'aannemer' ? ' Je aannemer bouwt 15% goedkoper.' : ''}</p>

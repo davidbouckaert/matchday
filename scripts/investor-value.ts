@@ -18,7 +18,7 @@ import * as actions from '../src/engine/actions';
 import { seasonPrize } from '../src/engine/turn';
 
 const SEASONS = 6;
-const BOUWPAKKET = ['kantine', 'verlichting', 'kunstgras', 'opleidingscentrum', 'sanitair', 'parking'] as const;
+const BOUWPAKKET = ['kantine', 'verlichting', 'kunstgras', 'opleidingscentrum', 'toiletten', 'kleedkamers', 'parking'] as const;
 
 interface Uitkomst {
   posten: Record<string, number>;

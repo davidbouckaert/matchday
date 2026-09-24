@@ -523,7 +523,7 @@ export function tribuneWeeks(seats: number): number {
 
 export function upgradeCost(state: GameState, id: UpgradeId, seats = 300): number {
   if (id === 'tribune') return tribuneCost(state, seats);
-  if (id === 'zonnepanelen') return greenEnergyCost(state);
+  if (id === 'zonnepanelen' || id === 'ledverlichting') return greenEnergyCost(state, id);
   const def = UPGRADES.find((u) => u.id === id)!;
   return round(def.cost * buildDiscount(state), 1000);
 }
@@ -553,11 +553,13 @@ export function canUpgrade(state: GameState, id: UpgradeId): string | null {
   if (id === 'opleidingscentrum' && i.academyLevel >= 3) return 'Het opleidingscentrum is al op het hoogste niveau.';
   if (id === 'recuperatie' && i.recoveryLevel >= 2) return 'De recuperatieruimte is al op het hoogste niveau.';
   if (id === 'wifi' && i.wifiLevel >= 2) return 'De wifi is al op het hoogste niveau.';
-  if (id === 'sanitair' && i.sanitairLevel >= 2) return 'Het sanitair is al op het hoogste niveau.';
+  if (id === 'toiletten' && i.toiletLevel >= 2) return 'De toiletten zijn al op het hoogste niveau.';
+  if (id === 'kleedkamers' && i.kleedkamerLevel >= 2) return 'De kleedkamers zijn al op het hoogste niveau.';
   if (id === 'parking' && i.parkingLevel >= 2) return 'De parking is al op het hoogste niveau.';
   if (id === 'scorebord' && i.scoreboardLevel >= 2) return 'Het scorebord is al op het hoogste niveau.';
   if (id === 'ploegbus' && i.teamBus) return 'Je hebt al een eigen ploegbus.';
-  if (id === 'zonnepanelen' && i.greenEnergy) return 'De zonnepanelen liggen er al.';
+  if (id === 'zonnepanelen' && i.solarPanels) return 'De zonnepanelen liggen er al.';
+  if (id === 'ledverlichting' && i.ledLighting) return 'De ledverlichting hangt er al.';
   return null;
 }
 
@@ -1387,12 +1389,15 @@ export function setMaintenance(state: GameState, level: Infrastructure['maintena
   );
 }
 
-export const GREEN_ENERGY_SAVING = 0.2; // hoeveel minder je per week betaalt
+// De groene ingrepen elk apart: samen drukken ze de factuur ongeveer evenveel als de
+// oude combi (0,86 × 0,94 ≈ 0,81), maar je kunt nu klein beginnen met led.
+export const SOLAR_SAVING = 0.14; // zonnepanelen: aandeel van de vaste kosten dat wegvalt
+export const LED_SAVING = 0.06; // ledverlichting: idem, kleiner
 const GREEN_ENERGY_PAYBACK_WEEKS = 156; // drie seizoenen
 
 /** De installatie wordt geprijsd naar de grootte van je complex: altijd ongeveer drie seizoenen terugverdientijd. */
-export function greenEnergyCost(state: GameState): number {
-  const weeklySaving = facilityCost(state) * GREEN_ENERGY_SAVING;
+export function greenEnergyCost(state: GameState, id: 'zonnepanelen' | 'ledverlichting' = 'zonnepanelen'): number {
+  const weeklySaving = facilityCost(state) * (id === 'zonnepanelen' ? SOLAR_SAVING : LED_SAVING);
   return round(weeklySaving * GREEN_ENERGY_PAYBACK_WEEKS, 500);
 }
 

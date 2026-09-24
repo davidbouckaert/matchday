@@ -74,7 +74,8 @@ export const TASK_SUPPORT: Partial<Record<TaskId, SupportNeed[]>> = {
       have: (s) => clamp(s.community.volunteers / 14, 0, 1),
       hint: 'Zonder volk achter de toog staan de mensen in de rij en bestellen ze minder.',
     },
-    infra('Sanitair', 'Nette toiletten houden gezinnen langer op het complex.', (s) => s.infrastructure.sanitairLevel, 2, 0.5),
+    infra('Toiletten', 'Nette toiletten houden gezinnen langer op het complex.', (s) => s.infrastructure.toiletLevel, 2, 0.5),
+    infra('Kleedkamers', 'Vrijwilligers zijn trots op een verzorgd complex.', (s) => s.infrastructure.kleedkamerLevel, 2, 0.4),
   ],
   ticketing: [
     infra('Scorebord', 'Een scorebord maakt er een wedstrijd van; dat verdraagt een hogere prijs.', (s) => s.infrastructure.scoreboardLevel, 2, 0.6),
