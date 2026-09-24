@@ -9,10 +9,10 @@ import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
 import { DIVISIONS } from './data/divisions';
 import {
-  CLUB_EVENTS, CONCESSION_SPACE, COURSES, MERCH_START_COST, TASKS, UPGRADES, VOLUNTEER_ACTIONS,
+  CLUB_EVENTS, CONCESSIONS, COURSES, KRAAMPJES_MAX, MERCH_START_COST, TASKS, UPGRADES, VOLUNTEER_ACTIONS,
   canteenDef, concessionDef, merchDef, roleDef, type ClubEventDef,
 } from './data/catalog';
-import { isTransferWindow } from './calendar';
+import { MATCH_WEEKS, isTransferWindow } from './calendar';
 import { coursePlan } from './training-staff';
 import { BANK_MAX, FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, wageDemand } from './players';
 import { stepPremium, transferWillingness, wantsAway } from './appeal';
@@ -24,9 +24,9 @@ import { hasDiploma, staffSkill } from './staff';
 import { taskCapacity, taskSkill, tasksOf } from './delegation';
 import { boundVolunteers, freeVolunteers, youthCapacityFactor } from './youth';
 import { bestPrice, margin } from './merch';
-import { acceptedMargin, concessionPartner } from './canteen';
+import { acceptedMargin, concessionForecast, concessionPartner } from './canteen';
 import { popularity } from './popularity';
-import { facilityCost } from './finance';
+import { expectedAttendance, facilityCost } from './finance';
 import { addLog, addNews, book, euro, nextId, weeks } from './util';
 import { openStoryline, remember } from './content';
 import { MIN_PRICE as SEASON_TICKET_MIN, canSell as canSellTickets, sellSeasonTickets } from './seasontickets';
@@ -524,6 +524,7 @@ export function tribuneWeeks(seats: number): number {
 export function upgradeCost(state: GameState, id: UpgradeId, seats = 300): number {
   if (id === 'tribune') return tribuneCost(state, seats);
   if (id === 'zonnepanelen' || id === 'ledverlichting') return greenEnergyCost(state, id);
+  if (id === 'kraampjes') return kraampjesCost(state);
   const def = UPGRADES.find((u) => u.id === id)!;
   return round(def.cost * buildDiscount(state), 1000);
 }
@@ -560,6 +561,7 @@ export function canUpgrade(state: GameState, id: UpgradeId): string | null {
   if (id === 'ploegbus' && i.teamBus) return 'Je hebt al een eigen ploegbus.';
   if (id === 'zonnepanelen' && i.solarPanels) return 'De zonnepanelen liggen er al.';
   if (id === 'ledverlichting' && i.ledLighting) return 'De ledverlichting hangt er al.';
+  if (id === 'kraampjes' && i.concessionSpace >= KRAAMPJES_MAX) return 'Meer plaats voor kramen is er niet op het complex.';
   return null;
 }
 
@@ -1325,7 +1327,7 @@ export function openConcession(state: GameState, id: ConcessionId, marginPct: nu
   if (locked) return locked;
   const def = concessionDef(id);
   if (state.canteen.concessions.some((c) => c.id === id)) return fail(`${def.label} staat er al.`);
-  if (usedConcessionSpace(state) + def.space > CONCESSION_SPACE) return fail(`Je hebt plaats voor ${CONCESSION_SPACE} kraam-eenheden. ${def.label} neemt er ${def.space} in.`);
+  if (usedConcessionSpace(state) + def.space > state.infrastructure.concessionSpace) return fail(`Je hebt plaats voor ${state.infrastructure.concessionSpace} kraam-eenheden. ${def.label} neemt er ${def.space} in. Meer plaats bouw je bij Infrastructuur.`);
   if (!Number.isFinite(marginPct) || marginPct < 0 || marginPct > 60) return fail('Kies een marge tussen 0% en 60%.');
   const max = acceptedMargin(state, id);
   const rng = createRng(state);
@@ -1391,6 +1393,19 @@ export const LED_SAVING = 0.06; // ledverlichting: idem, kleiner
 const GREEN_ENERGY_PAYBACK_WEEKS = 156; // drie seizoenen
 
 /** De installatie wordt geprijsd naar de grootte van je complex: altijd ongeveer drie seizoenen terugverdientijd. */
+/** Wat een extra kraamplaats kost: de verwachte opbrengst per plaats-eenheid per
+ *  thuiswedstrijd, keer een seizoen of twee — zo verdient hij zichzelf netjes terug en
+ *  groeit de prijs mee met je opkomst. Gemiddeld over de standtypes aan hun gangbare
+ *  marge, zodat één uitschieter de prijs niet zet. */
+const KRAAMPJES_PAYBACK_SEASONS = 2;
+export function kraampjesCost(state: GameState): number {
+  const att = Math.max(120, expectedAttendance(state, { weather: 'bewolkt', derby: false, positionFactor: 1 }));
+  const perEenheid =
+    CONCESSIONS.reduce((sum, d) => sum + concessionForecast(state, d.id, acceptedMargin(state, d.id), att) / d.space, 0) / CONCESSIONS.length;
+  const thuisPerSeizoen = MATCH_WEEKS.length / 2;
+  return Math.max(2_000, round(perEenheid * thuisPerSeizoen * KRAAMPJES_PAYBACK_SEASONS, 500));
+}
+
 export function greenEnergyCost(state: GameState, id: 'zonnepanelen' | 'ledverlichting' = 'zonnepanelen'): number {
   const weeklySaving = facilityCost(state) * (id === 'zonnepanelen' ? SOLAR_SAVING : LED_SAVING);
   return round(weeklySaving * GREEN_ENERGY_PAYBACK_WEEKS, 500);

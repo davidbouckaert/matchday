@@ -113,6 +113,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 34) migrateV34toV35(state);
   if (state.version === 35) migrateV35toV36(state);
   if (state.version === 36) migrateV36toV37(state);
+  if (state.version === 37) migrateV37toV38(state);
   repair(state);
   return state;
 }
@@ -491,6 +492,12 @@ function migrateV34toV35(state: GameState): void {
 
 /** Versie 36: sanitair gesplitst in toiletten en kleedkamers, de groene combi in
  *  zonnepanelen en ledverlichting. Wie de combi had, krijgt beide helften. */
+/** Versie 38: uitbreidbare kraampjesplaatsen. Iedereen begint op de oude drie. */
+function migrateV37toV38(state: GameState): void {
+  state.infrastructure.concessionSpace ??= 3;
+  state.version = 38;
+}
+
 /** Versie 37: de bank werd een echte wisselbank. Het oude veld betekende het
  *  omgekeerde (uitgesloten deze week), dus het begint leeg; invalbeurten starten op nul. */
 function migrateV36toV37(state: GameState): void {

@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.71.0';
+export const VERSION = '0.72.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.72.0',
+    date: '2026-09-24',
+    title: 'Kraampjesplaatsen bijbouwen',
+    items: [
+      'Nieuw bouwproject bij 💶 Investeringen: een extra plaats voor een standhouder (van 3 naar maximaal 6)',
+      'De prijs volgt je opkomst en is gemeten op een terugverdientijd van ±1,7 seizoen — een degelijke investering, geen gratis geld',
+      'Zit je horeca vol, dan wijst het scherm je nu de weg naar de bouwkaart',
+    ],
+  },
   {
     version: '0.71.0',
     date: '2026-09-24',

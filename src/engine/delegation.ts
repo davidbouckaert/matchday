@@ -7,7 +7,7 @@ import { NATURAL_RECOVERY, avgFatigue, matchLoad, recovery, trainingLoad } from 
 import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
 import { DIVISIONS } from './data/divisions';
-import { CANTEEN_ITEMS, CLUB_EVENTS, CONCESSIONS, CONCESSION_SPACE, MERCH_ITEMS, TASKS, UPGRADES } from './data/catalog';
+import { CANTEEN_ITEMS, CLUB_EVENTS, CONCESSIONS, MERCH_ITEMS, TASKS, UPGRADES } from './data/catalog';
 import { isTransferWindow } from './calendar';
 import { FORMATIONS, POSITIONS, bestForRole, bestFormation, departureBlock, isCorePlayer, overall, squadBlock, teamStrength } from './players';
 import { expectedAttendance, spendPerHead } from './finance';
@@ -632,7 +632,7 @@ function horecaTask(state: GameState): void {
     });
   }
   if ((state.eventCooldowns['auto-concessie'] ?? 0) > 0) return;
-  const open = CONCESSIONS.filter((c) => !state.canteen.concessions.some((x) => x.id === c.id) && usedConcessionSpace(state) + c.space <= CONCESSION_SPACE);
+  const open = CONCESSIONS.filter((c) => !state.canteen.concessions.some((x) => x.id === c.id) && usedConcessionSpace(state) + c.space <= state.infrastructure.concessionSpace);
   const next = open.sort((a, b) => b.perVisitor * b.price - a.perVisitor * a.price)[0];
   if (next && openConcession(state, next.id, acceptedMargin(state, next.id)).ok) {
     state.eventCooldowns['auto-concessie'] = 8;

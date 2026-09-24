@@ -9,7 +9,7 @@ import { refreshLoanMarket, refreshStaffMarket, refreshTransferList } from './ma
 import { annuity } from './loans';
 import { makeDeal, startingSponsors } from './sponsors';
 import { addNews, book } from './util';
-import { CANTEEN_ITEMS } from './data/catalog';
+import { CANTEEN_ITEMS, CONCESSION_SPACE } from './data/catalog';
 import { emptyStats } from './stats';
 import { createOpening } from './opening';
 import { teamsFor } from './youth';
@@ -18,7 +18,7 @@ import { emptyCareer, emptyOwner } from './career';
 import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 37;
+export const SAVE_VERSION = 38;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -79,6 +79,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
       toiletLevel: 0,
       kleedkamerLevel: 0,
       parkingLevel: 0,
+      concessionSpace: CONCESSION_SPACE,
       scoreboardLevel: 0,
       teamBus: false,
       maintenance: 'normaal',

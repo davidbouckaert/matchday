@@ -102,6 +102,14 @@ export const UPGRADES: UpgradeDef[] = [
     group: 'investering',
   },
   {
+    id: 'kraampjes',
+    label: 'Kraampjesplaats (+1)',
+    description: 'Verharding, stroom en water voor een extra standhouder. De prijs volgt je opkomst en verdient zichzelf in ongeveer twee seizoenen terug. Maximaal 6 plaatsen.',
+    cost: 0, // dynamisch: zie kraampjesCost()
+    weeks: 3,
+    group: 'investering',
+  },
+  {
     id: 'ledverlichting',
     label: 'Ledverlichting',
     description: 'Led in de kantine, de gangen en rond het veld. Elke week 6% minder vaste kosten, en de klus is zo geklaard. De prijs hangt af van hoe groot je complex is.',
@@ -577,4 +585,5 @@ export function concessionDef(id: ConcessionId): ConcessionDef {
   return CONCESSIONS.find((c) => c.id === id)!;
 }
 
-export const CONCESSION_SPACE = 3; // hoeveel kramen er op het complex passen
+export const CONCESSION_SPACE = 3; // waar een nieuwe club mee begint (zie infrastructure.concessionSpace)
+export const KRAAMPJES_MAX = 6; // meer plaats is er fysiek niet op het complex

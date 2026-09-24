@@ -8,6 +8,7 @@
 // Daarom staat het hier, als één functie die allebei gebruiken.
 
 import type { Infrastructure, UpgradeId } from './types';
+import { KRAAMPJES_MAX } from './data/catalog';
 
 /** De standaardgrootte van een tribune-uitbreiding als er geen aantal is meegegeven. */
 export const DEFAULT_SEATS = 300;
@@ -31,4 +32,5 @@ export function applyUpgrade(i: Infrastructure, id: UpgradeId, seats?: number): 
   if (id === 'ploegbus') i.teamBus = true;
   if (id === 'zonnepanelen') i.solarPanels = true;
   if (id === 'ledverlichting') i.ledLighting = true;
+  if (id === 'kraampjes') i.concessionSpace = Math.min(KRAAMPJES_MAX, i.concessionSpace + 1);
 }

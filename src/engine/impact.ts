@@ -255,6 +255,9 @@ export function upgradeImpact(state: GameState, id: UpgradeId, seats?: number): 
   if (id === 'zonnepanelen') {
     add('⚡', 'Energie', '−14%', 'good', 'Je vaste kosten zakken met 14%, elke week, en dat loopt door zolang de club bestaat.');
   }
+  if (id === 'kraampjes') {
+    add('🍟', 'Kraamplaats', '+1', 'good', 'Plaats voor een extra standhouder. De prijs volgt je opkomst en verdient zichzelf in ongeveer twee seizoenen terug.');
+  }
   if (id === 'ledverlichting') {
     add('⚡', 'Energie', '−6%', 'good', 'Je vaste kosten zakken met 6%, elke week — de kleinste groene stap, zo terugverdiend.');
   }

@@ -1,7 +1,7 @@
 // Kantine en concessies: prijzen aan de toog en standhouders op het complex.
 
 import type { GameState } from '../../engine/types';
-import { CANTEEN_ITEMS, CONCESSIONS, CONCESSION_SPACE, canteenDef, concessionDef } from '../../engine/data/catalog';
+import { CANTEEN_ITEMS, CONCESSIONS, canteenDef, concessionDef } from '../../engine/data/catalog';
 import { acceptedMargin, canteenPriceFactor, concessionForecast, expectedCanteenUnits } from '../../engine/canteen';
 import { usedConcessionSpace } from '../../engine/actions';
 import { expectedAttendance } from '../../engine/finance';
@@ -63,7 +63,8 @@ export function horecaScreen(s: GameState): string {
     .join('');
 
   const free = CONCESSIONS.filter((d) => !s.canteen.concessions.some((c) => c.id === d.id));
-  const space = CONCESSION_SPACE - usedConcessionSpace(s);
+  const plaatsTotaal = s.infrastructure.concessionSpace;
+  const space = plaatsTotaal - usedConcessionSpace(s);
 
   return `${taskPicker(s, ['horeca'])}<div class="grid">
     <section class="card span2" data-tour-doel="horeca">
@@ -78,7 +79,9 @@ export function horecaScreen(s: GameState): string {
     </section>
     <section class="card span2">
       <h2>Concessies ${hint('Standhouders staan op jouw terrein en betalen je een percentage van hun omzet. Vraag je te veel, dan haken ze af of verhogen ze hun prijzen, waardoor ze minder verkopen.')}</h2>
-      <p class="muted small">Plaats: ${space} van ${CONCESSION_SPACE} eenheden vrij. Wat ze aanvaarden hangt af van je publiek, je populariteit en je kantineverantwoordelijke.</p>
+      <p class="muted small">Plaats: ${space} van ${plaatsTotaal} eenheden vrij${
+        space < 2 ? ' — een extra plaats bouw je bij Club › Infrastructuur (💶 Investeringen)' : ''
+      }. Wat ze aanvaarden hangt af van je publiek, je populariteit en je kantineverantwoordelijke.</p>
       ${
         standRows
           ? `<div class="table-wrap"><table class="compact">

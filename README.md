@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.72.0 — Kraampjesplaatsen bijbouwen
+
+**Drie kraam-eenheden was een harde muur**: alle vier de standhouders samen vragen er vijf, dus een frituur (2) plus één kraam en je horeca zat vol. Bij 💶 Investeringen staat nu **Kraampjesplaats (+1)** — verharding, stroom en water voor een extra standhouder, van drie naar maximaal zes eenheden. De prijs is dynamisch zoals bij de zonnepanelen: de verwachte opbrengst per plaats-eenheid (gemiddeld over de standtypes, aan hun gangbare marge, bij jouw verwachte opkomst) keer twee seizoenen. **Gemeten over acht seeds**: prijs ±€3.000 halverwege seizoen één, en een vierde stand levert ±€1.735 per seizoen extra concessie-inkomen op — terugverdientijd ±1,7 seizoen. Een degelijke investering die meegroeit met je club, geen gratis geld. Zit je horeca vol, dan wijst de foutmelding én het horecascherm je voortaan de weg naar de bouwkaart. Opslagbestanden migreren naar versie 38 met de vertrouwde drie plaatsen.
+
 ### 0.71.0 — Selectie opgeruimd: minder dubbel, meer ruimte, duidelijker bank
 
 **Een kritische doorlichting van het Selectie-scherm vond drie keer hetzelfde.** De ploegsterkte stond er dubbel (de banner boven het veld én drie grote tegels eronder), de kwaliteit per linie stond er dubbel (op het veld zelf én als tegelrij), en de volledige kern stond er dubbel (het paneel naast het veld én een kaarten-weergave onderaan). Alles wat dubbel stond is weg; wat bleef is uniek: de speelklaar-teller, de uitsplitsing **"Waar je sterkte vandaan komt"** (samenwerking, moraal, vorm, vermoeidheid, rollen — nergens anders te zien) en de sorteerbare cijfertabel (de enige plek waar je op loon, waarde en contract kunt sorteren).
