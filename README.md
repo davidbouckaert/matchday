@@ -171,6 +171,16 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.54.0 — Het weekrapport bouwt spanning op in plaats van ze te verklappen
+
+**Boven het weekrapport stond een rij kaartjes met het resultaat en de uitslag — de hele week samengevat vóór het rapport ook maar iets kon vertellen.** De rollende cijfers en het scorebord zijn anticipatiemechanismen, maar je zat ze meteen door dat label bovenaan. De kaartjes zijn weg (alles wat erin stond heeft hieronder al zijn eigen blok), en de hele onthulling volgt nu één spanningsboog:
+
+1. **De wedstrijd als tijdlijn** (animatie, ≤3 seconden): elk doelpunt van beide kanten verschijnt op het moment in de wedstrijd waarop het viel — de 12de minuut vroeg, de 88ste laat — met de tussenstand erbij, en de eigen doelpuntenmaker in het vet. Pas daarna klinkt het affluiten met de uitslag. Klikken slaat over, zoals altijd.
+2. **De cijfers rollen binnen** (rapport, ~1,5 seconde): binnengekomen en uitgegeven tellen post per post naar hun eindbedrag.
+3. **Daarna pas de nieuwsflitsen**, regel per regel — die begonnen vroeger tegelijk met de cijfers.
+
+De motor levert de tijdlijn (`moments` op `lastMatch` in `turn.ts`): jouw doelpuntenmakers hadden al minuten, die van de tegenstander komen uit een **eigen toevalsbron met een vaste seed** — de hoofdstroom van het toeval blijft onaangeroerd, dus een opgeslagen spel speelt exact hetzelfde verder (vastgelegd in `test/weekrapport.test.ts`). Gecontroleerd in de echt draaiende app: ticker in beeld, geen kaartjes meer in het rapport, en op de schermafdruk halverwege staan de uitgaven nog op €0 terwijl de inkomsten al tellen.
+
 ### 0.53.0 — Personeel en Sponsors: klikken om te filteren, half zoveel scrollen
 
 **Het personeelsscherm was bijna vijfduizend pixels onder elkaar**: wie heb je, wie doet wat, wie kun je halen. Maar "wie heb je" en "wie kun je halen" zijn één gedachte — je kijkt naar een lege of zwakke functie en wilt meteen zien wie ervoor te vinden is. Die twee staan nu **naast elkaar**, en de takenlijst (delegeren: een andere denkbui) staat eronder over de volle breedte.

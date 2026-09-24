@@ -1301,6 +1301,17 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .slot-badge.vol { color: var(--good); }
 .slot-badge.leeg { color: var(--muted); font-weight: 600; }
 
+/* De wedstrijd als tijdlijn in de animatie: elk hoogtepunt verschijnt op het moment in
+   de wedstrijd waarop het viel, en pas op het einde klinkt het affluiten met de uitslag. */
+.match-ticker { list-style: none; margin: var(--s3) 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; min-height: 140px; }
+.match-ticker li { opacity: 0; transform: translateY(6px); animation: ticker-in .28s ease-out forwards;
+  display: flex; gap: 8px; align-items: baseline; justify-content: center; }
+.match-ticker .min { color: var(--faint); font-variant-numeric: tabular-nums; min-width: 2.4em; text-align: right; flex: none; }
+.match-ticker li.us .who { font-weight: 700; }
+.match-ticker .mini { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--muted); }
+.match-ticker li.fin { margin-top: 4px; font-weight: 750; font-size: 1.05rem; }
+@keyframes ticker-in { to { opacity: 1; transform: none; } }
+
 /* De banner die zegt dat er een nieuwe versie klaarstaat. Boven alles, in de accentkleur:
    wie hem negeert speelt gewoon door, wie klikt zit meteen op de nieuwste versie. */
 .update-banner { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; justify-content: center; gap: var(--s3);

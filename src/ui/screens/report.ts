@@ -9,8 +9,6 @@ import { DIVISIONS } from '../../engine/data/divisions';
 import { KIND_LABEL } from '../../engine/sponsors';
 import { weeks } from '../../engine/util';
 import { currentStreak } from '../../engine/records';
-import type { Impact } from '../../engine/impact';
-import { impactChips } from '../impact';
 import { esc, euro, resultIcon, venue } from '../format';
 
 export interface WeekRef {
@@ -18,17 +16,39 @@ export interface WeekRef {
   season: number;
 }
 
-/** Animatie terwijl de week gespeeld wordt: een bal die naar doel rolt. */
+/**
+ * Animatie terwijl de week gespeeld wordt.
+ *
+ * Bij een wedstrijd is dit een tijdlijn in plaats van een rollende bal: de hoogtepunten
+ * verschijnen regel voor regel, op het moment in de wedstrijd waarop ze vielen (de 12de
+ * minuut komt dus vroeg, de 88ste laat), en pas daarna klinkt het affluiten met de
+ * uitslag. Alles binnen een seconde of drie — spanning, geen wachttijd — en klikken slaat
+ * het over. Zonder wedstrijd blijft het de vertrouwde weekbalk.
+ */
 export function animationOverlay(s: GameState, prev: WeekRef): string {
-  const hadMatch = s.lastMatch && s.lastMatch.week === prev.week && s.season === prev.season;
-  const title = hadMatch ? `${s.lastMatch!.home ? s.clubName : esc(s.lastMatch!.opponent)} – ${s.lastMatch!.home ? esc(s.lastMatch!.opponent) : s.clubName}` : `Week ${prev.week}`;
-  const where = hadMatch ? venue(s.lastMatch!.home) : '';
-  return `<div class="overlay" data-action="skip-anim">
-    <div class="anim-card">
-      <p class="muted small">${formatDateLong(s.startYear, prev.season, prev.week)}</p>
-      <h2>${title}</h2>
-      ${where}
-      <svg class="pitch" viewBox="0 0 300 120" aria-hidden="true">
+  const m = s.lastMatch && s.lastMatch.week === prev.week && s.season === prev.season ? s.lastMatch : null;
+  const title = m ? `${m.home ? s.clubName : esc(m.opponent)} – ${m.home ? esc(m.opponent) : s.clubName}` : `Week ${prev.week}`;
+  const where = m ? venue(m.home) : '';
+
+  let middenstuk: string;
+  if (m && m.moments && !m.forfeit) {
+    const hg = m.home ? m.goalsFor : m.goalsAgainst;
+    const ag = m.home ? m.goalsAgainst : m.goalsFor;
+    // elk moment op zijn plek in de wedstrijd: minuut 12 vroeg, minuut 88 laat
+    const delay = (minute: number) => (0.35 + (minute / 95) * 2.1).toFixed(2);
+    const regels = m.moments
+      .map(
+        (g) => `<li class="${g.us ? 'us' : ''}" style="animation-delay:${delay(g.minute)}s">
+          <span class="min">${g.minute}'</span> ⚽ <span class="who">${esc(g.text)}</span> <span class="mini">${g.score}</span></li>`,
+      )
+      .join('');
+    middenstuk = `<ul class="match-ticker">
+      <li style="animation-delay:.1s"><span class="min">1'</span> Aftrap</li>
+      ${regels || '<li style="animation-delay:1.3s"><span class="min">45\'</span> Weinig grote kansen</li>'}
+      <li class="fin" style="animation-delay:2.7s"><span class="min">90'</span> Affluiten: ${hg} - ${ag}</li>
+    </ul>`;
+  } else {
+    middenstuk = `<svg class="pitch" viewBox="0 0 300 120" aria-hidden="true">
         <rect x="2" y="2" width="296" height="116" rx="6" class="field"/>
         <line x1="150" y1="2" x2="150" y2="118" class="lines"/>
         <circle cx="150" cy="60" r="16" class="lines" fill="none"/>
@@ -37,10 +57,18 @@ export function animationOverlay(s: GameState, prev: WeekRef): string {
         <g class="ball-move"><circle cx="0" cy="0" r="6" class="ball"/><path d="M-3 -2 L0 -4 L3 -2 L2 2 L-2 2Z" class="ball-dot"/></g>
       </svg>
       <div class="anim-beats">
-        <span>${hadMatch ? 'De bal rolt…' : 'De week begint…'}</span>
-        <span>${hadMatch ? 'Tweede helft…' : 'De rekeningen komen binnen…'}</span>
-        <span>${hadMatch ? 'Affluiten!' : 'Alles geteld!'}</span>
-      </div>
+        <span>${m ? 'De bal rolt…' : 'De week begint…'}</span>
+        <span>${m ? 'Tweede helft…' : 'De rekeningen komen binnen…'}</span>
+        <span>${m ? 'Affluiten!' : 'Alles geteld!'}</span>
+      </div>`;
+  }
+
+  return `<div class="overlay" data-action="skip-anim">
+    <div class="anim-card">
+      <p class="muted small">${formatDateLong(s.startYear, prev.season, prev.week)}</p>
+      <h2>${title}</h2>
+      ${where}
+      ${middenstuk}
       <div class="anim-bar"><span></span></div>
       <p class="muted small">Klik om over te slaan</p>
     </div>
@@ -263,35 +291,10 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   const suspended = s.players.filter((p) => p.suspended > 0);
   if (suspended.length) waiting.push(`Geschorst: ${suspended.map((p) => `${esc(p.name)} (${p.suspended})`).join(', ')}`);
 
-  // De week in kaartjes: het resultaat, de opkomst en de uitslag in één oogopslag,
-  // vóór je aan de tabellen begint. Wie alleen dit leest, weet genoeg.
-  const m2 = s.lastMatch;
-  const kaartjes: Impact[] = [];
-  kaartjes.push({
-    icon: '💶', label: 'Resultaat', value: `${net > 0 ? '+' : net < 0 ? '−' : ''}${euro(Math.abs(net))}`,
-    tone: net >= 0 ? 'good' : 'bad',
-    tip: `Alles bij elkaar hield je deze week ${euro(Math.abs(net))} ${net >= 0 ? 'over' : 'tekort'}. Je saldo staat nu op ${euro(s.cash)}.`,
-  });
-  if (m2 && m2.week === prev.week) {
-    const uit = m2.goalsFor - m2.goalsAgainst;
-    kaartjes.push({
-      icon: uit > 0 ? '🏆' : uit < 0 ? '🥀' : '🤝', label: 'Uitslag', value: `${m2.goalsFor}-${m2.goalsAgainst}`,
-      tone: uit > 0 ? 'good' : uit < 0 ? 'bad' : 'neutral',
-      tip: `${m2.home ? 'Thuis' : 'Uit'} tegen ${m2.opponent}. ${uit > 0 ? 'Gewonnen' : uit < 0 ? 'Verloren' : 'Gelijkgespeeld'}.`,
-    });
-    if (m2.home) {
-      kaartjes.push({
-        icon: '👥', label: 'Publiek', value: `${m2.attendance}`, tone: 'neutral',
-        tip: `${m2.attendance} toeschouwers bij ${m2.weather}. Zij betaalden tickets én consumpties.`,
-      });
-    }
-  }
-  if (s.lastRecords.length) {
-    kaartjes.push({ icon: '🏅', label: 'Clubrecords', value: `${s.lastRecords.length}`, tone: 'good', tip: s.lastRecords.join(' · ') });
-  }
-  if (s.lastMilestones.length) {
-    kaartjes.push({ icon: '🎉', label: 'Mijlpalen', value: `${s.lastMilestones.length}`, tone: 'good', tip: s.lastMilestones.join(' · ') });
-  }
+  // Er stond hier een rij kaartjes met het resultaat, de uitslag en het publiek — de hele
+  // week samengevat vóór het rapport ook maar iets kon vertellen. Dat verklapte precies
+  // wat de rollende cijfers en het scorebord aan spanning opbouwen, en het stond dubbel:
+  // alles eruit staat hieronder al in zijn eigen blok. Weg ermee.
 
   /**
    * De kop en de knop blijven staan, de rest scrollt ertussen.
@@ -319,7 +322,6 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
         <button class="sm ghost" data-action="close-report" data-tip="Sluit het rapport en ga terug naar het scherm waar je was.">Sluiten ✕</button>
       </div>
       <div class="report-body">
-        <div class="report-chips">${impactChips(kaartjes, 6)}</div>
         <div class="report-grid">
           ${seasonReview}
           ${milestones}

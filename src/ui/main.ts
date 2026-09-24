@@ -377,11 +377,12 @@ function revealLines(key: string): void {
   }
   revealedFor = key;
   for (const ul of lists) ul.classList.add('staged');
-  // ongeveer 260 ms per regel: je kunt elke regel lezen terwijl hij verschijnt
+  // ongeveer 260 ms per regel, en pas nádat de cijfertellers hun werk deden: eerst het
+  // geld dat binnenrolt, dan de nieuwsflitsen — dezelfde volgorde als de spanning
   const stagger = Math.min(260, 3200 / Math.max(1, items.length));
   requestAnimationFrame(() => {
     items.forEach((li, i) => {
-      window.setTimeout(() => li.classList.add('shown'), 300 + i * stagger);
+      window.setTimeout(() => li.classList.add('shown'), 1500 + i * stagger);
     });
   });
 }

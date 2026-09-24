@@ -282,6 +282,32 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
   serveOpponentSuspensions(state, opponentId, theirBanned);
 
   const scorers = pickScorers(state, lineup, goalsFor, rng);
+
+  // De wedstrijd als tijdlijn, voor de animatie: elk doelpunt van beide kanten met de
+  // tussenstand erbij. De minuten van de tegenstander komen uit een eigen toevalsbron met
+  // een vaste seed — de hoofdstroom van het toeval blijft zo onaangeroerd, en een
+  // opgeslagen spel speelt exact hetzelfde verder.
+  const animRng = createRng({ rngState: (state.season * 97 + state.week) * 2654435761 + opponentId.charCodeAt(opponentId.length - 1) });
+  const bezet = new Set(scorers.map((g) => g.minute));
+  const hunGoals: number[] = [];
+  for (let i = 0; i < goalsAgainst; i++) {
+    let minuut = animRng.int(1, 90);
+    while (bezet.has(minuut)) minuut = animRng.int(1, 90);
+    bezet.add(minuut);
+    hunGoals.push(minuut);
+  }
+  const moments = [
+    ...scorers.map((g) => ({ minute: g.minute, us: true, text: g.name })),
+    ...hunGoals.map((minute) => ({ minute, us: false, text: opponent.name })),
+  ]
+    .sort((a, b) => a.minute - b.minute)
+    .reduce<{ minute: number; us: boolean; text: string; score: string }[]>((lijst, g) => {
+      const voor = lijst.filter((x) => x.us).length + (g.us ? 1 : 0);
+      const tegen = lijst.filter((x) => !x.us).length + (g.us ? 0 : 1);
+      lijst.push({ ...g, score: home ? `${voor}-${tegen}` : `${tegen}-${voor}` });
+      return lijst;
+    }, []);
+
   state.lastMatch = {
     week: state.week,
     opponent: opponent.name,
@@ -298,6 +324,7 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     matchup: strength.matchup,
     lineup: lineup.map((p) => ({ id: p.id, name: p.name, position: p.position, zone: p.position, rating: overall(p) })),
     scorers,
+    moments,
   };
 
   // gevolgen voor moraal, vorm en supporters

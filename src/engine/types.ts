@@ -492,6 +492,11 @@ export interface MatchReport {
   matchup?: number;
   lineup?: { id: string; name: string; position: Position; zone: Position; rating: number }[]; // wie er begon
   scorers?: { name: string; minute: number }[]; // jouw doelpuntenmakers
+  /** De wedstrijd als tijdlijn, voor de animatie: elk doelpunt van beide kanten, met de
+   *  tussenstand (thuis-uit) erbij. De minuten van de tegenstander komen uit een eigen
+   *  toevalsbron met een vaste seed, zodat de hoofdstroom van het toeval onaangeroerd
+   *  blijft en een opgeslagen spel exact hetzelfde verder speelt. */
+  moments?: { minute: number; us: boolean; text: string; score: string }[];
 }
 
 export interface SeasonRecord {

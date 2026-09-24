@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.53.2';
+export const VERSION = '0.54.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,18 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.54.0',
+    date: '2026-09-24',
+    title: 'Het weekrapport bouwt spanning op in plaats van ze te verklappen',
+    items: [
+      'De kaartjes met het resultaat en de uitslag boven het rapport zijn weg: die verklapten alles vóór de cijfers konden rollen',
+      'De animatie is een wedstrijdtijdlijn: elk doelpunt van beide kanten verschijnt op het moment waarop het viel, met de tussenstand erbij',
+      'Pas op het einde klinkt het affluiten met de uitslag — alles binnen een seconde of drie, klikken slaat over',
+      'Daarna rollen de cijfers binnen, en pas dan verschijnen de nieuwsflitsen regel per regel',
+      'De minuten van de tegenstander komen uit een eigen toevalsbron: een opgeslagen spel speelt exact hetzelfde verder',
+    ],
+  },
   {
     version: '0.53.2',
     date: '2026-09-24',
