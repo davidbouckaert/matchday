@@ -1593,7 +1593,7 @@ tr.filtering td { background: var(--accent-soft); }
 /* ==========================================================================
    Opstelling: het veld links, je kern rechts.
    ========================================================================== */
-.lineup-board { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(360px, 1fr); gap: var(--s4); align-items: start; }
+.lineup-board { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(380px, 1fr); gap: var(--s5); align-items: start; }
 @media (max-width: 1100px) { .lineup-board { grid-template-columns: 1fr; } }
 
 .formation-line { display: flex; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; margin-bottom: var(--s4); }
@@ -1601,7 +1601,7 @@ tr.filtering td { background: var(--accent-soft); }
 
 /* het veld: gras met lijnen, maar ingetogen genoeg om de namen leesbaar te houden */
 .pitch {
-  display: flex; flex-direction: column; gap: var(--s3); padding: var(--s4) var(--s3);
+  display: flex; flex-direction: column; gap: var(--s4); padding: var(--s5) var(--s4);
   border-radius: var(--radius); background:
     linear-gradient(0deg, rgba(20,102,61,.055), rgba(20,102,61,.055)),
     repeating-linear-gradient(90deg, transparent 0 40px, rgba(20,102,61,.035) 40px 80px);
@@ -1664,7 +1664,9 @@ tr.filtering td { background: var(--accent-soft); }
 
 /* de kern ernaast */
 .squad-card .swap-hint { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
-.squad-list { display: flex; flex-direction: column; gap: var(--s4); max-height: 720px; overflow-y: auto; padding-right: var(--s1); }
+/* de lijst groeit mee met je scherm: vroeger stond hier een vaste 720 pixels en
+   scrolde je in een korte kaart terwijl eronder witruimte lag */
+.squad-list { display: flex; flex-direction: column; gap: var(--s4); max-height: max(720px, calc(100vh - 260px)); overflow-y: auto; padding-right: var(--s1); }
 .squad-group.highlight .group-head { color: var(--accent); }
 .group-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); padding-bottom: 5px; border-bottom: 1px solid var(--line); margin-bottom: var(--s1); }
 
@@ -1832,6 +1834,7 @@ tr.filtering td { background: var(--accent-soft); }
   color: var(--accent); font-weight: 650; font-size: .85rem; padding: 5px 13px; border-radius: 99px;
 }
 .pb-tour:hover { background: var(--accent-soft); filter: brightness(.96); }
+.bench-btn.on, .bench.on { background: var(--mid); box-shadow: none; }
 .pb-clear { color: var(--faint); }
 .pb-block { color: var(--bad); font-weight: 600; }
 .playbar .next-group { flex-direction: row; align-items: center; gap: var(--s2); }

@@ -171,6 +171,12 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.71.0 — Selectie opgeruimd: minder dubbel, meer ruimte, duidelijker bank
+
+**Een kritische doorlichting van het Selectie-scherm vond drie keer hetzelfde.** De ploegsterkte stond er dubbel (de banner boven het veld én drie grote tegels eronder), de kwaliteit per linie stond er dubbel (op het veld zelf én als tegelrij), en de volledige kern stond er dubbel (het paneel naast het veld én een kaarten-weergave onderaan). Alles wat dubbel stond is weg; wat bleef is uniek: de speelklaar-teller, de uitsplitsing **"Waar je sterkte vandaan komt"** (samenwerking, moraal, vorm, vermoeidheid, rollen — nergens anders te zien) en de sorteerbare cijfertabel (de enige plek waar je op loon, waarde en contract kunt sorteren).
+
+**De bank kreeg zijn eigen gezicht**: de knop is overal 🔁 (het stoeltje is weg — dat suggereerde nog het oude "aan de kant zetten"), en wie op de bank zit kleurt amber, dezelfde kleur als zijn toestandsstip. En het scherm gebruikt eindelijk de ruimte: het veld is breder en ruimer, en de kernlijst groeit mee met je schermhoogte in plaats van te scrollen in een kaart van 720 pixels terwijl eronder witruimte lag.
+
 ### 0.69.0 — Een echte wisselbank: invallers spelen, groeien en tellen mee
 
 **De wissels van 0.56.0 waren vertelling; nu zijn ze spelregel.** Op Selectie duid je met 🔁 tot vijf bankspelers aan (leeg of uitbesteed = je trainer vult hem met de beste beschikbaren). Tijdens de simulatie vallen er één tot drie in, uit de hoofd-toevalsstroom want het heeft spelgevolg: wie eraf gaat weegt naar vermoeidheid en leeftijd (nooit de doelman), de minuut ligt tussen 46 en 85, en de tijdlijn in het weekrapport toont voortaan déze echte wissels. De oude 🪑-knop ("deze week niet opstellen") is vervangen: wie niet in de basis en niet op de bank staat, speelt gewoon niet.

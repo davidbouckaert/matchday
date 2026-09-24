@@ -220,7 +220,7 @@ function faq(): QA[] {
     {
       q: 'Hoe stel ik mijn basiself samen?',
       a: `Elke speler heeft twee knopjes. Met de <strong>ster</strong> zet je hem vast in de basis (★); klik nog eens en je trainer kiest weer zelf.
-        Met het <strong>stoeltje</strong> zet je hem op de wisselbank (🔁) — dan start hij niet, maar kan hij tijdens de wedstrijd invallen (zie de vraag hieronder).
+        Met de <strong>wisselknop</strong> (🔁) zet je hem op de wisselbank — dan start hij niet, maar kan hij tijdens de wedstrijd invallen (zie de vraag hieronder).
         Een ✓ betekent: je trainer koos hem. Zet je iemand vast terwijl die linie al vol staat met vastgezette spelers, dan maakt de zwakste van hen plaats.
         Laat je op het veld bewust een <strong>plaats open</strong>, dan schuift je trainer er niemand in; zolang er een plaats openstaat,
         kun je niet naar de volgende week — duid zelf iemand aan of klik op "Alles loslaten".

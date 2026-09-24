@@ -247,7 +247,7 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
         : ''
     }
     ${locked || blocked ? '<span class="sr-btn"></span>' : `<button class="sr-btn bench-btn ${benched ? 'on' : ''}" data-action="bench" data-id="${p.id}"
-      ${tipAttr(benched ? `${p.name} zit op de wisselbank. Klik om hem eraf te halen.` : `${p.name} op de wisselbank zetten (max 5). Invallers pakken speelminuten en groeien mee — zo laat je ook je beloften spelen.`, 'Wisselbank')}>${benched ? '🔁' : '🪑'}</button>`}
+      ${tipAttr(benched ? `${p.name} zit op de wisselbank. Klik om hem eraf te halen.` : `${p.name} op de wisselbank zetten (max 5). Invallers pakken speelminuten en groeien mee — zo laat je ook je beloften spelen.`, 'Wisselbank')}>🔁</button>`}
   </div>`;
 }
 
@@ -282,7 +282,7 @@ function squadPanel(s: GameState, selected: string | null): string {
 
   return `<section class="card squad-card" data-tour-doel="selectie">
     <h2>Je kern <span class="tag">${s.players.length}</span>
-      ${hint('Alle spelers, per linie. Bovenaan elke linie staat wie er zondag begint. Klik iemand om hem vast in de basis te zetten; met het stoeltje zet je hem op de wisselbank — invallers pakken speelminuten en groeien mee.')}
+      ${hint('Alle spelers, per linie. Bovenaan elke linie staat wie er zondag begint. Klik iemand om hem vast in de basis te zetten; met 🔁 zet je hem op de wisselbank — invallers pakken speelminuten en groeien mee.')}
     </h2>
     ${
       selected

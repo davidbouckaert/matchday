@@ -1,20 +1,18 @@
 import type { GameState, Player, Position } from '../../engine/types';
 import { formatWeek, isTransferWindow } from '../../engine/calendar';
-import { DIVISIONS } from '../../engine/data/divisions';
 import { FORMATIONS, POSITIONS, currentBid, isCorePlayer, lineupGap, marketValue, overall, selectLineup, teamStrength } from '../../engine/players';
 import { PLAN_INFO } from '../../engine/strategy';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
 import * as actions from '../../engine/actions';
 import { available } from '../../engine/discipline';
-import { OPPONENT_STAFF_BONUS } from '../../engine/league';
 import { transferWillingness } from '../../engine/appeal';
 import { count, esc, euro, bar, starMark } from '../format';
 import { hint, tip, tipAttr } from '../tooltip';
 import { numField } from '../numfield';
 import { taskPicker } from '../taskpicker';
 import { lineupBoard } from './lineup';
-import { contractLabel, playerCards } from './playercard';
+import { contractLabel } from './playercard';
 import { ZONE_LABEL } from './lineup';
 import { impactChips } from '../impact';
 import { playerImpact } from '../../engine/impact';
@@ -29,16 +27,8 @@ function signed(n: number): string {
   return `<span class="${n < 0 ? 'neg' : n > 0 ? 'pos' : 'muted'}">${n > 0 ? '+' : ''}${n}</span>`;
 }
 
-/** Tegel met één cijfer, vergeleken met de gemiddelde tegenstander. */
-function tile(label: string, value: number, ref: number, sub = ''): string {
-  const diff = Math.round((value - ref) * 10) / 10;
-  return `<div class="tile"><span class="label">${label}</span><strong>${value}</strong>
-    <span class="small">${signed(diff)} <span class="muted">t.o.v. gemiddelde tegenstander</span></span>${sub ? `<span class="muted small">${sub}</span>` : ''}</div>`;
-}
-
 export function squadStats(s: GameState): string {
   const st = teamStrength(s);
-  const ref = DIVISIONS[s.league.divisionLevel].opponentStrength + OPPONENT_STAFF_BONUS;
   const depth = POSITIONS.map((pos) => {
     const all = s.players.filter((p) => p.position === pos);
     const fit = all.filter((p) => p.injuryWeeks === 0 && p.suspended === 0).length;
@@ -55,17 +45,10 @@ export function squadStats(s: GameState): string {
       ${complete ? '' : `<span class="small">tekort: ${shortOf.join(', ') || 'spelers'} — je kunt pas verder naar de volgende week als je 11 speelklare spelers hebt</span>`}
     </div>
     ${avail < 13 && complete ? `<p class="attention-inline small">Let op: slechts ${avail} spelers beschikbaar. Eén blessure erbij en je kunt geen elf meer opstellen.</p>` : ''}
-    <h2>Ploegsterkte</h2>
-    <div class="tiles">
-      ${tile('Totaal', st.total, ref)}
-      ${tile('Aanvalskracht', st.attack, ref, '30% middenveld + 70% aanval')}
-      ${tile('Verdedigingskracht', st.defense, ref, '20% doel + 55% verdediging + 25% middenveld')}
-    </div>
-    <h3>Per linie (kwaliteit van de basisspelers)</h3>
-    <div class="tiles four">
-      ${POSITIONS.map((pos) => `<div class="tile"><span class="label">${ZONE_LABEL[pos]}</span><strong>${st.zones[pos]}</strong>${bar(st.zones[pos] - 20, 60)}</div>`).join('')}
-    </div>
-    <h3>Bonussen en minpunten</h3>
+    <!-- De grote sterktetegels en de linietegels stonden hier dubbel: de banner boven het
+         veld toont totaal/aanval/verdediging al, en de linielabels op het veld de rest.
+         Wat overblijft is het enige dat nérgens anders staat: waar die sterkte vandaan komt. -->
+    <h2>Waar je sterkte vandaan komt</h2>
     <div class="mods">
       <span>Samenwerking ${signed(st.chemistry)}</span>
       <span>Personeel (hoofdtrainer, assistent-trainer, data-analist) ${signed(st.trainer)}</span>
@@ -187,7 +170,7 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
         }">${pinned ? '★' : zone ? '✓' : '☆'}</button>
         <button class="bench ${benched ? 'on' : ''}" data-action="bench" data-id="${p.id}" data-tip="${
           benched ? 'Van de wisselbank halen' : 'Op de wisselbank zetten: hij kan invallen en pakt speelminuten'
-        }">${benched ? '🔁' : '🪑'}</button>`;
+        }">🔁</button>`;
   // Eén stip vertelt de toestand: groen staat opgesteld, geel zit op de bank, rood kan
   // niet spelen. Vroeger moest je dat afleiden uit ★ ✓ ☆ 🪑 ⛔ 🩹 door elkaar.
   const staat = unavailable ? 'out' : zone ? 'in' : 'bank';
@@ -259,7 +242,7 @@ const TABLE_HEAD = `<thead><tr>
   <th data-nosort></th>
 </tr></thead>`;
 
-export function squadScreen(s: GameState, open: Record<string, boolean> = { basis: false, bank: false, out: false }, pick: string | null = null, view: 'tabel' | 'kaarten' = 'kaarten'): string {
+export function squadScreen(s: GameState, open: Record<string, boolean> = { basis: false, bank: false, out: false }, pick: string | null = null): string {
   const { slots } = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps);
   const zoneOf = new Map(slots.map((x) => [x.player.id, x.zone]));
   const window = isTransferWindow(s.week);
@@ -304,25 +287,18 @@ export function squadScreen(s: GameState, open: Record<string, boolean> = { basi
     <div class="col">${squadStats(s)}</div>
     <div class="col">${rolesCard(s)}</div>
   </div>
+  <!-- Hier stond ook een kaarten-weergave van de kern, maar die toonde dezelfde spelers
+       als het paneel naast het veld. Alleen de tabel bleef: die kan iets wat nergens
+       anders kan — sorteren op loon, waarde en contract. -->
   <section class="card">
     <div class="view-switch">
-      <h2>Je kern <span class="tag">${s.players.length}</span></h2>
+      <h2>Alle cijfers <span class="tag">${s.players.length}</span></h2>
       <span class="muted small">${euro(wages)} loon per week${window ? '' : ' · verkopen kan alleen tijdens de transferperiode'}</span>
-      <span class="switch" role="group" aria-label="Weergave">
-        <button class="${view === 'kaarten' ? 'on' : ''}" data-action="squad-view" data-id="kaarten"
-          ${tipAttr('Elke speler als kaartje, gegroepeerd per linie. Toont alleen wat er nu toe doet.')}>Kaarten</button>
-        <button class="${view === 'tabel' ? 'on' : ''}" data-action="squad-view" data-id="tabel"
-          ${tipAttr('Alle cijfers in een tabel, om te sorteren op loon, waarde of contract en spelers te vergelijken.')}>Tabel</button>
-      </span>
     </div>
-    ${
-      view === 'kaarten'
-        ? playerCards(s, new Set(zoneOf.keys()))
-        : `<p class="muted small">Klik op een kolomkop om te sorteren.</p>
-           ${table('A-kern: de basiself', starters, '★ = door jou vastgezet, ✓ = aangevuld door je trainer. Klik op de ster om iemand vast te zetten of weer los te laten; met 🪑 zet je hem op de wisselbank.', 'Nog niemand opgesteld.', 'basis')}
-           ${table('Bank en reserve', bench, 'Speelklaar, maar niet in de basis. Wie jij met 🔁 op de wisselbank zette, start niet maar kan invallen: speelminuten voor je beloften.', 'Geen reserves beschikbaar — dat is gevaarlijk bij een blessure.', 'bank')}
-           ${out.length ? table('Niet beschikbaar', out, 'Geblesseerd, geschorst of uitgeleend. Zij kunnen deze week niet spelen.', '', 'out') : ''}`
-    }
+    <p class="muted small">Klik op een kolomkop om te sorteren.</p>
+    ${table('A-kern: de basiself', starters, '★ = door jou vastgezet, ✓ = aangevuld door je trainer. Klik op de ster om iemand vast te zetten of weer los te laten; met 🔁 zet je hem op de wisselbank.', 'Nog niemand opgesteld.', 'basis')}
+    ${table('Bank en reserve', bench, 'Speelklaar, maar niet in de basis. Wie jij met 🔁 op de wisselbank zette, start niet maar kan invallen: speelminuten voor je beloften.', 'Geen reserves beschikbaar — dat is gevaarlijk bij een blessure.', 'bank')}
+    ${out.length ? table('Niet beschikbaar', out, 'Geblesseerd, geschorst of uitgeleend. Zij kunnen deze week niet spelen.', '', 'out') : ''}
   </section>`;
 }
 

@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.70.0';
+export const VERSION = '0.71.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.71.0',
+    date: '2026-09-24',
+    title: 'Selectie opgeruimd: minder dubbel, meer ruimte, duidelijker bank',
+    items: [
+      'De bankknop is nu overal 🔁 (het stoeltje is weg) en een bankspeler kleurt amber',
+      'Het veld is breder en ruimer, en de kernlijst groeit mee met je scherm in plaats van te scrollen in een korte kaart',
+      'Weg wat dubbel stond: de sterktetegels (de banner boven het veld toont ze al), de linietegels (staan op het veld zelf) en de kaarten-weergave van de kern (het zijpaneel toont dezelfde spelers)',
+      'Wat bleef is uniek: de speelklaar-teller, "Waar je sterkte vandaan komt" (de bonussen-uitsplitsing) en de sorteerbare cijfertabel',
+    ],
+  },
   {
     version: '0.70.0',
     date: '2026-09-24',

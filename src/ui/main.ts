@@ -125,7 +125,6 @@ interface UiState {
   openTables: Record<string, boolean>; // welke inklapbare tabellen openstaan
   moment: 'dicht' | 'vraag' | 'gevolg'; // popup van het weekmoment
   pitchPick: string | null; // wie je op het veld aanklikte om te vervangen
-  squadView: 'tabel' | 'kaarten'; // hoe je je kern bekijkt
 }
 
 const ui: UiState = {
@@ -155,7 +154,6 @@ const ui: UiState = {
   openTables: { basis: true, bank: false, out: false },
   moment: 'dicht',
   pitchPick: null,
-  squadView: readPref('vcg-squad-cards', true) ? 'kaarten' : 'tabel',
 };
 
 /** Kleine voorkeur in de browser (fout = standaardwaarde). */
@@ -237,7 +235,7 @@ function renderScreen(g: GameState): string {
   switch (ui.screen) {
     case 'overzicht': return dashboardScreen(g);
     case 'doelen': return goalsScreen(g);
-    case 'ploeg': return squadScreen(g, ui.openTables, ui.pitchPick, ui.squadView);
+    case 'ploeg': return squadScreen(g, ui.openTables, ui.pitchPick);
     case 'strategie': return strategyScreen(g);
     case 'opleiding': return trainingScreen(g);
     case 'invloeden': return influencesScreen(g);
@@ -843,10 +841,6 @@ const handlers: Record<string, Handler> = {
   'staff-open': (id) => void (ui.selectedStaff = ui.selectedStaff === id ? null : id),
   'stats-view': (id) => void (ui.statsView = id as 'seizoen' | 'week'),
   'toggle-menu': () => void (ui.menuOpen = !ui.menuOpen),
-  'squad-view': (id) => {
-    ui.squadView = id === 'tabel' ? 'tabel' : 'kaarten';
-    writePref('vcg-squad-cards', ui.squadView === 'kaarten'); // je keuze blijft staan
-  },
   // het veld: eerst wie eruit moet aanklikken, dan wie erin komt
   'pitch-pick': (id) => void (ui.pitchPick = ui.pitchPick === id ? null : id),
   'pitch-cancel': () => void (ui.pitchPick = null),
