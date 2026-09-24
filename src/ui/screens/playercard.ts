@@ -57,7 +57,7 @@ function state(s: GameState, p: Player, inLineup: boolean): { kind: 'in' | 'bank
     };
   }
   if (inLineup) return { kind: 'in', label: 'in de basis', tip: 'Hij staat zondag in de basiself.' };
-  if (s.tactics.benched.includes(p.id)) return { kind: 'bank', label: 'op de wisselbank', tip: 'Grote kans dat hij invalt en speelminuten pakt.' };
+  if (s.tactics.benched.includes(p.id)) return { kind: 'bank', label: 'op de wisselbank', tip: 'Grote kans dat hij invalt: speelminuten en wedstrijdritme voor zijn groei. Maar hij start nooit vanzelf — haal hem van de bank als je hem in de basis wil.' };
   return { kind: 'bank', label: 'reserve', tip: 'Speelklaar, maar hij haalt de beste elf niet.' };
 }
 

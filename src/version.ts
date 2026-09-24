@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.69.0';
+export const VERSION = '0.69.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.69.1',
+    date: '2026-09-24',
+    title: 'De wisselbank legt zichzelf uit',
+    items: [
+      'Nieuwe handleidingsvraag "Hoe werkt de wisselbank?" met het volledige verhaal: wie invalt, wat het kost, waarom het je beloften laat groeien, en de keerzijde',
+      'De basiself-vraag in de handleiding beschreef nog de oude uitsluitknop — rechtgezet',
+      'Een hint bij de bankregel op Selectie en een rijkere spelerskaart-tip, kort genoeg om in één keer te lezen',
+    ],
+  },
   {
     version: '0.69.0',
     date: '2026-09-24',

@@ -296,7 +296,10 @@ function squadPanel(s: GameState, selected: string | null): string {
       s.tactics.benched.length
         ? `${s.tactics.benched.length}/5 door jou gekozen — daaruit vallen er 1 à 3 in`
         : 'leeg — je trainer vult hem op wedstrijddag met de beste beschikbaren'
-    }.</p>
+    }. ${hint(
+      'Eén tot drie bankspelers vallen in; invalbeurten tellen als speelminuten plus wedstrijdritme in de groei — zo laat je beloften spelen die anders nooit aan bod komen. Keerzijde: een bankspeler start nooit vanzelf. Het hele verhaal staat in de Handleiding.',
+      'De wisselbank',
+    )}</p>
     <p class="tiny muted">Samen ${euro(wages)} loon per week · geschatte waarde ${euro(value)} · <span data-tip="Hoe duur spelers op dit moment zijn vergeleken met een gewoon jaar. Boven de 100% is de markt oververhit en betaal je meer; eronder doe je koopjes.">marktprijzen ${(s.marketIndex * 100).toFixed(0)}%</span></p>
   </section>`;
 }

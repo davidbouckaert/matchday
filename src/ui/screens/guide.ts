@@ -220,12 +220,24 @@ function faq(): QA[] {
     {
       q: 'Hoe stel ik mijn basiself samen?',
       a: `Elke speler heeft twee knopjes. Met de <strong>ster</strong> zet je hem vast in de basis (★); klik nog eens en je trainer kiest weer zelf.
-        Met het <strong>stoeltje</strong> hou je hem deze week op de bank (⛔) — dan wordt hij niet opgesteld, ook niet door je trainer.
+        Met het <strong>stoeltje</strong> zet je hem op de wisselbank (🔁) — dan start hij niet, maar kan hij tijdens de wedstrijd invallen (zie de vraag hieronder).
         Een ✓ betekent: je trainer koos hem. Zet je iemand vast terwijl die linie al vol staat met vastgezette spelers, dan maakt de zwakste van hen plaats.
-        Haal je iemand <strong>uit je basiself</strong>, dan blijft die plaats leeg — je trainer schuift er niemand in. Zolang er een plaats openstaat,
-        kun je niet naar de volgende week: duid zelf iemand aan met de ster, maak de speler weer beschikbaar, of klik op "Alles loslaten".
-        Boven de tabellen zie je per linie hoeveel plaatsen je formatie vraagt en hoeveel er ingevuld zijn (1/1 doel, 4/4 verdediging …).
-        Spelers springen meteen naar de juiste tabel: basiself, bank of niet beschikbaar. Elke tabel kun je in- en uitklappen; de bank staat standaard dicht.`,
+        Laat je op het veld bewust een <strong>plaats open</strong>, dan schuift je trainer er niemand in; zolang er een plaats openstaat,
+        kun je niet naar de volgende week — duid zelf iemand aan of klik op "Alles loslaten".
+        Boven de tabellen zie je per linie hoeveel plaatsen je formatie vraagt en hoeveel er ingevuld zijn (1/1 doel, 4/4 verdediging …).`,
+    },
+    {
+      q: 'Hoe werkt de wisselbank?',
+      a: `Je duidt tot <strong>vijf bankspelers</strong> aan met 🔁; laat je de bank leeg (of besteed je de opstelling uit), dan vult je trainer hem met
+        de beste beschikbare spelers. Tijdens de wedstrijd vallen er <strong>één tot drie</strong> van hen in, ergens tussen minuut 46 en 85.
+        Wie eraf gaat, kiest het lot met gezond verstand: vermoeide en oudere spelers eerst, en nooit je doelman.
+        <br/><br/>Invallers doen echt mee: ze kunnen <strong>scoren</strong> (pas na hun invalminuut), een kaart pakken, ze delen voor de helft in de
+        winstpremie en worden naar hun minuten moe. Ze tellen ook <strong>minuten-gewogen mee in je ploegsterkte</strong>: een doorsnee bank verandert
+        niets, een ijzersterke bank levert een beetje op, en een bank vol beloften kost een beetje — dat is de prijs van opleiden.
+        <br/><br/>Waarom je dit wil: <strong>speelminuten sturen de groei</strong>. Elke vier weken kijkt de ontwikkeling naar het speelaandeel van elke
+        speler; wie amper speelt, gaat achteruit. Een invalbeurt telt als minuten <em>plus wedstrijdritme</em>, dus een belofte die elke week invalt,
+        groeit sneller dan een die alleen meetraint. De keerzijde is eerlijk: wie op de bank zit, start nooit vanzelf — voor een speler die anders
+        geregeld in de basis zou staan, is de bank dus een rem in plaats van een duw.`,
     },
     {
       q: 'Hoe werken bouwprojecten?',
