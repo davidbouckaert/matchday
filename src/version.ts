@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.51.0';
+export const VERSION = '0.51.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.51.1',
+    date: '2026-09-24',
+    title: 'De sponsorbezetting staat weer in beeld',
+    items: [
+      'Elke sponsortegel draagt de bezetting als badge in de kop: 10/16, groen zodra de plaats vol zit',
+      'De teller stond als voetnootje onder het invoerveld en werd daar door niemand gezien',
+      'Ook plaatsen die nog op slot staan tonen hun aantal',
+      'Het stippellijntje dat uitleg aankondigt, deed het op deze tegels niet meer (dubbel class-attribuut) — hersteld',
+    ],
+  },
   {
     version: '0.51.0',
     date: '2026-09-24',

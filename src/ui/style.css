@@ -1286,12 +1286,16 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .slot-verdict.neutral { color: var(--muted); }
 .slot-verdict.bad { color: var(--bad); }
 
-.slot-note, .slot-count { font-size: .72rem; color: var(--faint); }
+.slot-note { font-size: .72rem; color: var(--faint); }
 .slot-note .link-btn { font-size: .72rem; }
-/* het aantal bezette plaatsen hoort onderaan, ook als de tegel erboven korter is */
-.tiles.slots .tile .slot-count { margin-top: auto; padding-top: 4px; }
+/* De bezetting als badge in de kop: label links, 3/16 rechts. Dit stond als voetnootje
+   onder het invoerveld en werd daar door niemand gezien. */
+.slot-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
+.slot-head .label { min-height: 0; }
+.slot-badge { font-size: .82rem; font-weight: 750; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+.slot-badge.vol { color: var(--good); }
+.slot-badge.leeg { color: var(--muted); font-weight: 600; }
 .slot-lock { font-size: .72rem; color: var(--muted); }
-.tile.filled .slot-count { color: var(--good); font-weight: 650; }
 
 /* knoppen die onder elkaar horen in een smalle kolom */
 .stack-btns { display: flex; flex-direction: column; gap: var(--s2); align-items: stretch; }

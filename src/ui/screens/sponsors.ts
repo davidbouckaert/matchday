@@ -4,7 +4,7 @@ import { sponsorWeekly } from '../../engine/loans';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
 import { bar, esc, euro } from '../format';
-import { hint, tip } from '../tooltip';
+import { hint, tip, tipAttr } from '../tooltip';
 import { taskPicker } from '../taskpicker';
 import { numField } from '../numfield';
 
@@ -33,8 +33,17 @@ export function sponsorsScreen(s: GameState): string {
 
     // let op: niet de class 'full' gebruiken — dat is de opmaakhulp die een element over
     // alle kolommen laat lopen, en dan werd een bezette plaats een balk over de hele breedte
+    //
+    // De bezetting staat als badge in de kop. Ze stond als voetnootje ónder het
+    // invoerveld (11 pixels, vaag grijs) en werd daar door niemand gezien — gemeld als
+    // "het aantal plaatsen per soort zie ik niet meer staan", terwijl het er stond.
     return `<div class="tile slot ${lock ? 'locked' : vol ? 'filled' : ''}">
-      <span class="label" ${tip(`${KIND_LABEL[k]}. ${KIND_INFO[k]}${lock ? ` ${lock}.` : ''}`)}>${KIND_SHORT[k]}</span>
+      <span class="slot-head">
+        <span class="label has-tip" ${tipAttr(`${KIND_LABEL[k]}. ${KIND_INFO[k]}${lock ? ` ${lock}.` : ''}`)}>${KIND_SHORT[k]}</span>
+        <span class="slot-badge ${vol ? 'vol' : used > 0 ? '' : 'leeg'} has-tip" ${tipAttr(
+          `${used} van de ${KIND_MAX[k]} ${KIND_MAX[k] === 1 ? 'plaats' : 'plaatsen'} voor ${KIND_LABEL[k].toLowerCase()} ${used === 1 ? 'is' : 'zijn'} bezet${vol ? ' — vol. Zet een contract stop om plaats te maken' : ''}.`,
+        )}>${used}/${KIND_MAX[k]}</span>
+      </span>
       ${
         lock
           ? `<span class="slot-lock">🔒 ${esc(lock)}</span>`
@@ -52,16 +61,15 @@ export function sponsorsScreen(s: GameState): string {
               // zonder eigen bedrag volg je de markt, en dan is het oordeel per definitie
               // "gangbaar" — dat er dan twee keer bij zetten is alleen maar ruis
               eigen
-                ? `<span class="slot-verdict ${oordeel.toon}" ${tip(
+                ? `<span class="slot-verdict ${oordeel.toon} has-tip" ${tipAttr(
                     `Gangbaar voor zo'n plaats is bij jouw club ${euro(fair)} per week. Jij vraagt ${euro(ask)}, en dat vinden de bedrijven in de streek ${oordeel.woord}. Hoe hoger je gaat, hoe minder vaak een bedrijf ja zegt, maar wie tekent betaalt wel jouw prijs.`,
                   )}>${oordeel.woord}</span>
                    <span class="slot-note"><button class="link-btn" data-action="sponsor-ask-reset" data-id="${k}">terug naar ${euro(fair)}</button></span>`
-                : `<span class="slot-note" ${tip(
+                : `<span class="slot-note has-tip" ${tipAttr(
                     `Dit is wat bedrijven in de streek normaal betalen voor ${KIND_LABEL[k].toLowerCase()} bij een club als de jouwe. Zet er zelf een ander bedrag in en je ziet meteen wat ze ervan vinden.`,
                   )}>volgt de markt</span>`
             }`
       }
-      <span class="slot-count">${used} van ${KIND_MAX[k]} bezet</span>
     </div>`;
   }).join('');
 
