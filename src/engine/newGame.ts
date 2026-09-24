@@ -18,7 +18,7 @@ import { emptyCareer, emptyOwner } from './career';
 import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 36;
+export const SAVE_VERSION = 37;
 
 export interface NewGameOptions {
   avatar: Avatar;

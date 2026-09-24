@@ -1318,17 +1318,18 @@ describe('Rivaliteit, weekmoment en stilstand', () => {
   });
 
   it('houdt een actieve club over 20 weken in betere sfeer dan een stilstaande', function () {
-    this.timeout(20_000);
+    this.timeout(60_000);
     // Dit mat vroeger iets anders dan het beweerde: de "actieve" club paste elke week haar
     // ticketprijs aan, en die prijs trekt zelf aan de opkomst en de sfeer. Het verschil dat
     // eruit kwam ging dus over tickets, niet over stilstand, en het sloeg om zodra de
     // uitslagen anders vielen. Nu spelen beide clubs exact dezelfde wedstrijden en is het
     // enige verschil dat de ene wél beslissingen neemt.
-    // Zestien partijen, want het bericht over de stilstand verbruikt zelf een toevalsgetal
-    // en daardoor spelen de twee clubs vanaf week tien niet meer exact dezelfde wedstrijden.
-    // Met acht partijen kan de uitslagenruis het effect nog omkeren; gemeten over zestien
-    // blijft er een verschil van ongeveer vijf punten sfeer over.
-    const seeds = Array.from({ length: 16 }, (_, i) => i + 1);
+    // Tweeëndertig partijen. Eerst waren het er zestien, maar het wisselsysteem (0.69.0)
+    // verbruikt per wedstrijd extra toevalsgetallen, en zodra de twee clubs uit de pas
+    // lopen (het stilstandsbericht verbruikt er zelf al één) stapelt dat verschil op.
+    // Over zestien partijen kon de uitslagenruis het sfeereffect dan weer omkeren;
+    // over tweeëndertig blijft het staan.
+    const seeds = Array.from({ length: 32 }, (_, i) => i + 1);
     let actiefSom = 0;
     let stilSom = 0;
     for (const seed of seeds) {
@@ -1488,7 +1489,7 @@ describe('Basiself samenstellen', () => {
     expect(actions.toggleBench(s, best.id).ok).to.equal(true);
     const after = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps).lineup;
     expect(after.map((p) => p.id)).to.not.include(best.id);
-    expect(after).to.have.length(10); // zijn plaats blijft open tot jij iemand aanduidt
+    expect(after).to.have.length(11); // de trainer vult zijn plaats: de bank is geen uitsluitknop meer
     // en hij speelt ook echt niet mee
     const played = playWeeks(s, 7).lastMatch;
     if (played && !played.forfeit) expect(played.lineup!.map((x) => x.id)).to.not.include(best.id);
@@ -1503,34 +1504,38 @@ describe('Basiself samenstellen', () => {
     expect(s.tactics.manualXI).to.include(p.id);
   });
 
-  it('iemand uit de basis halen laat die plaats open: de trainer vult niet aan', () => {
+  it('een basisspeler op de wisselbank zetten haalt hem uit de elf, en de trainer vult aan', () => {
+    // sinds het echte wisselsysteem (0.69.0) is de bank geen uitsluitknop meer: wie erop
+    // staat kan invallen, en de trainer zet gewoon een ander in de basis
     const s = newTestGame();
     const keeper = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps).lineup.find(
       (p) => p.position === 'DOEL',
     )!;
-    const reserve = s.players.find((p) => p.position === 'DOEL' && p.id !== keeper.id && p.injuryWeeks === 0)!;
     const result = actions.toggleBench(s, keeper.id);
-    expect(result.message).to.include('blijft open');
+    expect(result.message).to.include('wisselbank');
     const na = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps);
-    expect(na.lineup.filter((p) => p.position === 'DOEL')).to.have.length(0);
-    expect(na.lineup).to.have.length(10);
-    expect(lineupGap(s).openTotal).to.equal(1);
-    // zelf een keeper aanduiden vult het gat
-    actions.toggleStarter(s, reserve.id);
-    const gevuld = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps);
-    expect(gevuld.lineup).to.have.length(11);
-    expect(gevuld.lineup.map((p) => p.id)).to.include(reserve.id);
+    expect(na.lineup.map((p) => p.id)).to.not.include(keeper.id);
+    expect(na.lineup).to.have.length(11);
     expect(lineupGap(s).openTotal).to.equal(0);
   });
 
-  it('de speler weer beschikbaar maken sluit het gat ook', () => {
+  it('van de bank halen maakt hem weer opstelbaar, zonder gaten', () => {
     const s = newTestGame();
     const starter = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps).lineup[3];
     actions.toggleBench(s, starter.id);
-    expect(lineupGap(s).openTotal).to.equal(1);
-    actions.toggleBench(s, starter.id);
     expect(lineupGap(s).openTotal).to.equal(0);
+    actions.toggleBench(s, starter.id);
+    expect(s.tactics.benched).to.have.length(0);
     expect(selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps).lineup).to.have.length(11);
+  });
+
+  it('de wisselbank is vol bij vijf spelers', () => {
+    const s = newTestGame();
+    const fit = s.players.filter((p) => p.injuryWeeks === 0 && p.suspended === 0);
+    for (let i = 0; i < 5; i++) expect(actions.toggleBench(s, fit[i].id).ok).to.equal(true);
+    const zesde = actions.toggleBench(s, fit[5].id);
+    expect(zesde.ok).to.equal(false);
+    expect(zesde.message).to.include('vol');
   });
 
   it('een reservespeler op de bank zetten verandert niets aan je elftal', () => {
@@ -1547,7 +1552,7 @@ describe('Basiself samenstellen', () => {
     const xi = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps).lineup;
     actions.toggleBench(s, xi[0].id);
     actions.toggleBench(s, xi[1].id);
-    expect(lineupGap(s).openTotal).to.equal(2);
+    expect(s.tactics.benched).to.have.length(2); // bank blijft bank: geen gaten meer
     actions.autoLineup(s);
     expect(lineupGap(s).openTotal).to.equal(0);
     expect(selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps).lineup).to.have.length(11);
@@ -1610,11 +1615,11 @@ describe('Open plaatsen uit een oud bestand', () => {
     expect(g.week).to.equal(s.week + 2);
   });
 
-  it('een uitbestede opstelling laat geen plaatsen open', () => {
+  it('een uitbestede opstelling laat geen plaatsen open en wist je bank', () => {
     const s = newTestGame();
     const xi = selectLineup(s.players, s.tactics.formation, s.tactics.manualXI, s.tactics.benched, s.tactics.gaps).lineup;
     actions.toggleBench(s, xi[0].id);
-    expect(lineupGap(s).openTotal).to.equal(1);
+    expect(s.tactics.benched).to.have.length(1);
     const trainer = s.staff.find((x) => x.role === 'hoofdtrainer')!;
     trainer.skill = 80;
     actions.delegateTask(s, 'opstelling', trainer.id);

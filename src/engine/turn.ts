@@ -17,7 +17,7 @@ import {
 } from './calendar';
 import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt } from './league';
 import { starLabel, weeklyStars } from './stars';
-import { LOAN_PLAY_SHARE, departureBlock, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength, wageDemand, wagePressure } from './players';
+import { LOAN_PLAY_SHARE, OUT_OF_POSITION_PENALTY, SUB_BASELINE, SUB_RHYTHM_CREDIT, departureBlock, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, planSubstitutions, selectBank, selectLineup, teamStrength, wageDemand, wagePressure } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
 import { resolveRequests, sponsorsAfterSeason, weeklySponsors } from './sponsors';
@@ -43,7 +43,7 @@ import { NIEUWS } from '../content/news';
 import type { NieuwsSjabloon } from '../content/types';
 import { clubByName, runWorldSeason } from './world';
 import { boundVolunteers, maxYouthTeams, teamNames, updateYouthTeams, youthIntakePotential, youthIntakeQuality, youthShortage } from './youth';
-import { runDelegatedTasks, strategyTask } from './delegation';
+import { delegate, runDelegatedTasks, strategyTask } from './delegation';
 import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
 import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from './factors';
 import { available, cardsForOpponent, cardsForOwnTeam, serveOpponentSuspensions, serveOwnSuspensions } from './discipline';
@@ -252,15 +252,31 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     p.starts++;
     p.periodStarts++;
   }
+  // De wisselbank en het wisselplan, uit de hoofd-toevalsstroom: wissels hebben
+  // spelgevolg, dus ze horen in dezelfde stroom als de rest van de wedstrijd.
+  const bank = selectBank(state.players, state.tactics.benched, lineup, !delegate(state, 'opstelling'));
+  const wisselPlan = planSubstitutions(rng, lineup, bank);
+  for (const w of wisselPlan) {
+    w.in.subIn++;
+    w.in.periodStarts += Math.min(1, SUB_RHYTHM_CREDIT + w.share); // minuten plus wedstrijdritme
+  }
+  // Invallers tellen minuten-gewogen mee in de sterkte: een zwakkere belofte inbrengen
+  // kost dus een beetje, een sterke bank levert wat op. Buiten positie geldt dezelfde
+  // strafkorting als in de basis. Gedeeld door elf: één man is een elfde van de ploeg.
+  const wisselDelta =
+    wisselPlan.reduce(
+      (sum, w) => sum + (overall(w.in) - (w.in.position === w.out.position ? 0 : OUT_OF_POSITION_PENALTY) - overall(w.out)) * w.share,
+      0,
+    ) / 11 - SUB_BASELINE;
   const strength = teamStrength(state, { strength: opponent.strength, plan: theirPlan });
   const dayForm = rng.normal(0, 2);
-  const ourSide = { attack: strength.attack + dayForm, defense: strength.defense + dayForm };
+  const ourSide = { attack: strength.attack + dayForm + wisselDelta, defense: strength.defense + dayForm + wisselDelta };
   // ook zij hebben een seizoen in de benen: zonder dit speelde alleen jouw ploeg met
   // vermoeidheid, blessures en schorsingen, en zakte je vanzelf richting de tiende plaats
   const theirs = opponent.strength - teamWear(opponentId, state.season, state.week) - SUSPENSION_PENALTY * Math.min(3, theirBanned.size) + rng.normal(0, 2);
   const theirSide = opponentSide(theirs, theirPlan);
   const [hg, ag] = home ? simulateMatch(rng, ourSide, theirSide) : simulateMatch(rng, theirSide, ourSide);
-  const ours = strength.total + dayForm;
+  const ours = strength.total + dayForm + wisselDelta;
   f.homeGoals = hg;
   f.awayGoals = ag;
   applyResult(state.league, f);
@@ -273,17 +289,18 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
 
   // winstpremie voor de basiself: succes kost ook geld
   if (goalsFor > goalsAgainst) {
-    const bonus = lineup.reduce((sum, p) => sum + p.wage, 0) * WIN_BONUS_SHARE;
-    book(state, 'lonen spelers', -bonus, `Winstpremie basiself (${Math.round(WIN_BONUS_SHARE * 100)}% van hun vergoeding)`);
+    const bonus = (lineup.reduce((sum, p) => sum + p.wage, 0) + 0.5 * wisselPlan.reduce((sum, w) => sum + w.in.wage, 0)) * WIN_BONUS_SHARE;
+    book(state, 'lonen spelers', -bonus, `Winstpremie selectie (${Math.round(WIN_BONUS_SHARE * 100)}% van hun vergoeding, invallers de helft)`);
   }
 
   // kaarten en schorsingen
-  const cards = cardsForOwnTeam(state, rng, lineup, opponent.isRival);
+  const cards = cardsForOwnTeam(state, rng, [...lineup, ...wisselPlan.map((w) => w.in)], opponent.isRival);
   cardsForOpponent(state, rng, opponentId, opponent.isRival);
   serveOwnSuspensions(state.players, ownSuspended);
   serveOpponentSuspensions(state, opponentId, theirBanned);
 
-  const scorers = pickScorers(state, lineup, goalsFor, rng);
+  const vanaf = new Map(wisselPlan.map((w) => [w.in.id, w.minute]));
+  const scorers = pickScorers(state, [...lineup, ...wisselPlan.map((w) => w.in)], goalsFor, rng, vanaf);
 
   // De wedstrijd als tijdlijn, voor de animatie: elk doelpunt van beide kanten met de
   // tussenstand erbij. De minuten van de tegenstander komen uit een eigen toevalsbron met
@@ -300,22 +317,14 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
   const hunGoals: number[] = [];
   for (let i = 0; i < goalsAgainst; i++) hunGoals.push(vrijeMinuut(1, 90));
 
-  // Wissels, van beide kanten. Dit is vertelling: een echt wisselsysteem (bankspelers met
-  // speelminuten en gevolgen) staat op de planning, en tot dan hebben deze wissels geen
-  // enkel spelgevolg — maar de namen zijn echt: jouw wissels komen van je eigen bank, die
-  // van de tegenstander uit hun kern.
-  const bank = state.players.filter((p) => p.injuryWeeks === 0 && p.suspended === 0 && p.loan?.type !== 'uit' && !lineupIds.has(p.id));
-  const wissels: { minute: number; us: boolean; text: string }[] = [];
-  const eigenWissels = Math.min(animRng.int(1, 3), bank.length, lineup.length);
-  const eruitGeweest = new Set<string>();
-  for (let i = 0; i < eigenWissels; i++) {
-    const erin = bank[i];
-    const kandidaten = lineup.filter((p) => !eruitGeweest.has(p.id));
-    if (!erin || !kandidaten.length) break;
-    const eruit = kandidaten[animRng.int(0, kandidaten.length - 1)];
-    eruitGeweest.add(eruit.id);
-    wissels.push({ minute: vrijeMinuut(46, 88), us: true, text: `${erin.name} erin, ${eruit.name} eruit` });
-  }
+  // Wissels: die van jou zijn sinds 0.69.0 écht — het wisselplan hierboven bepaalde ze,
+  // met minuten, speelaandeel en sterkte-effect. Alleen die van de tegenstander blijven
+  // vertelling (hun kern is een namenlijst zonder eigen bankmodel).
+  const wissels: { minute: number; us: boolean; text: string }[] = wisselPlan.map((w) => ({
+    minute: w.minute,
+    us: true,
+    text: `${w.in.name} erin, ${w.out.name} eruit`,
+  }));
   const hunNamen = [...opponent.roster];
   const hunWissels = Math.min(animRng.int(1, 3), Math.floor(hunNamen.length / 2));
   for (let i = 0; i < hunWissels; i++) {
@@ -361,7 +370,7 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
   const calm = 1 - staffSkill(state, 'mentaal') / 300; // mentale coach: minder schommelingen
   for (const p of state.players) {
     const swing = (p.trait === 'gevoelig' ? 2 : 1) * calm;
-    const played = lineupIds.has(p.id);
+    const played = lineupIds.has(p.id) || wisselPlan.some((w) => w.in.id === p.id);
     p.morale = clamp(p.morale + result * 3 * swing + (played ? 1 : -1.2), 0, 100);
     const noise = (p.trait === 'feestbeest' ? 2 : 1) * (1 - staffSkill(state, 'conditietrainer') / 200) * calm;
     if (played) p.form = clamp(p.form * 0.7 + result * 1.5 + rng.normal(0, 1.5) * noise, -10, 10);
@@ -388,8 +397,13 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     'wedstrijd',
   );
   const load = matchLoad(state);
-  for (const p of state.players) if (lineupIds.has(p.id)) p.fatigue = clamp(p.fatigue + load * fatigueAgeFactor(p.age), 0, 100);
-  rollInjuries(state, rng, [...lineupIds]);
+  const inzet = new Map<string, number>(lineup.map((p) => [p.id, 1]));
+  for (const w of wisselPlan) inzet.set(w.in.id, w.share);
+  for (const p of state.players) {
+    const deel = inzet.get(p.id);
+    if (deel) p.fatigue = clamp(p.fatigue + load * fatigueAgeFactor(p.age) * deel, 0, 100);
+  }
+  rollInjuries(state, rng, [...inzet.keys()]);
 }
 
 // ---------- Uitgestelde opbrengsten ----------
@@ -989,6 +1003,7 @@ function newSeason(state: GameState, rng: Rng): void {
     p.yellowCards = 0;
     p.redCards = 0;
     p.starts = 0;
+    p.subIn = 0;
     p.goals = 0;
     p.age++;
     p.friends = p.friends.filter((f) => !leftIds.has(f));

@@ -1658,7 +1658,9 @@ tr.filtering td { background: var(--accent-soft); }
 .squad-row[role='button']:hover { background: var(--sunken); }
 .squad-row.in-xi { background: var(--accent-soft); }
 .squad-row.in-xi:hover { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
-.squad-row.benched { opacity: .6; }
+/* op de wisselbank is geen strafbankje meer: geen uitgrijzen, maar een zachte ambertint
+   die aansluit bij de gele toestandsstip */
+.squad-row.benched { background: var(--mid-soft); }
 .squad-row.blocked { opacity: .5; }
 .squad-row.swappable { box-shadow: inset 0 0 0 1px var(--line); }
 .squad-row.suggested { box-shadow: inset 0 0 0 2px var(--accent); background: var(--good-soft); }

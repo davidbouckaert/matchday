@@ -126,6 +126,7 @@ export function generatePlayer(state: GameState, rng: Rng, opts: PlayerOptions):
     redCards: 0,
     suspended: 0,
     starts: 0,
+    subIn: 0,
     goals: 0,
     careerGoals: 0,
     periodStarts: 0,
@@ -194,13 +195,15 @@ export interface LineupSlot {
  * Wie scoort er? Een doelpunt valt eerder aan spitsen toe dan aan verdedigers, en binnen een linie
  * eerder aan de betere spelers. De strafschopnemer krijgt een extra duwtje.
  */
-export function pickScorers(state: GameState, lineup: Player[], goals: number, rng: Rng): { name: string; minute: number }[] {
+export function pickScorers(state: GameState, lineup: Player[], goals: number, rng: Rng, vanaf?: Map<string, number>): { name: string; minute: number }[] {
   if (!goals || !lineup.length) return [];
   const ZONE_WEIGHT: Record<Position, number> = { DOEL: 0.02, VERD: 0.5, MIDD: 1.4, AANV: 3.2 };
   const weights = lineup.map((p) => {
     const base = ZONE_WEIGHT[p.position] * (0.5 + overall(p) / 100);
     const taker = state.tactics.roles.strafschop === p.id ? 1.35 : 1;
-    return base * taker;
+    // een invaller staat er maar een deel van de wedstrijd: zijn kans weegt mee met zijn minuten
+    const minuten = vanaf?.has(p.id) ? (90 - vanaf.get(p.id)!) / 90 : 1;
+    return base * taker * minuten;
   });
   const total = weights.reduce((a, b) => a + b, 0);
   const minutes = new Set<number>();
@@ -212,15 +215,97 @@ export function pickScorers(state: GameState, lineup: Player[], goals: number, r
       roll -= weights[idx];
       idx++;
     }
-    let minute = rng.int(1, 90);
-    while (minutes.has(minute)) minute = rng.int(1, 90);
-    minutes.add(minute);
     const scorer = lineup[idx];
+    const vroegst = Math.max(1, vanaf?.get(scorer.id) ?? 1);
+    let minute = rng.int(vroegst, 90);
+    while (minutes.has(minute)) minute = rng.int(vroegst, 90);
+    minutes.add(minute);
     scorer.goals++;
     scorer.careerGoals++;
     out.push({ name: scorer.name, minute });
   }
   return out.sort((a, b) => a.minute - b.minute);
+}
+
+// ---------- De wisselbank ----------
+//
+// Tot 0.68 was "de bank" een uitsluitknop: wie erop stond, speelde niet. Nu is het een
+// echte wisselbank: jij duidt tot vijf spelers aan (of je trainer vult hem), en tijdens
+// de wedstrijd vallen er één tot drie van hen in. Invallers tellen minuten-gewogen mee
+// in de ploegsterkte én in het speelaandeel waarop de groei elke vier weken rekent — zo
+// stuur je de ontwikkeling van je beloften zonder je basiself te slopen, tegen een
+// kleine, eerlijke sterkteprijs.
+
+export const BANK_MAX = 5;
+export const SUBS_MAX = 3;
+/** Wisselvenster: niet voor de rust, niet in de slotminuten. */
+export const SUB_WINDOW: [number, number] = [46, 85];
+/** Het typische minuten-gewogen sterkte-effect van trainerwissels, gemeten over 9.600
+ *  trekkingen (sept 2026): −0,45. De wedstrijd centreert het wisseleffect hieromheen,
+ *  want de sterktegetallen van tegenstanders hebben gewone wissels al in zich — alleen
+ *  jouw áfwijking van gewoon (bank vol beloften, of juist een ijzersterke bank) telt. */
+export const SUB_BASELINE = -0.45;
+/** Wat een invalbeurt wáárd is in het speelaandeel, bovenop de pure minuten: wedstrijd-
+ *  ritme — meespelen onder druk, al is het maar een half uur. Zonder dit krediet bleef
+ *  een vaste invaller onder de groeidrempel van 40% speelaandeel en groeide een belofte
+ *  op de bank juist trager dan vrij meetrainen (gemeten: −0,5 over 24 weken). Mét dit
+ *  krediet komt een wekelijkse invaller rond de 45-50% uit: bankminuten sturen de groei,
+ *  zoals het systeem bedoelt, zonder een basisplaats te evenaren. */
+export const SUB_RHYTHM_CREDIT = 0.35;
+
+/** De wisselbank voor deze wedstrijd: jouw keuze als die er is (en je de opstelling niet
+ *  uitbesteedde), anders vult de trainer aan met de beste beschikbare spelers. */
+export function selectBank(players: Player[], benched: string[], lineup: Player[], useManual: boolean): Player[] {
+  const inXI = new Set(lineup.map((p) => p.id));
+  const fit = players.filter(canPlay).filter((p) => !inXI.has(p.id));
+  if (useManual) {
+    const eigen = benched.map((id) => fit.find((p) => p.id === id)).filter((p): p is Player => !!p);
+    if (eigen.length) return eigen.slice(0, BANK_MAX);
+  }
+  return [...fit].sort((a, b) => overall(b) - overall(a)).slice(0, BANK_MAX);
+}
+
+export interface SubPlan {
+  minute: number;
+  in: Player;
+  out: Player;
+  /** Deel van de wedstrijd dat de invaller speelt: (90 − minuut) / 90. */
+  share: number;
+}
+
+/**
+ * De wissels van deze wedstrijd, uit de hoofd-toevalsstroom (ze hebben spelgevolg).
+ *
+ * Eén tot drie invallers, gewogen naar twee. Wie eraf gaat: nooit de doelman, en hoe
+ * vermoeider of ouder, hoe waarschijnlijker — precies wat een trainer doet.
+ */
+export function planSubstitutions(rng: Rng, lineup: Player[], bank: Player[]): SubPlan[] {
+  if (!bank.length || !lineup.length) return [];
+  const gepland = Math.min(bank.length, SUBS_MAX, [1, 2, 2, 3][rng.int(0, 3)]);
+  const veldspelers = lineup.filter((p) => p.position !== 'DOEL');
+  const beschikbaarIn = [...bank];
+  const alEruit = new Set<string>();
+  const minuten = new Set<number>();
+  const plan: SubPlan[] = [];
+  for (let i = 0; i < gepland; i++) {
+    const kandidaten = veldspelers.filter((p) => !alEruit.has(p.id));
+    if (!kandidaten.length || !beschikbaarIn.length) break;
+    const gewichten = kandidaten.map((p) => 1 + p.fatigue / 40 + Math.max(0, p.age - 28) * 0.15);
+    let rol = rng.next() * gewichten.reduce((a, b) => a + b, 0);
+    let idx = 0;
+    while (idx < gewichten.length - 1 && rol > gewichten[idx]) {
+      rol -= gewichten[idx];
+      idx++;
+    }
+    const eruit = kandidaten[idx];
+    alEruit.add(eruit.id);
+    const erin = beschikbaarIn.splice(rng.int(0, beschikbaarIn.length - 1), 1)[0];
+    let minute = rng.int(SUB_WINDOW[0], SUB_WINDOW[1]);
+    while (minuten.has(minute)) minute = rng.int(SUB_WINDOW[0], SUB_WINDOW[1]);
+    minuten.add(minute);
+    plan.push({ minute, in: erin, out: eruit, share: Math.round(((90 - minute) / 90) * 100) / 100 });
+  }
+  return plan.sort((a, b) => a.minute - b.minute);
 }
 
 export function selectLineup(

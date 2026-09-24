@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.68.2';
+export const VERSION = '0.69.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,18 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.69.0',
+    date: '2026-09-24',
+    title: 'Een echte wisselbank: invallers spelen, groeien en tellen mee',
+    items: [
+      'Duid tot vijf bankspelers aan (🔁 op Selectie); tijdens de wedstrijd vallen er één tot drie van hen in, nooit de doelman eruit',
+      'Invallers tellen minuten-gewogen mee in de sterkte, gecentreerd rond het gemeten trainersgemiddelde (−0,45): een gewone bank is neutraal, een sterke levert op, beloften kosten een beetje',
+      'Een invalbeurt telt als minuten plus wedstrijdritme in het speelaandeel: een diepe reserve op de bank groeit nu méér dan vrij meetrainen (gemeten: +1,00 tegenover +0,83 over 24 weken)',
+      'Invallers kunnen scoren (pas na hun invalminuut), pakken kaarten, delen in de winstpremie (de helft) en worden naar minuten moe',
+      'De wissels in de wedstrijdtijdlijn zijn nu écht — de belofte uit 0.56.0 is ingelost; de oude 🪑-uitsluitknop is vervangen door de bank',
+    ],
+  },
   {
     version: '0.68.2',
     date: '2026-09-24',

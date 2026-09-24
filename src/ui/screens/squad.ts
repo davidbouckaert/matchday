@@ -161,7 +161,7 @@ export function lineupCard(s: GameState): string {
   return `<section class="card">
     <h2>Basiself: <span class="${total < 11 ? 'neg' : ''}">${total}/11</span> ${hint('De teller per linie komt uit je formatie. ★ = door jou vastgezet, ✓ = aangevuld door je trainer. Staat er iemand buiten zijn positie, dan verliest hij 8 punten kwaliteit.')}</h2>
     <p class="muted small">Formatie <strong>${s.tactics.formation}</strong>${coach ? ` · gekozen door ${esc(coach.name)}` : ''} · wijzig de formatie bij Ploeg › Strategie.
-      ${pinned ? `<strong>${count(pinned, 'speler')}</strong> vastgezet` : 'Je trainer kiest voorlopig alles zelf'}${benched ? ` · <strong>${benched}</strong> op de bank gezet` : ''}.</p>
+      ${pinned ? `<strong>${count(pinned, 'speler')}</strong> vastgezet` : 'Je trainer kiest voorlopig alles zelf'}${benched ? ` · <strong>${benched}</strong> op de wisselbank` : ''}.</p>
     <div class="lineup-lines">${lines}</div>
     ${
       coach || (!pinned && !benched)
@@ -186,8 +186,8 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
           pinned ? 'Niet meer vastzetten: je trainer kiest weer' : 'Vast in de basis zetten'
         }">${pinned ? '★' : zone ? '✓' : '☆'}</button>
         <button class="bench ${benched ? 'on' : ''}" data-action="bench" data-id="${p.id}" data-tip="${
-          benched ? 'Weer beschikbaar maken' : 'Deze week niet opstellen'
-        }">${benched ? '⛔' : '🪑'}</button>`;
+          benched ? 'Van de wisselbank halen' : 'Op de wisselbank zetten: hij kan invallen en pakt speelminuten'
+        }">${benched ? '🔁' : '🪑'}</button>`;
   // Eén stip vertelt de toestand: groen staat opgesteld, geel zit op de bank, rood kan
   // niet spelen. Vroeger moest je dat afleiden uit ★ ✓ ☆ 🪑 ⛔ 🩹 door elkaar.
   const staat = unavailable ? 'out' : zone ? 'in' : 'bank';
@@ -319,8 +319,8 @@ export function squadScreen(s: GameState, open: Record<string, boolean> = { basi
       view === 'kaarten'
         ? playerCards(s, new Set(zoneOf.keys()))
         : `<p class="muted small">Klik op een kolomkop om te sorteren.</p>
-           ${table('A-kern: de basiself', starters, '★ = door jou vastgezet, ✓ = aangevuld door je trainer. Klik op de ster om iemand vast te zetten of weer los te laten; met 🪑 zet je hem deze week op de bank.', 'Nog niemand opgesteld.', 'basis')}
-           ${table('Bank en reserve', bench, 'Speelklaar, maar niet in de basis. Wie jij met ⛔ op de bank hield, wordt niet opgesteld; klik nogmaals om hem weer beschikbaar te maken.', 'Geen reserves beschikbaar — dat is gevaarlijk bij een blessure.', 'bank')}
+           ${table('A-kern: de basiself', starters, '★ = door jou vastgezet, ✓ = aangevuld door je trainer. Klik op de ster om iemand vast te zetten of weer los te laten; met 🪑 zet je hem op de wisselbank.', 'Nog niemand opgesteld.', 'basis')}
+           ${table('Bank en reserve', bench, 'Speelklaar, maar niet in de basis. Wie jij met 🔁 op de wisselbank zette, start niet maar kan invallen: speelminuten voor je beloften.', 'Geen reserves beschikbaar — dat is gevaarlijk bij een blessure.', 'bank')}
            ${out.length ? table('Niet beschikbaar', out, 'Geblesseerd, geschorst of uitgeleend. Zij kunnen deze week niet spelen.', '', 'out') : ''}`
     }
   </section>`;

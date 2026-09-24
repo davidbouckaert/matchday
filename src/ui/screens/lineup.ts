@@ -224,7 +224,7 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
 
   return `<div class="squad-row ${inXI ? 'in-xi' : ''} ${benched ? 'benched' : ''} ${blocked ? 'blocked' : ''} ${suggested ? 'suggested' : ''} ${swapping ? 'swappable' : ''}"
     ${action} ${tipAttr(tipText, p.name)} ${action ? 'role="button" tabindex="0"' : ''}>
-    <span class="sr-state">${inXI ? '<span class="dot-in" aria-label="in de basis"></span>' : benched ? '<span class="dot-bench" aria-label="op de bank"></span>' : '<span class="dot-out" aria-label="in de kern"></span>'}</span>
+    <span class="sr-state">${inXI ? '<span class="dot-in" aria-label="in de basis"></span>' : benched ? '<span class="dot-bench" aria-label="op de wisselbank"></span>' : '<span class="dot-out" aria-label="in de kern"></span>'}</span>
     <span class="sr-name">
       <span class="sr-line"><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ' <span class="core" ' + tipAttr('Kernspeler: hij hoort bij je beste elf of is een groot talent.') + '>★</span>' : ''}${roleMark(s, p.id)}</span>
       <span class="sr-sub">${p.age}j · ${esc(p.trait)}${p.isYouth ? ' · eigen jeugd' : ''}${p.loan?.type === 'in' ? ` · gehuurd van ${esc(p.loan.club)}` : ''}${p.listed ? ' · te koop' : ''}</span>
@@ -247,7 +247,7 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
         : ''
     }
     ${locked || blocked ? '<span class="sr-btn"></span>' : `<button class="sr-btn bench-btn ${benched ? 'on' : ''}" data-action="bench" data-id="${p.id}"
-      ${tipAttr(benched ? `${p.name} staat op de bank. Klik om hem weer beschikbaar te maken.` : `${p.name} deze week niet opstellen. Zijn plaats blijft dan open.`, 'Bank')}>${benched ? '⛔' : '🪑'}</button>`}
+      ${tipAttr(benched ? `${p.name} zit op de wisselbank. Klik om hem eraf te halen.` : `${p.name} op de wisselbank zetten (max 5). Invallers pakken speelminuten en groeien mee — zo laat je ook je beloften spelen.`, 'Wisselbank')}>${benched ? '🔁' : '🪑'}</button>`}
   </div>`;
 }
 
@@ -282,7 +282,7 @@ function squadPanel(s: GameState, selected: string | null): string {
 
   return `<section class="card squad-card" data-tour-doel="selectie">
     <h2>Je kern <span class="tag">${s.players.length}</span>
-      ${hint('Alle spelers, per linie. Bovenaan elke linie staat wie er zondag begint. Klik iemand om hem vast in de basis te zetten; met het stoeltje hou je hem een week aan de kant.')}
+      ${hint('Alle spelers, per linie. Bovenaan elke linie staat wie er zondag begint. Klik iemand om hem vast in de basis te zetten; met het stoeltje zet je hem op de wisselbank — invallers pakken speelminuten en groeien mee.')}
     </h2>
     ${
       selected
@@ -292,6 +292,11 @@ function squadPanel(s: GameState, selected: string | null): string {
         : ''
     }
     <div class="squad-list">${groups}</div>
+    <p class="tiny muted">🔁 Wisselbank: ${
+      s.tactics.benched.length
+        ? `${s.tactics.benched.length}/5 door jou gekozen — daaruit vallen er 1 à 3 in`
+        : 'leeg — je trainer vult hem op wedstrijddag met de beste beschikbaren'
+    }.</p>
     <p class="tiny muted">Samen ${euro(wages)} loon per week · geschatte waarde ${euro(value)} · <span data-tip="Hoe duur spelers op dit moment zijn vergeleken met een gewoon jaar. Boven de 100% is de markt oververhit en betaal je meer; eronder doe je koopjes.">marktprijzen ${(s.marketIndex * 100).toFixed(0)}%</span></p>
   </section>`;
 }

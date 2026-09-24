@@ -112,6 +112,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 33) migrateV33toV34(state);
   if (state.version === 34) migrateV34toV35(state);
   if (state.version === 35) migrateV35toV36(state);
+  if (state.version === 36) migrateV36toV37(state);
   repair(state);
   return state;
 }
@@ -490,6 +491,16 @@ function migrateV34toV35(state: GameState): void {
 
 /** Versie 36: sanitair gesplitst in toiletten en kleedkamers, de groene combi in
  *  zonnepanelen en ledverlichting. Wie de combi had, krijgt beide helften. */
+/** Versie 37: de bank werd een echte wisselbank. Het oude veld betekende het
+ *  omgekeerde (uitgesloten deze week), dus het begint leeg; invalbeurten starten op nul. */
+function migrateV36toV37(state: GameState): void {
+  state.tactics.benched = [];
+  for (const p of state.players) p.subIn ??= 0;
+  for (const p of state.loanMarket ?? []) p.subIn ??= 0;
+  for (const p of state.transferList ?? []) p.subIn ??= 0;
+  state.version = 37;
+}
+
 function migrateV35toV36(state: GameState): void {
   const i = state.infrastructure as Infrastructure & { sanitairLevel?: number; greenEnergy?: boolean };
   i.toiletLevel ??= i.sanitairLevel ?? 0;

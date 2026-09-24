@@ -30,6 +30,7 @@ export interface Player {
   redCards: number; // dit seizoen
   suspended: number; // aantal competitiewedstrijden geschorst
   starts: number; // basisplaatsen dit seizoen
+  subIn: number; // invalbeurten dit seizoen
   goals: number; // doelpunten dit seizoen
   careerGoals: number; // doelpunten voor deze club, over alle seizoenen
   periodStarts: number; // basisplaatsen sinds de laatste evolutie (om de 4 weken)
@@ -105,7 +106,12 @@ export interface Tactics {
   mentality: Mentality;
   plan: GamePlan; // spelplan tijdens de wedstrijd (sterk/zwak tegen andere spelplannen)
   manualXI: string[]; // speler-ids die de eigenaar zelf in de basis zet (leeg = automatisch)
-  benched: string[]; // speler-ids die de eigenaar deze week NIET wil opstellen
+  /** De wisselbank (max 5): wie jij aanduidt om in te vallen. Tot 0.68 betekende dit
+   *  veld "uitgesloten deze week" — sinds het echte wisselsysteem is het de bank. */
+  /** De wisselbank (max 5): wie jij aanduidt om in te vallen tijdens de wedstrijd.
+   *  Tot 0.68 betekende dit veld het omgekeerde ("deze week niet opstellen"); de
+   *  migratie naar v37 maakte hem leeg. Bankspelers starten nooit vanzelf. */
+  benched: string[];
   gaps: Partial<Record<Position, number>>; // plaatsen die jij bewust openliet: die vult de trainer niet op
   trainings: number; // trainingen per week (2-5)
   focus: TrainingFocus;

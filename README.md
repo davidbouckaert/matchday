@@ -171,6 +171,16 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.69.0 — Een echte wisselbank: invallers spelen, groeien en tellen mee
+
+**De wissels van 0.56.0 waren vertelling; nu zijn ze spelregel.** Op Selectie duid je met 🔁 tot vijf bankspelers aan (leeg of uitbesteed = je trainer vult hem met de beste beschikbaren). Tijdens de simulatie vallen er één tot drie in, uit de hoofd-toevalsstroom want het heeft spelgevolg: wie eraf gaat weegt naar vermoeidheid en leeftijd (nooit de doelman), de minuut ligt tussen 46 en 85, en de tijdlijn in het weekrapport toont voortaan déze echte wissels. De oude 🪑-knop ("deze week niet opstellen") is vervangen: wie niet in de basis en niet op de bank staat, speelt gewoon niet.
+
+**Invallers tellen overal mee, naar minuten gewogen.** In de ploegsterkte — gecentreerd rond het gemeten trainersgemiddelde van −0,45 (9.600 trekkingen), want de sterktegetallen van tegenstanders hebben gewone wissels al in zich: een doorsnee bank is neutraal, een ijzersterke levert tot ~+0,35 op, een bank vol beloften kost tot ~−0,5. Verder scoren ze (pas na hun invalminuut), pakken ze kaarten, delen ze voor de helft in de winstpremie en worden ze naar hun minuten moe.
+
+**En dit is het nieuwe stuurmiddel voor je beloften.** Een invalbeurt telt in het speelaandeel van de vierwekelijkse groei als minuten plus wedstrijdritme (+0,35). Die ritme-bonus kwam uit de meting: zonder bleef een vaste invaller onder de 40%-groeidrempel en groeide een belofte op de bank juist trager dan vrij meetrainen (−0,5 over 24 weken — mijn eerste opzet, gemeten en verworpen). Mét ritme-krediet, gemeten over 30 seeds: een diepe reserve op de bank pakt 13,3 invalbeurten en groeit **+1,00**, tegenover **+0,83** met 3,1 toevallige basisplaatsen in vrije rotatie. De afweging is eerlijk: de bank garandeert minuten maar blokkeert basisplaatsen — voor een rotatiespeler die af en toe zou starten is hij licht negatief, voor de belofte die anders nooit speelt is hij winst.
+
+Zeven nieuwe motortests (771 in totaal), opslagbestanden migreren naar versie 37 (het oude bankveld betekende het omgekeerde en begint dus leeg), en in de draaiende app nagespeeld: twee spelers op de bank, de bankregel eronder, en echte wissels met hun namen in de tijdlijn.
+
 ### 0.68.0 — Elke bouwcategorie zijn eigen kaart
 
 **De groepen van 0.62.0 zaten als kopjes bínnen één lange kaart, en dat las als één brij.** Elke categorie is nu een echte kaart met eigen kop en ondertitel — 🧱 Ruwbouw, ⚽ Sportief, 🚪 Afdelingen, 📡 Technologie, 💶 Investeringen — met erboven één smalle intro-balk voor de spelregels (hoeveel werven tegelijk, leningen, de aannemerskorting). En de tribune-uitbreiding met haar schuifregelaar, die een volledige rij voor zich alleen opeiste, is teruggebracht tot een **dubbelbreed kaartje ín het Ruwbouw-raster**: de schuif past prima op halve breedte, en kantine en toiletten staan er gewoon naast. In de draaiende app gefotografeerd: vijf kaarten, de tribune netjes ingepast.

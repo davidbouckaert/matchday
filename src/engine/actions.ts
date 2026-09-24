@@ -3,7 +3,7 @@
 
 import type {
   ActionResult, CanteenItemId, ConcessionId, Formation, GamePlan, GameState, Infrastructure, Mentality, MerchItemId,
-  Player, PlayerLoan, PlayerRoles, Position, StaffRole, TaskId, TrainingFocus, UpgradeId,
+  Player, PlayerLoan, PlayerRoles, StaffRole, TaskId, TrainingFocus, UpgradeId,
 } from './types';
 import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
@@ -14,7 +14,7 @@ import {
 } from './data/catalog';
 import { isTransferWindow } from './calendar';
 import { coursePlan } from './training-staff';
-import { FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, selectLineup, wageDemand } from './players';
+import { BANK_MAX, FORMATIONS, currentBid, departureBlock, isCorePlayer, marketValue, overall, wageDemand } from './players';
 import { stepPremium, transferWillingness, wantsAway } from './appeal';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
 import { emergencyOffer, loanOffers } from './loans';
@@ -786,19 +786,14 @@ export function toggleBench(state: GameState, playerId: string): ActionResult {
   const t = state.tactics;
   const p = state.players.find((x) => x.id === playerId);
   if (!p) return fail('Speler niet gevonden.');
-  const gapsOf = (pos: Position) => t.gaps?.[pos] ?? 0;
   if (t.benched.includes(playerId)) {
     t.benched = t.benched.filter((id) => id !== playerId);
-    t.gaps = { ...t.gaps, [p.position]: Math.max(0, gapsOf(p.position) - 1) };
-    return ok(`${p.name} is weer beschikbaar. Je trainer mag hem opnieuw opstellen.`);
+    return ok(`${p.name} staat niet meer op de wisselbank. Je trainer mag hem weer opstellen.`);
   }
-  const starting = selectLineup(state.players, t.formation, t.manualXI, t.benched, t.gaps).lineup.some((x) => x.id === playerId);
+  if (t.benched.length >= BANK_MAX) return fail(`Je wisselbank is vol (${BANK_MAX} spelers). Haal er eerst iemand af.`);
   t.benched.push(playerId);
   t.manualXI = t.manualXI.filter((id) => id !== playerId);
-  if (!starting) return ok(`${p.name} blijft op de bank. Klik nogmaals om hem weer beschikbaar te maken.`);
-  const room = FORMATIONS[t.formation][p.position];
-  t.gaps = { ...t.gaps, [p.position]: Math.min(room, gapsOf(p.position) + 1) };
-  return ok(`${p.name} staat niet meer in je basiself. Die plaats blijft open: duid zelf iemand aan met de ster.`);
+  return ok(`${p.name} zit op de wisselbank: grote kans dat hij invalt en speelminuten pakt.`);
 }
 
 /**
