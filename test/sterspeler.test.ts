@@ -188,9 +188,11 @@ describe('Sterspelers in het nieuws', () => {
   });
 
   it('laat ook andere clubs een sterspeler halen', () => {
-    // dit hoort bij de levende wereld: niet alleen jij versterkt je ploeg
+    // dit hoort bij de levende wereld: niet alleen jij versterkt je ploeg.
+    // Acht seeds in plaats van vier: het wisselsysteem (0.69.0) verbruikt extra
+    // toevalsgetallen, en over vier vaste seeds viel dit kansevent toen net buiten de boot.
     let gevonden = false;
-    for (const seed of [1, 2, 3, 4]) {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
       const na = playWeeks(readyGame('zuidrand', 'aannemer', seed), 54);
       if (na.news.some((n) => /haalde sterspeler/i.test(n.text)) || na.lastWorldMoves.some((m) => /sterspeler/i.test(m.text))) {
         gevonden = true;
