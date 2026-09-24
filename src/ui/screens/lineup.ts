@@ -280,7 +280,7 @@ function squadPanel(s: GameState, selected: string | null): string {
   const wages = s.players.reduce((sum, p) => sum + p.wage, 0);
   const value = s.players.reduce((sum, p) => sum + marketValue(p, s.marketIndex), 0);
 
-  return `<section class="card squad-card">
+  return `<section class="card squad-card" data-tour-doel="selectie">
     <h2>Je kern <span class="tag">${s.players.length}</span>
       ${hint('Alle spelers, per linie. Bovenaan elke linie staat wie er zondag begint. Klik iemand om hem vast in de basis te zetten; met het stoeltje hou je hem een week aan de kant.')}
     </h2>

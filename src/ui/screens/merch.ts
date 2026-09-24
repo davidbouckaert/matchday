@@ -16,7 +16,7 @@ export function merchScreen(s: GameState): string {
   const locked = !!manager;
 
   if (!m.active) {
-    return `<section class="card">
+    return `<section class="card" data-tour-doel="winkel">
       <h2>Clubwinkel</h2>
       <p>Supporters kopen graag een sjaal of een shirt van hun club. Met een eigen winkel en webwinkel verdien je aan elke thuiswedstrijd,
       en ook tussendoor verkoop je nog wat. Jij kiest welke artikelen in de rekken liggen en wat ze kosten.</p>
@@ -63,7 +63,7 @@ export function merchScreen(s: GameState): string {
   const missing = MERCH_ITEMS.filter((d) => !m.items.some((i) => i.id === d.id));
 
   return `${taskPicker(s, ['merchandising'])}<div class="grid">
-    <section class="card span2">
+    <section class="card span2" data-tour-doel="winkel">
       <h2>Clubwinkel</h2>
       <p class="muted small">
         ${isHomeMatchWeek(s) ? 'Deze week is er een thuiswedstrijd: de winkel verkoopt ongeveer 3,4 keer zoveel.' : 'Zonder thuiswedstrijd draait alleen de webwinkel.'}

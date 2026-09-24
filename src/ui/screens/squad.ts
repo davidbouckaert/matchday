@@ -108,7 +108,7 @@ export function rolesCard(s: GameState): string {
       ${options.map((p) => `<option value="${p.id}" ${current === p.id ? 'selected' : ''}>${esc(p.name)} (${p.position}, ${overall(p)})</option>`).join('')}
     </select>`;
   };
-  return `<section class="card">
+  return `<section class="card" data-tour-doel="kapitein">
     <h2>Spelersrollen ${hint('De kapitein tilt de ploeg op als hij leiderschap heeft en in de basis staat; een lastpak als kapitein werkt averechts. De nemers van strafschoppen en hoekschoppen leveren extra doelpunten uit stilstaande fases, zeker met trainingsfocus spelhervattingen.')}</h2>
     <div class="role-grid">
       ${(['kapitein', 'strafschop', 'hoekschop'] as const)
@@ -526,7 +526,7 @@ export function transfersScreen(s: GameState): string {
   </section>
   ${offers ? `<section class="card attention"><h2>Biedingen op je spelers (${s.playerOffers.length})</h2><ul class="offers">${offers}</ul></section>` : ''}
   ${loanKeepCard(s)}
-  <section class="card">
+  <section class="card" data-tour-doel="transfers">
     <h2>Transfermarkt: kopen</h2>
     <p class="muted small">${window ? 'De transferperiode is open. Elke week verdwijnen er spelers en komen er nieuwe bij.' : 'De transferperiode is gesloten. Je kunt al rondkijken; kopen, verkopen en huren kan van mei tot eind augustus en in januari.'}
     Een scout zorgt voor meer en betere spelers en lagere prijzen, een analist helpt hem.

@@ -178,7 +178,7 @@ export function staffScreen(s: GameState, selected: string | null, filter: Staff
       </section>
     </div>
     <div class="col">
-      <section class="card">
+      <section class="card" data-tour-doel="kandidaten">
         <h2>Kandidaten <span class="tag">${markt.length}${filter ? ` van ${s.staffMarket.length}` : ''}</span> ${filterChip}</h2>
         <p class="muted small">${filter ? 'Alle kandidaten voor deze functie in deze lichting.' : 'Je ziet de beste kandidaat per functie; klik op een functie voor de volledige lichting.'} De lijst vernieuwt elke 4 weken; maximaal één persoon per functie. Bij elke kandidaat staat of zijn functie vrij is, bezet (vervangen kan in één beslissing) of nog op slot. "Wat het je oplevert" is het verschil met wie je nu hebt.</p>
         <div class="table-wrap"><table class="compact" data-sort-id="kandidaten">
@@ -188,7 +188,7 @@ export function staffScreen(s: GameState, selected: string | null, filter: Staff
       </section>
     </div>
   </div>
-  <section class="card">
+  <section class="card" data-tour-doel="taken">
     <h2>Wie doet wat? ${hint('Kies per taak wie ze doet: jij, of iemand van je personeel.')}</h2>
     <p class="muted small">Staat er "Jij", dan beslis je het zelf op het scherm waar die taak thuishoort. Geef je ze uit handen, dan beslist die persoon elke week automatisch — en hoe beter hij is, hoe minder hij ernaast zit. Terugnemen kan altijd.
     Je hebt ${TASKS.filter((t) => delegate(s, t.id)).length} van de ${TASKS.length} taken uitbesteed. Iemand kan 1 tot 4 taken aan, en werkt buiten zijn vakgebied op een lager niveau.</p>

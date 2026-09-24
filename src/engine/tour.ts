@@ -42,6 +42,9 @@ export interface TourStep {
   where: string;
   /** Het scherm-id waar de knop heen navigeert. */
   screen: string;
+  /** Waar op dat scherm je moet zijn: het data-tour-doel-anker dat de wijzer krijgt.
+   *  Kijk-stappen hebben er geen — daar is aankomen genoeg. */
+  wijs?: string;
   done: (s: GameState) => boolean;
 }
 
@@ -60,21 +63,24 @@ export const TOUR_CHAPTERS: TourChapter[] = [
     title: 'Eerst je ploeg',
     steps: [
       {
-        text: 'Zet je basiself vast — of laat je trainer dat elke week doen',
+        text: 'Bekijk je selectie: je trainer zet elke week de beste elf klaar — met de ster zet je zelf iemand vast',
         where: 'Ploeg › Selectie',
         screen: 'ploeg',
-        done: (s) => s.tactics.manualXI.length > 0 || !!delegate(s, 'opstelling'),
+        wijs: 'selectie',
+        done: (s) => seen(s, 'ploeg') || s.tactics.manualXI.length > 0 || !!delegate(s, 'opstelling'),
       },
       {
         text: 'Kies een spelplan: elk plan klopt tegen het ene en kraakt tegen het andere',
         where: 'Ploeg › Strategie',
         screen: 'strategie',
+        wijs: 'spelplan',
         done: (s) => !!delegate(s, 'tactiek') || s.tactics.plan !== 'balbezit' || s.week > 8,
       },
       {
         text: 'Duid een kapitein aan — leiders tillen de ploeg op',
         where: 'Ploeg › Selectie',
         screen: 'ploeg',
+        wijs: 'kapitein',
         done: (s) => !!s.tactics.roles.kapitein,
       },
     ],
@@ -86,6 +92,7 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         text: 'Kijk rond op de transfermarkt zolang de periode loopt: transfervrije spelers kosten geen overnamesom en huren is de goedkoopste versterking',
         where: 'Ploeg › Transfers',
         screen: 'transfers',
+        wijs: 'transfers',
         done: (s) => s.players.some((p) => p.purchasePrice > 0 || p.loan?.type === 'in') || !!delegate(s, 'transfers') || !isTransferWindow(s.week),
       },
     ],
@@ -97,12 +104,14 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         text: 'Werf minstens één personeelslid aan — een assistent of een scout is een goede eerste',
         where: 'Personeel',
         screen: 'staff',
+        wijs: 'kandidaten',
         done: (s) => s.staff.length > 2,
       },
       {
         text: 'Besteed een taak uit: wat je uit handen geeft, gebeurt elke week vanzelf',
         where: 'Personeel',
         screen: 'staff',
+        wijs: 'taken',
         done: (s) => TASKS.some((t) => !!delegate(s, t.id)),
       },
       {
@@ -126,6 +135,7 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         text: 'Klop aan bij een bedrijf voor een extra sponsor — sponsoring is de grootste geldstroom van een club als de jouwe',
         where: 'Geld › Sponsors',
         screen: 'sponsors',
+        wijs: 'contacten',
         done: (s) => s.prospects.some((p) => p.approached) || s.sponsorCampaignWeeks > 0 || s.sponsorOffers.length > 0 || !!delegate(s, 'sponsoring'),
       },
     ],
@@ -137,18 +147,21 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         text: 'Open je clubwinkel: sjaals verkopen bijna zichzelf',
         where: 'Club › Clubwinkel',
         screen: 'clubwinkel',
+        wijs: 'winkel',
         done: (s) => s.merch.active,
       },
       {
         text: 'Zet je kantineprijzen of haal een standhouder binnen — de kantine is goud op wedstrijddagen',
         where: 'Club › Horeca',
         screen: 'horeca',
+        wijs: 'horeca',
         done: (s) => s.canteen.items.some((i) => Math.abs(i.price - canteenDef(i.id).ref) > 0.01) || !!delegate(s, 'horeca') || s.canteen.concessions.length > 0,
       },
       {
         text: 'Organiseer een evenement: extra geld en sfeer, maar let op je vrijwilligers',
         where: 'Club › Evenementen',
         screen: 'evenementen',
+        wijs: 'evenementen',
         done: (s) => s.eventLog.length > 0 || !!delegate(s, 'evenementen'),
       },
     ],
@@ -194,6 +207,13 @@ export function tourMarkSeen(s: GameState, screen: string): boolean {
   if (!TOUR_CHAPTERS.some((c) => c.steps.some((st) => st.screen === screen))) return false;
   t.seen.push(screen);
   return true;
+}
+
+/** De afvinkstand van het actieve hoofdstuk — om na een klik te zien of er iets bij kwam. */
+export function tourFlags(s: GameState): { nr: number; flags: boolean[] } | null {
+  const t = tourChapter(s);
+  if (!t) return null;
+  return { nr: t.nr, flags: t.chapter.steps.map((st) => st.done(s)) };
 }
 
 /**

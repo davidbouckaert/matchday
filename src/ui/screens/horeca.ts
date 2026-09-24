@@ -66,7 +66,7 @@ export function horecaScreen(s: GameState): string {
   const space = CONCESSION_SPACE - usedConcessionSpace(s);
 
   return `${taskPicker(s, ['horeca'])}<div class="grid">
-    <section class="card span2">
+    <section class="card span2" data-tour-doel="horeca">
       <h2>Kantine ${hint('De kantine draait op thuiswedstrijden. Je verdient het verschil tussen je prijs en de inkoopprijs; vrijwilligers, het kantineniveau en je populariteit bepalen hoeveel er besteld wordt.')}</h2>
       <p class="muted small">Prijzen passen zich meteen toe, je hoeft niets op te slaan. Verwachting bij een gewone thuiswedstrijd met ongeveer ${attendance} toeschouwers.</p>
       ${locked ? `<p class="attention-inline small">${esc(manager!.name)} bepaalt de prijzen en de concessies. Neem de taak "Kantine en concessies" terug bij Personeel om zelf te beslissen.</p>` : ''}

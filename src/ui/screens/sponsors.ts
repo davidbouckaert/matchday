@@ -216,7 +216,7 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
       </section>
     </div>
     <div class="col">
-      <section class="card">
+      <section class="card" data-tour-doel="contacten">
         <h2>Contacten <span class="tag">${gefilterdeProspects.length}${filter ? ` van ${s.prospects.length}` : ''}</span> ${filterChip}</h2>
         <!-- de knoppen om aan nieuwe namen te raken stonden ónder de tabel: wie een lange
              lijst had, zag ze pas na scrollen — en wie een lege lijst had, zocht ze net. -->

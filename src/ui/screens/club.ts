@@ -207,7 +207,7 @@ export function eventsScreen(s: GameState): string {
     </div>
   </section>
   ${pending ? `<section class="card"><h2>Nog te ontvangen</h2><ul>${pending}</ul></section>` : ''}
-  <section class="card">
+  <section class="card" data-tour-doel="evenementen">
     <h2>Evenementen</h2>
     ${organiser ? `<p class="attention-inline small">${esc(organiser.name)} organiseert automatisch het evenement met de beste verwachte winst (maximaal één per 5 weken).</p>` : ''}
     <p class="muted small">De opbrengst is een prognose: het weer en de opkomst bepalen waar je uitkomt. Het geld komt pas binnen na de vermelde periode.

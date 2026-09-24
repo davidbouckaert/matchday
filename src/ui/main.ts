@@ -5,7 +5,7 @@ import type { Formation, GamePlan, GameState, Mentality, SponsorDeal, StaffRole,
 type SponsorKind = SponsorDeal['kind'];
 import { createNewGame } from '../engine/newGame';
 import { advanceWeek } from '../engine/turn';
-import { tourMarkSeen } from '../engine/tour';
+import { TOUR_CHAPTERS, tourFlags, tourMarkSeen } from '../engine/tour';
 import * as actions from '../engine/actions';
 import type { ActionResult } from '../engine/actions';
 import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, inWinterBreak } from '../engine/calendar';
@@ -107,6 +107,10 @@ interface UiState {
    * verslag ze kon vertellen. De kopbalk loopt nu pas bij wanneer jij het verslag sluit.
    */
   held: GameState | null;
+  /** Het anker (data-tour-doel) dat na de volgende hertekening de rondleidingswijzer
+   *  krijgt: een stuiterend handje plus een omlijning op de plek waar je moet zijn.
+   *  Elke andere klik haalt hem weer weg. */
+  tourAim: string | null;
   /** De bevestigingspopup voor een ingrijpende beslissing: welke actie, en met welke uitleg. */
   confirmAction: { action: string; id: string; title: string; body: string; verb: string } | null;
   /** De versie die de server draait als die nieuwer is dan deze bundle: dan staat er een
@@ -138,6 +142,7 @@ const ui: UiState = {
   sorts: {},
   report: null,
   held: null,
+  tourAim: null,
   confirmAction: null,
   updateAvailable: null,
   fastForward: null,
@@ -207,6 +212,21 @@ function toastHtml(): string {
 /** Kijk-stappen van de rondleiding: een bezoek aan het scherm is genoeg. */
 function markTourSeen(): void {
   if (ui.game && tourMarkSeen(ui.game, ui.screen)) void persist();
+}
+
+/**
+ * Vinkt een klik een rondleidingsstap af, dan hoor je dat meteen — anders mist wie niet
+ * toevallig op zijn Bureau staat de hele vooruitgang. Geeft de toast-tekst terug, of null.
+ */
+function tourMelding(voor: ReturnType<typeof tourFlags>): string | null {
+  if (!ui.game || !voor) return null;
+  const nu = tourFlags(ui.game);
+  if (!nu || nu.nr !== voor.nr) return null; // hoofdstuk wisselde (weekwissel): dan geen stap-toast
+  if (!nu.flags.some((f, i) => f && !voor.flags[i])) return null;
+  const rest = nu.flags.filter((f) => !f).length;
+  return rest
+    ? `📚 Stap afgevinkt! Nog ${rest === 1 ? 'één stap' : `${rest} stappen`} in dit hoofdstuk — je vindt ze op je Bureau.`
+    : `📚 Hoofdstuk "${TOUR_CHAPTERS[nu.nr - 1].title}" is helemaal klaar. Volgende week ligt het volgende voor je klaar.`;
 }
 
 function renderScreen(g: GameState): string {
@@ -335,6 +355,7 @@ function render(): void {
   rollNumbers();
   driveMatchClock();
   if (ui.report?.phase === 'report') revealLines(`${ui.report.prev.season}-${ui.report.prev.week}`);
+  if (ui.tourAim) root.querySelector(`[data-tour-doel="${ui.tourAim}"]`)?.classList.add('tour-doel');
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
     if (btn) {
@@ -725,6 +746,15 @@ const handlers: Record<string, Handler> = {
     ui.confirmNewGame = false;
     markTourSeen();
   },
+  // een rondleidingsstap: navigeren én de wijzer zetten op de plek waar je moet zijn
+  'tour-go': (id) => {
+    const [scherm, aim] = id.split(':');
+    ui.screen = scherm as Screen;
+    ui.menuOpen = false;
+    ui.lastScreen[groupOf(ui.screen).id] = ui.screen;
+    ui.tourAim = aim || null;
+    markTourSeen();
+  },
   // "Ik ken het spel al": komt hier via de bevestigingspopup, dus dit is al de ja-klik
   'tour-hide': () => {
     if (!ui.game?.tour) return;
@@ -948,10 +978,16 @@ root.addEventListener('click', async (e) => {
   }
   const handler = handlers[target.dataset.action!];
   if (!handler) return;
+  if (target.dataset.action !== 'tour-go') ui.tourAim = null; // elke andere klik haalt de wijzer weg
+  const tourVoor = ui.game ? tourFlags(ui.game) : null;
   const result = await handler(target.dataset.id ?? '');
+  const melding = tourMelding(tourVoor);
   if (result) {
-    showToast(result);
+    // een feesttoast laten we met rust; een gewone toast krijgt de vooruitgang erbij
+    showToast(melding && result.ok && !result.viering ? { ...result, message: `${result.message} ${melding}` } : result);
     if (result.ok && ui.game) await persist();
+  } else if (melding) {
+    showToast({ ok: true, message: melding });
   }
   render();
 });
@@ -993,8 +1029,10 @@ root.addEventListener('change', async (e) => {
   const el = e.target as HTMLInputElement;
   const key = el.dataset?.change;
   if (key && changeHandlers[key] && ui.game) {
+    const tourVoor = tourFlags(ui.game);
     const result = changeHandlers[key](ui.game, el.value, el.dataset.id ?? '');
-    showToast(result);
+    const melding = tourMelding(tourVoor);
+    showToast(melding && result.ok ? { ...result, message: `${result.message} ${melding}` } : result);
     if (result.ok) await persist();
     render();
     return;

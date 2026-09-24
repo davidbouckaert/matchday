@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.64.0 — De rondleiding neemt je bij het handje
+
+**De rondleiding van 0.61.0 liet je nog te vrij**: ze wees naar een scherm, maar eenmaal daar stond je er alleen voor — en de eerste stap ("zet je basiself vast") was niet eens af te vinken zonder trucje, want de trainer had al een elf klaargezet. Drie ingrepen. **Eén: de wijzer.** Klik op een stap en het spel brengt je niet alleen naar het scherm, maar zet een omlijning in de clubkleur om de kaart waar je moet zijn, met een stuiterend handje erboven — bij het handje nemen, letterlijk. Elke volgende klik haalt hem weer weg. De ankers (`data-tour-doel`) staan op tien plekken, van de kernlijst tot de evenementenkaart. **Twee: de basiself-stap klopt nu.** Kijken is genoeg (de tekst legt uit dat je trainer kiest tot jij met de ster iemand vastzet), dus de stap vinkt af zodra je de selectie echt gezien hebt. **Drie: vooruitgang meldt zich.** Vink je een stap af — waar je ook bent — dan zegt een toast hoeveel stappen er nog resten en dat ze op je Bureau staan; bij een compleet hoofdstuk hoor je dat het volgende er volgende week ligt. Zo kun je de uitleg niet meer geruisloos missen. In de draaiende app nagespeeld: wijzer op de kernlijst, stap afgevinkt met melding, wijzer op de rollenkaart, en de kapiteinkeuze kreeg "📚 Stap afgevinkt!" netjes achter de actiemelding.
+
 ### 0.63.0 — Shirts met spelersnamen: de tribune kiest haar lieveling
 
 **Wie een replicashirt koopt, wil er een naam op — en welke naam, dat beslist de tribune, niet het bestuur.** Ligt het wedstrijdshirt in je clubwinkel, dan betaalt ruim de helft van de kopers €12 extra voor een naam en rugnummer. Wiens naam onder de pers gaat, volgt uit echte populariteit: basisplaatsen tellen (wie er elke week staat, kent iedereen), doelpunten tellen dubbel (de spits verkoopt), een sterspeler verkoopt nog eens dubbel zo goed, en een jongen uit de eigen jeugd heeft streekwaarde. Een uitgeleende speler hangt in een andere kleedkamer en verkoopt niets.

@@ -147,7 +147,7 @@ export function strategyScreen(s: GameState): string {
     `)}
   </section>`;
 
-  const tacticCard = `<section class="card">
+  const tacticCard = `<section class="card" data-tour-doel="spelplan">
     <h2>Wedstrijdtactiek</h2>
     ${lkTactic.note}
     ${lkTactic.fs(`

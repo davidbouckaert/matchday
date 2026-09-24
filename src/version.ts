@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.63.0';
+export const VERSION = '0.64.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.64.0',
+    date: '2026-09-24',
+    title: 'De rondleiding neemt je bij het handje',
+    items: [
+      'Klik op een stap en de plek waar je moet zijn krijgt een omlijning in de clubkleur met een stuiterend handje erboven',
+      'De basiself-stap was niet afvinkbaar zonder trucje (er staat al een elf klaar): kijken is nu genoeg, en de tekst legt uit dat de trainer kiest tot jij vastzet',
+      'Vink je een stap af, dan hoor je het meteen: een toast zegt hoeveel er nog resten in het hoofdstuk — ook als je niet op je Bureau staat',
+      'Hoofdstuk helemaal klaar? Ook dat meldt zich, met de belofte dat het volgende er volgende week ligt',
+    ],
+  },
   {
     version: '0.63.0',
     date: '2026-09-24',

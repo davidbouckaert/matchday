@@ -1198,6 +1198,17 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .bouw-groep > .muted { margin: 2px 0 var(--s2); }
 .bouw-groep .choice-grid { margin-top: var(--s2); }
 
+/* De rondleidingswijzer: klik je op een stap, dan krijgt de plek waar je moet zijn een
+   omlijning in de clubkleur en een stuiterend handje — bij het handje nemen, letterlijk.
+   Elke volgende klik haalt hem weer weg (dat regelt de klik-afhandeling). */
+.tour-doel { position: relative; box-shadow: 0 0 0 3px var(--accent), 0 10px 30px -10px var(--accent); }
+.tour-doel::before {
+  content: '👇'; position: absolute; top: -40px; left: 22px; font-size: 1.9rem; z-index: 6;
+  animation: tour-stuiter .85s ease-in-out infinite; filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
+}
+@keyframes tour-stuiter { 50% { transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .tour-doel::before { animation: none; } }
+
 /* de lokale taakkiezer bovenaan een taakscherm */
 .card.picker { padding: var(--s3) var(--s4); display: flex; flex-direction: column; gap: var(--s2); }
 .card.picker h2 { margin-bottom: var(--s1); }

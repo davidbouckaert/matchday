@@ -319,7 +319,7 @@ function tourBlock(s: GameState): string {
           return `<li class="${af ? 'done' : ''}">
             <span class="box">${af ? '✓' : ''}</span>
             <span class="what">${esc(st.text)}</span>
-            ${af ? '' : `<button class="link-btn small" data-action="nav" data-id="${st.screen}">${esc(st.where)} →</button>`}
+            ${af ? '' : `<button class="link-btn small" data-action="tour-go" data-id="${st.screen}:${st.wijs ?? ''}">${esc(st.where)} →</button>`}
           </li>`;
         })
         .join('')}
