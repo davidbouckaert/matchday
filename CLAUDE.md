@@ -45,7 +45,12 @@ verandert. Veel van wat willekeurig lijkt, is een keuze met een meting eronder.
   verandert. Te veel tijd aan verificatie is verspilling.
 - Commitboodschap zegt wat er **gemeten** is, niet alleen wat er veranderd is.
 - Botsen twee eisen met elkaar: zeg dat, los het niet stil op in mijn nadeel.
-- Werk landt in een pull request, niet rechtstreeks op `main`.
+- Werk landt rechtstreeks op `main`: één versie per afgewerkte taak. Vaste
+  gang: versienummer + changelog in `src/version.ts` (README-laagvermelding bij
+  een minor, alleen changelog bij een patch) → commit met wat er gemeten is →
+  tag `vX.Y.Z` → `git push origin main --tags` → op de achtergrond
+  `/api/version` pollen tot de versie live staat. UI-werk eerst met
+  Playwright-schermafdrukken (voor én na) uit de draaiende app verifiëren.
 
 ## Commando's
 
