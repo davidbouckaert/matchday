@@ -1217,21 +1217,20 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .link-btn { background: none; box-shadow: none; padding: 0; color: var(--accent); font-weight: 650; }
 .link-btn:hover { background: none; text-decoration: underline; }
 
-/* De bouwgroepen op het infrastructuurscherm: vijf kopjes die de twaalf werven ordenen
-   zoals een bestuur erover praat. De kop draagt de betekenis, de kaarten blijven gelijk. */
 /* een kaart die álle kolommen van het raster pakt — de bouwprojecten stonden op span2,
    maar het raster telt op een breed scherm vier kolommen: de kaart hing er halfbreed
-   en scheef bij, naast twee smalle kaartjes. Nu: twee halve kaarten, dan de volle rij. */
+   en scheef bij, naast twee smalle kaartjes. Nu: twee halve kaarten, dan volle rijen. */
 .span-all { grid-column: 1 / -1; }
 
-.bouw-groep { margin-top: var(--s5); }
-.bouw-groep:first-of-type { margin-top: var(--s3); }
-.bouw-groep h3 { margin: 0; }
-.bouw-groep > .muted { margin: 2px 0 var(--s2); }
-.bouw-groep .choice-grid { margin-top: var(--s2); }
-/* de projectkaarten vullen de rij gelijkmatig: twee projecten = twee halve kaarten,
-   drie = drie derden — geen gapende gaten meer naast een wees-kaartje */
-.bouw-groep .choice-grid.two { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+/* De bouwcategorieën: elke categorie is een echte kaart (eerst waren het kopjes bínnen
+   één lange kaart, en dat las als één brij). De projectkaarten vullen de rij
+   gelijkmatig; de tribune met haar schuif telt dubbel maar krijgt niet langer een
+   hele rij voor zich alleen. */
+.bouw-intro { padding-bottom: var(--s3); }
+.bouw-kaart > .muted { margin: -4px 0 var(--s3); }
+.bouw-kaart .choice-grid.two { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.bouw-kaart .tribune-builder { grid-column: span 2; margin-bottom: 0; }
+@media (max-width: 700px) { .bouw-kaart .tribune-builder { grid-column: span 1; } }
 
 /* De rondleidingswijzer: klik je op een stap, dan krijgt de plek waar je moet zijn een
    omlijning in de clubkleur en een stuiterend handje — bij het handje nemen, letterlijk.

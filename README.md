@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.68.0 — Elke bouwcategorie zijn eigen kaart
+
+**De groepen van 0.62.0 zaten als kopjes bínnen één lange kaart, en dat las als één brij.** Elke categorie is nu een echte kaart met eigen kop en ondertitel — 🧱 Ruwbouw, ⚽ Sportief, 🚪 Afdelingen, 📡 Technologie, 💶 Investeringen — met erboven één smalle intro-balk voor de spelregels (hoeveel werven tegelijk, leningen, de aannemerskorting). En de tribune-uitbreiding met haar schuifregelaar, die een volledige rij voor zich alleen opeiste, is teruggebracht tot een **dubbelbreed kaartje ín het Ruwbouw-raster**: de schuif past prima op halve breedte, en kantine en toiletten staan er gewoon naast. In de draaiende app gefotografeerd: vijf kaarten, de tribune netjes ingepast.
+
 ### 0.67.0 — De rondleiding durft er te staan
 
 **De kalmte van 0.61.0 sloeg door**: het rondleidingsblok was zo gedempt dat het als een optioneel voetnootje las, en omdat hoofdstuk 1 over de ploeg gaat, leek de hele rondleiding "iets over de ploeg" — terwijl geld, clubzaken en bouwen gewoon volgen. Drie ingrepen: het blok is nu een **paneel in de clubkleur** (dezelfde visuele taal als de persconferentie op de seizoensopening), elke open stap heeft een **echte groene knop** in plaats van een tekstlinkje, en onderaan staat de **routekaart** van wat nog komt: "Daarna: De markt is open → Je mensen → Waar het geld binnenkomt → Meer dan voetbal → Vooruitkijken". Zo weet je dat wegklikken met "Ik ken het spel al" ook die hoofdstukken wegklikt — en die knop blijft, want wie het spel kent moet er in één klik vanaf kunnen.

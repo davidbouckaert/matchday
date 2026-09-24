@@ -98,43 +98,39 @@ export function infraScreen(s: GameState): string {
       💡 ledverlichting met ${Math.round(LED_SAVING * 100)}% (${euro(Math.round(facilityCost(s) * LED_SAVING))}/week)${i.ledLighting ? ' — die hangt er al' : ''}.
       ${i.solarPanels && i.ledLighting ? '' : 'Je vindt ze bij de investeringen hieronder.'}</p>
     </section>
-    <section class="card span-all">
+    <section class="card span-all bouw-intro">
       <h2>Bouwprojecten ${hint(`Er mogen ${projectLimit(s)} werven tegelijk lopen. Elk project wordt meteen betaald en is klaar na de vermelde bouwtijd.`)}</h2>
       <p class="muted small">Maximaal ${projectLimit(s)} projecten tegelijk — nu bezig: <strong>${i.constructions.length}</strong>.
         Te weinig geld? Neem een lening bij Financiën.${s.investor === 'aannemer' ? ' Je aannemer bouwt 15% goedkoper.' : ''}</p>
-      ${UPGRADE_GROUPS.map((groep) => {
-        const projecten = UPGRADES.filter((u) => u.group === groep.id && u.id !== 'tribune');
-        const tribune = groep.id === 'ruwbouw' ? tribuneCard(s) : '';
-        if (!projecten.length && !tribune) return '';
-        return `<div class="bouw-groep">
-          <h3>${groep.label}</h3>
-          <p class="muted small">${groep.sub}</p>
-          ${tribune}
-          ${
-            projecten.length
-              ? `<div class="choice-grid two">
-            ${projecten
-              .map((u) => {
-                const reason = canUpgrade(s, u.id);
-                const busy = s.infrastructure.constructions.find((c) => c.upgrade === u.id);
-                return `<div class="choice static"><strong>${esc(u.label)}</strong><span>${esc(u.description)}</span>
-                ${impactChips(upgradeImpact(s, u.id), 5)}
-                <span class="big">${euro(upgradeCost(s, u.id))}</span><span class="muted small">${upgradeWeeks(s, u.id)} weken bouwtijd</span>
-                ${
-                  busy
-                    ? `<span class="attention-inline small">🏗️ bezig, nog ${weeks(busy.weeksLeft)}</span>`
-                    : reason
-                      ? `<span class="muted small">${esc(reason)}</span>`
-                      : `<button class="sm primary" data-action="upgrade" data-id="${u.id}" ${s.cash < upgradeCost(s, u.id) ? 'disabled' : ''}>Bouwen</button>`
-                }</div>`;
-              })
-              .join('')}
-          </div>`
-              : ''
-          }
-        </div>`;
-      }).join('')}
     </section>
+    ${UPGRADE_GROUPS.map((groep) => {
+      const projecten = UPGRADES.filter((u) => u.group === groep.id && u.id !== 'tribune');
+      const tribune = groep.id === 'ruwbouw' ? tribuneCard(s) : '';
+      if (!projecten.length && !tribune) return '';
+      return `<section class="card span-all bouw-kaart">
+        <h2>${groep.label}</h2>
+        <p class="muted small">${groep.sub}</p>
+        <div class="choice-grid two">
+          ${tribune}
+          ${projecten
+            .map((u) => {
+              const reason = canUpgrade(s, u.id);
+              const busy = s.infrastructure.constructions.find((c) => c.upgrade === u.id);
+              return `<div class="choice static"><strong>${esc(u.label)}</strong><span>${esc(u.description)}</span>
+              ${impactChips(upgradeImpact(s, u.id), 5)}
+              <span class="big">${euro(upgradeCost(s, u.id))}</span><span class="muted small">${upgradeWeeks(s, u.id)} weken bouwtijd</span>
+              ${
+                busy
+                  ? `<span class="attention-inline small">🏗️ bezig, nog ${weeks(busy.weeksLeft)}</span>`
+                  : reason
+                    ? `<span class="muted small">${esc(reason)}</span>`
+                    : `<button class="sm primary" data-action="upgrade" data-id="${u.id}" ${s.cash < upgradeCost(s, u.id) ? 'disabled' : ''}>Bouwen</button>`
+              }</div>`;
+            })
+            .join('')}
+        </div>
+      </section>`;
+    }).join('')}
   </div>`;
 }
 

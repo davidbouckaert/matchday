@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.67.0';
+export const VERSION = '0.68.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.68.0',
+    date: '2026-09-24',
+    title: 'Elke bouwcategorie zijn eigen kaart',
+    items: [
+      'De vijf categorieën waren kopjes binnen één lange kaart en dat las als één brij: nu is elke categorie een echte kaart',
+      'De tribune met haar schuif nam een hele rij in beslag: ze is nu een dubbelbreed kaartje in het Ruwbouw-raster, naast kantine en toiletten',
+      'Een smalle intro-balk erboven houdt de spelregels (hoeveel werven tegelijk, leningen, aannemerskorting)',
+    ],
+  },
   {
     version: '0.67.0',
     date: '2026-09-24',
