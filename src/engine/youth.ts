@@ -76,3 +76,33 @@ export function updateYouthTeams(state: GameState): number {
 export function teamNames(state: GameState): string[] {
   return TEAM_LABELS.slice(0, state.community.youthTeams);
 }
+
+/**
+ * De kwaliteit waarmee een doorstromer uit de eigen jeugd aan de A-kern begint.
+ *
+ * Dit hing aan je reeks: kwaliteit = reeksniveau − 12 + bonussen. Daardoor werd je jeugd
+ * vanzelf beter telkens jij promoveerde — een gratis, reeks-geïndexeerde aanvoer van spelers
+ * aan €40 per week. Gemeten (scripts/doorlichting-loonlat.ts): tegen seizoen zes bestond de
+ * kern van een uitbestedende club voor 60% uit eigen jeugd en stond ze structureel 4 à 7
+ * punten boven haar reeks, zonder één euro transferbudget. Je reeks maakt je jeugd niet
+ * beter; je jeugdwerking wel. Vanaf nu telt alleen die: de coördinator, het
+ * opleidingscentrum en hoeveel kinderen er komen voetballen.
+ *
+ * IJkpunt: een startclub in 3de Nationale met een degelijke coördinator komt op ~46 uit,
+ * hetzelfde als voorheen — aan het begin van een carrière verandert er dus niets. Het
+ * plafond (topcoördinator, vol centrum, 400 leden) ligt rond 65: jeugd kan je naar
+ * 1ste Nationale dragen, maar wie hoger wil, moet kopen aan de loonlat van die reeks.
+ */
+export function youthIntakeQuality(state: GameState): number {
+  const coord = staffSkill(state, 'jeugdcoordinator');
+  const academy = state.infrastructure.academyLevel;
+  const members = Math.min(400, state.community.youthMembers);
+  return 34 + coord / 6 + academy * 3 + members / 60;
+}
+
+/** Hoeveel rek er op zo'n doorstromer zit. Talent toont zich pas met begeleiding. */
+export function youthIntakePotential(state: GameState): number {
+  const coord = staffSkill(state, 'jeugdcoordinator');
+  const members = Math.min(400, state.community.youthMembers);
+  return coord / 8 + members / 60 + state.infrastructure.academyLevel * 3;
+}

@@ -64,6 +64,27 @@ export function wageDemand(state: GameState, p: Player): number {
   return round(170 * Math.pow(1.08, overall(p) - 52) * traitFactor * level, 5);
 }
 
+/**
+ * Hoe zwaar een speler tilt aan een loon dat niet meer bij zijn niveau past.
+ *
+ * De loonlat van 0.42.0 gold alleen voor wie je haalt of wie bijtekent; wie al getekend
+ * had, kreeg bij een promotie 14% terwijl de lat 45 à 62% per trede stijgt. Eén promotie
+ * verteert een kleedkamer (14% extra tegenover een lat van +45% blijft boven de grens van
+ * driekwart), maar wie twee tredes klimt zonder één contract open te breken, betaalt zijn
+ * spelers nog geen zestig procent van wat het niveau vraagt — en dat pikken ze niet.
+ *
+ * Geeft het aantal punten waarmee zijn moraal-evenwicht zakt (0 tot 25). Eigen jeugd tot
+ * en met 19 jaar valt erbuiten (een leercontract hoort goedkoop te zijn), huurlingen ook:
+ * hun loon is een afspraak tussen clubs.
+ */
+export function wagePressure(state: GameState, p: Player): number {
+  if (p.loan || (p.isYouth && p.age <= 19)) return 0;
+  const lat = wageDemand(state, p);
+  if (lat <= 0) return 0;
+  const ratio = p.wage / lat;
+  return clamp((0.75 - ratio) * 60, 0, 25);
+}
+
 export interface PlayerOptions {
   position?: Position;
   quality: number; // gemiddelde kwaliteit

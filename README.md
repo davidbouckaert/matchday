@@ -169,7 +169,18 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 - **Logboek:** elke beslissing en elk antwoord (zoals een extra sponsorbijdrage, die nu pas een week later komt) staat op de tab Overzicht
 - **Klein maar fijn:** klassement als echte competitiestand met doelpunten voor, tegen en saldo; een logokeuze bij de start; sponsornamen die bij hun sector passen; twee clubs kunnen tegelijk op dezelfde speler bieden; het versienummer staat onderaan elke pagina
 
-## Laag 17 (deze versie)
+## Laag 18 (deze versie)
+
+### 0.45.0 — De loonlat kent geen achterpoortjes meer
+
+**De doorlichting van september 2026 vond de motor achter "promoveren is gratis geld", en hij zat niet waar HANDOVER.md hem zocht.** Niet (alleen) in de tegenstand die van 52 naar 70 loopt, maar in twee lekken in de loonlat van 0.42.0. Gemeten met `scripts/doorlichting-loonlat.ts` (5 seeds × 6 seizoenen, beste betaalbare staf en alles uitbesteed): tegen seizoen zes bestond de kern voor 60% uit eigen jeugd aan €40 per week, betaalde de club 60 à 80% van wat haar reeks vraagt, en stond ze structureel 4 à 7 punten boven het reeksgemiddelde — zonder één euro transferbudget.
+
+- **De eigen jeugd was reeks-geïndexeerd.** Een doorstromer kreeg kwaliteit "reeksniveau − 12": elke promotie maakte je gratis aanvoer vanzelf beter. De kwaliteit hangt nu aan je jeugdwérking — coördinator, opleidingscentrum, ledenaantal (`youthIntakeQuality` in `youth.ts`). IJkpunt: een startclub in 3de Nationale blijft op ~46, dus aan het begin van een carrière verandert er niets. Het plafond van een topwerking ligt rond 1ste Nationale; wie hoger wil, koopt aan de lat.
+- **Zittende contracten kregen +14% per promotie terwijl de lat +45 à +62% per trede stijgt.** Eén promotie verteert een kleedkamer (14% extra blijft boven driekwart van de nieuwe lat); wie twee tredes klimt zonder één contract open te breken, betaalt onder de zestig procent van het niveau — en dat pikken ze niet meer (`wagePressure` in `players.ts`). Hun moraal-evenwicht zakt tot je bijbetaalt, in het nieuws heet dat loononrust, en wie ontevreden blijft, weigert te verlengen en vertrekt gratis. Eigen jeugd tot en met negentien en huurlingen vallen erbuiten: een leercontract hoort goedkoop te zijn, en het loon van een huurling is een afspraak tussen clubs.
+
+**Gemeten na de ingreep** (zelfde meting): de loonlast klimt naar 104% van de lat in seizoen zes, de sterkte-voorsprong op de reeks krimpt (seizoen vijf: van +5,5 naar −1,7), en voor het eerst blijft een club ook eens vier seizoenen in dezelfde reeks hangen. **Wat het nog niet oplevert, en dat hoort erbij:** de autopilot gaat nog altijd 0 op 48 failliet. De club klimt trager, maar elke reeks blijft winstgevend zolang de evenementen-economie (netto €714.000 per seizoen in de Challenger Pro Liga) en de papieren licentie er staan. Die volgen in de volgende lagen — bewust één oorzaak per laag, zodat elke meting zegt wát er werkte.
+
+## Laag 17
 
 ### 0.44.0 — De log is een log, geen spelfeature
 

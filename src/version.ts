@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.44.0';
+export const VERSION = '0.45.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,19 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.45.0',
+    date: '2026-09-24',
+    title: 'De loonlat kent geen achterpoortjes meer',
+    items: [
+      'De kwaliteit van doorstromende jeugd hangt aan je jeugdwerking (coördinator, opleidingscentrum, leden), niet meer aan je reeks',
+      'Een startclub in 3de Nationale merkt daar niets van; wie promoveert, krijgt zijn jeugd niet langer gratis mee omhoog',
+      'Spelers die ver onder de loonlat van hun reeks betaald worden, zakken in moraal tot je bijbetaalt: loononrust',
+      'Eén promotie met de gewone opslag blijft verteerbaar; twee promoties zonder heronderhandelen niet',
+      'Eigen jeugd tot en met 19 jaar en huurlingen vallen buiten de loondruk',
+      'Gemeten: de loonlast van een uitbestedende club stijgt van 76% naar 104% van de lat in seizoen zes, en haar sterkte-voorsprong op de reeks smelt',
+    ],
+  },
   {
     version: '0.44.0',
     date: '2026-09-24',

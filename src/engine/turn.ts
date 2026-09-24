@@ -17,7 +17,7 @@ import {
 } from './calendar';
 import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt } from './league';
 import { starLabel, weeklyStars } from './stars';
-import { LOAN_PLAY_SHARE, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
+import { LOAN_PLAY_SHARE, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength, wagePressure } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
 import { resolveRequests, sponsorsAfterSeason, weeklySponsors } from './sponsors';
@@ -41,7 +41,7 @@ import { checkFundPatience, notePromotion, takePrizeShare, updateStadiumSponsor 
 import { NIEUWS } from '../content/news';
 import type { NieuwsSjabloon } from '../content/types';
 import { clubByName, runWorldSeason } from './world';
-import { boundVolunteers, maxYouthTeams, teamNames, updateYouthTeams, youthShortage } from './youth';
+import { boundVolunteers, maxYouthTeams, teamNames, updateYouthTeams, youthIntakePotential, youthIntakeQuality, youthShortage } from './youth';
 import { runDelegatedTasks, strategyTask } from './delegation';
 import { opponentSide, trainingCost, weeklyMoraleEffect } from './strategy';
 import { NATURAL_RECOVERY, matchLoad, recovery, trainingLoad } from './factors';
@@ -560,14 +560,27 @@ function weeklyPlayers(state: GameState, rng: Rng): void {
     // herstellend: focus herstel en de kinesist verkorten blessures
     if (p.injuryWeeks > 0 && state.tactics.focus === 'herstel' && rng.chance(0.3)) p.injuryWeeks--;
     if (p.injuryWeeks > 0 && kine && rng.chance(kine / 150)) p.injuryWeeks--;
-    // moraal zakt terug naar een basisniveau; leiders en een mentale coach houden de groep samen
-    const base = 55 + Math.min(3, leaders) * 3 + (state.avatar.background === 'exspeler' ? 5 : 0) + mental / 20;
+    // moraal zakt terug naar een basisniveau; leiders en een mentale coach houden de groep
+    // samen, en wie ver onder de loonlat van de reeks betaald wordt, zit lager (wagePressure)
+    const base = 55 + Math.min(3, leaders) * 3 + (state.avatar.background === 'exspeler' ? 5 : 0) + mental / 20 - wagePressure(state, p);
     p.morale = clamp(p.morale + (base - p.morale) * (p.trait === 'professioneel' ? 0.15 : 0.08) + trainingMood * (p.trait === 'feestbeest' ? 1.5 : 1), 0, 100);
     if (p.trait === 'lastpak' && rng.chance(0.03)) {
       p.morale = clamp(p.morale - 15, 0, 100);
       addNews(state, 'slecht', `${p.name} klaagt in de pers over zijn speelgelegenheid.`);
     }
   }
+  // loononrust: wie structureel onder de lat van de reeks speelt, hoor je erover
+  const ontevreden = state.players.filter((p) => wagePressure(state, p) >= 6);
+  if (ontevreden.length >= 2 && (state.eventCooldowns['loononrust'] ?? 0) === 0) {
+    state.eventCooldowns['loononrust'] = 10;
+    const namen = ontevreden.slice(0, 3).map((p) => p.name).join(', ');
+    addNews(
+      state,
+      'slecht',
+      `Loononrust in de kleedkamer: ${ontevreden.length} spelers vinden dat hun loon niet meer past bij ${DIVISIONS[state.league.divisionLevel].name} (onder meer ${namen}). Verleng hun contract aan een passend loon bij Ploeg, of zie hun moraal zakken.`,
+    );
+  }
+
   // wie er sterspeler wordt of het niet meer is, hoor je meteen
   const sterren = weeklyStars(state);
   for (const p of sterren.nieuw) {
@@ -805,19 +818,21 @@ function newSeason(state: GameState, rng: Rng): void {
   }
   if (leaving.length) addNews(state, 'neutraal', `Transfervrij vertrokken: ${leaving.map((p) => p.name).join(', ')}.`);
 
-  // jeugd die doorstroomt
+  // Jeugd die doorstroomt. Hoe goed die is, hangt aan je jeugdwerking — coördinator,
+  // opleidingscentrum, ledenaantal — en niet aan je reeks. Dat hing het wél (reeksniveau
+  // − 12), en dan wordt je gratis aanvoer vanzelf beter telkens je promoveert; zie
+  // youthIntakeQuality voor de meting die dat bovenhaalde.
   const coord = staffSkill(state, 'jeugdcoordinator');
-  const level = DIVISIONS[state.nextDivisionLevel].opponentStrength;
   const academy = state.infrastructure.academyLevel;
   const count = 1 + Math.floor(coord / 35) + (state.community.youthMembers > 250 ? 1 : 0) + academy;
   const newcomers = [];
   for (let i = 0; i < count; i++) {
     const p = generatePlayer(state, rng, {
-      quality: level - 12 + coord / 10 + academy * 2,
+      quality: youthIntakeQuality(state),
       age: rng.int(17, 18),
       season: state.season,
       isYouth: true,
-      potentialBoost: coord / 8 + state.community.youthMembers / 60 + academy * 3,
+      potentialBoost: youthIntakePotential(state),
     });
     p.contractUntil = state.season + 2;
     newcomers.push(p);
