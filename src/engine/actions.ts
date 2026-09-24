@@ -140,7 +140,7 @@ export function declinePlayerOffer(state: GameState, offerId: string): ActionRes
 export const MAX_NEGOTIATIONS = 3; // na zoveel mislukte gesprekken ligt het stil tot volgend seizoen
 
 export function askingWage(state: GameState, p: Player): number {
-  const base = Math.max(p.wage, p.isYouth && p.age < 19 ? 60 : wageDemand(p));
+  const base = Math.max(p.wage, p.isYouth && p.age < 19 ? 60 : wageDemand(state, p));
   const form = 1 + clamp(p.form, -5, 8) / 40;
   const core = isCorePlayer(state, p) ? 1.08 : 1;
   const mood = p.morale < 50 ? 1.12 : p.morale > 75 ? 0.96 : 1;

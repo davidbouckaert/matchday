@@ -779,7 +779,7 @@ function resolveLoanRequest(state: GameState, rng: Rng, r: PendingRequest): void
   p.loan = null;
   p.purchasePrice = bod;
   p.contractUntil = state.season + 2;
-  p.wage = round(wageDemand(p), 5);
+  p.wage = round(wageDemand(state, p), 5);
   p.loanTalks = { season: state.season, weeksLeft: 0, bought: true };
   p.morale = clamp(p.morale + 8, 0, 100);
   addNews(state, 'goed', `${p.name} is definitief van jou: ${club} verkoopt hem voor €${bod.toLocaleString('nl-BE')}. Hij tekent voor twee seizoenen aan €${p.wage} per week.`);

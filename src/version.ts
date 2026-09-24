@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.41.0';
+export const VERSION = '0.42.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,20 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.42.0',
+    date: '2026-09-24',
+    title: 'Een reeks hoger spelen kost ook meer',
+    items: [
+      'Spelers vragen meer naarmate je hoger speelt: dezelfde man kost in de Pro Liga zes en een half keer wat hij in 3de Nationale kost',
+      'Bestaande contracten blijven staan — de nieuwe lat geldt voor wie je haalt en voor wie bijtekent, dus na een promotie heb je even lucht',
+      'Nieuwe wekelijkse kost: bond, scheidsrechters, afgevaardigden en verplaatsingen, en die stijgt mee met je reeks',
+      'In 3de Nationale verandert er niets aan wat je betaalt: die reeks is de ijking',
+      'Daarmee is een oude scheeftrekking weg: promoveren vermenigvuldigde je sponsorgeld, tv-geld en publiek terwijl je loonlast bleef staan',
+      'Gemeten over zes seizoenen ging de omzet van een uitbestedende club zes keer omhoog en haar kosten maar twee keer; die kosten volgen nu mee',
+      'Een club die niets doet, gaat nu rond seizoen vier failliet in plaats van seizoen zes',
+    ],
+  },
   {
     version: '0.41.0',
     date: '2026-09-24',

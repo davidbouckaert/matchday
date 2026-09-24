@@ -173,6 +173,18 @@ export function bookWeeklyFlows(state: GameState): void {
   const tv = DIVISIONS[state.league.divisionLevel].tvRightsPerWeek;
   if (tv > 0) book(state, 'tv-rechten', tv, 'Tv- en radiorechten');
 
+  // Meespelen op een hoger niveau kost geld, los van wat je zelf gebouwd hebt: duurdere
+  // scheidsrechters, verplichte afgevaardigden en stewards, een licentiedossier, en
+  // verplaatsingen die van de buurgemeente naar de andere kant van het land gaan. Dit is de
+  // rekening die je meteen bij een promotie krijgt, nog voor je spelers meer beginnen vragen.
+  const reeks = DIVISIONS[state.league.divisionLevel];
+  book(
+    state,
+    'bond & verzekering',
+    -Math.round(reeks.weeklyCost * state.inflation),
+    `Bond, scheidsrechters en verplaatsingen (${reeks.name})`,
+  );
+
   for (const loan of state.loans) {
     const paid = payLoanWeek(loan);
     book(state, 'aflossingen', -paid, `Afbetaling ${loan.label}`);

@@ -5,6 +5,7 @@ import { avgFatigue, fatigueFactor } from './factors';
 import type { Rng } from './rng';
 import { clamp, round } from './rng';
 import { FIRST_NAMES, LAST_NAMES } from './data/names';
+import { DIVISIONS } from './data/divisions';
 import { nextId } from './util';
 
 export const POSITIONS: Position[] = ['DOEL', 'VERD', 'MIDD', 'AANV'];
@@ -42,9 +43,25 @@ export function currentBid(p: Player, marketIndex: number): number {
 }
 
 /** Loon dat een speler van dit niveau vraagt (euro per week). */
-export function wageDemand(p: Player): number {
+/**
+ * Wat een speler per week vraagt.
+ *
+ * Zijn kwaliteit bepaalt het meeste, maar niet alles: dezelfde speler vraagt in de Pro Liga
+ * een veelvoud van wat hij in 3de Nationale vraagt. Dat is geen detail maar de motor onder de
+ * moeilijkheid van dit spel. Zonder dat stuk liep je economie op één been: promoveren
+ * vermenigvuldigde je sponsorgeld (factor 0,6 tot 8 over de zes reeksen), je tv-geld en je
+ * publiek, terwijl je loonlast gewoon bleef staan. Over zes seizoenen gemeten steeg de
+ * omzet van een uitbestedende club zes keer en haar kosten twee keer — elke promotie was
+ * gratis geld. Nu stijgt de rekening mee: klimmen is nog altijd de weg vooruit, maar je moet
+ * de ploeg die daarbij hoort ook kunnen betalen.
+ *
+ * Bestaande contracten blijven staan; de nieuwe lat geldt voor wie je haalt en voor wie
+ * bijtekent. Je hebt na een promotie dus even lucht, en daarna komt de rekening.
+ */
+export function wageDemand(state: GameState, p: Player): number {
   const traitFactor = p.trait === 'lastpak' ? 1.2 : p.trait === 'professioneel' ? 1.05 : 1;
-  return round(170 * Math.pow(1.08, overall(p) - 52) * traitFactor, 5);
+  const level = DIVISIONS[state.league.divisionLevel]?.wageFactor ?? 1;
+  return round(170 * Math.pow(1.08, overall(p) - 52) * traitFactor * level, 5);
 }
 
 export interface PlayerOptions {
@@ -101,7 +118,7 @@ export function generatePlayer(state: GameState, rng: Rng, opts: PlayerOptions):
     startQuality: 0,
   };
   player.startQuality = overall(player); // waar hij stond toen hij binnenkwam
-  player.wage = opts.isYouth ? 40 : wageDemand(player);
+  player.wage = opts.isYouth ? 40 : wageDemand(state, player);
   return player;
 }
 

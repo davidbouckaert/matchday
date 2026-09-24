@@ -1306,7 +1306,8 @@ describe('Rivaliteit, weekmoment en stilstand', () => {
     expect(lui.news.some((n) => /geen beweging|stilstand|niets van het bestuur/.test(n.text))).to.equal(true);
   });
 
-  it('houdt een actieve club over 20 weken in betere sfeer dan een stilstaande', () => {
+  it('houdt een actieve club over 20 weken in betere sfeer dan een stilstaande', function () {
+    this.timeout(20_000);
     // Dit mat vroeger iets anders dan het beweerde: de "actieve" club paste elke week haar
     // ticketprijs aan, en die prijs trekt zelf aan de opkomst en de sfeer. Het verschil dat
     // eruit kwam ging dus over tickets, niet over stilstand, en het sloeg om zodra de

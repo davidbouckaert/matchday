@@ -64,7 +64,7 @@ export function refreshLoanMarket(state: GameState, rng: Rng): void {
   const n = 3 + Math.round(staffSkill(state, 'scout') / 30);
   for (let i = 0; i < n; i++) {
     const p = generatePlayer(state, rng, { quality: level + rng.range(2, 7), age: rng.int(18, 22), season: state.season, potentialBoost: 6 });
-    p.wage = round(wageDemand(p) * rng.range(0.3, 0.7), 5); // jouw deel van het loon
+    p.wage = round(wageDemand(state, p) * rng.range(0.3, 0.7), 5); // jouw deel van het loon
     p.purchasePrice = round(marketValue(p, state.marketIndex) * rng.range(0.03, 0.08), 250);
     p.contractUntil = state.season;
     p.loan = { type: 'in', club: rng.pick(PRO_CLUBS), untilSeason: state.season, wageShare: 1 };

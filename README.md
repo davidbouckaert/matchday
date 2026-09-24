@@ -171,6 +171,37 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 17 (deze versie)
 
+### 0.42.0 — Een reeks hoger spelen kost ook meer
+
+**Je economie liep op één been.** Ik ging op zoek naar de reden waarom "de beste betaalbare staf aanwerven en alles uitbesteden" nooit failliet gaat, en ik verwachtte die bij het personeel te vinden. Ze zat ergens anders. Dit is de boekhouding van één club over zes seizoenen, met vier aangeworven personeelsleden en alles uitbesteed:
+
+| seizoen | reeks | inkomsten | kosten | sponsors | lonen |
+|---|---|---:|---:|---:|---:|
+| 1 | 3de Nationale | €648k | €449k | €250k | €234k |
+| 3 | 1ste Nationale | €1,41M | €570k | €715k | €311k |
+| 6 | Challenger Pro Liga | €3,97M | €933k | €2,14M | €589k |
+
+De omzet ging zes keer omhoog, de kosten twee keer. Dat is geen toeval maar een gat in de cijfers: **op de inkomstenkant was álles geïndexeerd op je reeks** — sponsorbedragen gaan met factor 0,6 naar 8 over de zes reeksen, tv-geld van niets naar €30.000 per week, het normale publiek van 250 naar 10.000 — **en op de kostenkant stond niets**. Het onderhoud hing aan je eigen gebouwen, en het loon van een speler hing alleen aan hoe goed hij was: `170 × 1,08^(kwaliteit − 52)`, of je nu in 1ste Provinciale of in de Pro Liga speelde. Je kon dus met een dorpsploeg naar de Challenger Pro Liga klimmen en daar profgeld opstrijken aan dorpslonen. Elke promotie was gratis geld.
+
+**Wat er nu gebeurt.** Elke reeks heeft er twee cijfers bij: een loonlat en een weekkost.
+
+| reeks | loonlat | bond, scheidsrechters, verplaatsingen |
+|---|---:|---:|
+| 1ste Provinciale | 0,7× | €120/week |
+| 3de Nationale | **1×** | €260/week |
+| 2de Nationale | 1,45× | €520/week |
+| 1ste Nationale | 2,2× | €1.100/week |
+| Challenger Pro Liga | 3,6× | €3.200/week |
+| Pro Liga | 6,5× | €9.000/week |
+
+3de Nationale staat op één: aan het begin van een carrière verandert er dus niets aan wat je betaalt. De rest schuift mee.
+
+**Bestaande contracten blijven staan.** De nieuwe lat geldt voor wie je haalt en voor wie bijtekent, niet voor wie al getekend heeft. Dat is bewust: anders springt je loonlast omhoog in de week van je promotie, op een moment dat je er nog niets aan kunt doen, en dat voelt als een straf in plaats van als een keuze. Nu krijg je eerst de weekkost van je nieuwe reeks — die komt meteen — en pas daarna, contract per contract, de rekening voor je ploeg.
+
+**Wat het oplevert.** Bij dezelfde club stijgen de kosten in seizoen 6 van €933k naar €1,89M, waarvan €1,31M lonen. Een club die niets doet, gaat nu rond seizoen vier failliet in plaats van seizoen zes.
+
+**Wat het niet oplevert, en dat hoor je te weten.** "De beste betaalbare staf aanwerven en alles uitbesteden" gaat nog altijd nooit failliet: nul op acht, in alle zes de combinaties van club en investeerder. Die club eindigt nu op €6,6M in plaats van €8,2M, maar ze eindigt in de plus. De reden is dat ze met een goedkope ploeg blíjft winnen — de tegenstand loopt van sterkte 52 in 3de Nationale naar 70 in de Challenger Pro Liga, en dat is te weinig om een goedkope kern tegen te houden. Dat laatste cijfer is precies de knop die je me twee vragen geleden de ándere kant op liet draaien ("maak het iets makkelijker om te winnen"). Daar zit een echte spanning tussen twee dingen die je allebei gevraagd hebt, en die hoort thuis in het gesprek over de moeilijkheidsgraad.
+
 ### 0.41.0 — Achttien spelers, en personeel dat elke week rondkijkt
 
 **De ondergrens gaat van zestien naar achttien, en het ventiel gaat dicht.** Vorige versie zette een harde ondergrens op zestien spelers en gaf daar een uitweg bij: met een te kleine kern mocht je ook buiten de transferperiode transfervrije spelers halen, want anders zou je vastzitten. Dat ventiel was niet nodig, en de reden waarom is de moeite waard om op te schrijven.
