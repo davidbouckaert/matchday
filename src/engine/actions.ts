@@ -321,7 +321,11 @@ export function fireStaff(state: GameState, staffId: string): ActionResult {
     }
   }
   if (dropped.length) addNews(state, 'neutraal', `Na het vertrek van ${s.name} doe je zelf weer: ${dropped.join(', ')}.`);
-  if (s.role === 'hoofdtrainer') state.players.forEach((p) => (p.morale = clamp(p.morale - 3, 0, 100)));
+  if (s.role === 'hoofdtrainer') {
+    state.players.forEach((p) => (p.morale = clamp(p.morale - 3, 0, 100)));
+    // een trainersontslag is dorpsnieuws: iedereen heeft er een mening over
+    addNews(state, 'neutraal', `${state.clubName} zet hoofdtrainer ${s.name} op straat. In de kantine wordt er schande van gesproken — of net opgelucht geademd.`);
+  }
   return ok(`${s.name} is ontslagen (vergoeding €${payoff.toLocaleString('nl-BE')}).`);
 }
 

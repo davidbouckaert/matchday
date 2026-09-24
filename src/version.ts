@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.75.0';
+export const VERSION = '0.76.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.76.0',
+    date: '2026-09-25',
+    title: 'De trainerscarrousel draait — ook bij de andere clubs',
+    items: [
+      'Ontsla je je hoofdtrainer, dan is dat dorpsnieuws in je nieuwsstroom',
+      'En elders in de reeks rollen er nu ook koppen: clubs onderin zetten al eens een trainer op straat, met een opvolger die meteen op het oefenveld staat',
+      'Pure vertelling — de sterkte van tegenstanders verandert er niet door, maar de reeks leeft',
+    ],
+  },
   {
     version: '0.75.0',
     date: '2026-09-25',

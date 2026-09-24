@@ -15,7 +15,7 @@ import {
   WEEKS_PER_YEAR,
   isWinter,
 } from './calendar';
-import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt } from './league';
+import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt, teamName } from './league';
 import { starLabel, weeklyStars } from './stars';
 import { LOAN_PLAY_SHARE, OUT_OF_POSITION_PENALTY, SUB_BASELINE, SUB_RHYTHM_CREDIT, departureBlock, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, planSubstitutions, selectBank, selectLineup, teamStrength, wageDemand, wagePressure } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
@@ -26,6 +26,7 @@ import { bankruptcyCheck, rollInjuries, weeklyEvents } from './events';
 import { refreshLoanMarket, refreshStaffMarket, refreshTransferList, weeklyMarket } from './market';
 import { addNews, book } from './util';
 import { advanceTour } from './tour';
+import { LAST_NAMES, STAFF_FIRST } from './data/names';
 import { STAR_THRESHOLDS, TRAINING_CAP, skillStars } from './training-staff';
 import { recordWeek, rolloverStats, snapshot } from './stats';
 import { clearOrigins } from './origins';
@@ -80,6 +81,7 @@ export function advanceWeek(previous: GameState): GameState {
   if (state.week === 30 || state.week === 41) licencePromotionWarning(state);
   if (state.week === SEASON_END_WEEK) seasonEnd(state);
   weeklyMarket(state, rng);
+  coachCarousel(state, rng);
   bankruptcyCheck(state);
 
   state.lastMilestones = checkMilestones(state).map((m) => m.label);
@@ -404,6 +406,41 @@ function playOwnMatch(state: GameState, rng: Rng, f: Fixture): void {
     if (deel) p.fatigue = clamp(p.fatigue + load * fatigueAgeFactor(p.age) * deel, 0, 100);
   }
   rollInjuries(state, rng, [...inzet.keys()]);
+}
+
+/** Kans per speelweek dat er ergens in de reeks een trainer sneuvelt. */
+export const COACH_SACK_CHANCE = 0.035;
+
+/**
+ * De trainerscarrousel: ook bij de andere clubs rollen er koppen.
+ *
+ * Pure vertelling — de sterkte van de tegenstander verandert er niet door (die ademt al
+ * mee via slijtage en ambitie), maar de reeks leeft: onderin vliegt er al eens een
+ * trainer uit, en dat lees je in je nieuwsstroom zoals je het in de krant zou lezen.
+ * Clubs onderaan het klassement lopen het meeste risico, precies zoals in het echt.
+ */
+function coachCarousel(state: GameState, rng: Rng): void {
+  const table = state.league.table;
+  const gespeeld = table.find((r) => r.teamId === OWN_TEAM_ID)?.played ?? 0;
+  if (gespeeld < 4 || !rng.chance(COACH_SACK_CHANCE)) return;
+  const anderen = table.filter((r) => r.teamId !== OWN_TEAM_ID);
+  if (!anderen.length) return;
+  // hoe lager in de stand, hoe waarschijnlijker: gewicht = plaats in de rangschikking
+  const gewichten = anderen.map((_, i) => i + 1);
+  let rol = rng.next() * gewichten.reduce((a, b) => a + b, 0);
+  let idx = 0;
+  while (idx < gewichten.length - 1 && rol > gewichten[idx]) {
+    rol -= gewichten[idx];
+    idx++;
+  }
+  const club = teamName(state, anderen[idx].teamId);
+  const nieuwe = `${rng.pick(STAFF_FIRST)} ${rng.pick(LAST_NAMES)}`;
+  const bericht = rng.pick([
+    `${club} zet zijn trainer op straat na een reeks zonder overwinning. ${nieuwe} neemt over.`,
+    `Trainerswissel bij ${club}: het bestuur kiest voor ${nieuwe}. "We danken hem voor de inzet", klinkt het droogjes.`,
+    `${club} en zijn trainer gaan per direct uit elkaar. ${nieuwe} stond gisteravond al op het oefenveld.`,
+  ]);
+  addNews(state, 'neutraal', bericht);
 }
 
 // ---------- Uitgestelde opbrengsten ----------
