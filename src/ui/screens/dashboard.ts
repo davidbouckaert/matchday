@@ -307,7 +307,8 @@ function tourBlock(s: GameState): string {
   // de hoofdstukken die nog komen: zo zie je dat ook geld, clubzaken en bouwen aan bod
   // komen — anders lijkt de rondleiding "iets over de ploeg" en klik je hem te vroeg weg
   const verder = TOUR_CHAPTERS.slice(t.nr).map((c) => c.title);
-  return `<div class="tour-block">
+  const openStappen = t.chapter.steps.some((st) => !st.done(s));
+  return `<div class="tour-block ${openStappen ? 'wacht' : ''}">
     <div class="tour-head">
       <span class="tour-titel">📚 Leer je club kennen</span>
       <span class="tour-hoofdstuk">hoofdstuk ${t.nr}/${t.total} · <strong>${esc(t.chapter.title)}</strong></span>

@@ -252,7 +252,7 @@ export function header(g: GameState): string {
  * kas zat. Hier staan ze vast: links je saldo en wat er nog op je wacht, rechts de twee
  * knoppen. Op een telefoon scheelt dat nog het meest, want daar is de kopbalk het duurst.
  */
-export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: boolean; tourLoop: boolean }): string {
+export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: boolean; tourLoop: boolean; tourReady: boolean }): string {
   const nextTip = o.blocked
     ? o.blocked
     : o.fastWeeks >= 2
@@ -285,8 +285,11 @@ export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: bo
       <button class="ghost fast" data-action="fast-forward" ${o.fastWeeks < 2 || o.busy ? 'disabled' : ''} ${tipAttr(nextTip)}>
         ▶▶ Tot de match${o.fastWeeks >= 2 ? ` <span class="small">(${o.fastWeeks})</span>` : ''}
       </button>
-      <button class="primary next ${o.weekLabel.highlight ? 'season-end' : ''}" data-action="next-week"
-        ${o.blocked || g.gameOver || o.busy ? 'disabled' : ''} ${tipAttr(o.blocked || o.weekLabel.tip)}>${o.weekLabel.text}</button>
+      <span class="next-wrap">
+        ${o.tourReady && !o.blocked && !g.gameOver ? '<span class="tour-bubbel">Hoofdstuk klaar — speel gerust een weekje!<i>👇</i></span>' : ''}
+        <button class="primary next ${o.weekLabel.highlight ? 'season-end' : ''}" data-action="next-week"
+          ${o.blocked || g.gameOver || o.busy ? 'disabled' : ''} ${tipAttr(o.blocked || o.weekLabel.tip)}>${o.weekLabel.text}</button>
+      </span>
     </div>
   </div>`;
 }

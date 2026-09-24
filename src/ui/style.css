@@ -1209,6 +1209,25 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .tour-steps .what { flex: 1 1 auto; }
 .tour-steps .tour-ga { flex: none; white-space: nowrap; }
 .tour-verder { margin: var(--s3) 0 0; color: var(--muted); border-top: 1px dashed color-mix(in srgb, var(--accent) 30%, transparent); padding-top: var(--s2); }
+/* zolang er stappen openstaan wijst er een vingertje naast de titel — dezelfde taal als
+   de wijzer op de doelschermen */
+.tour-block.wacht .tour-titel::after { content: '👈'; display: inline-block; margin-left: 8px; animation: tour-wijs-x .9s ease-in-out infinite; }
+@keyframes tour-wijs-x { 50% { transform: translateX(-7px); } }
+
+/* Hoofdstuk af? Dan hangt er een tekstballon met wijsvinger boven "Volgende week":
+   de rondleiding zegt zelf wanneer je gerust mag doorspelen. */
+.next-wrap { position: relative; display: inline-flex; }
+.tour-bubbel {
+  position: absolute; bottom: calc(100% + 34px); right: 0; white-space: nowrap; z-index: 21;
+  background: var(--card); border: 2px solid var(--accent); border-radius: 12px;
+  padding: 8px 14px; font-size: .88rem; font-weight: 650; box-shadow: var(--shadow-lift);
+}
+.tour-bubbel::after {
+  content: ''; position: absolute; top: 100%; right: 34px;
+  border: 8px solid transparent; border-top-color: var(--accent);
+}
+.tour-bubbel i { position: absolute; top: calc(100% + 2px); right: 22px; font-style: normal; font-size: 1.5rem; animation: tour-stuiter .85s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .tour-bubbel i, .tour-block.wacht .tour-titel::after { animation: none; } }
 
 .todo-list { list-style: none; padding: 0; margin-top: var(--s3); display: flex; flex-direction: column; gap: var(--s1); }
 .todo-list li { display: flex; gap: var(--s3); align-items: flex-start; padding: var(--s2) var(--s3); border-radius: var(--radius-sm); background: var(--sunken); }
