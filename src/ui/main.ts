@@ -1,4 +1,5 @@
 import './style.css';
+import { attachBrowserLog } from '../log/browser';
 import type { Formation, GamePlan, GameState, Mentality, TaskId, TrainingFocus } from '../engine/types';
 import { createNewGame } from '../engine/newGame';
 import { advanceWeek } from '../engine/turn';
@@ -896,6 +897,11 @@ document.addEventListener('keydown', (e) => {
 // ---------- Start ----------
 
 (async () => {
+  // Het logboek van de motor gaat altijd naar de console van je browser. In een gebouwde
+  // productieversie ook naar functions/api/log.ts, zodat jij als eigenaar van het project kunt
+  // meekijken. Tijdens `npm run dev` bestaat dat pad niet — daar blijft het bij de console, zodat
+  // lokaal testen niet tussen de regels van echte spelers terechtkomt.
+  attachBrowserLog({ level: 'debug', endpoint: import.meta.env.PROD ? '/api/log' : null });
   // eenmalig: tooltips en getalvelden werken met delegatie, dus ze overleven elke hertekening
   initTooltips();
   initNumFields();

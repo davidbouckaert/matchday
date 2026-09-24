@@ -84,8 +84,52 @@ geïsoleerd in code:
   aangepakt.
 - **Winston**: de logmodule (`src/log/`) heeft winston-vormige niveaus en records, maar geen
   afhankelijkheid. Wil je echt winston op een server, dan volstaat één bestemming van vijftien
-  regels; de motor hoeft niet aangeraakt te worden. Browserspel levert sinds 0.44.0 bewust geen
-  logbestand meer op — dat hoort via een echte server te lopen.
+  regels; de motor hoeft niet aangeraakt te worden.
+
+## Publiceren: op weg naar Cloudflare Pages (bezig)
+
+David wil vrienden, familie en kennissen laten spelen — niet om geld te verdienen of populair te
+worden, gewoon om te delen. Hostingkeuze: **Cloudflare Pages** (ruimste gratis tier, Pages
+Functions voor het logendpoint, `wrangler pages deployment tail` voor live meekijken). Nog te
+doen, punt na punt: het logendpoint (dit punt), de deploy pipeline ombouwen (GitHub Actions doet
+nu test + build + GitHub Pages, moet test-gate + Cloudflare-deploy worden), en een reeks kleinere
+dingen die anders vergeten worden (zie hieronder).
+
+**Wat er klaar is, code-only, nog nergens live geverifieerd.** Browserspel had sinds 0.44.0
+bewust geen logbestand meer — "wil je dat terug, dan hoort het via een echte server te lopen".
+Die server is er nu, als code:
+
+- `src/log/browser.ts` (herbouwd op het patroon van vóór 0.44.0): bundelt regels per seconde en
+  stuurt ze naar een endpoint. In productie (`import.meta.env.PROD`) is dat `/api/log`; tijdens
+  `npm run dev` is er geen endpoint, zodat lokaal testen niet tussen de regels van echte spelers
+  belandt.
+- `functions/api/log.ts`: een Cloudflare Pages Function die dat verzoek ontvangt en met
+  `console.log` wegschrijft — leesbaar via `wrangler pages deployment tail` zodra het gedeployed
+  is. Bewust géén gedeeld geheim en géén rate-limit: het adres is publiek bereikbaar en kan
+  volgespamd worden. Gekende, openstaande knoop, geen vergeten detail.
+- 9 nieuwe tests in `test/log-server.test.ts` (mock-`fetch`, echte `Request`/`Response` van
+  Node), 688 in totaal. Dat bewijst dat de code doet wat ze belooft in Node — **niet** dat ze
+  werkt op Cloudflare's eigen runtime (`workerd`). Dat is pas gemeten zodra er een Cloudflare
+  Pages-project aan de repo hangt en er een echt verzoek doorheen gaat.
+- Geen CHANGELOG-item in `version.ts`: er verandert niets aan wat een speler ziet of doet, dus
+  dit hoort niet in de speler-gerichte changelog. Ook geen nieuwe laag in de README — die komt
+  pas als er een meting op de echte infrastructuur bij hoort, niet bij code die alleen unit-getest
+  is.
+
+**Wat nog moet gebeuren voor dit iets verandert:** een Cloudflare-account, de repo eraan hangen
+(build command `npm run build`, output `dist`), en dan pas is er iets om te tailen.
+
+**Andere punten die David expliciet niet wil laten sneeuwen, nog niet aangepakt:**
+
+- Logniveau in productie bewust kiezen (nu `debug`, zoals de taaklogs dat altijd al waren) — bij
+  veel gelijktijdige spelers kan dat tegen de gratis-tier requestlimiet aanlopen. Batching (max 50
+  regels of 1×/seconde) dempt dit al fors, maar is nooit tegen echt verkeer gemeten.
+- Saves zitten alleen in `localStorage` — ander toestel of gewiste cache is het spel kwijt. Geen
+  blocker, wel iets om ergens te vermelden of met een export/import-knop op te vangen vóór er
+  echte accounts zijn.
+- Geen crash-vangnet: het logboek vangt beslissingen van personeel, geen JS-fouten die een
+  speler bij David nooit meldt. Een `window.onerror`/`unhandledrejection` naar hetzelfde endpoint
+  (level `error`) is een voor de hand liggende volgende stap.
 - `scripts/investor-value.ts` haakt als enige script het logboek niet aan.
 
 ## Hoe je hier werkt
