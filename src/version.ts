@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.74.0';
+export const VERSION = '0.74.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.74.1',
+    date: '2026-09-24',
+    title: 'Pixels op hun plek, en navigeren begint bovenaan',
+    items: [
+      'Prijzen en knoppen op kaarten in één rij hingen tot 49 pixels uit elkaar: de prijs-en-knop-cluster zit nu onderaan elke kaart vastgepind',
+      'Sluit een kaart af met een tekstregel in plaats van een knop, dan krijgt die regel knophoogte — geen verspringende prijzen meer',
+      'Wissel je van scherm (ook via de Bureau-knop), dan begin je bovenaan in plaats van ergens midden in de vorige scrollpositie',
+    ],
+  },
   {
     version: '0.74.0',
     date: '2026-09-24',

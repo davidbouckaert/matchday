@@ -405,7 +405,15 @@ dl.facts dt:last-of-type, dl.facts dd:last-of-type { border-bottom: none; }
 .choice.static { cursor: default; }
 .choice.static button { align-self: flex-start; }
 .choice.warn { border-color: var(--bad); }
-.choice .big { font-size: 1.3rem; font-weight: 700; }
+/* de prijs-en-knop-cluster hangt onderaan elke kaart: kaarten in één rij zijn even hoog
+   (het raster rekt ze), maar de tekst erboven verschilt — zonder dit stonden prijzen en
+   "Bouwen"-knoppen per kaart tot 49 pixels hoger of lager en oogde de rij slordig */
+.choice .big { font-size: 1.3rem; font-weight: 700; margin-top: auto; }
+/* sluit een kaart af met een reden ("er ligt al kunstgras") in plaats van een knop, dan
+   krijgt die regel de hoogte van een knop — anders schoof de prijs erboven 12px omhoog */
+.choice.static > .muted.small:last-child, .choice.static > .attention-inline.small:last-child {
+  min-height: 32px; display: inline-flex; align-items: center;
+}
 .choice .sub { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
 .choice ul { font-size: 0.85rem; }
 .crest { width: 34px; height: 40px; border-radius: 6px 6px 16px 16px; border: 1px solid var(--line); }

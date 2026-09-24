@@ -363,6 +363,10 @@ function render(): void {
   rollNumbers();
   driveMatchClock();
   if (ui.report?.phase === 'report') revealLines(`${ui.report.prev.season}-${ui.report.prev.week}`);
+  if (getekendScherm !== ui.screen) {
+    window.scrollTo(0, 0);
+    getekendScherm = ui.screen;
+  }
   if (ui.tourAim) root.querySelector(`[data-tour-doel="${ui.tourAim}"]`)?.classList.add('tour-doel');
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
@@ -432,6 +436,10 @@ function rollNumbers(): void {
 
 // voor welk weekrapport de regels al binnengerold zijn; zo begint het niet opnieuw bij elke hertekening
 let revealedFor = '';
+
+// het scherm dat nu getekend staat: wissel je van scherm, dan begin je bovenaan —
+// anders landde je (bijvoorbeeld via de Bureau-knop) midden in de vorige scrollpositie
+let getekendScherm: Screen | null = null;
 
 /**
  * Nieuws en "in afwachting" rollen regel per regel binnen (niet letter per letter),
