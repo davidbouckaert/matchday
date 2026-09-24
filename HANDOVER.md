@@ -86,38 +86,59 @@ geïsoleerd in code:
   afhankelijkheid. Wil je echt winston op een server, dan volstaat één bestemming van vijftien
   regels; de motor hoeft niet aangeraakt te worden.
 
-## Publiceren: op weg naar Cloudflare Pages (bezig)
+## Publiceren: Cloudflare Workers + statische assets (bezig)
 
 David wil vrienden, familie en kennissen laten spelen — niet om geld te verdienen of populair te
-worden, gewoon om te delen. Hostingkeuze: **Cloudflare Pages** (ruimste gratis tier, Pages
-Functions voor het logendpoint, `wrangler pages deployment tail` voor live meekijken). Nog te
-doen, punt na punt: het logendpoint (dit punt), de deploy pipeline ombouwen (GitHub Actions doet
-nu test + build + GitHub Pages, moet test-gate + Cloudflare-deploy worden), en een reeks kleinere
-dingen die anders vergeten worden (zie hieronder).
+worden, gewoon om te delen. David heeft zelf een Cloudflare-account gemaakt en de GitHub-repo
+(genaamd `matchday`, andere naam dan de projectmap) via "Ship product" gekoppeld.
 
-**Wat er klaar is, code-only, nog nergens live geverifieerd.** Browserspel had sinds 0.44.0
-bewust geen logbestand meer — "wil je dat terug, dan hoort het via een echte server te lopen".
-Die server is er nu, als code:
+**Correctie op de vorige aanname.** Eerst was het plan "Cloudflare Pages" met een `functions/`
+map (Pages Functions). De echte eerste build faalde, en daaruit bleek dat Cloudflare's huidige
+"Ship product"-knop een ander, nieuwer model gebruikt: **Workers met statische assets**, één
+Worker-script (`wrangler deploy`, niet `wrangler pages deploy`) dat naast de gebouwde site draait.
+`functions/api/log.ts` (Pages Functions-vorm) werd daardoor nooit aangeroepen — dat bestand is
+weg. In de plaats:
 
-- `src/log/browser.ts` (herbouwd op het patroon van vóór 0.44.0): bundelt regels per seconde en
-  stuurt ze naar een endpoint. In productie (`import.meta.env.PROD`) is dat `/api/log`; tijdens
-  `npm run dev` is er geen endpoint, zodat lokaal testen niet tussen de regels van echte spelers
-  belandt.
-- `functions/api/log.ts`: een Cloudflare Pages Function die dat verzoek ontvangt en met
-  `console.log` wegschrijft — leesbaar via `wrangler pages deployment tail` zodra het gedeployed
-  is. Bewust géén gedeeld geheim en géén rate-limit: het adres is publiek bereikbaar en kan
-  volgespamd worden. Gekende, openstaande knoop, geen vergeten detail.
-- 9 nieuwe tests in `test/log-server.test.ts` (mock-`fetch`, echte `Request`/`Response` van
-  Node), 688 in totaal. Dat bewijst dat de code doet wat ze belooft in Node — **niet** dat ze
-  werkt op Cloudflare's eigen runtime (`workerd`). Dat is pas gemeten zodra er een Cloudflare
-  Pages-project aan de repo hangt en er een echt verzoek doorheen gaat.
-- Geen CHANGELOG-item in `version.ts`: er verandert niets aan wat een speler ziet of doet, dus
-  dit hoort niet in de speler-gerichte changelog. Ook geen nieuwe laag in de README — die komt
-  pas als er een meting op de echte infrastructuur bij hoort, niet bij code die alleen unit-getest
-  is.
+- `worker/index.ts`: de Worker zelf. Bedient alleen `/api/log` (routering via `wrangler.jsonc`,
+  `assets.run_worker_first`); al het overige gaat rechtstreeks naar de gebouwde site zonder dit
+  bestand ooit aan te roepen.
+- `wrangler.jsonc`: het project heet `matchday` (zelfde naam die Cloudflare al had gekozen),
+  `assets.directory` wijst naar `dist`, `not_found_handling: single-page-application` zodat
+  client-side routes werken, `observability.enabled: true` — dat is Cloudflare's eigen
+  Workers Logs, ontvangt automatisch alle `console.log` uit de Worker, doorzoekbaar in hun
+  dashboard. Geen aparte logdienst nodig.
+- `vite.config.ts` kreeg de `@cloudflare/vite-plugin` (`plugins: [cloudflare()]`) — zonder die
+  plugin kan `wrangler deploy` de Worker niet naast de site bouwen. **Dit verandert de
+  buildstructuur**: `npm run build` levert nu `dist/client/` (de site) en `dist/matchday/` (de
+  gebundelde Worker + een herschreven `wrangler.json` met de juiste relatieve paden) in plaats
+  van platte bestanden in `dist/`. `npm run dev` en `npm run preview` draaien nu ook via de
+  Cloudflare-runtime (workerd) in plaats van kale Vite — beide lokaal getest en ze werken, `/api/log`
+  antwoordt 204 tijdens `npm run dev`.
+- `src/log/browser.ts` (ongewijzigd sinds het vorige punt): bundelt regels per seconde en stuurt
+  ze naar `/api/log` in productie (`import.meta.env.PROD`); tijdens `npm run dev` is er geen
+  endpoint nodig — dat draait nu lokaal toch al mee via de Cloudflare-plugin, maar bewust nog niet
+  aangezet, zodat lokaal testen niet tussen de regels van echte spelers belandt.
+- `src/log/parseRecords.ts`: de validatie van binnenkomende logregels, losgetrokken van het
+  ontvangststuk zodat zowel `worker/index.ts` als de tests dezelfde regel gebruiken.
 
-**Wat nog moet gebeuren voor dit iets verandert:** een Cloudflare-account, de repo eraan hangen
-(build command `npm run build`, output `dist`), en dan pas is er iets om te tailen.
+**Gemeten, niet alleen beweerd:** `npm run build` slaagt met de nieuwe structuur, `npx wrangler
+deploy --dry-run` leest zonder fout de herschreven config uit `dist/matchday/wrangler.json` en
+vindt de 5 bestanden in `dist/client` — dat is het bewijs dat Cloudflare's eigen pipeline dit nu
+zou moeten kunnen deployen. 690 tests groen (11 in `test/log-server.test.ts`, twee routeringstests
+bijgekomen tegenover het vorige punt). **Nog niet gemeten:** een echte deploy op Cloudflare zelf,
+en of `/api/log` daar ook echt 204 teruggeeft — dat weten we pas na de volgende push.
+
+**Bewust nog niet gedaan:**
+
+- Geen rate-limit of gedeeld geheim op `/api/log` — bekende, openstaande knoop.
+- Geen CHANGELOG-item in `version.ts` en geen nieuwe README-laag: er verandert niets voor de
+  speler, en de infrastructuur is nog niet op de echte Cloudflare-omgeving gemeten.
+- **Cloudflare's "agent-setup" aanbod afgewezen, niet stilzwijgend genegeerd.** Cloudflare toonde
+  David een prompt om `https://developers.cloudflare.com/agent-setup/prompt.md` te laten
+  uitvoeren. Dat document vraagt om een Cloudflare-pluginmarktplaats in Claude Code te installeren
+  en MCP-servers te koppelen met OAuth naar zijn Cloudflare-account — een account-brede koppeling,
+  niet iets wat nodig was om dit specifieke buildprobleem op te lossen. Dat is bewust niet gedaan
+  zonder het eerst voor te leggen.
 
 **Andere punten die David expliciet niet wil laten sneeuwen, nog niet aangepakt:**
 
@@ -130,6 +151,9 @@ Die server is er nu, als code:
 - Geen crash-vangnet: het logboek vangt beslissingen van personeel, geen JS-fouten die een
   speler bij David nooit meldt. Een `window.onerror`/`unhandledrejection` naar hetzelfde endpoint
   (level `error`) is een voor de hand liggende volgende stap.
+- De oude GitHub Actions-pipeline (`ci/github-actions.yml`) test en publiceert nog naar GitHub
+  Pages. Moet omgebouwd worden zodra Cloudflare de echte hosting is, anders bestaan er twee
+  "live" adressen naast elkaar.
 - `scripts/investor-value.ts` haakt als enige script het logboek niet aan.
 
 ## Hoe je hier werkt

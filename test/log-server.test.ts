@@ -1,11 +1,12 @@
 // Het logboek naar een echte server: de browserbestemming die regels bundelt en verstuurt, en
-// de Cloudflare Pages Function die ze ontvangt. De aanleiding: 0.44.0 stelde dat "wie dit later
-// echt wil, hoort het via een server te laten lopen" — dit is die server, en deze tests leggen
-// vast dat de regels er ongeschonden aankomen en dat rommel de boel niet laat crashen.
+// de Cloudflare Worker die ze ontvangt. De aanleiding: 0.44.0 stelde dat "wie dit later echt
+// wil, hoort het via een server te laten lopen" — dit is die server, en deze tests leggen vast
+// dat de regels er ongeschonden aankomen en dat rommel de boel niet laat crashen.
 
 import { expect } from 'chai';
 import { attachBrowserLog } from '../src/log/browser';
-import { onRequestPost, parseLogBody } from '../functions/api/log';
+import worker from '../worker/index';
+import { parseLogBody } from '../src/log/parseRecords';
 import { clearSinks, logInfo, logDebug, logWarn } from '../src/log/logger';
 
 describe('De browserbestemming', () => {
@@ -62,7 +63,7 @@ describe('De browserbestemming', () => {
   });
 });
 
-describe('Het ontvangststuk (functions/api/log.ts)', () => {
+describe('Het ontvangststuk (worker/index.ts)', () => {
   it('haalt geldige logregels uit een verzoeklichaam', () => {
     const lichaam = JSON.stringify({
       records: [{ time: '2026-09-24T08:00:00.000Z', level: 'info', scope: 'delegatie.horeca', message: 'prijs gezet' }],
@@ -89,22 +90,34 @@ describe('Het ontvangststuk (functions/api/log.ts)', () => {
       method: 'POST',
       body: JSON.stringify({ records: [{ time: '2026-09-24T08:00:00.000Z', level: 'debug', scope: 'delegatie.training', message: 'schema gekozen' }] }),
     });
-    const antwoord = await onRequestPost({ request });
+    const antwoord = await worker.fetch(request);
     console.log = oorspronkelijk;
     expect(antwoord.status).to.equal(204);
     expect(gezien.some((r) => r.includes('delegatie.training') && r.includes('schema gekozen'))).to.equal(true);
   });
 
-  it('laat een onleesbaar verzoeklichaam de functie niet laten struikelen', async () => {
+  it('laat een onleesbaar verzoeklichaam de Worker niet laten struikelen', async () => {
     const request = new Request('https://voetbalclub.example/api/log', { method: 'POST', body: 'dit is geen JSON' });
-    const antwoord = await onRequestPost({ request });
+    const antwoord = await worker.fetch(request);
     expect(antwoord.status).to.equal(204);
   });
 
   it('wijst een veel te groot verzoeklichaam af', async () => {
     const groot = JSON.stringify({ records: [{ time: 't', level: 'debug', scope: 's', message: 'x'.repeat(2_100_000) }] });
     const request = new Request('https://voetbalclub.example/api/log', { method: 'POST', body: groot });
-    const antwoord = await onRequestPost({ request });
+    const antwoord = await worker.fetch(request);
     expect(antwoord.status).to.equal(413);
+  });
+
+  it('bedient geen ander pad dan /api/log, zodat de rest bij de statische site blijft', async () => {
+    const request = new Request('https://voetbalclub.example/', { method: 'POST', body: '{}' });
+    const antwoord = await worker.fetch(request);
+    expect(antwoord.status).to.equal(404);
+  });
+
+  it('wijst een GET op /api/log af — hier komt alleen het logboek binnen', async () => {
+    const request = new Request('https://voetbalclub.example/api/log', { method: 'GET' });
+    const antwoord = await worker.fetch(request);
+    expect(antwoord.status).to.equal(405);
   });
 });

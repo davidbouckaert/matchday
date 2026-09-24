@@ -1,4 +1,6 @@
 node_modules/
 dist/
+.wrangler/
 .DS_Store
 *.log
+.claude/settings.local.json
