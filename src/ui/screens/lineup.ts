@@ -226,7 +226,7 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
     ${action} ${tipAttr(tipText, p.name)} ${action ? 'role="button" tabindex="0"' : ''}>
     <span class="sr-state">${inXI ? '<span class="dot-in" aria-label="in de basis"></span>' : benched ? '<span class="dot-bench" aria-label="op de bank"></span>' : '<span class="dot-out" aria-label="in de kern"></span>'}</span>
     <span class="sr-name">
-      <strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ' <span class="core" ' + tipAttr('Kernspeler: hij hoort bij je beste elf of is een groot talent.') + '>★</span>' : ''}${roleMark(s, p.id)}
+      <span class="sr-line"><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ' <span class="core" ' + tipAttr('Kernspeler: hij hoort bij je beste elf of is een groot talent.') + '>★</span>' : ''}${roleMark(s, p.id)}</span>
       <span class="sr-sub">${p.age}j · ${esc(p.trait)}${p.isYouth ? ' · eigen jeugd' : ''}${p.loan?.type === 'in' ? ` · gehuurd van ${esc(p.loan.club)}` : ''}${p.listed ? ' · te koop' : ''}</span>
     </span>
     <span class="sr-rating"><strong>${overall(p)}</strong><span class="muted">/${Math.round(p.potential)}</span></span>

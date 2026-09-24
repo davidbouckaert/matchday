@@ -1584,7 +1584,11 @@ tr.filtering td { background: var(--accent-soft); }
 .sr-state .dot-bench { background: var(--mid); }
 .sr-state .dot-out { background: var(--line); box-shadow: inset 0 0 0 1px var(--faint); }
 .sr-name { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
-.sr-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+/* naam en tekens (ster, kernspeler, kapitein, strafschop, hoekschop) op één regel: de
+   kolom hierboven maakte van elk teken een eigen regel, en dan werd de rij een toren */
+.sr-name .sr-line { display: flex; align-items: baseline; gap: 4px; min-width: 0; }
+.sr-name .sr-line > * { flex: none; }
+.sr-name strong { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .sr-sub { font-size: .72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sr-rating { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sr-rating strong { font-size: 1.02rem; }
