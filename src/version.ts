@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.60.1';
+export const VERSION = '0.60.2';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.60.2',
+    date: '2026-09-24',
+    title: 'De feestkaartjes mogen gezien worden',
+    items: [
+      'Dikkere gouden rand, verzadigder goudverloop, een gloed eromheen, groter icoon en vetter lettertype',
+      'Na het oppoppen trekt er één keer een glansveeg over de kaart — feest, geen paniek',
+      'De pop-in veert nu ook licht door; bij animaties uit of verminderde beweging staat alles er gewoon meteen',
+    ],
+  },
   {
     version: '0.60.1',
     date: '2026-09-24',

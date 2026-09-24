@@ -333,7 +333,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
     : '🎉';
   const feestHtml = feest.length
     ? `<section class="wide"><h3>🎉 Om te vieren</h3><div class="vieringen">${feest
-        .map((n, i) => `<div class="viering-kaart" style="animation-delay:${(1.5 + i * 0.4).toFixed(1)}s"><span class="v-icon">${feestIcon(n.text)}</span><p>${esc(n.text)}</p></div>`)
+        .map((n, i) => `<div class="viering-kaart" style="--vd:${(1.5 + i * 0.4).toFixed(1)}s"><span class="v-icon">${feestIcon(n.text)}</span><p>${esc(n.text)}</p></div>`)
         .join('')}</div></section>`
     : '';
 

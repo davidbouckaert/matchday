@@ -348,21 +348,41 @@ dl.facts dt:last-of-type, dl.facts dd:last-of-type { border-bottom: none; }
 /* De feestkaartjes in het weekverslag: successen die vanzelf gebeurden (een diploma, een
    opgeleverde bouw, een sponsor die je commerciële man binnenhaalde) poppen na de cijfers
    één voor één op, met een gouden randje. Maximaal drie — anders is het geen feest meer. */
-.vieringen { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 4px; }
+.vieringen { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 4px; }
+/* het kaartje mag gezien worden: dikke gouden rand, gloed eromheen, groot icoon, en na
+   het oppoppen trekt er één keer een glansveeg overheen — feest, geen paniek */
 .viering-kaart {
-  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-  border: 1px solid #d9a927; border-radius: 10px;
-  background: linear-gradient(120deg, rgba(246,196,69,.16), rgba(246,196,69,.05));
-  opacity: 0; animation: viering-pop .45s cubic-bezier(.34,1.56,.64,1) forwards;
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 14px; padding: 13px 18px;
+  border: 2px solid #d9a927; border-radius: 12px;
+  background: linear-gradient(120deg, rgba(246,196,69,.30), rgba(246,196,69,.08));
+  box-shadow: 0 0 0 3px rgba(246,196,69,.14), 0 6px 18px -8px rgba(217,169,39,.55);
+  opacity: 0; animation: viering-pop .5s cubic-bezier(.34,1.56,.64,1) forwards;
+  animation-delay: var(--vd, 0s);
 }
-.viering-kaart .v-icon { font-size: 1.5em; line-height: 1; }
-.viering-kaart p { margin: 0; }
+.viering-kaart .v-icon { font-size: 2em; line-height: 1; }
+.viering-kaart p { margin: 0; font-weight: 600; font-size: 1.02em; }
+.viering-kaart::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,.5), transparent);
+  transform: skewX(-18deg); opacity: 0;
+  animation: viering-glans .9s ease-out forwards; animation-delay: calc(var(--vd, 0s) + .55s);
+}
 @keyframes viering-pop {
-  from { transform: scale(.85); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  0% { transform: scale(.7); opacity: 0; }
+  70% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes viering-glans {
+  0% { left: -60%; opacity: 1; }
+  100% { left: 120%; opacity: 0; }
 }
 .viering-kaart.meteen { animation: none; opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .viering-kaart { animation: none; opacity: 1; } }
+.viering-kaart.meteen::after { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .viering-kaart { animation: none; opacity: 1; }
+  .viering-kaart::after { animation: none; }
+}
 
 /* ---------- setup ---------- */
 .setup-wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
