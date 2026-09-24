@@ -23,9 +23,9 @@ export interface WeekRef {
  * animatievertraging) en de lopende klok (main.ts) moeten exact dezelfde tijd rekenen.
  */
 export const ANIM_T = { start: 0.3, h1: 2.2, rust: 2.4, h2: 2.95, end: 4.6, fin: 4.85 };
-/** Na het affluiten blijft de uitslag nog anderhalve seconde staan voor het rapport opent:
- *  even nagenieten (of vloeken) vóór de cijfers beginnen te rollen. */
-export const ANIM_MATCH_MS = 6400;
+/** Na het affluiten blijft de uitslag nog tweeënhalve seconde staan voor het rapport
+ *  opent: even nagenieten (of vloeken) vóór de cijfers beginnen te rollen. */
+export const ANIM_MATCH_MS = 7400;
 export const ANIM_WEEK_MS = 3600;
 
 /** Wanneer een wedstrijdminuut in beeld komt, op de klok van de animatie. */
@@ -50,29 +50,42 @@ export function animationOverlay(s: GameState, prev: WeekRef): string {
   const where = m ? venue(m.home) : '';
 
   let middenstuk: string;
+  let affiche = `<h2>${title}</h2>`;
   if (m && m.moments && !m.forfeit) {
     const hg = m.home ? m.goalsFor : m.goalsAgainst;
     const ag = m.home ? m.goalsAgainst : m.goalsFor;
+    const isDerby = s.league.teams.some((t) => t.isRival && t.name === m.opponent);
+    // De affiche prominent: de twee ploegen groot, jouw ploeg in de clubkleur — dezelfde
+    // kleur die verderop je doelpunten en wissels aanwijst, zodat je geen namen hoeft te
+    // kennen om te zien wie wat deed.
+    affiche = `<div class="match-title">
+      <span class="mt-team ${m.home ? 'us' : ''}">${m.home ? esc(s.clubName) : esc(m.opponent)}</span>
+      <span class="mt-vs">–</span>
+      <span class="mt-team ${m.home ? '' : 'us'}">${m.home ? esc(m.opponent) : esc(s.clubName)}</span>
+    </div>${isDerby ? '<p class="center"><span class="tag derby">🔥 DERBY</span></p>' : ''}`;
+    // twee lanen rond een middellijn: de thuisploeg links, de uitploeg rechts, de minuut
+    // in het midden — zo zie je in één oogopslag van wie een doelpunt of wissel was
+    const kant = (us: boolean) => (us === m.home ? 'links' : 'rechts');
     const regel = (g: NonNullable<typeof m.moments>[number]) =>
       g.type === 'wissel'
         ? `<li class="sub ${g.us ? 'us' : ''}" style="animation-delay:${momentDelay(g.minute).toFixed(2)}s">
-          <span class="min">${g.minute}'</span> 🔁 <span class="who">${esc(g.text)}</span></li>`
+          <span class="min">${g.minute}'</span><span class="side ${kant(g.us)}">🔁 <span class="who">${esc(g.text)}</span></span></li>`
         : `<li class="${g.us ? 'us' : ''}" style="animation-delay:${momentDelay(g.minute).toFixed(2)}s">
-          <span class="min">${g.minute}'</span> ⚽ <span class="who">${esc(g.text)}</span> <span class="mini">${g.score}</span></li>`;
+          <span class="min">${g.minute}'</span><span class="side ${kant(g.us)}">⚽ <span class="who">${esc(g.text)}</span> <span class="mini">${g.score}</span></span></li>`;
     const eersteHelft = m.moments.filter((g) => g.minute <= 45);
     const tweedeHelft = m.moments.filter((g) => g.minute > 45);
     // de ruststand: de doelpunten van de eerste helft, in thuis-uit-volgorde
     const rustGoals = eersteHelft.filter((g) => g.type !== 'wissel');
     const rustStand = rustGoals.length ? rustGoals[rustGoals.length - 1].score : '0-0';
     middenstuk = `<div class="match-clock" data-fin="${hg} - ${ag}">1'</div>
-    <ul class="match-ticker">
-      <li style="animation-delay:.12s"><span class="min">1'</span> Aftrap</li>
+    <ul class="match-ticker lanes">
+      <li class="mid" style="animation-delay:.12s"><span class="min">1'</span> Aftrap</li>
       ${eersteHelft.map(regel).join('')}
-      <li class="rust" style="animation-delay:${ANIM_T.rust}s"><span class="min">45'</span> Rust: ${rustStand}</li>
+      <li class="mid rust" style="animation-delay:${ANIM_T.rust}s"><span class="min">45'</span> Rust: ${rustStand}</li>
       ${tweedeHelft.map(regel).join('')}
-      <li class="fin" style="animation-delay:${ANIM_T.fin}s"><span class="min">90'</span> Affluiten: ${hg} - ${ag}</li>
+      <li class="mid fin" style="animation-delay:${ANIM_T.fin}s"><span class="min">90'</span> Affluiten: ${hg} - ${ag}</li>
     </ul>`;
-  } else {
+    } else {
     middenstuk = `<svg class="pitch" viewBox="0 0 300 120" aria-hidden="true">
         <rect x="2" y="2" width="296" height="116" rx="6" class="field"/>
         <line x1="150" y1="2" x2="150" y2="118" class="lines"/>
@@ -91,7 +104,7 @@ export function animationOverlay(s: GameState, prev: WeekRef): string {
   return `<div class="overlay" data-action="skip-anim">
     <div class="anim-card">
       <p class="muted small">${formatDateLong(s.startYear, prev.season, prev.week)}</p>
-      <h2>${title}</h2>
+      ${affiche}
       ${where}
       ${middenstuk}
       <div class="anim-bar" style="--dur:${m && m.moments && !m.forfeit ? ANIM_MATCH_MS : ANIM_WEEK_MS}ms"><span></span></div>

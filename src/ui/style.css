@@ -1303,11 +1303,25 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 
 /* De wedstrijd als tijdlijn in de animatie: elk hoogtepunt verschijnt op het moment in
    de wedstrijd waarop het viel, en pas op het einde klinkt het affluiten met de uitslag. */
-/* De regels staan op één verticale lijn — minuut rechts uitgelijnd in zijn eigen kolom,
-   de gebeurtenis links ernaast, de tussenstand rechts op de regel — in plaats van
-   gecentreerde regels die per lengte verspringen. Dat leest als een wedstrijdverslag. */
-.match-ticker { list-style: none; margin: var(--s4) auto 0; padding: 0; display: flex; flex-direction: column; gap: 9px;
-  min-height: 300px; font-size: 1.05rem; max-width: 560px; text-align: left; }
+/* Twee lanen rond een middellijn: de thuisploeg links, de uitploeg rechts, de minuut in
+   het midden op de lijn. Jouw ploeg draagt overal de clubkleur — in de affiche én bij
+   elk doelpunt of elke wissel — zodat je geen namen hoeft te kennen om te zien van wie
+   iets was. Onderaan bewust extra lucht voor het affluiten en de balk eronder. */
+.match-title { display: flex; align-items: baseline; justify-content: center; gap: 12px; margin: 2px 0 6px; flex-wrap: wrap; }
+.match-title .mt-team { font-size: 1.45rem; font-weight: 750; letter-spacing: -.01em; }
+.match-title .mt-team.us { color: var(--accent); }
+.match-title .mt-vs { color: var(--faint); font-size: 1.2rem; }
+.match-ticker { list-style: none; margin: var(--s4) auto 0; padding: 0 0 var(--s4); display: flex; flex-direction: column; gap: 10px;
+  min-height: 320px; font-size: 1.05rem; max-width: 100%; text-align: left; position: relative; }
+.match-ticker.lanes::before { content: ''; position: absolute; top: 4px; bottom: var(--s4); left: 50%; width: 1px; background: var(--line); }
+.match-ticker.lanes li { display: grid; grid-template-columns: minmax(0, 1fr) 3.4em minmax(0, 1fr); gap: 0 10px; align-items: baseline; }
+.match-ticker.lanes .min { grid-column: 2; text-align: center; min-width: 0; background: var(--card); position: relative; }
+.match-ticker.lanes .side { display: flex; gap: 7px; align-items: baseline; min-width: 0; }
+.match-ticker.lanes .side.links { grid-column: 1; grid-row: 1; justify-content: flex-end; text-align: right; }
+.match-ticker.lanes .side.rechts { grid-column: 3; grid-row: 1; }
+.match-ticker.lanes li.mid { display: flex; justify-content: center; gap: 8px; }
+.match-ticker.lanes li.mid .min { background: var(--card); padding: 0 6px; }
+.match-ticker li.us .who { color: var(--accent); }
 /* de klok: groot en tabulair, en hij kleurt bij het affluiten */
 .match-clock { font-size: 1.9rem; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.01em; margin-top: 4px; min-height: 1.2em; }
 .match-clock.af { color: var(--accent); }
@@ -1316,11 +1330,11 @@ select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px
 .match-ticker li.sub.us .who { font-weight: 650; color: var(--text); }
 .match-ticker li { opacity: 0; transform: translateY(6px); animation: ticker-in .28s ease-out forwards;
   display: flex; gap: 10px; align-items: baseline; }
-.match-ticker .min { color: var(--faint); font-variant-numeric: tabular-nums; min-width: 2.6em; text-align: right; flex: none; }
-.match-ticker .mini { margin-left: auto; }
+.match-ticker .min { color: var(--faint); font-variant-numeric: tabular-nums; flex: none; }
+.match-ticker .mini { flex: none; }
 .match-ticker li.us .who { font-weight: 700; }
 .match-ticker .mini { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--muted); }
-.match-ticker li.fin { margin-top: 6px; font-weight: 750; font-size: 1.18rem; }
+.match-ticker li.fin { margin-top: 10px; font-weight: 750; font-size: 1.18rem; }
 @keyframes ticker-in { to { opacity: 1; transform: none; } }
 
 /* De banner die zegt dat er een nieuwe versie klaarstaat. Boven alles, in de accentkleur:

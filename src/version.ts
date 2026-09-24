@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.57.0';
+export const VERSION = '0.57.1';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.57.1',
+    date: '2026-09-24',
+    title: 'De wedstrijd in twee lanen',
+    items: [
+      'De affiche staat er nu echt: beide ploegen groot, jouw ploeg in de clubkleur, en bij een derby de vlag erbij',
+      'De tijdlijn heeft twee lanen rond een middellijn: de thuisploeg links, de uitploeg rechts, de minuut in het midden',
+      'Jouw doelpuntenmakers en wissels dragen de clubkleur — je hoeft geen namen te kennen om te zien van wie iets was',
+      'Na het affluiten blijft de uitslag tweeënhalve seconde staan, en onderaan de lijst kwam extra lucht',
+    ],
+  },
   {
     version: '0.57.0',
     date: '2026-09-24',
