@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.59.0 — De werklijst-pil valt nu echt op
+
+**"2 dingen wachten op jou" is de nuttigste knop van de speelbalk — en de onzichtbaarste.** Hij stond in dezelfde zachte accentkleur als de rest van de balk en viel volledig weg naast de grote groene weekknop. De pil draagt nu het aandacht-palet: amber, met het aantal in een echte gekleurde badge, en een rand die hem van de achtergrond tilt. Zit er iets dringends tussen (te weinig speelklare spelers, een deadline die vandaag valt), dan kleurt het geheel rood. Rond de badge klopt een trage polsslag — elke 2,8 seconden één zachte ring — die het oog trekt zonder te irriteren, en een pijltje maakt duidelijk dat de pil ergens heen gaat. Wie verminderde beweging instelde, krijgt geen polsslag. Voor en na met Playwright-schermafdrukken vergeleken, in beide staten.
+
 ### 0.58.0 — Kleine successen worden echt gevierd
 
 **Een speler die tekent, een sponsor die verlengt, een nieuw personeelslid: dat was een grijze regel, en dat voelt niet als winnen.** Directe successen — een contract verlengen, een speler of huurling binnenhalen, een sponsorvoorstel tekenen of tegen jouw prijs verlengen, personeel aanwerven of vervangen — krijgen nu een feesttoast: de melding kleurt in de clubkleur, met een groot icoon, de naam als kop en het bedrag eronder, en een seconde confettisnippers (goud, wit en de clubkleur — puur CSS). De motor geeft dat door via een optioneel `viering`-veld op het bestaande `ActionResult`; schermen die er niets mee doen, merken er niets van.

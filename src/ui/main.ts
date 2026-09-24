@@ -294,7 +294,14 @@ function render(): void {
         ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de clubwinkel te laten draaien.</p></section>`
         : ''
     }${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${renderScreen(g)}</main>
-    ${playBar(g, { weekLabel, blocked, fastWeeks, busy: ui.busy, open: todos(g).length + (g.weekChoice && !g.weekChoice.answer ? 1 : 0) })}
+    ${playBar(g, {
+      weekLabel,
+      blocked,
+      fastWeeks,
+      busy: ui.busy,
+      open: todos(g).length + (g.weekChoice && !g.weekChoice.answer ? 1 : 0),
+      urgent: todos(g).some((t) => t.level === 'urgent'),
+    })}
     <footer class="app-footer"><span class="muted small">Clubeigenaar ${VERSION} · ${esc(g.clubName)} · seizoen ${g.season}, week ${g.week}</span></footer>
     ${ui.fastForward ? fastForwardOverlay(g, ui.fastForward) : ''}
     ${!ui.fastForward && ui.report ? (ui.report.phase === 'anim' ? animationOverlay(g, ui.report.prev) : reportOverlay(g, ui.report.prev)) : ''}

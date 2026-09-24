@@ -220,7 +220,7 @@ export function header(g: GameState): string {
  * kas zat. Hier staan ze vast: links je saldo en wat er nog op je wacht, rechts de twee
  * knoppen. Op een telefoon scheelt dat nog het meest, want daar is de kopbalk het duurst.
  */
-export function playBar(g: GameState, o: HeaderOpts & { open: number }): string {
+export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: boolean }): string {
   const nextTip = o.blocked
     ? o.blocked
     : o.fastWeeks >= 2
@@ -235,8 +235,8 @@ export function playBar(g: GameState, o: HeaderOpts & { open: number }): string 
     <div class="pb-left">
       ${
         o.open
-          ? `<button class="pb-open" data-action="nav" data-id="overzicht" ${tipAttr('Naar je werklijst op je bureau.')}>
-              <span class="dot"></span>${o.open} ${o.open === 1 ? 'ding wacht' : 'dingen wachten'} op jou
+          ? `<button class="pb-open ${o.urgent ? 'urgent' : ''}" data-action="nav" data-id="overzicht" ${tipAttr(o.urgent ? 'Er zit iets dringends tussen. Naar je werklijst op je bureau.' : 'Naar je werklijst op je bureau.')}>
+              <span class="pb-count">${o.open}</span>${o.open === 1 ? 'ding wacht' : 'dingen wachten'} op jou <span class="pb-arrow">▸</span>
             </button>`
           : '<span class="pb-clear small">niets dat op jou wacht</span>'
       }

@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.58.1';
+export const VERSION = '0.59.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.59.0',
+    date: '2026-09-24',
+    title: 'De werklijst-pil valt nu echt op',
+    items: [
+      '"X dingen wachten op jou" stond in dezelfde zachte kleur als de rest van de balk en viel weg naast de grote weekknop',
+      'De pil draagt nu het aandacht-palet: amber met het aantal in een echte badge, en rood zodra er iets dringends tussen zit',
+      'Een trage polsslag rond de badge trekt het oog zonder te storen (uit bij verminderde beweging), en een pijltje toont dat je erop kunt klikken',
+    ],
+  },
   {
     version: '0.58.1',
     date: '2026-09-24',
