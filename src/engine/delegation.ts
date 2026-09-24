@@ -13,6 +13,8 @@ import { FORMATIONS, POSITIONS, bestForRole, bestFormation, departureBlock, isCo
 import { expectedAttendance, spendPerHead } from './finance';
 import { acceptedMargin, expectedCanteenUnits } from './canteen';
 import { staffSkill } from './staff';
+import { supportFactor, supportReport } from './support';
+import { logDecision } from './reasoning';
 import { acceptSponsorOffer, approachProspect, renewSponsor } from './sponsors';
 import {
   YOUTH_FEE_WEEK, addMerchItem, buyPlayer, canOrganise, canUpgrade, eventForecast, extendContract, openConcession, organiseEvent,
@@ -56,9 +58,16 @@ export function taskStars(state: GameState, taskId: TaskId, staff: Staff): numbe
   return clamp(Math.round(taskSkill(state, taskId, staff) / 20), 1, 5);
 }
 
-/** Het deel van de winst dat hij pakt: 0,50 bij één ster, 0,85 bij vijf. */
+/**
+ * Het deel van de winst dat hij pakt.
+ *
+ * Zijn sterren zeggen hoe goed hij is, de rest van je club zegt of hij zijn werk kán doen.
+ * Een trainer van vijf sterren zonder kinesist, zonder verzorger en zonder recuperatieruimte
+ * haalt niet meer dan een trainer van drie sterren met dat alles achter zich — en dat hoort
+ * ook zo. Wie zijn personeel wil laten renderen, moet er iets omheen bouwen.
+ */
 export function taskEfficiency(state: GameState, taskId: TaskId, staff: Staff): number {
-  return STAR_EFFICIENCY[taskStars(state, taskId, staff) - 1];
+  return STAR_EFFICIENCY[taskStars(state, taskId, staff) - 1] * supportFactor(state, taskId);
 }
 
 /**
@@ -184,7 +193,33 @@ export function strategyTask(state: GameState, rng: Rng = createRng(state)): voi
     const opties = [2, 3, 4, 5].map((n) => ({ optie: n, waarde: waardeVan(n) }));
     // de basis is drie trainingen: wat een club zonder trainer sowieso doet
     const gekozen = pickByEfficiency(opties, waardeVan(3), eff) ?? 3;
-    t.trainings = injured >= 3 ? Math.min(gekozen, 3) : gekozen;
+    const vorige = t.trainings;
+    // Gas terugnemen bij een uitgeputte groep is geen optimalisatie maar gezond verstand:
+    // dat ziet ook een zwak omkaderde trainer. Daarom staat deze grens los van zijn
+    // efficiëntie — anders bleef hij bij een doodvermoeide ploeg op de standaard hangen.
+    const plafond = tired >= 52 ? 2 : tired >= 42 || injured >= 3 ? 3 : 5;
+    t.trainings = Math.min(gekozen, plafond);
+
+    // opschrijven wat hij gerekend heeft, vóór de week gespeeld wordt
+    const omkadering = supportReport(state, 'training');
+    logDecision(state, {
+      task: 'training',
+      staff: trainingStaff.name,
+      subject: 'Trainingen per week',
+      from: String(vorige),
+      to: String(t.trainings),
+      changed: vorige !== t.trainings,
+      efficiency: eff,
+      steps: [
+        `Groep staat op vermoeidheid ${Math.round(tired)}; ${injured} ${injured === 1 ? 'speler is' : 'spelers zijn'} geblesseerd.`,
+        `Herstel per week: ${recovery(state).toFixed(1)} punten (natuurlijk ${Math.round(NATURAL_RECOVERY * 100)}% plus je staf en accommodatie).`,
+        ...opties.map((o) => `${o.optie} trainingen zou uitkomen op waarde ${o.waarde.toFixed(2)}.`),
+        `Beste keuze is ${opties.reduce((a, b) => (b.waarde > a.waarde ? b : a)).optie} trainingen; met ${Math.round(eff * 100)}% efficiëntie wordt het er ${gekozen}.`,
+        omkadering.missing
+          ? `Hij mist ${omkadering.missing.label.toLowerCase()}: ${omkadering.missing.hint}`
+          : 'Alles wat hij nodig heeft, is aanwezig.',
+      ],
+    });
 
     if (injured >= 3 || tired > 45) t.focus = 'herstel';
     else if (analyst && skill >= 55) t.focus = 'tactiek';
@@ -349,8 +384,26 @@ function ticketTask(state: GameState, rng: Rng): void {
   const opties: { optie: number; waarde: number }[] = [];
   for (let price = Math.round(ref * 0.5); price <= cap; price++) opties.push({ optie: price, waarde: opbrengst(price) });
   const basis = opbrengst(ref); // de richtprijs van je reeks: wat het zonder ingrijpen opbrengt
-  const gekozen = pickByEfficiency(opties, basis, taskEfficiency(state, 'ticketing', s)) ?? original;
+  const eff = taskEfficiency(state, 'ticketing', s);
+  const gekozen = pickByEfficiency(opties, basis, eff) ?? original;
   state.ticketPrice = Math.max(0, Math.round(gekozen * (1 + rng.normal(0, errorChance(taskSkill(state, 'ticketing', s)) / 4))));
+  const beste = opties.reduce((a, b) => (b.waarde > a.waarde ? b : a));
+  const omkadering = supportReport(state, 'ticketing');
+  logDecision(state, {
+    task: 'ticketing',
+    staff: s.name,
+    subject: 'Ticketprijs',
+    from: `€${original}`,
+    to: `€${state.ticketPrice}`,
+    changed: original !== state.ticketPrice,
+    efficiency: eff,
+    steps: [
+      `Richtprijs in ${DIVISIONS[state.league.divisionLevel].name} is €${ref}; bij die prijs brengt een thuismatch €${basis.toFixed(0)} op.`,
+      `De beste prijs zou €${beste.optie} zijn, goed voor €${beste.waarde.toFixed(0)} — maar dat drukt de sfeer.`,
+      `Met ${Math.round(eff * 100)}% efficiëntie zet hij €${state.ticketPrice}.`,
+      omkadering.missing ? `Hij mist ${omkadering.missing.label.toLowerCase()}: ${omkadering.missing.hint}` : 'Alles wat hij nodig heeft, is aanwezig.',
+    ],
+  });
 }
 
 // ---------- Evenementen ----------
@@ -483,7 +536,24 @@ function horecaTask(state: GameState): void {
     }
     // de basis is de richtprijs: wat de kantine opbrengt als niemand er iets aan doet
     const gekozen = pickByEfficiency(opties, opbrengst(def.ref), eff) ?? def.ref;
+    const vorige = item.price;
     item.price = Math.max(0.5, Math.round(gekozen * (1 + rng2(state).normal(0, err / 4)) * 10) / 10);
+    const beste = opties.reduce((a, b) => (b.waarde > a.waarde ? b : a));
+    logDecision(state, {
+      task: 'horeca',
+      staff: s.name,
+      subject: `Prijs ${def.label.toLowerCase()}`,
+      from: `€${vorige.toFixed(2)}`,
+      to: `€${item.price.toFixed(2)}`,
+      changed: Math.abs(vorige - item.price) >= 0.05,
+      efficiency: eff,
+      steps: [
+        `Richtprijs is €${def.ref.toFixed(2)}, inkoop €${def.cost.toFixed(2)}, gerekend op ${bezoekers} bezoekers.`,
+        `Bij de richtprijs levert dit artikel €${opbrengst(def.ref).toFixed(0)} op.`,
+        `De beste prijs zou €${beste.optie.toFixed(2)} zijn, goed voor €${beste.waarde.toFixed(0)}.`,
+        `Met ${Math.round(eff * 100)}% efficiëntie komt hij uit op €${gekozen.toFixed(2)}.`,
+      ],
+    });
   }
   if ((state.eventCooldowns['auto-concessie'] ?? 0) > 0) return;
   const open = CONCESSIONS.filter((c) => !state.canteen.concessions.some((x) => x.id === c.id) && usedConcessionSpace(state) + c.space <= CONCESSION_SPACE);

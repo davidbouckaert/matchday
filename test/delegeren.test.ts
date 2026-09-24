@@ -1,7 +1,9 @@
 import { expect } from 'chai';
 import { MIN_SQUAD, squadBlock } from '../src/engine/players';
 import { buyPlayer, delegateTask, hireStaff, startCourse } from '../src/engine/actions';
-import { STAR_EFFICIENCY, pickByEfficiency, runDelegatedTasks, strategyTask, taskSkill } from '../src/engine/delegation';
+import { STAR_EFFICIENCY, pickByEfficiency, runDelegatedTasks, strategyTask, taskEfficiency, taskSkill } from '../src/engine/delegation';
+import { MIN_SUPPORT, supportReport } from '../src/engine/support';
+import { recentReasoning } from '../src/engine/reasoning';
 import { spendPerHeadCanteen } from '../src/engine/canteen';
 import { recovery } from '../src/engine/factors';
 import { advanceWeek } from '../src/engine/turn';
@@ -207,5 +209,94 @@ describe('Personeel opleiden', () => {
     s.cash = 100;
     const plan = coursePlan(s, { ...s.staff[0], skill: 35, courseWeeksLeft: 0 });
     expect(plan.blocked).to.contain('rekening');
+  });
+});
+
+describe('Wat je club om een medewerker heen heeft, telt mee', () => {
+  it('drukt de efficiëntie van een topper die niets om zich heen heeft', () => {
+    // Dit is het punt: sterren zeggen hoe goed hij is, de rest van je club of hij zijn werk
+    // kán doen. Een trainer van vijf sterren zonder medische ploeg haalt minder dan een
+    // trainer van drie sterren met alles achter zich.
+    const kaal = readyGame();
+    const topper = kaal.staff.find((x) => x.role === 'hoofdtrainer')!;
+    topper.skill = 95;
+    delegateTask(kaal, 'training', topper.id);
+    const zonder = taskEfficiency(kaal, 'training', topper);
+
+    const rijk = readyGame();
+    const zelfde = rijk.staff.find((x) => x.role === 'hoofdtrainer')!;
+    zelfde.skill = 95;
+    rijk.infrastructure.recoveryLevel = 2;
+    rijk.cash += 500_000;
+    for (const rol of ['kinesist', 'verzorger', 'conditietrainer'] as const) {
+      const k = rijk.staffMarket.find((x) => x.role === rol);
+      if (k) {
+        k.skill = 75;
+        hireStaff(rijk, k.id);
+      }
+    }
+    delegateTask(rijk, 'training', zelfde.id);
+    expect(taskEfficiency(rijk, 'training', zelfde)).to.be.above(zonder * 1.4);
+  });
+
+  it('valt nooit lager terug dan de bodem', () => {
+    const s = readyGame();
+    for (const taak of ['training', 'horeca', 'ticketing', 'transfers'] as const) {
+      expect(supportReport(s, taak).factor).to.be.at.least(MIN_SUPPORT);
+      expect(supportReport(s, taak).factor).to.be.at.most(1);
+    }
+  });
+
+  it('zegt wat er ontbreekt en wat je eraan kunt doen', () => {
+    const s = readyGame();
+    const rapport = supportReport(s, 'training');
+    expect(rapport.missing, 'een startende club mist zeker iets').to.not.equal(null);
+    expect(rapport.missing!.hint, 'en er hoort bij te staan wat je eraan doet').to.be.a('string').with.length.above(20);
+  });
+});
+
+describe('Het logboek van het brein', () => {
+  it('schrijft op wat er berekend is voor de beslissing genomen wordt', () => {
+    const s = readyGame();
+    const trainer = s.staff.find((x) => x.role === 'hoofdtrainer')!;
+    delegateTask(s, 'training', trainer.id);
+    strategyTask(s);
+    const regel = recentReasoning(s, 5).find((e) => e.subject === 'Trainingen per week');
+    expect(regel, 'de trainer hoort zijn rekenwerk op te schrijven').to.not.equal(undefined);
+    expect(regel!.steps.length, 'met de stappen erbij').to.be.above(3);
+    expect(regel!.staff).to.equal(trainer.name);
+    expect(regel!.to).to.equal(String(s.tactics.trainings));
+  });
+
+  it('past de beslissing aan als je club verandert, en zegt dat het veranderd is', () => {
+    // het concrete voorbeeld: van 3 naar 4 trainingen zodra er een kinesist in dienst is
+    const s = readyGame();
+    const trainer = s.staff.find((x) => x.role === 'hoofdtrainer')!;
+    trainer.skill = 85;
+    delegateTask(s, 'training', trainer.id);
+    for (const p of s.players) p.fatigue = 30;
+    strategyTask(s);
+    const eerst = s.tactics.trainings;
+
+    s.infrastructure.recoveryLevel = 2;
+    s.cash += 500_000;
+    for (const rol of ['kinesist', 'verzorger'] as const) {
+      const k = s.staffMarket.find((x) => x.role === rol);
+      if (k) {
+        k.skill = 78;
+        hireStaff(s, k.id);
+      }
+    }
+    s.week++;
+    strategyTask(s);
+    expect(s.tactics.trainings, 'met opvang erbij mag er zwaarder getraind worden').to.be.above(eerst);
+    const laatste = recentReasoning(s, 1)[0];
+    expect(laatste.changed, 'en dat hoort als wijziging in het logboek te staan').to.equal(true);
+    expect(laatste.from).to.equal(String(eerst));
+  });
+
+  it('houdt het logboek begrensd', () => {
+    const s = playWeeks(readyGame(), 30);
+    expect(s.reasoning.length).to.be.at.most(120);
   });
 });

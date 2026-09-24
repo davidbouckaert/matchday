@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.39.0';
+export const VERSION = '0.40.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,23 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.40.0',
+    date: '2026-09-24',
+    title: 'Wat je personeel nodig heeft, en waarom het doet wat het doet',
+    items: [
+      'De efficiëntie van een medewerker hangt nu ook af van wat je club om hem heen heeft: collega\'s en accommodatie',
+      'Een trainer van vijf sterren zonder kinesist, verzorger of recuperatieruimte haalt 53%; met dat alles erbij 85%',
+      'Dat geldt voor elf taken: je kantine vraagt vrijwilligers en een deftige toog, je scout vraagt een opleidingscentrum, je analist vraagt wifi',
+      'Zonder ondersteuning val je terug op 62% van wat je sterren toelaten — nooit lager, maar het scheelt',
+      'Bij elke taak staat wat er ontbreekt en wat je eraan kunt doen',
+      'Nieuw logboek: wat je personeel uitrekende vóór het iets deed, met de stappen erbij, op het scherm Personeel',
+      'Verandert er iets aan je club, dan verandert hun keuze mee — en dat staat er als wijziging bij: "3 → 4 trainingen"',
+      'De getallen in dat logboek komen uit dezelfde functies die daarna ook echt het werk doen',
+      'Live meekijken kan met vcgDebug = true in de console van je browser',
+      'Gas terugnemen bij een uitgeputte groep staat los van zijn efficiëntie: dat ziet ook een slecht omkaderde trainer',
+    ],
+  },
   {
     version: '0.39.0',
     date: '2026-09-24',

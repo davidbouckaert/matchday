@@ -171,6 +171,39 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.40.0 — Wat je personeel nodig heeft, en waarom het doet wat het doet
+
+**Een medewerker is zo goed als wat er om hem heen staat.** Zijn sterren zeggen hoe goed hij ís; de rest van je club zegt of hij zijn werk kán doen. Dat zat alleen in de training, als uitzondering. Nu is het een regel die voor elf taken geldt: elke taak heeft een lijstje van collega's en accommodatie die meetellen, en wat ontbreekt drukt zijn efficiëntie.
+
+| trainer met vijf sterren | efficiëntie |
+|---|---|
+| zonder kinesist, verzorger of recuperatieruimte | **53%** |
+| met dat alles erbij | **85%** |
+
+Die 53% is minder dan een trainer van drie sterren met alles achter zich (68%), en dat hoort ook zo: wie zijn personeel wil laten renderen, moet er iets omheen bouwen. De bodem ligt op 62% van wat je sterren toelaten, zodat een medewerker nooit waardeloos wordt. Bij elke taak staat wat er ontbreekt en wat je eraan kunt doen — "hij mist een kinesist: die haalt elke week vermoeidheid weg, zodat er zwaarder getraind kan worden."
+
+Zo hangt je kantine aan vrijwilligers en een deftige toog, je scout aan een opleidingscentrum, je analist aan wifi, en je evenementenmens aan genoeg handen.
+
+**En je ziet nu waarom.** Er is een logboek bijgekomen op het scherm Personeel, waarin elke beslissing staat die je personeel neemt — met de berekening erachter, opgeschreven vóór de week gespeeld wordt:
+
+```
+Trainingen per week: 3 → 4 (GEWIJZIGD) (70%)
+   Groep staat op vermoeidheid 30; 0 spelers zijn geblesseerd.
+   Herstel per week: 14.6 punten (natuurlijk 40% plus je staf en accommodatie).
+   2 trainingen zou uitkomen op waarde 2.40.
+   3 trainingen zou uitkomen op waarde 3.60.
+   4 trainingen zou uitkomen op waarde 4.80.
+   5 trainingen zou uitkomen op waarde 6.00.
+   Beste keuze is 5 trainingen; met 70% efficiëntie wordt het er 4.
+   Hij mist conditietrainer: hij bouwt de belasting op zonder de groep op te branden.
+```
+
+Dat is de week nadat er een kinesist en een verzorger in dienst kwamen: zijn efficiëntie ging van 47% naar 70%, zijn herstel van 0 naar 14,6 per week, en zijn keuze van drie naar vier trainingen. Hun beslissingen zijn dus niet statisch — ze rekenen elke week opnieuw, en wat verandert staat als wijziging aangeduid.
+
+De getallen komen uit dezelfde functies die daarna ook echt het werk doen, dus het logboek kan niet iets anders beweren dan er gebeurt. Wil je live meekijken terwijl je speelt: `vcgDebug = true` in de console van je browser, en elke beslissing verschijnt daar met haar stappen.
+
+**Eén regel staat bewust los van dit alles:** gas terugnemen bij een uitgeputte groep. Dat is geen optimalisatie maar gezond verstand, en dat ziet ook een trainer die verder niets om zich heen heeft.
+
 ### 0.39.0 — Sterren bepalen wat je personeel voor je uithaalt
 
 **Personeel hébben ontgrendelt het delegeren; wie je erop zet bepaalt wat het oplevert.** Dat zat verspreid over een handvol losse vuistregels per taak. Nu is er één schaal, en die geldt overal:

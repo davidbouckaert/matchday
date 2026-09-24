@@ -588,6 +588,8 @@ export interface SeasonOpening {
 
 import type { WeekOrigin } from './origins';
 
+import type { ReasoningEntry } from './reasoning';
+
 export interface GameState {
   version: number;
   seed: number;
@@ -672,6 +674,8 @@ export interface GameState {
   sponsorAsk: Partial<Record<SponsorKind, number>>;
   /** Wie vorige week je sterspeler was, zodat een nieuwe ster in het nieuws komt. */
   starIds: string[];
+  /** Het logboek van het brein: wat je personeel uitrekende voor het iets deed. */
+  reasoning: ReasoningEntry[];
   emergencyLoanOffered: boolean;
   promotionsWithInvestor: number;
   investorActive: boolean;
