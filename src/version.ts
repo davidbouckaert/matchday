@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.54.0';
+export const VERSION = '0.55.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,17 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.55.0',
+    date: '2026-09-24',
+    title: 'Het sponsorscherm in de vorm van het personeelsscherm',
+    items: [
+      'Zelfde opbouw als Personeel: de prijskaart vol breed, daaronder links wat je hebt (sponsors) en rechts wat er speelt (op tafel, contacten, acties)',
+      'De sponsortegels hebben vier vaste zones — kop, invoer, oordeel, notitie — die er ook staan als ze leeg zijn: alles lijnt uit, wat er ook in staat',
+      'Compactere tabellen: het type staat bij de naam, budget en vrije plaats bij het bedrijf',
+      'Het scherm werd er ook korter van: van 2.596 naar 2.230 pixels',
+    ],
+  },
   {
     version: '0.54.0',
     date: '2026-09-24',

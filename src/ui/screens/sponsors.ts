@@ -37,6 +37,10 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
     // De bezetting staat als badge in de kop. Ze stond als voetnootje ónder het
     // invoerveld (11 pixels, vaag grijs) en werd daar door niemand gezien — gemeld als
     // "het aantal plaatsen per soort zie ik niet meer staan", terwijl het er stond.
+    // Vier vaste zones per tegel — kop, invoerveld, oordeel, notitie — die er ook staan
+    // als ze leeg zijn. Anders verspringt de hoogte per tegel met wat er toevallig in
+    // staat ("te goedkoop" + "terug naar" tegenover alleen "volgt de markt") en oogt de
+    // rij scheef en slordig.
     return `<div class="tile slot ${lock ? 'locked' : vol ? 'filled' : ''} ${filter === k ? 'filter-on' : ''}">
       <span class="slot-head">
         <button class="label filter-pick ${filter === k ? 'on' : ''} has-tip" data-action="sponsor-filter" data-id="${k}" ${tipAttr(
@@ -48,10 +52,10 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
             : `${used} van de ${KIND_MAX[k]} ${KIND_MAX[k] === 1 ? 'plaats' : 'plaatsen'} voor ${KIND_LABEL[k].toLowerCase()} ${used === 1 ? 'is' : 'zijn'} bezet${vol ? '. Zet een contract stop om plaats te maken' : ''}.`,
         )}>${lock ? 'op slot' : vol ? 'vol' : `nog ${KIND_MAX[k] - used} vrij`}</span>
       </span>
-      ${
+      <span class="slot-body">${
         lock
           ? `<span class="slot-lock">🔒 ${esc(lock)}</span>`
-          : `${numField({
+          : numField({
               value: ask,
               min: 0,
               max: Math.max(50, fair * 5),
@@ -60,20 +64,24 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
               change: 'sponsor-ask',
               rowId: k,
               label: `Vraagprijs ${KIND_LABEL[k]} per week`,
-            })}
-            ${
-              // zonder eigen bedrag volg je de markt, en dan is het oordeel per definitie
-              // "gangbaar" — dat er dan twee keer bij zetten is alleen maar ruis
-              eigen
-                ? `<span class="slot-verdict ${oordeel.toon} has-tip" ${tipAttr(
-                    `Gangbaar voor zo'n plaats is bij jouw club ${euro(fair)} per week. Jij vraagt ${euro(ask)}, en dat vinden de bedrijven in de streek ${oordeel.woord}. Hoe hoger je gaat, hoe minder vaak een bedrijf ja zegt, maar wie tekent betaalt wel jouw prijs.`,
-                  )}>${oordeel.woord}</span>
-                   <span class="slot-note"><button class="link-btn" data-action="sponsor-ask-reset" data-id="${k}">terug naar ${euro(fair)}</button></span>`
-                : `<span class="slot-note has-tip" ${tipAttr(
-                    `Dit is wat bedrijven in de streek normaal betalen voor ${KIND_LABEL[k].toLowerCase()} bij een club als de jouwe. Zet er zelf een ander bedrag in en je ziet meteen wat ze ervan vinden.`,
-                  )}>volgt de markt</span>`
-            }`
-      }
+            })
+      }</span>
+      <span class="slot-line">${
+        !lock && eigen
+          ? `<span class="slot-verdict ${oordeel.toon} has-tip" ${tipAttr(
+              `Gangbaar voor zo'n plaats is bij jouw club ${euro(fair)} per week. Jij vraagt ${euro(ask)}, en dat vinden de bedrijven in de streek ${oordeel.woord}. Hoe hoger je gaat, hoe minder vaak een bedrijf ja zegt, maar wie tekent betaalt wel jouw prijs.`,
+            )}>${oordeel.woord}</span>`
+          : ''
+      }</span>
+      <span class="slot-line">${
+        lock
+          ? ''
+          : eigen
+            ? `<span class="slot-note"><button class="link-btn" data-action="sponsor-ask-reset" data-id="${k}">terug naar ${euro(fair)}</button></span>`
+            : `<span class="slot-note has-tip" ${tipAttr(
+                `Dit is wat bedrijven in de streek normaal betalen voor ${KIND_LABEL[k].toLowerCase()} bij een club als de jouwe. Zet er zelf een ander bedrag in en je ziet meteen wat ze ervan vinden.`,
+              )}>volgt de markt</span>`
+      }</span>
     </div>`;
   }).join('');
 
@@ -109,12 +117,11 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
     .map((d) => {
       const askedNow = d.extraAskedSeason === s.season;
       return `<tr>
-        <td><strong>${esc(d.name)}</strong><br/><span class="muted small">${esc(d.sector)}</span></td>
-        <td data-v="${KINDS.indexOf(d.kind as SponsorDeal['kind'])}">${KIND_LABEL[d.kind]}</td>
+        <td><strong>${esc(d.name)}</strong><br/><span class="muted small">${esc(d.sector)} · ${KIND_LABEL[d.kind]}</span></td>
         <td data-v="${d.weekly}" class="num">${euro(d.weekly)}</td>
         <td data-v="${d.kind === 'stadion' ? 9999 : d.weeksLeft}" class="num">${d.kind === 'stadion' ? '∞' : `${d.weeksLeft}w`}</td>
         <td data-v="${d.satisfaction}" ${tip(satisfactionTip(s))}>${bar(d.satisfaction)} ${Math.round(d.satisfaction)}</td>
-        <td class="btns">${
+        <td class="btns stack-sm">${
           d.kind === 'stadion'
             ? '<span class="muted small">hoort bij je investeerder</span>'
             : `<button class="sm" data-action="sponsor-extra" data-id="${d.id}" ${askedNow ? 'disabled data-tip="Dit seizoen al gevraagd"' : 'data-tip="Hij denkt erover na: je hoort het antwoord volgende week in het weekrapport. De kans hangt af van zijn tevredenheid."'}>Extra bijdrage vragen</button>
@@ -133,9 +140,7 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
       const { kans, kind } = prospectChance(s, p);
       const status = p.approached ? '<span class="tag">gesprek loopt</span>' : p.cooldown ? `<span class="muted small">opnieuw over ${weeks(p.cooldown)}</span>` : `<button class="sm primary" data-action="approach" data-id="${p.id}">Benaderen</button>`;
       return `<tr>
-        <td><strong>${esc(p.name)}</strong></td>
-        <td>${esc(p.sector)}</td>
-        <td data-v="${KINDS.length - KINDS.indexOf(p.maxKind)}">tot ${KIND_LABEL[p.maxKind].toLowerCase()}<br/><span class="muted small">${
+        <td><strong>${esc(p.name)}</strong> <span class="muted small">${esc(p.sector)}</span><br/><span class="muted small">tot ${KIND_LABEL[p.maxKind].toLowerCase()} · ${
           // de plaats die hij écht zou krijgen: zijn beste plaats is misschien al bezet, en
           // dan zakt hij een trapje — met de prijs die daarbij hoort
           kind ? `vrije plaats: ${KIND_SHORT[kind].toLowerCase()} aan ${euro(askPrice(s, kind))}/week` : 'geen vrije plaats in hun klasse'
@@ -189,16 +194,33 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
     <div class="tiles slots">${slots}</div>
   </section>
 
+  ${
+    offers
+      ? `<section class="card attention"><h2>Op tafel <span class="tag bad">${s.sponsorOffers.length}</span></h2><ul class="offers">${offers}</ul></section>`
+      : ''
+  }
+
   <div class="cols-2">
     <div class="col">
-      ${
-        offers
-          ? `<section class="card attention"><h2>Op tafel <span class="tag bad">${s.sponsorOffers.length}</span></h2><ul class="offers">${offers}</ul></section>`
-          : '<section class="card"><h2>Op tafel</h2><p class="muted small">Geen voorstellen op dit moment. Benader een contact of hou een netwerkavond.</p></section>'
-      }
+      <section class="card">
+        <h2>Huidige sponsors <span class="tag">${gefilterdeDeals.length}${filter ? ` van ${s.sponsors.length}` : ''}</span> ${filterChip}</h2>
+        <p class="muted small">Tevredenheid stijgt met goede resultaten, sfeer en reputatie. Tevreden sponsors stellen zelf een verlenging voor, geven sneller een extra bijdrage en blijven langer.</p>
+        <div class="table-wrap"><table class="compact" data-sort-id="sponsors">
+          <thead><tr><th>Sponsor</th><th class="num">Per week</th><th class="num">Resterend</th><th>Tevredenheid</th><th data-nosort></th></tr></thead>
+          <tbody>${deals || `<tr><td colspan="5" class="muted">${filter ? `Geen sponsors op ${KIND_LABEL[filter].toLowerCase()}. Haal de filter weg met het kruisje hierboven.` : 'Nog geen sponsors.'}</td></tr>`}</tbody>
+        </table></div>
+      </section>
     </div>
-
     <div class="col">
+      ${offers ? '' : '<section class="card"><h2>Op tafel</h2><p class="muted small">Geen voorstellen op dit moment. Benader een contact of hou een netwerkavond.</p></section>'}
+      <section class="card">
+        <h2>Contacten <span class="tag">${gefilterdeProspects.length}${filter ? ` van ${s.prospects.length}` : ''}</span> ${filterChip}</h2>
+        <p class="muted small">Benader een bedrijf: volgende week hoor je of het een voorstel doet. De kans hangt af van hun interesse.</p>
+        <div class="table-wrap"><table class="compact" data-sort-id="prospects">
+          <thead><tr><th>Bedrijf</th><th>Interesse</th><th class="num" data-tip="Hoe vaak dit bedrijf ja zegt op de prijs die jij vraagt. Vraag je minder, dan stijgt de kans; vraag je meer, dan daalt ze.">Zegt ja</th><th data-nosort></th></tr></thead>
+          <tbody>${prospects || `<tr><td colspan="4" class="muted">${filter ? `Geen contacten die op ${KIND_LABEL[filter].toLowerCase()} zouden tekenen. Haal de filter weg met het kruisje hierboven.` : 'Geen contacten. Hou een netwerkavond of schakel een bureau in.'}</td></tr>`}</tbody>
+        </table></div>
+      </section>
       <section class="card">
         <h2>Nieuwe namen vinden</h2>
         <p class="muted small">Een netwerkavond verhoogt de interesse van alle bedrijven; een bureau zoekt grotere sponsors.</p>
@@ -208,23 +230,5 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
         </div>
       </section>
     </div>
-  </div>
-
-      <section class="card">
-        <h2>Huidige sponsors <span class="tag">${gefilterdeDeals.length}${filter ? ` van ${s.sponsors.length}` : ''}</span> ${filterChip}</h2>
-        <p class="muted small">Tevredenheid stijgt met goede resultaten, sfeer en reputatie. Tevreden sponsors stellen zelf een verlenging voor, geven sneller een extra bijdrage en blijven langer.</p>
-        <div class="table-wrap"><table data-sort-id="sponsors">
-          <thead><tr><th>Sponsor</th><th>Type</th><th class="num">Per week</th><th class="num">Resterend</th><th>Tevredenheid</th><th data-nosort></th></tr></thead>
-          <tbody>${deals || `<tr><td colspan="6" class="muted">${filter ? `Geen sponsors op ${KIND_LABEL[filter].toLowerCase()}. Haal de filter weg met het kruisje hierboven.` : 'Nog geen sponsors.'}</td></tr>`}</tbody>
-        </table></div>
-      </section>
-
-      <section class="card">
-        <h2>Contacten <span class="tag">${gefilterdeProspects.length}${filter ? ` van ${s.prospects.length}` : ''}</span> ${filterChip}</h2>
-        <p class="muted small">Benader een bedrijf: volgende week hoor je of het een voorstel doet. De kans hangt af van hun interesse.</p>
-        <div class="table-wrap"><table data-sort-id="prospects">
-          <thead><tr><th>Bedrijf</th><th>Sector</th><th>Budget</th><th>Interesse</th><th class="num" data-tip="Hoe vaak dit bedrijf ja zegt op de prijs die jij vraagt. Vraag je minder, dan stijgt de kans; vraag je meer, dan daalt ze.">Zegt ja</th><th data-nosort></th></tr></thead>
-          <tbody>${prospects || `<tr><td colspan="6" class="muted">${filter ? `Geen contacten die op ${KIND_LABEL[filter].toLowerCase()} zouden tekenen. Haal de filter weg met het kruisje hierboven.` : 'Geen contacten. Hou een netwerkavond of schakel een bureau in.'}</td></tr>`}</tbody>
-        </table></div>
-      </section>`;
+  </div>`;
 }

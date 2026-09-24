@@ -1329,6 +1329,18 @@ tr.filtering td { background: var(--accent-soft); }
   padding: 2px 10px; border: none; border-radius: 999px; background: var(--accent-soft); color: var(--accent); cursor: pointer; }
 .filter-chip:hover { background: var(--accent); color: var(--accent-ink); }
 
+/* Vier vaste zones per sponsortegel, ook als ze leeg zijn: kop (twee regels), invoer,
+   oordeel, notitie. Zo staan alle invoervelden, oordelen en notities op één lijn, wat
+   er ook in de tegel staat — zonder dit hing elke tegel op zijn eigen hoogte. */
+.tiles.slots .slot-head { min-height: 2.6em; align-content: start; }
+.tiles.slots .slot-body { min-height: 46px; display: flex; align-items: center; }
+.tiles.slots .slot-body .numfield { width: 100%; }
+.tiles.slots .slot-line { min-height: 1.2em; line-height: 1.2; }
+
+/* knoppen die in een smalle tabelkolom onder elkaar mogen vallen */
+.btns.stack-sm { display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+.btns.stack-sm button { text-align: left; }
+
 /* de status van een functie in de kandidatenlijst: vrij, bezet of op slot */
 .seat-free { color: var(--accent); font-weight: 700; }
 .seat-taken { color: var(--muted); }

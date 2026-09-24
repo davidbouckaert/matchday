@@ -171,6 +171,12 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.55.0 — Het sponsorscherm in de vorm van het personeelsscherm
+
+**Zelfde denkstructuur, zelfde vorm.** Het personeelsscherm van 0.53.0 beviel — links wat je hebt, rechts wat je kunt halen, acties compact — dus het sponsorscherm volgt nu dezelfde opbouw: de prijskaart vol breed bovenaan (dat is én je instrument én je filter), daaronder links "Huidige sponsors" en rechts "Op tafel", "Contacten" en "Nieuwe namen vinden". De tabellen zijn compacter gemaakt (type bij de naam, budget en vrije plaats bij het bedrijf), en het scherm ging van 2.596 naar 2.230 pixels.
+
+**En de tegels staan eindelijk strak.** Elke sponsortegel heeft nu vier vaste zones — kop (twee regels gereserveerd), invoerveld, oordeel, notitie — die er ook staan als ze leeg zijn. Vroeger hing elke tegel op zijn eigen hoogte, afhankelijk van wat er toevallig in stond ("te goedkoop" plus "terug naar €915" tegenover alleen "volgt de markt"), en oogde de rij scheef en slordig. Nu staan alle invoervelden op één lijn, alle oordelen op één lijn en alle notities op één lijn — ook bij plaatsen die nog op slot staan. Met Playwright-schermafdrukken gecontroleerd.
+
 ### 0.54.0 — Het weekrapport bouwt spanning op in plaats van ze te verklappen
 
 **Boven het weekrapport stond een rij kaartjes met het resultaat en de uitslag — de hele week samengevat vóór het rapport ook maar iets kon vertellen.** De rollende cijfers en het scorebord zijn anticipatiemechanismen, maar je zat ze meteen door dat label bovenaan. De kaartjes zijn weg (alles wat erin stond heeft hieronder al zijn eigen blok), en de hele onthulling volgt nu één spanningsboog:
