@@ -53,6 +53,13 @@ function faq(): QA[] {
       a: 'Sommige functies hebben eerst infrastructuur of een werking nodig: een kinesist een recuperatieruimte, een data-analist wifi, een kantineverantwoordelijke een kantine van niveau 2, een jeugdcoördinator minstens 3 jeugdploegen. Je ziet de reden bij de kandidaat.',
     },
     {
+      q: 'Wat gebeurt er met een speler die ik uitleen?',
+      a: `Hij speelt een seizoen bij een echte club uit de wereld, en die club kiest het spel voor je: eentje waar hij in de ploeg past en waar de jeugdwerking iets voorstelt.
+        Daar groeit hij mee met hún trainer en hún werking, en met hoeveel hij er speelt. Bij een club die een maat te groot is, zit hij daar ook op de bank en levert het seizoen
+        vrijwel niets op; bij een club op zijn maat speelt hij bijna elke week en komt hij drie tot vijf punten sterker terug. Terwijl hij weg is, zie je bij Ploeg › Transfers
+        hoeveel wedstrijden hij speelde en hoeveel hij vooruitging, en bij zijn terugkeer staat het in het nieuws.`,
+    },
+    {
       q: 'Kan ik een huurspeler houden?',
       a: `Ja, maar zij beslissen. Vanaf week 26 staat bij Ploeg › Transfers een blok "Je huurspelers" met twee mogelijkheden: nog een seizoen huren, of hem definitief kopen.
         Jij vult in wat je biedt en ziet meteen hoe groot de kans is dat ze ja zeggen; die kans beweegt mee terwijl je aan het bedrag draait. Waar ze naar kijken: hoeveel hij bij jou

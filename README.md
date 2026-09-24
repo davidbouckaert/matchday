@@ -171,6 +171,25 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 16 (deze versie)
 
+### 0.35.0 — Een uitgeleende speler speelt ergens echt
+
+**Je leende hem uit aan een naam.** `rng.pick(state.league.teams).name` — een willekeurige club uit je eigen reeks, zonder enig gevolg. Waar hij naartoe ging maakte niets uit, en zijn ontwikkeling liep intussen gewoon door op jóuw trainer en jouw trainingsschema, terwijl hij een heel seizoen honderd kilometer verderop speelde.
+
+Hij komt nu terecht bij een echte club uit de wereld, en die wordt gekozen zoals een club dat zou doen: eentje waar hij in de ploeg past — niet te zwak, want dan leert hij niets, en niet te sterk, want daar zit hij ook op de bank — met een goede jeugdwerking als doorslag. Bij het uitlenen zie je meteen waar hij heen gaat, in welke reeks en wat die club met jeugd doet.
+
+**Daar hangt zijn groei nu van af.** Hun trainer, hun jeugdwerking, en hoeveel hij er speelt. Gemeten over tien partijen, een jong talent dat een volledig seizoen weg is:
+
+| gastclub | groei over het seizoen | wedstrijden gespeeld |
+|---|---|---|
+| zoals het spel zelf kiest | **+4,8** | 27 |
+| topwerking, maar een maat te sterk | +4,3 | 8 |
+| gewone club op zijn maat | +3,0 | 23 |
+| zwakke werking, veel te sterk | **+0,0** | 6 |
+
+Een seizoen bij een club die hem niet nodig heeft, is dus een verloren seizoen — en dat hoort ook zo. Ter vergelijking: bij jou op de bank groeit diezelfde speler +2,5, in jouw basiself +6,0.
+
+**En je ziet het.** Terwijl hij weg is, staat bij Ploeg › Transfers hoeveel wedstrijden hij daar speelde en hoeveel hij erop vooruitging. Bij zijn terugkeer stond er vroeger alleen "Terug van uitleenbeurt: Kobe Deprez." Nu staat er wat het opleverde: hoeveel hij speelde, hoeveel sterker hij werd, of juist dat hij er nauwelijks aan spelen toekwam.
+
 ### 0.34.0 — Een huurspeler die je wil houden
 
 **Een huurcontract liep af en dan was hij weg, punt.** Je haalde een jonge speler van een profclub, liet hem een seizoen groeien in je ploeg, en in week 52 stond hij weer op de bus. Nu kun je erover praten — maar zíj beslissen, niet jij.

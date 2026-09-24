@@ -44,7 +44,17 @@ export function contractLabel(s: GameState, p: Player): { kort: string; lang: st
 function state(s: GameState, p: Player, inLineup: boolean): { kind: 'in' | 'bank' | 'out'; label: string; tip: string } {
   if (p.injuryWeeks > 0) return { kind: 'out', label: `${p.injuryWeeks}w geblesseerd`, tip: `Hij is geblesseerd en valt nog ${p.injuryWeeks} ${p.injuryWeeks === 1 ? 'week' : 'weken'} uit.` };
   if (p.suspended > 0) return { kind: 'out', label: `${p.suspended} geschorst`, tip: `Hij is geschorst voor ${p.suspended} ${p.suspended === 1 ? 'wedstrijd' : 'wedstrijden'}.` };
-  if (p.loan?.type === 'uit') return { kind: 'out', label: 'uitgeleend', tip: `Uitgeleend aan ${p.loan.club} tot het einde van het seizoen.` };
+  if (p.loan?.type === 'uit') {
+    const gespeeld = p.loan.matches ?? 0;
+    const groei = Math.round((overall(p) - (p.loan.quality ?? overall(p))) * 10) / 10;
+    return {
+      kind: 'out',
+      label: 'uitgeleend',
+      tip: `Uitgeleend aan ${p.loan.club} tot het einde van het seizoen. Hij speelde er ${gespeeld} ${
+        gespeeld === 1 ? 'wedstrijd' : 'wedstrijden'
+      } en werd er ${groei > 0 ? `${groei} punten sterker` : 'nog niet beter'} van. Hoe hij daar groeit, hangt af van hún trainer en jeugdwerking en van hoeveel hij er speelt.`,
+    };
+  }
   if (inLineup) return { kind: 'in', label: 'in de basis', tip: 'Hij staat zondag in de basiself.' };
   if (s.tactics.benched.includes(p.id)) return { kind: 'bank', label: 'op de bank', tip: 'Jij hield hem deze week uit de ploeg.' };
   return { kind: 'bank', label: 'reserve', tip: 'Speelklaar, maar hij haalt de beste elf niet.' };

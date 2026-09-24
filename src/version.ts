@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.34.0';
+export const VERSION = '0.35.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,20 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.35.0',
+    date: '2026-09-24',
+    title: 'Een uitgeleende speler speelt ergens echt',
+    items: [
+      'Je uitgeleende speler ging naar een willekeurige naam uit je eigen reeks, en die club deed verder niets met hem',
+      'Hij komt nu terecht bij een echte club uit de wereld, gekozen op waar hij in de ploeg past en waar de jeugdwerking iets voorstelt',
+      'Zijn groei hangt voortaan af van hún trainer, hún jeugdwerking en hoeveel hij er speelt — niet meer van jouw trainer, terwijl hij honderd kilometer verderop zit',
+      'Bij een club die een maat te groot is zit hij daar ook op de bank: een seizoen bij zo een club levert vrijwel niets op',
+      'Bij een club op zijn maat speelt hij bijna elke week en komt hij drie tot vijf punten sterker terug',
+      'Je ziet nu wat een uitleenbeurt doet: hoeveel wedstrijden hij speelde en hoeveel hij erop vooruitging, terwijl hij weg is',
+      'En bij zijn terugkeer staat er een bericht met het verhaal in plaats van alleen zijn naam',
+    ],
+  },
   {
     version: '0.34.0',
     date: '2026-09-23',

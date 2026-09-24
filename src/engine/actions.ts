@@ -3,8 +3,9 @@
 
 import type {
   ActionResult, CanteenItemId, ConcessionId, Formation, GamePlan, GameState, Infrastructure, Mentality, MerchItemId,
-  Player, PlayerLoan, PlayerRoles, Position, StaffRole, TaskId, TrainingFocus, UpgradeId,
+  Player, PlayerLoan, PlayerRoles, Position, StaffRole, TaskId, TrainingFocus, UpgradeId, WorldClub,
 } from './types';
+import type { Rng } from './rng';
 import { clamp, createRng, round } from './rng';
 import { DIVISIONS } from './data/divisions';
 import {
@@ -924,6 +925,33 @@ export function unlistPlayer(state: GameState, playerId: string): ActionResult {
   return ok(`${p.name} staat niet langer te koop.`);
 }
 
+export const LOAN_YOUTH_WORDS = ['zwakke', 'bescheiden', 'degelijke', 'sterke'];
+
+/**
+ * Waar je uitgeleende speler terechtkomt.
+ *
+ * Dit was `rng.pick(state.league.teams)`: een willekeurige naam uit je eigen reeks, zonder
+ * enig gevolg. Waar hij speelt hoort er juist toe te doen — dat is het stuk levende wereld
+ * dat hier ontbrak. Clubs die hem willen, zijn clubs waar hij in de ploeg past: niet te
+ * zwak (dan leert hij niets) en niet te sterk (dan zit hij daar op de bank). Een goede
+ * jeugdwerking geeft de doorslag, want daar komt een jonge speler om te groeien.
+ */
+export function loanHost(state: GameState, p: Player, rng: Rng): WorldClub {
+  const kwaliteit = overall(p);
+  const kandidaten = (state.world?.clubs ?? []).filter((c) => !c.defunct);
+  if (!kandidaten.length) {
+    // geen wereld (een heel oud opgeslagen spel): dan blijft het bij een naam uit je reeks
+    const naam = rng.pick(state.league.teams);
+    return { id: '', name: naam.name, divisionLevel: state.league.divisionLevel, strength: naam.strength, budget: 0, ambition: 50, momentum: 0, stadium: 1, youth: 1, trouble: 0, defunct: false, lastMove: null, seasons: [] };
+  }
+  const score = (c: WorldClub) => {
+    // hij past het best bij een club waar hij net aan de maat is: rond zijn eigen niveau
+    const kloof = Math.abs(c.strength - kwaliteit);
+    return -kloof + c.youth * 1.2 + (c.ambition - 50) / 40 + rng.range(0, 3);
+  };
+  return [...kandidaten].sort((a, b) => score(b) - score(a))[0];
+}
+
 /** Welk deel van het loon betaalt een andere club als je deze speler uitleent? */
 export function loanWageShare(state: GameState, p: Player): number {
   const level = DIVISIONS[state.league.divisionLevel].opponentStrength;
@@ -941,13 +969,28 @@ export function loanOut(state: GameState, playerId: string): ActionResult {
   const lblock = departureBlock(state, p, 'uitlenen');
   if (lblock) return fail(lblock);
   const rng = createRng(state);
-  const club = rng.pick(state.league.teams).name;
+  const gastclub = loanHost(state, p, rng);
   const share = loanWageShare(state, p);
-  p.loan = { type: 'uit', club, untilSeason: state.season, wageShare: share };
+  p.loan = {
+    type: 'uit',
+    club: gastclub.name,
+    clubId: gastclub.id,
+    untilSeason: state.season,
+    wageShare: share,
+    quality: overall(p),
+    matches: 0,
+  };
   p.listed = false;
   state.tactics.manualXI = state.tactics.manualXI.filter((id) => id !== playerId);
-  addNews(state, 'neutraal', `${p.name} wordt tot het einde van het seizoen uitgeleend aan ${club}. Zij betalen ${Math.round(share * 100)}% van zijn loon.`);
-  return ok(`${p.name} uitgeleend aan ${club} (${Math.round(share * 100)}% van zijn loon betaald). Hij speelt daar en blijft zich ontwikkelen.`);
+  const werking = LOAN_YOUTH_WORDS[gastclub.youth] ?? 'gewone';
+  addNews(
+    state,
+    'neutraal',
+    `${p.name} wordt tot het einde van het seizoen uitgeleend aan ${gastclub.name} (${DIVISIONS[gastclub.divisionLevel].name}, ${werking} werking). Zij betalen ${Math.round(share * 100)}% van zijn loon.`,
+  );
+  return ok(
+    `${p.name} uitgeleend aan ${gastclub.name} (${Math.round(share * 100)}% van zijn loon betaald). Hij speelt daar en groeit mee met hún werking — je ziet op het einde van het seizoen wat het opleverde.`,
+  );
 }
 
 export function loanIn(state: GameState, playerId: string): ActionResult {

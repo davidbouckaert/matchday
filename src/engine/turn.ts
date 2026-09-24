@@ -16,7 +16,7 @@ import {
   isWinter,
 } from './calendar';
 import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ownPosition, rivalTeam, simulateMatch, sortedTable, teamWear, zoneAt } from './league';
-import { developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
+import { developPlayers, fatigueAgeFactor, generatePlayer, hostClub, hostPlayShare, linkFriends, overall, pickScorers, selectLineup, teamStrength } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
 import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
 import { resolveRequests, sponsorsAfterSeason, weeklySponsors } from './sponsors';
@@ -165,6 +165,15 @@ function playMatchWeek(state: GameState, rng: Rng): void {
 
   // kleine schommelingen in de vorm van tegenstanders
   for (const t of state.league.teams) t.strength = Math.round(clamp(t.strength + rng.normal(0, 0.4), 30, 95) * 10) / 10;
+
+  // ook je uitgeleende spelers spelen deze week ergens: hoe vaak hangt af van of ze bij hun
+  // gastclub in de ploeg passen. Zo heb je bij zijn terugkeer een echt verhaal in plaats van
+  // alleen een naam die weer opduikt.
+  for (const p of state.players) {
+    if (p.loan?.type !== 'uit') continue;
+    const club = hostClub(state, p);
+    if (club && rng.chance(hostPlayShare(club, p))) p.loan.matches = (p.loan.matches ?? 0) + 1;
+  }
 
   for (const f of fixtures) {
     const involved = f.homeId === OWN_TEAM_ID || f.awayId === OWN_TEAM_ID;
@@ -723,9 +732,24 @@ function newSeason(state: GameState, rng: Rng): void {
   state.players = state.players.filter((p) => !(p.loan?.type === 'in' && p.loan.untilSeason < state.season));
   const blijvers = state.players.filter((p) => p.loan?.type === 'in');
   if (blijvers.length) addNews(state, 'goed', `Blijven nog een seizoen op huurbasis: ${blijvers.map((p) => `${p.name} (${p.loan!.club})`).join(', ')}.`);
+  // Terug van een uitleenbeurt, met wat het opbracht. Vroeger stond er alleen "Terug van
+  // uitleenbeurt: Kobe Deprez." — je zag nergens of dat seizoen elders iets had uitgehaald.
   const back = state.players.filter((p) => p.loan?.type === 'uit');
-  for (const p of back) p.loan = null;
-  if (back.length) addNews(state, 'neutraal', `Terug van uitleenbeurt: ${back.map((p) => p.name).join(', ')}.`);
+  for (const p of back) {
+    const groei = Math.round((overall(p) - (p.loan!.quality ?? overall(p))) * 10) / 10;
+    const wedstrijden = p.loan!.matches ?? 0;
+    const waar = p.loan!.club;
+    addNews(
+      state,
+      groei >= 1 ? 'goed' : 'neutraal',
+      groei >= 0.3
+        ? `${p.name} is terug van ${waar}: ${wedstrijden} wedstrijden gespeeld en ${groei} punten sterker geworden (nu ${overall(p)}).`
+        : wedstrijden < 8
+          ? `${p.name} is terug van ${waar}, maar hij kwam er nauwelijks aan spelen toe (${wedstrijden} wedstrijden). Daar is hij niet beter van geworden.`
+          : `${p.name} is terug van ${waar}: ${wedstrijden} wedstrijden gespeeld, maar zijn niveau bleef hetzelfde.`,
+    );
+    p.loan = null;
+  }
 
   // spelers worden ouder, aflopende contracten vertrekken
   const leaving = state.players.filter((p) => p.contractUntil < state.season);

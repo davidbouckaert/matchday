@@ -467,7 +467,13 @@ export function transfersScreen(s: GameState): string {
         status = `gehuurd van ${esc(p.loan.club)}`;
         actionsHtml = `<button class="sm ghost" data-action="release" data-id="${p.id}">Huur beëindigen</button>`;
       } else if (p.loan?.type === 'uit') {
-        status = `uitgeleend aan ${esc(p.loan.club)} (${Math.round(p.loan.wageShare * 100)}% loon betaald)`;
+        // wat zijn uitleenbeurt tot nu toe opleverde: anders is hij een naam die verdwijnt
+        const gespeeld = p.loan.matches ?? 0;
+        const groei = Math.round((overall(p) - (p.loan.quality ?? overall(p))) * 10) / 10;
+        status = `uitgeleend aan ${esc(p.loan.club)} (${Math.round(p.loan.wageShare * 100)}% loon betaald)
+          <br/><span class="muted small">${count(gespeeld, 'wedstrijd', 'wedstrijden')} gespeeld${
+            groei > 0 ? ` · ${groei} punten sterker` : gespeeld > 6 ? ' · nog geen vooruitgang' : ''
+          }</span>`;
       } else {
         const block = actions.departureBlockReason(s, p);
         status = p.listed ? `<span class="tag">te koop: ${euro(p.askingPrice)}</span>` : '';

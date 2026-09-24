@@ -1,10 +1,11 @@
-import type { Formation, GamePlan, GameState, Player, PlayerTrait, Position } from './types';
+import type { Formation, GamePlan, GameState, Player, PlayerTrait, Position, WorldClub } from './types';
 import { MATCHUP_ATT, MATCHUP_DEF, MENTALITY_INFO, developmentFactor, matchup, matchupWeight, sharpness } from './strategy';
 import { staffSkill } from './staff';
 import { avgFatigue, fatigueFactor } from './factors';
 import type { Rng } from './rng';
 import { clamp, round } from './rng';
 import { FIRST_NAMES, LAST_NAMES } from './data/names';
+import { DIVISIONS } from './data/divisions';
 import { nextId } from './util';
 
 export const POSITIONS: Position[] = ['DOEL', 'VERD', 'MIDD', 'AANV'];
@@ -474,6 +475,27 @@ export function playEffect(p: Player, playShare: number): number {
   return (playShare - 0.4) * weight;
 }
 
+/** De club waar een uitgeleende speler zit, als die in de wereld terug te vinden is. */
+export function hostClub(state: GameState, p: Player): WorldClub | null {
+  const id = p.loan?.clubId;
+  const club = id ? state.world?.clubs.find((c) => c.id === id) : undefined;
+  if (club) return club;
+  // een uitleenbeurt uit een ouder opgeslagen spel: dan nemen we de naam en gokken we het niveau
+  return p.loan?.type === 'uit'
+    ? { id: '', name: p.loan.club, divisionLevel: state.league.divisionLevel, strength: DIVISIONS[state.league.divisionLevel].opponentStrength, budget: 0, ambition: 50, momentum: 0, stadium: 1, youth: 1, trouble: 0, defunct: false, lastMove: null, seasons: [] }
+    : null;
+}
+
+/** Wat de trainer van de gastclub waard is voor zijn ontwikkeling. */
+export function hostTrainer(club: WorldClub): number {
+  return clamp(0.45 + club.divisionLevel * 0.08 + club.youth * 0.1, 0.4, 1.5);
+}
+
+/** Hoeveel hij daar speelt: bij een club die te sterk voor hem is, zit hij op de bank. */
+export function hostPlayShare(club: WorldClub, p: Player): number {
+  return clamp(0.85 + (overall(p) - club.strength) / 14, 0.25, 1);
+}
+
 /** Trainingseffect per maand: 2 trainingen = −0,08, 5 trainingen = +0,16. */
 export function trainingEffect(trainings: number): number {
   return (trainings - 3) * 0.08;
@@ -496,21 +518,29 @@ export function developPlayers(state: GameState, rng: Rng): DevelopmentSummary {
   for (const p of state.players) {
     const before = rawOverall(p);
     const traitBonus = p.trait === 'harde werker' || p.trait === 'professioneel' ? 1.3 : p.trait === 'feestbeest' ? 0.7 : 1;
-    let factor = dc.trainer * traitBonus * dc.trainings;
+    // Een uitgeleende speler traint niet bij jou: daar staat een andere trainer op het veld
+    // en draait een andere jeugdwerking. Vroeger telde hier jóuw trainer mee, ook al zat de
+    // speler een heel seizoen honderd kilometer verderop.
+    const weg = p.loan?.type === 'uit' ? hostClub(state, p) : null;
+    let factor = (weg ? hostTrainer(weg) : dc.trainer) * traitBonus * (weg ? 1 : dc.trainings);
     const { assistant, academy, keeperCoach } = dc;
-    if (p.age <= 23) factor += assistant;
-    if (p.age <= 21) factor += academy;
-    if (p.position === 'DOEL') factor += keeperCoach;
+    if (!weg && p.age <= 23) factor += assistant;
+    if (p.age <= 21) factor += weg ? weg.youth * 0.12 : academy;
+    if (!weg && p.position === 'DOEL') factor += keeperCoach;
     // leeftijd: hoe jonger, hoe meer groei; vanaf 31 jaar groeit niemand nog en weegt alleen de achteruitgang
     const growth = growthFactor(p.age);
     const room = clamp((p.potential - overall(p)) / 10, 0, 1); // dicht bij het potentieel gaat het trager
     let delta = rng.range(0, 0.72) * factor * growth * (0.35 + 0.65 * room);
     delta -= rng.range(0.05, 0.7) * declineFactor(p.age);
-    // speeltijd: uitgeleende spelers spelen bij hun andere club; zonder wedstrijden (winterstop) telt het niet
-    const playShare = p.loan?.type === 'uit' ? 0.75 : matches > 0 ? p.periodStarts / matches : 0.5;
+    // Speeltijd. Bij een uitgeleende speler hangt die af van hoe hij daar in de ploeg past:
+    // bij een club die zwakker is dan hij, speelt hij elke week; bij een club die een maat
+    // te groot is, zit hij er óók op de bank en schiet hij er niets mee op.
+    const playShare = weg ? hostPlayShare(weg, p) : matches > 0 ? p.periodStarts / matches : 0.5;
     delta += playEffect(p, playShare);
     // trainingsritme (bij de eigen club), niet voor wie geblesseerd was
-    if (p.loan?.type !== 'uit' && p.injuryWeeks === 0) delta += trainingEffect(state.tactics.trainings);
+    if (!weg && p.injuryWeeks === 0) delta += trainingEffect(state.tactics.trainings);
+    // en bij de gastclub telt hún werking: een sterke jeugdwerking is er elke maand eentje waard
+    if (weg) delta += (weg.youth - 1) * 0.07;
     if (delta > 0 && overall(p) >= p.potential) delta = Math.min(delta, 0.05);
     const focus = state.tactics.focus;
     const techShare = focus === 'techniek' ? rng.range(0.65, 0.9) : focus === 'conditie' ? rng.range(0.1, 0.35) : rng.range(0.3, 0.7);

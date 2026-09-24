@@ -53,6 +53,12 @@ export interface PlayerLoan {
   club: string;
   untilSeason: number; // keert terug op het einde van dit seizoen
   wageShare: number; // uit: deel van het loon dat de andere club betaalt
+  /** Uit: welke club uit de wereld hem opvangt, zodat hún werking zijn groei bepaalt. */
+  clubId?: string;
+  /** Uit: zijn kwaliteit toen hij vertrok, om te kunnen tonen wat de uitleenbeurt opleverde. */
+  quality?: number;
+  /** Uit: hoeveel wedstrijden hij daar intussen speelde. */
+  matches?: number;
 }
 
 export type StaffRole =
