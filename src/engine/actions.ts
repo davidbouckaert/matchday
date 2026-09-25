@@ -27,7 +27,8 @@ import { bestPrice, margin } from './merch';
 import { acceptedMargin, concessionForecast, concessionPartner } from './canteen';
 import { popularity } from './popularity';
 import { available } from './discipline';
-import { expectedAttendance, facilityCost } from './finance';
+import { expectedAttendance, facilityCost, subsidieBedrag } from './finance';
+import { PREVENTIE, VOEDING, type Voeding } from './medisch';
 import { addLog, addNews, book, euro, nextId, weeks } from './util';
 import { openStoryline, remember } from './content';
 import { MIN_PRICE as SEASON_TICKET_MIN, canSell as canSellTickets, sellSeasonTickets } from './seasontickets';
@@ -117,6 +118,48 @@ export function completeSigning(state: GameState, p: Player, wil: ReturnType<typ
     message: `${p.name} is aangeworven.`,
     viering: { icon: '🖊️', kop: `${p.name} tekent`, sub: p.purchasePrice ? `voor ${euro(p.purchasePrice)}` : 'transfervrij' },
   };
+}
+
+/** De jaarlijkse gemeentesubsidie aanvragen: één keer per seizoen, antwoord na twee weken. */
+export function vraagSubsidieAan(state: GameState): ActionResult {
+  const g = guard(state);
+  if (g) return g;
+  if (state.subsidieSeizoen === state.season) return fail('Je vroeg de subsidie dit seizoen al aan. Volgend seizoen mag het opnieuw.');
+  if (state.requests.some((r) => r.kind === 'subsidie')) return fail('Je aanvraag ligt al bij de gemeente.');
+  state.subsidieSeizoen = state.season;
+  state.requests.push({
+    id: nextId(state, 'sub'),
+    kind: 'subsidie',
+    targetId: '',
+    label: `Subsidieaanvraag gemeente (${euro(subsidieBedrag(state))})`,
+    weeksLeft: 2,
+    amount: subsidieBedrag(state),
+  });
+  addLog(state, 'beslissing', `Subsidiedossier ingediend bij de gemeente (${euro(subsidieBedrag(state))}).`);
+  return ok('Dossier ingediend. Binnen twee weken hoor je of de gemeente toekent.');
+}
+
+/** Voedingsbeleid van de medische cel (vereist een recuperatieruimte). */
+export function setVoeding(state: GameState, stand: Voeding): ActionResult {
+  const locked = taskLocked(state, 'medisch');
+  if (locked) return locked;
+  if (state.infrastructure.recoveryLevel < 1) return fail('Bouw eerst een recuperatieruimte: zonder ruimte geen medische cel.');
+  if (!VOEDING[stand]) return fail('Onbekende voedingsstand.');
+  state.medical.voeding = stand;
+  const kost = Math.round(VOEDING[stand].kost * state.inflation);
+  return ok(stand === 'geen' ? 'Voeding stopgezet: iedereen zorgt weer voor zichzelf.' : `Voeding op ${VOEDING[stand].label.toLowerCase()}: ${euro(kost)} per week, vanaf nu in je boekhouding.`);
+}
+
+export function setPreventie(state: GameState, aan: boolean): ActionResult {
+  const locked = taskLocked(state, 'medisch');
+  if (locked) return locked;
+  if (state.infrastructure.recoveryLevel < 1) return fail('Bouw eerst een recuperatieruimte: zonder ruimte geen medische cel.');
+  state.medical.preventie = aan;
+  return ok(
+    aan
+      ? `Preventieprogramma gestart: minder blessures, maar het kost ${euro(Math.round(PREVENTIE.kost * state.inflation))}/week én een stukje wedstrijdscherpte.`
+      : 'Preventieprogramma stopgezet.',
+  );
 }
 
 /** "Niet verlengen": haal een aflopend contract bewust van je te-verlengen-lijst. */

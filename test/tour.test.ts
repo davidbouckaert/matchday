@@ -69,7 +69,7 @@ describe('rondleiding (tour)', () => {
     const s = readyGame();
     expect(tourMarkSeen(s, 'prijzen')).to.equal(true);
     expect(tourMarkSeen(s, 'prijzen')).to.equal(false); // tweede keer is geen nieuws
-    expect(tourMarkSeen(s, 'financien')).to.equal(false); // geen kijk-stap → niet bijhouden
+    expect(tourMarkSeen(s, 'cijfers')).to.equal(false); // geen kijk-stap → niet bijhouden ('financien' is er sinds de leningstap wél een)
     const prijzenStap = TOUR_CHAPTERS.flatMap((c) => c.steps).find((st) => st.screen === 'prijzen')!;
     expect(prijzenStap.done(s)).to.equal(true);
   });

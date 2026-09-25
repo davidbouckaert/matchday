@@ -549,6 +549,12 @@ function medicalTask(state: GameState): void {
   } else if (tired < 20 && injured === 0 && t.focus === 'herstel') {
     t.focus = 'conditie';
   }
+  // het beleid van de medische cel: preventie altijd aan, voeding naar wat de kas draagt
+  if (state.infrastructure.recoveryLevel >= 1) {
+    const weekLonen = state.players.reduce((sum, p) => sum + p.wage, 0);
+    state.medical.preventie = true;
+    state.medical.voeding = state.cash > weekLonen * 20 ? 'volledig' : state.cash > weekLonen * 8 ? 'basis' : 'geen';
+  }
 }
 
 /** Onderhoud en bouwprojecten, met een ruime buffer op de rekening. */

@@ -12,6 +12,7 @@ import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, inWinterBre
 import { indexedDbStore, exportToFile, importFromFile } from '../storage/save';
 import { defaultDraft, setupScreen, type SetupDraft } from './screens/setup';
 import { changesScreen, hasUnseenChanges } from './screens/changes';
+import { medischScreen } from './screens/medisch';
 import { dashboardScreen, todos } from './screens/dashboard';
 import { goalsScreen } from './screens/goals';
 import { squadScreen, transfersScreen } from './screens/squad';
@@ -53,7 +54,7 @@ const SLOT = 'slot1';
 
 type Screen =
   | 'overzicht' | 'ploeg' | 'strategie' | 'transfers' | 'contracten' | 'staff' | 'opleiding'
-  | 'nieuw' | 'kalender' | 'financien' | 'prijzen' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club' | 'doelen'
+  | 'nieuw' | 'herstel' | 'kalender' | 'financien' | 'prijzen' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club' | 'doelen'
   | 'competitie' | 'invloeden' | 'opslaan' | 'handleiding' | 'museum';
 
 /**
@@ -66,7 +67,7 @@ type Screen =
  */
 const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
   { id: 'overzicht', label: 'Bureau', screens: [['overzicht', 'Bureau'], ['kalender', 'Agenda']] },
-  { id: 'ploeg', label: 'Ploeg', screens: [['ploeg', 'Selectie'], ['strategie', 'Strategie'], ['transfers', 'Transfers'], ['contracten', 'Contracten']] },
+  { id: 'ploeg', label: 'Ploeg', screens: [['ploeg', 'Selectie'], ['strategie', 'Strategie'], ['herstel', 'Medische cel'], ['transfers', 'Transfers'], ['contracten', 'Contracten']] },
   { id: 'staff', label: 'Personeel', screens: [['staff', 'Personeel en taken'], ['opleiding', 'Opleiding']] },
   { id: 'geld', label: 'Geld', screens: [['financien', 'Financiën'], ['prijzen', 'Tickets en lidgeld'], ['sponsors', 'Sponsors'], ['cijfers', 'Cijfers']] },
   {
@@ -255,6 +256,7 @@ function renderScreen(g: GameState): string {
     case 'club': return clubScreen(g);
     case 'opslaan': return saveScreen(g, ui.lastSaved, ui.animate);
     case 'nieuw': return changesScreen();
+    case 'herstel': return medischScreen(g);
     case 'kalender': return calendarScreen(g);
     case 'handleiding': return guideScreen(g);
     case 'clubwinkel': return merchScreen(g);
@@ -320,7 +322,9 @@ function render(): void {
           </div>`
         : ''
     }
-    ${group.screens.length > 1 ? `<nav class="subtabs">${group.screens.map(([id, label]) => `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}</button>`).join('')}</nav>` : ''}
+    ${group.screens.length > 1 ? `<nav class="subtabs">${group.screens
+      .filter(([id]) => id !== 'herstel' || g.infrastructure.recoveryLevel > 0)
+      .map(([id, label]) => `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}</button>`).join('')}</nav>` : ''}
     </div>
     <main class="content">${
       inWinterBreak(g.week)
@@ -889,6 +893,9 @@ const handlers: Record<string, Handler> = {
     return actions.extendContract(g, id, input ? Number(input.value) : undefined);
   }),
   'no-extend': gameAction(actions.toggleNoExtend),
+  'subsidie-aanvragen': gameAction((g) => actions.vraagSubsidieAan(g)),
+  voeding: gameAction((g, id) => actions.setVoeding(g, id as Parameters<typeof actions.setVoeding>[1])),
+  preventie: gameAction((g, id) => actions.setPreventie(g, id === 'aan')),
   // "alles gezien": de badges uit en de stip op het menu doven, per toestel onthouden
   'changes-seen': () => {
     try {
