@@ -47,7 +47,9 @@ export interface TourStep {
   /** Het scherm-id waar de knop heen navigeert. */
   screen: string;
   /** Waar op dat scherm je moet zijn: het data-tour-doel-anker dat de wijzer krijgt.
-   *  Kijk-stappen hebben er geen — daar is aankomen genoeg. */
+   *  Een kijk-stap kan er zonder — dan is aankomen genoeg — maar een scherm met meerdere
+   *  kaarten (zoals de bouwplannen, ver onder de accommodatie) heeft er wél een nodig,
+   *  anders sta je op de juiste plek zonder te weten waar te kijken. */
   wijs?: string;
   done: (s: GameState) => boolean;
 }
@@ -188,18 +190,21 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         text: 'Kijk waarop je wordt afgerekend: je doelen, je belofte aan de pers en je logboek',
         where: 'Bureau › Doelen',
         screen: 'doelen',
+        wijs: 'doelen-overzicht',
         done: (s) => seen(s, 'doelen'),
       },
       {
         text: 'Verken de bouwplannen — de winterstop is hét moment om te bouwen',
         where: 'Club › Infrastructuur',
         screen: 'infrastructuur',
+        wijs: 'bouwplannen',
         done: (s) => seen(s, 'infrastructuur') || s.infrastructure.constructions.length > 0,
       },
       {
         text: '"Wat beïnvloedt wat" is de kaart van het spel: één blik en je snapt hoe de knoppen aan elkaar hangen',
         where: 'Menu › Wat beïnvloedt wat',
         screen: 'invloeden',
+        wijs: 'invloeden-kaart',
         done: (s) => seen(s, 'invloeden'),
       },
     ],

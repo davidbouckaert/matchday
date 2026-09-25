@@ -16,7 +16,7 @@ function show(f: Factor): string {
 export function influencesScreen(s: GameState): string {
   const groups = allModifiers(s);
   return `
-  <section class="card">
+  <section class="card" data-tour-doel="invloeden-kaart">
     <h2>Invloeden</h2>
     <p class="muted small">Alle vermenigvuldigers (×) en bonussen (+) die nu meespelen. Het spel rekent met exact deze cijfers.
     Groen helpt, rood kost. Bij een vermenigvuldiger staat het procentuele effect tussen haakjes.</p>
