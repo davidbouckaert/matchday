@@ -687,6 +687,16 @@ export function squadBlock(state: GameState): string | null {
   return `Je kern telt nog maar ${kern} spelers en er moeten er minstens ${MIN_SQUAD} zijn. Haal er ${tekort} bij via Ploeg › Transfers — transfervrije spelers kosten je geen overnamesom — of verleng aflopende contracten bij Ploeg › Contracten.`;
 }
 
+/** Ondergrens voor "beloftevol": zo veel moet het potentieel minstens boven de huidige kwaliteit liggen. */
+export const PROMISING_GAP = 15;
+/** Bovengrens voor "beloftevol": ouder dan dit is hij geen belofte meer, ook al groeit hij nog. */
+export const PROMISING_MAX_AGE = 20;
+
+/** Beloftevol: jong (onder de 20) én een potentieel dat minstens 15 punten boven zijn huidige kwaliteit ligt. */
+export function isPromising(p: Player): boolean {
+  return p.age < PROMISING_MAX_AGE && p.potential - overall(p) >= PROMISING_GAP;
+}
+
 /** Spelers die je liever niet kwijtspeelt: veel gespeeld, sterk of veel potentieel. */
 export function isCorePlayer(state: GameState, p: Player): boolean {
   if (p.loan?.type === 'in') return false;

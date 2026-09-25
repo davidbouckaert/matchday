@@ -8,6 +8,9 @@ import { readyGame } from './helpers';
 import { staffScreen } from '../src/ui/screens/staff';
 import { sponsorsScreen } from '../src/ui/screens/sponsors';
 import { prospectChance } from '../src/engine/sponsors';
+import { transfersScreen } from '../src/ui/screens/squad';
+import { isPromising } from '../src/engine/players';
+import type { Position } from '../src/engine/types';
 
 describe('filteren door aan te klikken', () => {
   it('een functie aanklikken filtert de kandidatenlijst tot die rol', () => {
@@ -49,6 +52,61 @@ describe('filteren door aan te klikken', () => {
     const past = s.prospects.filter((p) => prospectChance(s, p).kind === 'bord').length;
     expect(html).to.contain(`${past} van ${s.prospects.length}`);
     expect(html).to.contain('✕');
+  });
+
+  it('een positie aanklikken op de transfermarkt filtert kopen, huren en je eigen kern samen', () => {
+    const s = readyGame('heidebeke');
+    // ids zijn uniek (namen komen uit een kleine pool en kunnen toevallig dubbel voorkomen)
+    const positie: Position = s.transferList[0]?.position ?? s.loanMarket[0]?.position ?? s.players[0].position;
+    const html = transfersScreen(s, positie);
+
+    const kopenSectie = html.split('Transfermarkt: kopen')[1].split('Huren van profclubs')[0];
+    const hurenSectie = html.split('Huren van profclubs')[1].split('Jouw spelers')[0];
+    const eigenSectie = html.split('Jouw spelers')[1];
+    for (const p of s.transferList) {
+      if (p.position === positie) continue;
+      expect(kopenSectie, p.id).to.not.contain(`data-id="${p.id}"`);
+    }
+    for (const p of s.loanMarket) {
+      if (p.position === positie) continue;
+      expect(hurenSectie, p.id).to.not.contain(`data-id="${p.id}"`);
+    }
+    for (const p of s.players) {
+      if (p.position === positie) continue;
+      expect(eigenSectie, p.id).to.not.contain(`data-id="${p.id}"`);
+    }
+    // wie wél die positie heeft, blijft gewoon zichtbaar
+    const eersteEigen = s.players.find((p) => p.position === positie);
+    if (eersteEigen) expect(eigenSectie).to.contain(`data-id="${eersteEigen.id}"`);
+    expect(html).to.contain('✕');
+  });
+
+  it('zonder filter staan alle posities in de drie transfertabellen', () => {
+    const s = readyGame('heidebeke');
+    const html = transfersScreen(s);
+    for (const p of [...s.transferList, ...s.loanMarket, ...s.players]) expect(html, p.id).to.contain(`data-id="${p.id}"`);
+    expect(html).to.not.contain('✕');
+  });
+
+  it('het beloftevol-label staat bij een jonge speler met veel groeiruimte op de transfermarkt en op de kern-tabel', () => {
+    const s = readyGame('heidebeke');
+    // forceer een duidelijk geval van "beloftevol" (19j, techniek/fysiek 45, potentieel 65 —
+    // exact het voorbeeld uit de aanvraag), los van wat de seed toevallig genereerde
+    const opTransfermarkt = s.transferList[0];
+    const inDeKern = s.players[0];
+    for (const p of [opTransfermarkt, inDeKern]) {
+      p.age = 19;
+      p.technique = 45;
+      p.physical = 45;
+      p.potential = 65;
+      expect(isPromising(p)).to.equal(true);
+    }
+
+    const html = transfersScreen(s);
+    const kopenSectie = html.split('Transfermarkt: kopen')[1].split('Huren van profclubs')[0];
+    const eigenSectie = html.split('Jouw spelers')[1];
+    expect(kopenSectie, opTransfermarkt.id).to.contain('beloftevol');
+    expect(eigenSectie, inDeKern.id).to.contain('beloftevol');
   });
 });
 

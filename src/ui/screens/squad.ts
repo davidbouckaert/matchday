@@ -1,6 +1,6 @@
 import type { GameState, Player, Position } from '../../engine/types';
 import { formatWeek, isTransferWindow } from '../../engine/calendar';
-import { FORMATIONS, POSITIONS, currentBid, isCorePlayer, lineupGap, marketValue, overall, selectLineup, teamStrength } from '../../engine/players';
+import { FORMATIONS, POSITIONS, currentBid, isCorePlayer, isPromising, lineupGap, marketValue, overall, selectLineup, teamStrength } from '../../engine/players';
 import { PLAN_INFO } from '../../engine/strategy';
 import { delegate } from '../../engine/delegation';
 import { weeks } from '../../engine/util';
@@ -17,6 +17,9 @@ import { ZONE_LABEL } from './lineup';
 import { impactChips } from '../impact';
 import { playerImpact } from '../../engine/impact';
 
+
+/** Positielabels voor de filterknoppen op de transfermarkt (enkelvoud, zoals een speler zelf is). */
+export const POSITION_LABEL: Record<Position, string> = { DOEL: 'Doelman', VERD: 'Verdediger', MIDD: 'Middenvelder', AANV: 'Aanvaller' };
 
 function friendsOf(s: GameState, p: Player): string {
   const names = p.friends.map((id) => s.players.find((x) => x.id === id)?.name.split(' ')[0]).filter(Boolean);
@@ -192,7 +195,7 @@ function playerRow(s: GameState, p: Player, zoneOf: Map<string, Position>, windo
         zone && zone !== p.position ? ` <span class="tag bad" ${tipAttr(`Hij speelt op ${zone} terwijl hij ${p.position} is. Dat kost een stuk van zijn kwaliteit.`)}>${zone}</span>` : ''
       }</td>
     <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-    <td><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">${p.injuryWeeks}w geblesseerd</span>` : ''}${p.suspended ? ` <span class="tag bad">${p.suspended} ${p.suspended === 1 ? 'wedstrijd' : 'wedstrijden'} geschorst</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
+    <td><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: bij je beste elf of een groot talent">★</span>` : ''}${isPromising(p) ? ` <span class="tag good" data-tip="Beloftevol: ${p.age} jaar, kwaliteit ${overall(p)} van een mogelijke ${Math.round(p.potential)}">💎 beloftevol</span>` : ''}${roleTag(s, p.id)}${p.isYouth ? ' <span class="tag">eigen jeugd</span>' : ''}${p.injuryWeeks ? ` <span class="tag bad">${p.injuryWeeks}w geblesseerd</span>` : ''}${p.suspended ? ` <span class="tag bad">${p.suspended} ${p.suspended === 1 ? 'wedstrijd' : 'wedstrijden'} geschorst</span>` : ''}${p.loan?.type === 'uit' ? ` <span class="tag">uitgeleend aan ${esc(p.loan.club)}</span>` : ''}${p.loan?.type === 'in' ? ` <span class="tag">gehuurd van ${esc(p.loan.club)}</span>` : ''}${p.listed ? ' <span class="tag">te koop</span>' : ''}<br/><span class="muted small">${esc(p.trait)} ${friendsOf(s, p)}</span></td>
     <td>${p.age}</td>
     <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
     <td data-v="${p.trend}" class="small ${p.trend > 0 ? 'pos' : p.trend < 0 ? 'neg' : 'muted'}" data-tip="Verandering bij de laatste evolutie (om de 4 weken)">${p.trend > 0 ? `▲ +${p.trend}` : p.trend < 0 ? `▼ ${p.trend}` : '–'}</td>
@@ -394,17 +397,36 @@ export function loanKeepCard(s: GameState): string {
   </section>`;
 }
 
-export function transfersScreen(s: GameState): string {
+/** Beloftevol-label naast een naam, ook in de compacte transfertabellen. */
+function promisingTag(p: Player): string {
+  return isPromising(p) ? ` <span class="tag good" data-tip="Beloftevol: ${p.age} jaar, kwaliteit ${overall(p)} van een mogelijke ${Math.round(p.potential)}">💎 beloftevol</span>` : '';
+}
+
+export function transfersScreen(s: GameState, filter: Position | null = null): string {
   const window = isTransferWindow(s.week);
   const scout = delegate(s, 'transfers');
   const offers = offersList(s);
 
-  const buyRows = s.transferList
+  const transferList = filter ? s.transferList.filter((p) => p.position === filter) : s.transferList;
+  const loanMarket = filter ? s.loanMarket.filter((p) => p.position === filter) : s.loanMarket;
+  const ownPlayers = filter ? s.players.filter((p) => p.position === filter) : s.players;
+
+  const filterBar = `<div class="transfer-filters">
+    ${POSITIONS.map(
+      (pos) =>
+        `<button class="filter-pick ${filter === pos ? 'on' : ''}" data-action="transfer-filter" data-id="${pos}" ${tipAttr(
+          `Toon alleen ${POSITION_LABEL[pos].toLowerCase()}s in de drie tabellen hieronder${filter === pos ? ' — nog eens klikken haalt de filter weg' : ''}.`,
+        )}>${POSITION_LABEL[pos]}${filter === pos ? ' ●' : ''}</button>`,
+    ).join('')}
+    ${filter ? `<button class="filter-chip" data-action="transfer-filter" data-id="${filter}" aria-label="Filter op ${POSITION_LABEL[filter]} weghalen">${POSITION_LABEL[filter]} ✕</button>` : ''}
+  </div>`;
+
+  const buyRows = transferList
     .map((p) => {
       const wil = transferWillingness(s, p);
       return `<tr>
       <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-      <td><strong>${esc(p.name)}</strong><br/><span class="muted small">${esc(p.trait)}</span></td>
+      <td><strong>${esc(p.name)}</strong>${promisingTag(p)}<br/><span class="muted small">${esc(p.trait)}</span></td>
       <td>${p.age}</td>
       <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
       <td class="small" data-v="${p.technique}" ${tipAttr(`Techniek ${Math.round(p.technique)}, fysiek ${Math.round(p.physical)}.`, p.name)}>${Math.round(p.technique)} / ${Math.round(p.physical)}</td>
@@ -422,12 +444,12 @@ export function transfersScreen(s: GameState): string {
     })
     .join('');
 
-  const loanRows = s.loanMarket
+  const loanRows = loanMarket
     .map((p) => {
       const wil = transferWillingness(s, p, true);
       return `<tr>
       <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-      <td><strong>${esc(p.name)}</strong><br/><span class="muted small">van ${esc(p.loan?.club ?? '')}</span></td>
+      <td><strong>${esc(p.name)}</strong>${promisingTag(p)}<br/><span class="muted small">van ${esc(p.loan?.club ?? '')}</span></td>
       <td>${p.age}</td>
       <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
       <td data-v="${p.wage}">${euro(p.wage)}</td>
@@ -443,7 +465,7 @@ export function transfersScreen(s: GameState): string {
     })
     .join('');
 
-  const ownRows = [...s.players]
+  const ownRows = [...ownPlayers]
     .sort((a, b) => POSITIONS.indexOf(a.position) - POSITIONS.indexOf(b.position) || overall(b) - overall(a))
     .map((p) => {
       const value = marketValue(p, s.marketIndex);
@@ -476,7 +498,7 @@ export function transfersScreen(s: GameState): string {
       }
       return `<tr>
         <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-        <td><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: hij hoort bij je beste elf of is een groot talent. Verkoop je hem, dan verzwak je meteen.">★</span>` : ''}<br/><span class="muted small">${p.age} jaar · ${p.starts} basisplaatsen</span></td>
+        <td><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ` <span class="core" data-tip="Kernspeler: hij hoort bij je beste elf of is een groot talent. Verkoop je hem, dan verzwak je meteen.">★</span>` : ''}${promisingTag(p)}<br/><span class="muted small">${p.age} jaar · ${p.starts} basisplaatsen</span></td>
         <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
         <td data-v="${value}">${euro(value)}</td>
         <td data-v="${p.wage}">${euro(p.wage)}</td>
@@ -501,6 +523,10 @@ export function transfersScreen(s: GameState): string {
       ? `<p class="muted small">🤝 Je huurspelers verlengen of definitief kopen doe je bij <button class="link-btn" data-action="nav" data-id="contracten">Ploeg › Contracten</button> — daar staat alles over wie blijft.</p>`
       : ''
   }
+  <section class="card">
+    <h2>Filter op positie ${hint('Klik op een positie om de drie tabellen hieronder (kopen, huren en je eigen kern) tot die positie te beperken. Nog eens klikken op dezelfde knop, of op het kruisje, haalt de filter weer weg.')}</h2>
+    ${filterBar}
+  </section>
   <section class="card" data-tour-doel="transfers">
     <h2>Transfermarkt: kopen</h2>
     <p class="muted small">${window ? 'De transferperiode is open. Elke week verdwijnen er spelers en komen er nieuwe bij.' : 'De transferperiode is gesloten. Je kunt al rondkijken; kopen, verkopen en huren kan van mei tot eind augustus en in januari.'}
@@ -515,7 +541,7 @@ export function transfersScreen(s: GameState): string {
     }
     <div class="table-wrap"><table data-sort-id="transfers">
       <thead><tr><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th>Techn/Fys</th><th>Loon/w</th><th>Prijs</th><th>Wil hij komen?</th><th data-nosort>Wat hij toevoegt</th><th data-nosort></th></tr></thead>
-      <tbody>${buyRows || '<tr><td colspan="10" class="muted">Geen spelers beschikbaar.</td></tr>'}</tbody>
+      <tbody>${buyRows || `<tr><td colspan="10" class="muted">${filter ? `Geen ${POSITION_LABEL[filter].toLowerCase()}s beschikbaar — haal de filter weg voor de hele markt.` : 'Geen spelers beschikbaar.'}</td></tr>`}</tbody>
     </table></div>
   </section>
   <section class="card">
@@ -523,7 +549,7 @@ export function transfersScreen(s: GameState): string {
     <p class="muted small">Jonge spelers die beter zijn dan je niveau, tot het einde van het seizoen. Je betaalt een huurvergoeding en een deel van hun loon; daarna keren ze terug. Nieuw aanbod in juli en januari.</p>
     <div class="table-wrap"><table data-sort-id="huur">
       <thead><tr><th>Pos</th><th>Speler</th><th>Leeftijd</th><th>Kwal/Pot</th><th>Jouw loondeel/w</th><th>Huurvergoeding</th><th>Wil hij komen?</th><th data-nosort></th></tr></thead>
-      <tbody>${loanRows || `<tr><td colspan="8" class="muted">${window ? 'Geen huurspelers meer beschikbaar.' : 'Buiten de transferperiode is er geen huuraanbod.'}</td></tr>`}</tbody>
+      <tbody>${loanRows || `<tr><td colspan="8" class="muted">${filter ? `Geen ${POSITION_LABEL[filter].toLowerCase()}s te huur — haal de filter weg voor de hele markt.` : window ? 'Geen huurspelers meer beschikbaar.' : 'Buiten de transferperiode is er geen huuraanbod.'}</td></tr>`}</tbody>
     </table></div>
   </section>
   <section class="card">
@@ -532,7 +558,7 @@ export function transfersScreen(s: GameState): string {
     <strong>Uitlenen</strong>: tot het einde van het seizoen; de andere club betaalt een deel van zijn loon en hij krijgt speelminuten, dus hij blijft groeien.</p>
     <div class="table-wrap"><table data-sort-id="eigen">
       <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Waarde</th><th>Loon/w</th><th>Status</th><th data-nosort></th></tr></thead>
-      <tbody>${ownRows}</tbody>
+      <tbody>${ownRows || `<tr><td colspan="7" class="muted">Geen ${filter ? POSITION_LABEL[filter].toLowerCase() + 's' : 'spelers'} in je kern.</td></tr>`}</tbody>
     </table></div>
   </section>`;
 }
