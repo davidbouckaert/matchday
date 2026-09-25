@@ -1471,6 +1471,7 @@ document.addEventListener('keydown', (e) => {
       ui.held = null;
       if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
     }
+    taskOrigin = null;
     ui.screen = 'overzicht';
     ui.menuOpen = false;
     render();
