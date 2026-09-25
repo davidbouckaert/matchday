@@ -676,6 +676,9 @@ tr.expiring td { background: rgba(178, 40, 40, 0.06); }
 .stat-toggle button { border: 1px solid var(--line); }
 .window-banner.open { border-left: 4px solid var(--good); }
 .window-banner.shut { border-left: 4px solid var(--bad); }
+/* De linkerrand telt mee in de padding, anders loopt de tekst 4px verder in dan
+   in de kaarten ernaast die geen rand hebben. */
+.window-banner { padding-left: calc(var(--s5) - 4px); }
 .window-banner h2 { margin: 0 0 4px; font-size: 1.05rem; }
 .stat-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
 .link-stat { border: none; background: transparent; text-align: left; padding: 2px 18px; cursor: pointer; border-radius: 6px; }
@@ -1640,6 +1643,9 @@ tr.filtering td { background: var(--accent-soft); }
    over de volle paginabreedte, zodat ze niet als losse, ongelijke blokjes ogen. */
 .cols-3.even { align-items: stretch; }
 .cols-3.even > .card { display: flex; flex-direction: column; min-width: 0; }
+/* .card.picker heeft elders (los, volle breedte) een krappere padding; naast gewone
+   kaarten in deze rij liep de tekst daardoor niet gelijk met de kaart eronder. */
+.cols-3.even > .card.picker { padding: var(--s4) var(--s5) var(--s5); }
 
 /* ==========================================================================
    Opstelling: het veld links, je kern rechts.
