@@ -284,7 +284,7 @@ function squadPanel(s: GameState, selected: string | null): string {
   const bankTotaal = s.tactics.benched.length;
   return `<section class="card squad-card" data-tour-doel="selectie">
     <h2>Je kern <span class="tag">${s.players.length}</span>
-      <span class="tag bank-tag ${bankTotaal ? '' : 'leeg'}" ${tipAttr(bankTotaal ? `${bankTotaal} van de 5 bankplaatsen ingevuld. De teller per linie staat in de kopjes hieronder.` : 'Nog niemand op de wisselbank: je trainer vult hem op wedstrijddag. Kies zelf met 🔁 wie er minuten pakt.', 'Wisselbank')}>🔁 ${bankTotaal}/5</span>
+      <span class="tag bank-tag ${bankTotaal ? '' : 'leeg'}" data-tour-doel="wisselbank" ${tipAttr(bankTotaal ? `${bankTotaal} van de 5 bankplaatsen ingevuld. De teller per linie staat in de kopjes hieronder.` : 'Nog niemand op de wisselbank: je trainer vult hem op wedstrijddag. Kies zelf met 🔁 wie er minuten pakt.', 'Wisselbank')}>🔁 ${bankTotaal}/5</span>
       ${hint('Alle spelers, per linie. Bovenaan elke linie staat wie er zondag begint. Klik iemand om hem vast in de basis te zetten; met 🔁 zet je hem op de wisselbank — invallers pakken speelminuten en groeien mee.')}
     </h2>
     ${

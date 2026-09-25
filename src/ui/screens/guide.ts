@@ -1,6 +1,7 @@
 // Handleiding: korte uitleg en veelgestelde vragen. Bedoeld om snel iets op te zoeken.
 
 import type { GameState } from '../../engine/types';
+import { WEEK_COMBO } from '../keys';
 import { MATCH_WEEKS, SEASON_END_WEEK } from '../../engine/calendar';
 import { MIN_SQUAD } from '../../engine/players';
 import { VERSION } from '../../version';
@@ -260,7 +261,7 @@ function faq(): QA[] {
     },
     {
       q: 'Kan ik de animatie na elke week uitzetten?',
-      a: 'Ja, bij Opslaan. Spatie = volgende week of rapport sluiten, Esc = rapport sluiten.',
+      a: `Ja. ${WEEK_COMBO} = volgende week, B = naar je Bureau, spatie of Esc = het weekrapport sluiten. Ze staan ook op de knoppen zelf.`,
     },
   ];
 }
@@ -281,7 +282,7 @@ export function guideScreen(s: GameState): string {
         <li><strong>Competitie</strong><span>De stand, jouw wedstrijden met hun uitslag, de clubs in je reeks en de tuchtzaken.</span></li>
         <li><strong>Menu ☰</strong><span>Deze handleiding, "Wat beïnvloedt wat" met elke vermenigvuldiger die nu meespeelt, en opslaan en instellingen.</span></li>
       </ul>
-      <p class="small">Klaar? Druk op <strong>Volgende week</strong> (of op de spatiebalk). Je ziet een korte animatie en daarna het weekrapport.</p>
+      <p class="small">Klaar? Druk op <strong>Volgende week</strong> (of ${WEEK_COMBO}). Je ziet een korte animatie en daarna het weekrapport.</p>
     </section>
     <section class="card span2">
       <h3>Veelgestelde vragen</h3>
