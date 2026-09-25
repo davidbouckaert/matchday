@@ -1,3 +1,4 @@
+import { subsidieOutcome } from '../subsidiezaak';
 // Weekrapport: verschijnt na elke gesimuleerde week, eerst met een korte animatie.
 
 import type { GameState, LedgerCategory } from '../../engine/types';
@@ -320,7 +321,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   // eens als nieuwsregel met dezelfde toeschouwers en dezelfde kaarten erin. Het weekmoment
   // stond twee keer. In de nieuwsstroom op je bureau horen ze wél thuis — daar is geen
   // scorebord — dus ze worden hier alleen overgeslagen.
-  const weekNews = s.news.filter((n) => n.week === prev.week && n.season === prev.season && n.kind !== 'wedstrijd' && n.kind !== 'moment');
+  const weekNews = s.news.filter((n) => n.week === prev.week && n.season === prev.season && n.kind !== 'wedstrijd' && n.kind !== 'moment' && !n.subsidieZaakId);
 
   // De kleine successen die vanzelf gebeurden — een diploma, een opgeleverde bouw, een
   // sponsor die je commerciële man binnenhaalde — verdwenen als grijze regel tussen het
@@ -346,7 +347,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   // in afwachting
   const waiting: string[] = [];
   for (const p of s.pending) waiting.push(`${esc(p.label)}${p.amount ? `: ${euro(p.amount)}` : ''}, over ${weeks(p.weeksLeft)}`);
-  for (const r of s.requests) waiting.push(`${esc(r.label)}: antwoord over ${weeks(r.weeksLeft)}`);
+  for (const r of s.requests) waiting.push(`${r.kind === 'subsidie' ? 'Gemeentesubsidie (raming bij aanvraag)' : esc(r.label)}: antwoord over ${weeks(r.weeksLeft)}`);
   for (const o of s.sponsorOffers) waiting.push(`Sponsorvoorstel ${esc(o.name)} (${o.renewalOf ? 'verlenging' : KIND_LABEL[o.kind].toLowerCase()}, ${euro(o.weekly)}/week): beslis binnen ${weeks(o.expiresInWeeks)}`);
   for (const p of s.prospects.filter((x) => x.approached)) waiting.push(`Gesprek met ${esc(p.name)}: antwoord volgende week`);
   for (const o of s.playerOffers) {
@@ -389,7 +390,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
           <ul class="small">${waiting.map((w) => `<li>${w}</li>`).join('')}</ul></details>`;
 
   return `<div class="overlay">
-    <div class="report-card" role="dialog" aria-label="Weekrapport">
+    <div class="report-card" role="dialog" aria-modal="true" tabindex="-1" aria-label="Weekrapport">
       <div class="report-head">
         <div><h2>Weekrapport</h2><span class="muted small">Week ${prev.week} · ${formatDateLong(s.startYear, prev.season, prev.week)}</span></div>
         <button class="sm ghost" data-action="close-report" data-tip="Sluit het rapport en ga terug naar het scherm waar je was. Sneltoets: Esc.">Sluiten ✕ ${kbd('Esc')}</button>
@@ -401,6 +402,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
           ${records}
           <section class="wide"><h3>De wedstrijd</h3>${matchHtml}${othersHtml}</section>
           <section class="wide"><h3>Geld</h3>${financeHtml}</section>
+          ${s.subsidieZaken.filter((z) => z.antwoord?.week === prev.week && z.antwoord.seizoen === prev.season).map((z) => `<section class="wide slice"><h3>Antwoord van de gemeente</h3>${subsidieOutcome(z)}<button class="sm" data-action="subsidie-open" data-id="${esc(z.id)}">Bekijk dossier</button></section>`).join('')}
           ${feestHtml}
           ${s.lastChoice ? `<section class="wide moment-result"><h3>📌 Weekmoment — ${esc(s.lastChoice.title)}</h3><p class="small">${esc(s.lastChoice.outcome)}</p></section>` : ''}
           <section class="wide"><h3>Nieuws${news.length ? ` <span class="tag">${news.length}</span>` : ''}</h3>${newsHtml}</section>

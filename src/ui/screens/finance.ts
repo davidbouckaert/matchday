@@ -1,5 +1,6 @@
 import type { GameState, LedgerCategory, LedgerEntry, WeekRecord } from '../../engine/types';
-import { subsidieBedrag, subsidieKans } from '../../engine/finance';
+import { subsidieCard } from '../subsidiezaak';
+import { cashGroup, cashSummary } from '../financial';
 import { creditLimit, emergencyOffer, interestRate, loanOffers, totalDebt } from '../../engine/loans';
 import { weeks } from '../../engine/util';
 import { esc, euro, signedEuro } from '../format';
@@ -19,15 +20,16 @@ function groupByCategory(entries: LedgerEntry[]): [LedgerCategory, number][] {
 function totalsTable(totals: Partial<Record<LedgerCategory, number>>): string {
   const rows = Object.entries(totals).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
   if (!rows.length) return '<p class="muted">Nog geen boekingen.</p>';
-  const sum = rows.reduce((s, [k, v]) => s + (k === 'leningen' || k === 'investeerder' ? 0 : v ?? 0), 0);
+  const summary = cashSummary(totals);
   return `<table class="compact"><tbody>
     ${rows.map(([k, v]) => `<tr><td>${k}</td><td class="num">${signedEuro(v ?? 0)}</td></tr>`).join('')}
-    <tr class="total"><td>Operationeel resultaat</td><td class="num">${signedEuro(sum)}</td></tr>
+    <tr class="total"><td>Over uit de werking</td><td class="num">${signedEuro(summary.werking)}</td></tr>
+    <tr><td>Investeringen</td><td class="num">${signedEuro(summary.investeringen)}</td></tr>
+    <tr><td>Spelerstransfers</td><td class="num">${signedEuro(summary.transfers)}</td></tr>
+    <tr><td>Financiering en aflossing</td><td class="num">${signedEuro(summary.financiering)}</td></tr>
+    <tr class="total"><td>Kasverandering</td><td class="num">${signedEuro(summary.totaal)}</td></tr>
   </tbody></table>`;
 }
-
-/** Niet-operationeel: financiering, investeringen en spelershandel. */
-const NON_OPERATIONAL: LedgerCategory[] = ['leningen', 'investeerder', 'aflossingen', 'transfers', 'infrastructuur'];
 
 function weekChart(records: WeekRecord[]): string {
   if (!records.length) return '<p class="muted">Nog geen weken gespeeld.</p>';
@@ -35,7 +37,7 @@ function weekChart(records: WeekRecord[]): string {
     let inc = 0;
     let out = 0;
     for (const [k, v] of Object.entries(r.totals)) {
-      if (NON_OPERATIONAL.includes(k as LedgerCategory)) continue;
+      if (cashGroup(k as LedgerCategory) !== 'werking') continue;
       if ((v ?? 0) > 0) inc += v!;
       else out += v!;
     }
@@ -58,7 +60,7 @@ function weekChart(records: WeekRecord[]): string {
         ${data.length <= 16 || i % 2 === 0 ? `<text x="${i * bw + bw / 2}" y="${H - 1}" class="axis">${d.label}</text>` : ''}</g>`;
     })
     .join('');
-  return `<svg class="weekchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Operationele inkomsten en uitgaven per week">
+  return `<svg class="weekchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Inkomsten en uitgaven uit de werking per week">
     <line x1="0" x2="${W}" y1="${mid}" y2="${mid}" class="zero"/>${bars}</svg>
     <p class="legend small"><span class="sw in"></span> inkomsten <span class="sw out"></span> uitgaven <span class="sw net"></span> netto</p>`;
 }
@@ -67,7 +69,7 @@ function weekTable(records: WeekRecord[]): string {
   const recent = records.slice(-12);
   if (!recent.length) return '';
   const cats = new Set<LedgerCategory>();
-  for (const r of recent) for (const k of Object.keys(r.totals) as LedgerCategory[]) if (!NON_OPERATIONAL.includes(k)) cats.add(k);
+  for (const r of recent) for (const k of Object.keys(r.totals) as LedgerCategory[]) if (cashGroup(k) === 'werking') cats.add(k);
   const sorted = [...cats].sort((a, b) => {
     const sa = recent.reduce((s, r) => s + (r.totals[a] ?? 0), 0);
     const sb = recent.reduce((s, r) => s + (r.totals[b] ?? 0), 0);
@@ -75,12 +77,12 @@ function weekTable(records: WeekRecord[]): string {
   });
   const cell = (v: number) => (v ? `<td class="num ${v < 0 ? 'neg' : 'pos'}">${Math.round(v).toLocaleString('nl-BE')}</td>` : '<td class="num muted">·</td>');
   const net = (r: WeekRecord) => sorted.reduce((s, k) => s + (r.totals[k] ?? 0), 0);
-  const other = (r: WeekRecord) => NON_OPERATIONAL.reduce((s, k) => s + (r.totals[k] ?? 0), 0);
+  const other = (r: WeekRecord) => cashSummary(r.totals).totaal - cashSummary(r.totals).werking;
   return `<div class="table-wrap"><table class="compact weektable">
     <thead><tr><th>Categorie (€)</th>${recent.map((r) => `<th class="num">week ${r.week}</th>`).join('')}<th class="num">Totaal</th></tr></thead>
     <tbody>
       ${sorted.map((k) => `<tr><td>${k}</td>${recent.map((r) => cell(r.totals[k] ?? 0)).join('')}${cell(recent.reduce((s, r) => s + (r.totals[k] ?? 0), 0))}</tr>`).join('')}
-      <tr class="total"><td>Operationeel resultaat</td>${recent.map((r) => cell(net(r))).join('')}${cell(recent.reduce((s, r) => s + net(r), 0))}</tr>
+      <tr class="total"><td>Over uit de werking</td>${recent.map((r) => cell(net(r))).join('')}${cell(recent.reduce((s, r) => s + net(r), 0))}</tr>
       <tr><td class="muted" data-tip="Geld dat niet uit de gewone werking komt: wat je leent of aflost, wat een transfer opbrengt of kost, en wat je in je accommodatie steekt.">Buiten de gewone werking</td>${recent.map((r) => cell(other(r))).join('')}${cell(recent.reduce((s, r) => s + other(r), 0))}</tr>
     </tbody></table></div>`;
 }
@@ -95,21 +97,23 @@ function forecastCard(s: GameState): string {
   const f = forecast(s);
   if (!f.weeks.length) {
     return `<section class="card">
-      <h2>Wat komt eraan</h2>
+      <h2>Financiële toestand</h2><p>In kas: <strong>${euro(s.cash)}</strong></p>
       <p class="muted">Het seizoen loopt op zijn einde; vanaf het nieuwe seizoen verandert er te veel om vooruit te rekenen.</p>
     </section>`;
   }
   const worst = f.lowest;
-  return `<section class="card forecast">
-    <h2>Wat komt eraan ${hint('Een vooruitblik van maximaal acht weken op basis van wat nu vastligt: lonen, onderhoud, sponsorcontracten, aflossingen en de vaste momenten in het jaar. Wat een wedstrijd opbrengt is een schatting bij gewoon weer; daar staat "(schatting)" bij.')}</h2>
-    <p class="muted small">Over ${f.weeks.length} ${f.weeks.length === 1 ? 'week' : 'weken'}: <strong class="${f.net < 0 ? 'neg' : 'pos'}">${signedEuro(f.net)}</strong>.
+  return `<section class="card forecast slice">
+    <h2>Financiële toestand ${hint('Een vooruitblik van maximaal acht weken op basis van wat nu vastligt: lonen, onderhoud, sponsorcontracten, aflossingen en de vaste momenten in het jaar. Wat een wedstrijd opbrengt is een schatting bij gewoon weer; daar staat "(schatting)" bij.')}</h2>
+    <div class="case-facts"><div><span>In kas</span><strong>${euro(s.cash)}</strong></div><div><span>Laagste raming · week ${worst.week}</span><strong>${euro(worst.balance)}</strong></div></div>
+    <p class="muted small">Raming bij huidig beleid · ${f.weeks.length} weken. Kasverandering over ${f.weeks.length} ${f.weeks.length === 1 ? 'week' : 'weken'}: <strong class="${f.net < 0 ? 'neg' : 'pos'}">${signedEuro(f.net)}</strong>.
       Laagste punt: ${euro(worst.balance)} in week ${worst.week}.</p>
     ${
       f.trouble
         ? `<p class="warn"><strong>Let op:</strong> met wat er nu vastligt duik je in week ${f.trouble.week} onder nul. Zoek inkomsten of schuif een uitgave op.</p>`
         : ''
     }
-    <div class="table-wrap"><table class="compact forecast-table">
+    ${f.weeks.some((w) => w.lines.some((l) => l.category === 'subsidies')) ? '<p class="small forecast-caveat"><strong>Let op:</strong> deze bestaande vooruitblik rekent nog een subsidie in week 24 mee. Die ontvangst is niet gegarandeerd: je moet aanvragen en de gemeente kan weigeren.</p>' : ''}
+    <details class="forecast-evidence"><summary>Prognose en bekende verplichtingen</summary><div class="table-wrap"><table class="compact forecast-table">
       <thead><tr>
         <th>Week</th><th></th>
         <th class="num">In</th><th class="num">Uit</th><th class="num" data-tip="Wat er die week overblijft of bijkomt">Over die week</th><th class="num" data-tip="Wat er daarna op de rekening staat">Op de rekening</th>
@@ -129,7 +133,7 @@ function forecastCard(s: GameState): string {
             .join(' · ')}</td></tr>`,
         )
         .join('')}</tbody>
-    </table></div>
+    </table></div></details>
   </section>`;
 }
 
@@ -222,7 +226,7 @@ function investorCard(s: GameState): string {
   </section>`;
 }
 
-export function financeScreen(s: GameState): string {
+export function financeScreen(s: GameState, selectedCase?: string, backLabel?: string): string {
   const lastWeek = groupByCategory(s.lastWeek);
   const thisWeek = s.thisWeek;
   const offers = loanOffers(s);
@@ -236,13 +240,15 @@ export function financeScreen(s: GameState): string {
   // halve pagina wit. Nu ligt de indeling vast: wat je instelt naast wat je terugleest,
   // de twee seizoensoverzichten naast elkaar omdat je ze vergelijkt, en alles wat een
   // brede tabel is over de volle breedte.
-  return `${taskPicker(s, ['ticketing'])}
-  ${investorCard(s)}
-  ${subsidieCard(s)}
+  return `<div class="finance-slice slice"><h1>Financiën</h1>
   ${forecastCard(s)}
+  ${subsidieCard(s, selectedCase, backLabel)}
+  <details class="card finance-delegation"><summary>Ticketprijs en delegatie</summary>${taskPicker(s, ['ticketing'])}</details>
+  </div>
+  ${investorCard(s)}
   ${originsCard(s)}
   <section class="card">
-    <h2>Operationeel per week</h2>
+    <h2>Werking per week</h2>
     <p class="muted small">Inkomsten en uitgaven uit de werking van de club, zonder leningen, investeringen, infrastructuur en transfers. Beweeg over een staaf voor de cijfers. Tabel: laatste 12 weken.</p>
     ${weekChart(s.weekHistory.slice(-26))}
     ${weekTable(s.weekHistory)}
@@ -310,27 +316,4 @@ export function financeScreen(s: GameState): string {
           .join('') || '<p class="muted">De bank leent je op dit moment niets meer.</p>'}
       </div>
     </section>`;
-}
-
-/**
- * De gemeentesubsidie: vroeger kwam ze in week 24 vanzelf binnen, nu is het een dossier.
- * Eén aanvraag per seizoen, antwoord na twee weken, en de kans hangt vooral aan je
- * jeugdwerking — de kaart zegt eerlijk waar je dossier zwak staat.
- */
-function subsidieCard(s: GameState): string {
-  const { kans, zwakstePlek } = subsidieKans(s);
-  const bedrag = subsidieBedrag(s);
-  const loopt = s.requests.some((r) => r.kind === 'subsidie');
-  const gedaan = s.subsidieSeizoen === s.season;
-  return `<section class="card" data-tour-doel="subsidie">
-    <h2>Gemeentesubsidie ${hint('De jaarlijkse werkingssubsidie van de gemeente. Eén aanvraag per seizoen; de kans hangt vooral aan je jeugdwerking, daarnaast aan je reputatie en je licentiedossier.')}</h2>
-    <p class="muted small">Bij toekenning: <strong>${euro(bedrag)}</strong> · kans nu ongeveer <strong>${Math.round(kans * 100)}%</strong> · zwakste plek in je dossier: ${zwakstePlek}.</p>
-    ${
-      loopt
-        ? '<p class="attention-inline small">📨 Je dossier ligt bij de gemeente — antwoord binnen twee weken.</p>'
-        : gedaan
-          ? '<p class="muted small">Dit seizoen al aangevraagd. Volgend seizoen mag je opnieuw indienen.</p>'
-          : `<button class="primary sm" data-action="subsidie-aanvragen">Dossier indienen</button>`
-    }
-  </section>`;
 }

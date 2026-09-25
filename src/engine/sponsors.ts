@@ -575,16 +575,26 @@ export function resolveRequests(state: GameState, rng: Rng): void {
       continue;
     }
     if (r.kind === 'subsidie') {
+      const zaak = state.subsidieZaken.find((z) => z.id === r.id);
       const { kans, zwakstePlek } = subsidieKans(state);
       if (rng.chance(kans)) {
         const bedrag = subsidieBedrag(state);
+        if (zaak) {
+          zaak.status = 'toegekend';
+          zaak.antwoord = { seizoen: state.season, week: state.week, bedrag };
+        }
         book(state, 'subsidies', bedrag, 'Subsidie gemeente (jeugdwerking en sportieve uitstraling)');
         addNews(state, 'goed', `De gemeente kent je werkingssubsidie toe: €${bedrag.toLocaleString('nl-BE')}. Je jeugdwerking gaf de doorslag.`, 'viering');
         addLog(state, 'antwoord', `Subsidie toegekend: €${bedrag.toLocaleString('nl-BE')}.`);
       } else {
+        if (zaak) {
+          zaak.status = 'afgewezen';
+          zaak.antwoord = { seizoen: state.season, week: state.week, bedrag: 0, dossierzwakte: zwakstePlek };
+        }
         addNews(state, 'slecht', `De gemeente wijst je subsidieaanvraag af. In de brief staat vooral: ${zwakstePlek}. Volgend seizoen mag je opnieuw indienen.`);
         addLog(state, 'antwoord', `Subsidie geweigerd: ${zwakstePlek}.`);
       }
+      if (zaak) state.news[0].subsidieZaakId = zaak.id;
       continue;
     }
     if (r.kind === 'transfer-koop' || r.kind === 'transfer-huur') {

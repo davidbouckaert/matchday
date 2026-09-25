@@ -16,6 +16,37 @@ npm run build      # productieversie in dist/
 
 Sneltoets in het spel: **spatie** = volgende week.
 
+## Subsidiedossier en Bureau — implementatie vanaf v0.84.0
+
+Slice 1 bewaart subsidieaanvragen en antwoorden als getypeerde dossiers. Saveversie 41
+migreert lopende aanvragen met hun bestaande id, bedrag en resterende termijn. Van oude
+afgehandelde aanvragen blijft de uitkomst onbekend: geen reconstructie uit kas of proza.
+Kans en bedrag worden nog steeds opnieuw berekend bij het antwoord. De aanvraagsnapshot
+is uitsluitend een raming; er verandert geen boeking of RNG-aanroep.
+
+Bureau en speelbalk gebruiken dezelfde semantische projectie: sponsorvoorstellen vragen
+werk, lopende aanvragen vragen wachten, een open transferperiode geeft informatie.
+De rondleiding telde ook vóór deze wijziging niet mee. Tijdens de bestaande zes
+hoofdstukken staat nu één actuele leeropdracht direct bovenaan Bureau: doel, reden,
+voortgang en één hoofdactie. De terugknop meldt een afgeronde stap ook als je op het
+doelscherm omlaag bent gescrold. Pas na afloop wordt begeleiding ingeklapte naslag.
+Dit corrigeert de eerste Slice 1-presentatie, die nieuwe spelers te weinig bij de hand nam;
+voltooiingsregels, zachte doorschuif en het weekritme blijven hetzelfde.
+Financiën toont eerst kas en prognose, daarna het dossier. De gedeelde kasindeling houdt
+werking, infrastructuur, transfers en financiering uit elkaar. De kasverandering op Bureau
+neemt alle boekingen mee; de werkingssamenvatting sluit financiering en investeringen uit.
+
+Gemeten tegen commit `bfffcb8`: acht seeds op vier aanvraagweken (1, 23, 51, 52), aanvraag
+plus drie weekovergangen, geven dezelfde volledige speltoestand na weglaten van uitsluitend
+nieuwe dossiermetadata en saveversie. De regressiesuite bevat vaste toekenning/afwijzing,
+migratie, jaargrens, rapportkoppeling, werktelling en kasindeling. Browsercontroles gebruiken
+losse lokale teststanden en de bestaande importfunctie; live saves blijven ongemoeid.
+
+Bekende bestaande beperking: de prognosemotor rekent nog een subsidie in week 24 mee.
+De nieuwe financiële kern benoemt die onzekerheid als die post in de vooruitblik valt.
+Deze implementatie wijzigt de prognosemotor niet. Fysieke iPad/Safari en VoiceOver zijn nog
+handmatig te toetsen; viewportemulatie geldt daarvoor niet als vervanging.
+
 ## Hoe de code in elkaar zit
 
 ```

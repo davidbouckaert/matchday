@@ -385,6 +385,17 @@ export interface WeekStats {
   revenue: Partial<Record<LedgerCategory, number>>;
 }
 
+/** Bewaarde feiten van een subsidiedossier; ontbrekende oude gegevens blijven onbekend. */
+export interface SubsidieZaak {
+  id: string;
+  seizoen: number;
+  ingediendWeek?: number;
+  raming?: number;
+  kansBijAanvraag?: number;
+  status: 'loopt' | 'toegekend' | 'afgewezen' | 'onbekend';
+  antwoord?: { seizoen: number; week: number; bedrag: number; dossierzwakte?: string };
+}
+
 /** Een vraag die je stelde en waarop je volgende week antwoord krijgt. */
 export interface PendingRequest {
   id: string;
@@ -478,6 +489,7 @@ export interface LedgerEntry {
 }
 
 export interface NewsItem {
+  subsidieZaakId?: string;
   week: number;
   season: number;
   tone: 'goed' | 'slecht' | 'neutraal';
@@ -646,6 +658,7 @@ export interface GameState {
   medical: { voeding: import('./medisch').Voeding; preventie: boolean };
   /** Laatste seizoen waarin je de gemeentesubsidie aanvroeg (één keer per seizoen). */
   subsidieSeizoen?: number;
+  subsidieZaken: SubsidieZaak[];
 
   ticketPrice: number;
   players: Player[];

@@ -1,3 +1,4 @@
+import { guidedTourCard, dashboardScreen, bureauStatus } from '../src/ui/screens/dashboard';
 import { expect } from 'chai';
 import { TOUR_CHAPTERS, TOUR_PATIENCE, rememberDoneSteps, tourChapter, tourMarkSeen, tourStepDone, repairTour } from '../src/engine/tour';
 import { migrate } from '../src/storage/save';
@@ -164,5 +165,54 @@ describe('rondleiding (tour)', () => {
     const na = migrate(JSON.parse(JSON.stringify(s)));
     expect(na.tour).to.not.equal(undefined);
     expect(na.version).to.equal(SAVE_VERSION);
+  });
+});
+
+// De rondleiding moet een nieuwe speler leiden zonder eerst een hulppaneel te laten zoeken.
+describe('actieve begeleiding op Bureau', () => {
+  it('toont vóór uitklappen één actuele opdracht met reden, voortgang en hoofdactie', () => {
+    const s = readyGame();
+    const visible = guidedTourCard(s).split('<details>')[0];
+    expect(visible).to.include('Bekijk je selectie');
+    expect(visible).to.include('Je trainer zet elke week de beste elf klaar');
+    expect(visible).to.include('0 van 4 stappen afgerond');
+    expect(visible.match(/data-action="tour-go"/g)).to.have.length(1);
+    const html = dashboardScreen(s);
+    expect(html.indexOf('guided-tour')).to.be.lessThan(html.indexOf('bureau-work'));
+  });
+
+  it('geeft na een kijkstap direct de volgende opdracht zonder een week te spelen', () => {
+    const s = readyGame();
+    const week = s.week, count = bureauStatus(s).count;
+    tourMarkSeen(s, 'ploeg'); rememberDoneSteps(s);
+    const visible = guidedTourCard(s).split('<details>')[0];
+    expect(visible).to.include('Bekijk je spelplan');
+    expect(visible).to.include('1 van 4 stappen afgerond');
+    expect(visible).to.include('Je eerdere stappen zijn afgevinkt');
+    expect(s.week).to.equal(week);
+    expect(bureauStatus(s).count).to.equal(count);
+  });
+
+  it('houdt latere bestaande hoofdstukken actief en maakt geen nieuwe ervaringsgrens', () => {
+    const s = readyGame(); s.tour!.chapter = 3;
+    expect(guidedTourCard(s)).to.include('hoofdstuk 4 van 6');
+    expect(guidedTourCard(s)).to.include('Bekijk je ticketprijs');
+  });
+
+  it('maakt het hoofdstukeinde zichtbaar en bewaart het bestaande weekritme', () => {
+    const s = readyGame(); werkHoofdstuk1Af(s);
+    const visible = guidedTourCard(s).split('<details>')[0];
+    expect(visible).to.include('Dit hoofdstuk is klaar');
+    expect(visible).to.include('4 van 4 stappen afgerond');
+    expect(visible).not.to.include('data-action="tour-go"');
+    expect(s.tour!.chapter).to.equal(0);
+  });
+
+  it('biedt na afloop alleen secundaire naslag en respecteert bewust verbergen', () => {
+    const s = readyGame(); s.tour!.chapter = TOUR_CHAPTERS.length;
+    expect(guidedTourCard(s)).to.equal('');
+    expect(dashboardScreen(s)).to.include('Leer je club kennen · naslag');
+    s.tour!.hidden = true;
+    expect(dashboardScreen(s)).not.to.include('Leer je club kennen');
   });
 });

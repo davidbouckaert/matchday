@@ -43,6 +43,7 @@ function ensurePanel(): HTMLElement {
   if (panel && panel.isConnected) return panel;
   panel = document.createElement('div');
   panel.className = 'tip-panel';
+  panel.hidden = true;
   panel.setAttribute('role', 'status');
   panel.setAttribute('aria-live', 'polite');
   document.body.appendChild(panel);
@@ -50,12 +51,15 @@ function ensurePanel(): HTMLElement {
 }
 
 function show(el: HTMLElement): void {
+  if (!el.isConnected || el.closest('[inert]')) return;
+  if (document.querySelector('.overlay, .moment-overlay') && !el.closest('.overlay, .moment-overlay')) return;
   const text = el.getAttribute(TIP_ATTR);
   if (!text) return;
   const title = el.getAttribute('data-tip-title');
   const p = ensurePanel();
   window.clearTimeout(hideTimer);
   p.innerHTML = `${title ? `<strong class="tip-title">${esc(title)}</strong>` : ''}<span class="tip-text">${esc(text)}</span>`;
+  p.hidden = false;
   p.classList.add('on');
 }
 
@@ -63,7 +67,10 @@ function hide(immediate = false): void {
   if (pinned && !immediate) return;
   window.clearTimeout(hideTimer);
   // een korte nasleep: ga je met de muis van het ene naar het andere woord, dan flikkert het niet
-  hideTimer = window.setTimeout(() => panel?.classList.remove('on'), immediate ? 0 : 120);
+  hideTimer = window.setTimeout(() => {
+    panel?.classList.remove('on');
+    if (panel) panel.hidden = true;
+  }, immediate ? 0 : 120);
 }
 
 /** Het dichtstbijzijnde element met uitleg, ook als je op iets erbinnen wijst. */
@@ -121,4 +128,12 @@ export function initTooltips(): void {
 
   // tijdens het scrollen is de uitleg meestal niet meer wat je zoekt
   window.addEventListener('scroll', () => !pinned && hide(true), { passive: true });
+}
+
+/** Een tip hoort bij zijn bronnode; na hertekenen is die context verdwenen. */
+export function dismissTooltips(): void {
+  pinned = false;
+  window.clearTimeout(hideTimer);
+  panel?.classList.remove('on');
+  if (panel) panel.hidden = true;
 }

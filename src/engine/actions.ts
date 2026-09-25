@@ -27,7 +27,7 @@ import { bestPrice, margin } from './merch';
 import { acceptedMargin, concessionForecast, concessionPartner } from './canteen';
 import { popularity } from './popularity';
 import { available } from './discipline';
-import { expectedAttendance, facilityCost, subsidieBedrag } from './finance';
+import { expectedAttendance, facilityCost, subsidieBedrag, subsidieKans } from './finance';
 import { PREVENTIE, VOEDING, type Voeding } from './medisch';
 import { addLog, addNews, book, euro, nextId, weeks } from './util';
 import { openStoryline, remember } from './content';
@@ -127,8 +127,11 @@ export function vraagSubsidieAan(state: GameState): ActionResult {
   if (state.subsidieSeizoen === state.season) return fail('Je vroeg de subsidie dit seizoen al aan. Volgend seizoen mag het opnieuw.');
   if (state.requests.some((r) => r.kind === 'subsidie')) return fail('Je aanvraag ligt al bij de gemeente.');
   state.subsidieSeizoen = state.season;
+  const id = nextId(state, 'sub');
+  state.subsidieZaken.push({ id, seizoen: state.season, ingediendWeek: state.week,
+    raming: subsidieBedrag(state), kansBijAanvraag: subsidieKans(state).kans, status: 'loopt' });
   state.requests.push({
-    id: nextId(state, 'sub'),
+    id,
     kind: 'subsidie',
     targetId: '',
     label: `Subsidieaanvraag gemeente (${euro(subsidieBedrag(state))})`,
