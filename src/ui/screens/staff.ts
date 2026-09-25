@@ -123,7 +123,7 @@ export function staffScreen(s: GameState, selected: string | null, filter: Staff
     const costs = `${euro(cost)} totaal nu: ${euro(staffSigningFee(c))} tekengeld${incumbent ? ` + ${euro(staffPayoff(incumbent))} opzegvergoeding` : ''}. Loon: ${euro(c.wage)} per week (${weeklyDelta > 0 ? '+' : ''}${euro(weeklyDelta)} verschil).`;
     const confirmation = `${costs} ${handover}${incumbent?.role === 'hoofdtrainer' ? ' Het ontslag van de hoofdtrainer verlaagt de moraal van je spelers.' : ''}`;
     return `<tr>
-      <td><strong>${esc(c.name)}</strong><span class="staff-meta">${esc(c.trait)}${hasDiploma(c.role) ? ` · ${c.diploma}` : ''}</span>
+      <td><strong>${esc(c.name)}</strong><button class="tablet-inspect" data-action="workflow-open" data-id="staff:${c.id}" aria-label="Vergelijk ${esc(c.name)}">Vergelijken</button><span class="staff-meta">${esc(c.trait)}${hasDiploma(c.role) ? ` · ${c.diploma}` : ''}</span>
         ${!filter ? `<button class="link-btn" data-action="staff-filter" data-id="${c.role}">${roleDef(c.role).label}</button>` : ''}
         <span class="staff-meta">${incumbent ? `Nu: ${esc(incumbent.name)} · ${incumbent.skill} · ${euro(incumbent.wage)}/week` : 'Vacature'}</span></td>
       <td data-v="${c.skill}"><strong>${c.skill}</strong><span class="staff-meta">${incumbent ? `${c.skill - incumbent.skill > 0 ? '+' : ''}${c.skill - incumbent.skill} verschil` : 'op 100'}<br/>${taskCapacity(c)} ${taskCapacity(c) === 1 ? 'taak' : 'taken'}</span></td>

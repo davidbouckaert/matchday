@@ -1,3 +1,4 @@
+import { licenceLinks } from '../licence-context';
 import type { GameState } from '../../engine/types';
 import { WEEK_COMBO } from '../keys';
 import { CLUB_EVENTS, UPGRADES, UPGRADE_GROUPS, VOLUNTEER_ACTIONS } from '../../engine/data/catalog';
@@ -255,7 +256,7 @@ export function leagueScreen(s: GameState): string {
 
       ${s.week > SEASON_END_WEEK ? `<p class="competition-settled">De seizoensbeoordeling in week ${SEASON_END_WEEK} is afgerond.${s.nextDivisionLevel !== undefined ? ` Volgend seizoen: ${esc(DIVISIONS[s.nextDivisionLevel].name)}.` : ''} Latere verbeteringen veranderen deze beslissing niet.</p>` : level < DIVISIONS.length - 1 ? `<details class="competition-licence"><summary>${own?.played && ['kampioen', 'promotie'].includes(zone(ownIndex)) ? 'Sportief op promotieplaats · ' : ''}Licentie voor ${DIVISIONS[level + 1].name}: ${problems.length ? 'nog voorwaarden te vervullen' : 'voorwaarden nu in orde'}</summary>
         <p>${problems.length ? `Nog nodig: ${esc(problems.join('; '))}.` : 'Je voldoet nu aan de voorwaarden. Die worden bij het seizoenseinde opnieuw getoetst.'}</p>
-        <div class="btn-row"><button class="sm ghost" data-action="nav" data-id="staff">Personeel aanwerven</button><button class="sm ghost" data-action="nav" data-id="opleiding">Diploma’s en opleiding</button><button class="sm ghost" data-action="nav" data-id="infrastructuur">Infrastructuur</button></div></details>` : ''}
+        <div class="btn-row">${licenceLinks(s, problems).map((link) => `<button class="sm ghost" data-action="nav" data-id="${link.screen}">${esc(link.label)}</button>`).join('')}</div></details>` : ''}
       <div class="table-wrap"><table class="compact league"><caption class="sr-only">Stand ${division.name}</caption>
         <thead><tr>
           <th scope="col">#</th><th scope="col" class="league-club">Club</th>

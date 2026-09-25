@@ -113,6 +113,7 @@ function forecastCard(s: GameState): string {
         : ''
     }
     ${f.weeks.some((w) => w.lines.some((l) => l.category === 'subsidies')) ? '<p class="small forecast-caveat"><strong>Let op:</strong> deze bestaande vooruitblik rekent nog een subsidie in week 24 mee. Die ontvangst is niet gegarandeerd: je moet aanvragen en de gemeente kan weigeren.</p>' : ''}
+    <p><button class="sm ghost" data-action="nav" data-id="staff">Bekijk personeelskosten</button></p>
     <details class="forecast-evidence"><summary>Prognose en bekende verplichtingen</summary><div class="table-wrap"><table class="compact forecast-table">
       <thead><tr>
         <th>Week</th><th></th>
