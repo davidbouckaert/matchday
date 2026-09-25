@@ -2217,3 +2217,120 @@ html { -webkit-tap-highlight-color: transparent; }
 @media (max-width: 700px) { .guided-return { flex-direction: column; align-items: flex-start; } }
 
 .tour-doel, .guided-return { scroll-margin-top: calc(var(--bars-h, 200px) + 20px); }
+
+/* Slice 2: ruimte voor vergelijken, zonder een tweede tabel naast de hoofdtaak. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.staff-screen, .competition-screen { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.staff-layout { display: grid; grid-template-columns: 272px minmax(0, 1fr); gap: 16px; align-items: start; }
+.staff-screen .card, .competition-screen .card { min-width: 0; }
+.staff-screen h2, .competition-screen h2 { text-transform: none; letter-spacing: normal; font-size: 1.12rem; color: var(--text); }
+.staff-roster { padding: 18px; }
+.staff-role-list > summary { font-size: .85rem; color: var(--muted); }
+.staff-role-list ul { padding: 0; list-style: none; margin: 12px 0 0; }
+.staff-role-list li { border-top: 1px solid var(--line); padding: 8px 0; }
+.staff-role { width: 100%; display: block; text-align: left; padding: 7px 8px; background: transparent; border: 1px solid transparent; color: var(--text); }
+.staff-role strong, .staff-role span, .staff-role small { display: block; }
+.staff-role span { font-weight: 400; font-size: .85rem; }
+.staff-role small { color: var(--muted); margin-top: 3px; font-size: .8rem; }
+.staff-role[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.staff-person { margin: 3px 8px; font-size: .76rem; }
+.staff-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.staff-context { background: var(--sunken); padding: 12px; border-left: 3px solid var(--accent); max-width: none !important; }
+.staff-context button { margin-left: 8px; }
+.staff-candidates { table-layout: fixed; width: 100%; }
+.staff-candidates th:nth-child(1) { width: 24%; }
+.staff-candidates th:nth-child(2) { width: 12%; }
+.staff-candidates th:nth-child(3) { width: 25%; }
+.staff-candidates th:nth-child(4) { width: 22%; }
+.staff-candidates th:nth-child(5) { width: 17%; }
+.staff-candidates td { vertical-align: top; padding: 14px 8px; overflow-wrap: anywhere; }
+.staff-meta { display: block; font-size: .8rem; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+.staff-cost { font-variant-numeric: tabular-nums; }
+.staff-cost > strong { display: block; white-space: nowrap; }
+.staff-cost > strong:not(:first-child) { margin-top: 10px; }
+.staff-decision button { width: 100%; white-space: normal; }
+.staff-decision p { margin: 8px 0 0; }
+.staff-candidates .effects { display: block; }
+.staff-candidates .effect { display: flex; flex-wrap: wrap; white-space: normal; border-radius: 0; background: none; padding: 2px 0; font-size: .83rem; gap: 4px; }
+.staff-candidates .effect .lbl { overflow: visible; }
+.staff-explanation { margin-top: 8px; font-size: .8rem; }
+.staff-explanation summary { color: var(--text); }
+.staff-explanation p { margin: 8px 0; }
+.staff-mobile-picker { display: none; }
+.table-sort-button { padding: 0; background: transparent; color: inherit; border: 0; font: inherit; text-transform: inherit; letter-spacing: inherit; white-space: normal; text-align: inherit; }
+.staff-screen th.sortable { white-space: normal; }
+.staff-screen :is(button, select, summary):focus-visible, .competition-screen :is(button, summary, a):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.competition-screen .league { table-layout: fixed; width: 100%; font-variant-numeric: tabular-nums; }
+.competition-screen .league th, .competition-screen .league td { padding: 9px 10px; }
+.competition-screen .league thead th { width: 5%; }
+.competition-screen .league thead th:first-child { width: 6%; }
+.competition-screen .league thead .league-club { width: auto; }
+.competition-screen .league tbody .league-club { font: inherit; text-align: left; letter-spacing: normal; text-transform: none; color: inherit; overflow-wrap: anywhere; }
+.competition-screen .league .own th { font-weight: 700; }
+.own-label { font-size: .75rem; font-weight: 500; margin-left: 8px; white-space: nowrap; }
+.zone-symbol { font-size: .8rem; }
+.competition-screen .league abbr { text-decoration: none; }
+.competition-context { max-width: none !important; }
+.competition-licence { margin: 12px 0 16px; font-size: .87rem; }
+@media (max-width: 1199px) {
+  .staff-layout { display: flex; flex-direction: column; }
+  .staff-market, .staff-roster { width: 100%; box-sizing: border-box; }
+  .staff-market { order: -1; }
+  .staff-role-list ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .staff-mobile-picker { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .staff-mobile-picker select { max-width: 100%; }
+}
+@media (max-width: 800px) {
+  .staff-screen .card, .competition-screen .card { padding: 16px; }
+  .staff-candidates th:nth-child(1) { width: 22%; }
+  .staff-candidates th:nth-child(2) { width: 12%; }
+  .staff-candidates th:nth-child(3) { width: 23%; }
+  .staff-candidates th:nth-child(4) { width: 24%; }
+  .staff-candidates th:nth-child(5) { width: 19%; }
+  .staff-candidates td, .staff-candidates th { padding: 12px 6px; }
+  .staff-candidates .bar { display: none; }
+  .staff-role-list ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .competition-screen .league th, .competition-screen .league td { padding: 9px 5px; }
+  .competition-screen .league thead th { width: 6%; }
+  .competition-screen .league thead th:first-child { width: 7%; }
+}
+@media (max-width: 600px) {
+  .staff-candidates, .staff-candidates tbody, .staff-candidates tr, .staff-candidates td { display: block; width: auto; }
+  .staff-candidates thead { display: none; }
+  .staff-candidates tr { padding: 12px 0; border-bottom: 2px solid var(--line); }
+  .staff-candidates td { border: 0; padding: 5px 0; }
+  .staff-candidates td:nth-child(2)::before { content: 'Vaardigheid: '; }
+  .staff-candidates td:nth-child(3)::before { content: 'Wat verandert'; display: block; font-weight: 700; }
+  .staff-mobile-picker { display: block; }
+  .staff-role-list ul { display: block; }
+  .competition-screen .league { min-width: 480px; }
+}
+.competition-screen .league tbody th { background: transparent; }
+.competition-screen .league .own th { background: var(--accent-soft); }
+.competition-screen .competition-rules { max-width: none; }
+.staff-candidates th { overflow-wrap: anywhere; }
+.staff-screen :is(button, select, summary, .staff-context), .competition-screen :is(button, summary, a) {
+  scroll-margin-top: calc(var(--bars-h, 200px) + 16px);
+  scroll-margin-bottom: calc(var(--playbar-h, 64px) + 16px);
+}
+.staff-role-list li { padding: 4px 0; }
+.staff-role { padding: 5px 6px; line-height: 1.35; }
+.staff-person { margin: 2px 6px; }
+
+/* Urgentie is overal dezelfde taal, los van de clubkleur. Tekst blijft de betekenis dragen. */
+.signal-badge { display: inline-flex; align-items: center; gap: .25em; padding: .15em .5em; border: 1px solid currentColor; border-radius: 5px; font-size: .75rem; font-weight: 700; line-height: 1.5; vertical-align: middle; }
+.signal-urgent { color: #a32222; background: #fff0f0; }
+.signal-warn { color: #765000; background: #fff5d9; }
+.signal-info { color: var(--muted); background: var(--sunken); }
+.tabs .signal-badge, .subtabs .signal-badge { margin-left: .4em; }
+.domain-signals { padding: 12px 18px; }
+.domain-signals .worklist { margin: 0; }
+@media (prefers-color-scheme: dark) {
+  .signal-urgent { color: #ffbaba; background: #431d20; }
+  .signal-warn { color: #ffda8a; background: #3c3014; }
+}
+.worklist .signal-badge { align-self: flex-start; width: fit-content; }
+.domain-signals .worklist li { grid-template-columns: minmax(0, 1fr) auto; }
+.domain-signals .worklist .sub-line { color: var(--text); }
+.head-signal { font-size: .8rem; padding: 4px 8px; background: transparent; }
+.forecast-warning { padding: 8px 10px; border-left: 3px solid var(--mid); }

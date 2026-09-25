@@ -25,8 +25,9 @@ describe('filteren door aan te klikken', () => {
       if (c.role === rol) continue;
       expect(html.split('Kandidaten')[1]).to.not.contain(esc(c.name));
     }
-    expect(html, 'de chip met het kruisje staat bij de gefilterde lijst').to.contain('✕');
-    expect(html).to.contain(`${verwacht} van ${s.staffMarket.length}`);
+    // Een benoemde terugweg vervangt de oude kruisjeschip.
+    expect(html).to.contain('>Alle functies</button>');
+    expect(html).to.contain(`${verwacht} kandidaten`);
   });
 
   it('zonder filter zie je de beste kandidaat per functie, zonder kruisje', () => {

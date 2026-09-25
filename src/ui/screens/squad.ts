@@ -1,3 +1,4 @@
+import { deadlineBadge } from '../signals';
 import type { GameState, Player, Position } from '../../engine/types';
 import { formatWeek, isTransferWindow } from '../../engine/calendar';
 import { FORMATIONS, POSITIONS, currentBid, isCorePlayer, isPromising, lineupGap, marketValue, overall, selectLineup, teamStrength } from '../../engine/players';
@@ -257,7 +258,7 @@ export function squadScreen(s: GameState, open: Record<string, boolean> = { basi
     .map((o) => {
       const p = s.players.find((x) => x.id === o.playerId);
       if (!p) return '';
-      return `<li><strong>${esc(o.club)}</strong> biedt <strong>${euro(o.amount)}</strong> voor <button class="link-btn speler-link" data-action="goto-speler" data-id="${p.id}" data-tip="Spring naar ${esc(p.name)} in je kernlijst: zo zie je meteen wie hij is.">${esc(p.name)}</button> (marktwaarde ${euro(marketValue(p, s.marketIndex))}, nog ${weeks(o.expiresInWeeks)})
+      return `<li>${deadlineBadge(o.expiresInWeeks)} <strong>${esc(o.club)}</strong> biedt <strong>${euro(o.amount)}</strong> voor <button class="link-btn speler-link" data-action="goto-speler" data-id="${p.id}" data-tip="Spring naar ${esc(p.name)} in je kernlijst: zo zie je meteen wie hij is.">${esc(p.name)}</button> (marktwaarde ${euro(marketValue(p, s.marketIndex))}, nog ${weeks(o.expiresInWeeks)})
         <span class="btns"><button class="primary sm" data-action="accept-offer" data-id="${o.id}">Aanvaarden</button><button class="sm" data-action="decline-offer" data-id="${o.id}">Weigeren</button></span></li>`;
     })
     .join('');
@@ -284,7 +285,7 @@ export function squadScreen(s: GameState, open: Record<string, boolean> = { basi
   // Het veld met de kern ernaast is het werkblad; de tabellen met alle cijfers staan
   // eronder, ingeklapt, voor wie wil sorteren op loon, waarde of contract.
   return `${taskPicker(s, ['opstelling', 'spelersrollen'])}
-  ${offers ? `<section class="card attention"><h2>Biedingen op je spelers <span class="tag bad">${s.playerOffers.length}</span></h2><ul class="offers">${offers}</ul></section>` : ''}
+  ${offers ? `<section class="card attention"><h2>Biedingen op je spelers <span class="tag">${s.playerOffers.length}</span></h2><ul class="offers">${offers}</ul></section>` : ''}
   ${lineupBoard(s, pick, squadStats(s) + rolesCard(s))}
   <!-- Hier stond ook een kaarten-weergave van de kern, maar die toonde dezelfde spelers
        als het paneel naast het veld. Alleen de tabel bleef: die kan iets wat nergens
@@ -306,7 +307,7 @@ function offersList(s: GameState): string {
     .map((o) => {
       const p = s.players.find((x) => x.id === o.playerId);
       if (!p) return '';
-      return `<li><strong>${esc(o.club)}</strong> biedt <strong>${euro(o.amount)}</strong> voor <button class="link-btn speler-link" data-action="goto-speler" data-id="${p.id}" data-tip="Spring naar ${esc(p.name)} in je kernlijst: zo zie je meteen wie hij is.">${esc(p.name)}</button> (marktwaarde ${euro(marketValue(p, s.marketIndex))}, nog ${weeks(o.expiresInWeeks)})
+      return `<li>${deadlineBadge(o.expiresInWeeks)} <strong>${esc(o.club)}</strong> biedt <strong>${euro(o.amount)}</strong> voor <button class="link-btn speler-link" data-action="goto-speler" data-id="${p.id}" data-tip="Spring naar ${esc(p.name)} in je kernlijst: zo zie je meteen wie hij is.">${esc(p.name)}</button> (marktwaarde ${euro(marketValue(p, s.marketIndex))}, nog ${weeks(o.expiresInWeeks)})
         <span class="btns"><button class="primary sm" data-action="accept-offer" data-id="${o.id}">Aanvaarden</button><button class="sm" data-action="decline-offer" data-id="${o.id}">Weigeren</button></span></li>`;
     })
     .join('');

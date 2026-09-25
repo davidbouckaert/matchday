@@ -28,7 +28,7 @@ import { horecaScreen } from './screens/horeca';
 import { numbersScreen } from './screens/numbers';
 import { contractsScreen } from './screens/contracts';
 import { VERSION } from '../version';
-import { lineupGap, squadBlock } from '../engine/players';
+import { speelBlokkade, navigationSignal, domainSignals } from './signals';
 import { ANIM_MATCH_MS, ANIM_T, ANIM_WEEK_MS, animationOverlay, reportOverlay, type WeekRef } from './screens/report';
 import { fastForwardOverlay } from './screens/fastforward';
 import { canFastForward, playAhead as playAheadEngine, type FastForwardResult } from '../engine/fastforward';
@@ -301,21 +301,6 @@ function renderScreen(g: GameState): string {
 
 /** Waarom er nu geen week gespeeld kan worden (lege string = het kan wél). Eén bron voor
  *  de knop, de waarschuwingsbalk én de sneltoets — het scherm rekent nooit apart. */
-function speelBlokkade(g: GameState): string {
-  const gap = lineupGap(g);
-  const ZONES: Record<string, string> = { DOEL: 'doel', VERD: 'verdediging', MIDD: 'middenveld', AANV: 'aanval' };
-  const openLines = Object.entries(g.tactics.gaps ?? {})
-    .filter(([, n]) => (n ?? 0) > 0)
-    .map(([pos, n]) => `${n}× ${ZONES[pos] ?? pos}`);
-  return (
-    squadBlock(g) ??
-    (gap.available < 11
-      ? `Je kunt geen elf opstellen: nog maar ${gap.available} speelklare spelers. Ga naar Ploeg › Selectie en haal spelers bij Transfers.`
-      : openLines.length
-        ? `Je liet plaatsen open in je basiself (${openLines.join(', ')}). Duid bij Ploeg › Selectie zelf iemand aan met de ster, of klik op "Alles loslaten" om je trainer te laten aanvullen.`
-        : '')
-  );
-}
 
 function render(): void {
   dismissTooltips();
@@ -344,6 +329,7 @@ function render(): void {
   const group = groupOf(ui.screen);
   const weekLabel = nextWeekLabel(g);
   const blocked = speelBlokkade(g);
+  const signals = bureauStatus(g);
   const fastWeeks = blocked ? 0 : canFastForward(g);
   // onthouden waar de cursor stond: elke wijziging tekent het scherm opnieuw, en wie net
   // een prijs aan het intikken is mag daar niet uit geduwd worden
@@ -357,7 +343,7 @@ function render(): void {
     ${header(ui.report && ui.held ? ui.held : g)}
     <nav class="tabs">${GROUPS.filter((gr) => gr.id !== 'menu')
       .map((gr) => {
-        const warn = gr.id === 'ploeg' && blocked ? '<span class="badge" data-tip="Er is een probleem met je selectie">!</span>' : '';
+        const warn = navigationSignal(signals.acties.filter((t) => gr.id === 'overzicht' || gr.screens.some(([screen]) => screen === t.screen || !!t.relatedScreens?.includes(screen))));
         return `<button class="${gr.id === group.id ? 'on' : ''}" data-action="nav-group" data-id="${gr.id}">${gr.label}${warn}</button>`;
       })
       .join('')}
@@ -381,21 +367,21 @@ function render(): void {
         if (id === 'herstel' && g.infrastructure.recoveryLevel < 1) {
           return `<button class="locked" aria-disabled="true" ${tipAttr('Bouw een recuperatieruimte bij Club › Infrastructuur, en hier opent je medische cel: voeding, preventie en sneller herstel.', 'Nog vergrendeld')}>🔒 ${label}</button>`;
         }
-        return `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}</button>`;
+        return `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}${navigationSignal(signals.acties.filter((t) => t.screen === id || t.relatedScreens?.includes(id)))}</button>`;
       }).join('')}</nav>` : ''}
     </div>
     <main class="content">${
       inWinterBreak(g.week)
         ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de clubwinkel te laten draaien.</p></section>`
         : ''
-    }${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${tourReturnCard(g)}${renderScreen(g)}</main>
+    }${gameOver}${tourReturnCard(g)}${domainSignals(signals.acties, ui.screen)}${renderScreen(g)}</main>
     ${playBar(g, {
       weekLabel,
       blocked,
       fastWeeks,
       busy: ui.busy,
-      open: bureauStatus(g).count,
-      urgent: bureauStatus(g).urgent,
+      open: signals.count,
+      urgent: signals.urgent,
       tourLoop: ui.tourLoop && ui.screen !== 'overzicht' && !!tourChapter(g),
       tourStepComplete: !!guidedStep && guidedStep.chapter === g.tour?.chapter && tourStepDone(g, guidedStep.chapter, guidedStep.step),
       thuis: ui.screen === 'overzicht',
@@ -657,8 +643,18 @@ function applySorts(): void {
     headers.forEach((th, i) => {
       if (th.dataset.nosort !== undefined) return;
       th.classList.add('sortable');
-      th.dataset.action = 'sort';
-      th.dataset.id = `${id}:${i}`;
+      if (table.hasAttribute('data-accessible-sort')) {
+        const button = document.createElement('button');
+        button.className = 'table-sort-button';
+        button.textContent = th.textContent;
+        button.dataset.action = 'sort';
+        button.dataset.id = `${id}:${i}`;
+        th.replaceChildren(button);
+        th.setAttribute('aria-sort', ui.sorts[id]?.col === i ? (ui.sorts[id].dir === 1 ? 'ascending' : 'descending') : 'none');
+      } else {
+        th.dataset.action = 'sort';
+        th.dataset.id = `${id}:${i}`;
+      }
     });
     const sort = ui.sorts[id];
     if (!sort) return;
@@ -1074,8 +1070,18 @@ const handlers: Record<string, Handler> = {
   'transfer-filter': (id) => {
     ui.transferFilter = ui.transferFilter === id ? null : (id as Position);
   },
-  hire: gameAction(actions.hireStaff),
-  'hire-replace': gameAction(actions.replaceStaff),
+  hire: gameAction((g, id) => {
+    const role = g.staffMarket.find((m) => m.id === id)?.role;
+    const result = actions.hireStaff(g, id);
+    if (result.ok && role) { ui.staffFilter = role; focusAfterRender = '#staff-context'; }
+    return result;
+  }),
+  'hire-replace': gameAction((g, id) => {
+    const role = g.staffMarket.find((m) => m.id === id)?.role;
+    const result = actions.replaceStaff(g, id);
+    if (result.ok && role) { ui.staffFilter = role; focusAfterRender = '#staff-context'; }
+    return result;
+  }),
   fire: gameAction(actions.fireStaff),
   course: gameAction((g, id) => actions.startCourse(g, id, 'diploma')),
   bijscholing: gameAction((g, id) => actions.startCourse(g, id, 'bijscholing')),
@@ -1229,6 +1235,11 @@ const changeHandlers: Record<string, (g: GameState, value: string, id: string) =
 root.addEventListener('change', async (e) => {
   const el = e.target as HTMLInputElement;
   const key = el.dataset?.change;
+  if (key === 'staff-role') {
+    ui.staffFilter = el.value ? el.value as StaffRole : null;
+    render();
+    return;
+  }
   if (key && changeHandlers[key] && ui.game) {
     const tourVoor = tourFlags(ui.game);
     const result = changeHandlers[key](ui.game, el.value, el.dataset.id ?? '');

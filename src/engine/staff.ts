@@ -53,3 +53,10 @@ export function hasDiploma(role: StaffRole): boolean {
 export function hasStaff(state: GameState, role: StaffRole): boolean {
   return state.staff.some((s) => s.role === role);
 }
+
+/** Bestaande personeelsvergoedingen, gedeeld door boeking en vergelijking. */
+export const staffSigningFee = (member: Staff): number => member.wage * 2;
+export const staffPayoff = (member: Staff): number => member.wage * 8;
+export function staffChangeCost(candidate: Staff, current?: Staff): number {
+  return staffSigningFee(candidate) + (current ? staffPayoff(current) : 0);
+}

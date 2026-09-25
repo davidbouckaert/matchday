@@ -55,16 +55,17 @@ describe('personeel vervangen', () => {
   it('de kandidatenlijst zegt vooraf wat kan: vrij, bezet of op slot', () => {
     const s = readyGame('heidebeke');
     const html = staffScreen(s, null);
-    expect(html).to.contain('functie vrij');
-    expect(html).to.contain('bezet: ');
+    expect(html).to.contain('Vacature');
+    expect(html).to.contain('Nu: ');
     expect(html).to.contain('Vervang ');
-    expect(html).to.contain('op slot');
+    expect(html).to.contain('disabled aria-describedby=');
   });
 
   it('de aanwerf-knop staat alleen bij vrije functies: "geen plaats" bestaat niet meer', () => {
     const s = readyGame('heidebeke');
     const html = staffScreen(s, null);
-    const aanwerfKnoppen = (html.match(/data-action="hire"(?!-)/g) ?? []).length;
+    // Vergrendelde functies houden nu een uitgeschakelde knop met zichtbare reden.
+    const aanwerfKnoppen = (html.match(/<button[^>]*data-action="hire"[^>]*>/g) ?? []).filter((button) => !button.includes('disabled')).length;
     // het overzicht toont de beste kandidaat per functie: één knop per vrije, open functie
     const vrijeRollen = new Set(s.staffMarket.filter((c) => !s.staff.some((x) => x.role === c.role) && !staffLock(s, c.role)).map((c) => c.role));
     expect(aanwerfKnoppen).to.equal(vrijeRollen.size);
