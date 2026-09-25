@@ -31,7 +31,8 @@ describe('rondleiding (tour)', () => {
 
   it('schuift een blijven-liggen hoofdstuk na drie weken zachtjes door', () => {
     let s = readyGame();
-    // niets doen: hoofdstuk 1 blijft onaf (spelplan-stap vinkt pas af na week 8)
+    // niets doen: hoofdstuk 1 blijft onaf (spelplan-stap vinkt pas af bij een bezoek aan
+    // het scherm, en playWeeks simuleert geen schermbezoeken)
     expect(tourChapter(s)!.nr).to.equal(1);
     s = playWeeks(s, TOUR_PATIENCE);
     expect(tourChapter(s)!.nr).to.equal(1); // drie weken geduld
@@ -59,6 +60,18 @@ describe('rondleiding (tour)', () => {
     expect(tourMarkSeen(s, 'financien')).to.equal(false); // geen kijk-stap → niet bijhouden
     const prijzenStap = TOUR_CHAPTERS.flatMap((c) => c.steps).find((st) => st.screen === 'prijzen')!;
     expect(prijzenStap.done(s)).to.equal(true);
+  });
+
+  // Het beginplan (balbezit) staat al gekozen op dag één, dus "kijk maar" vinkte deze stap
+  // nooit af — je moest eerst zelf van plan wisselen. Sindsdien is een bezoek genoeg, net als
+  // bij de andere kijk-stappen: de bedoeling is dat je het scoutingrapport en de matchup-tabel
+  // een keer bekeken hebt, niet dat je verplicht van tactiek wisselt.
+  it('vinkt de spelplan-stap af bij een bezoek, ook zonder van plan te wisselen', () => {
+    const s = readyGame();
+    const stap = TOUR_CHAPTERS[0].steps[1];
+    expect(stap.done(s), 'nog niet bezocht, beginplan staat nog').to.equal(false);
+    tourMarkSeen(s, 'strategie');
+    expect(stap.done(s)).to.equal(true);
   });
 
   it('blijft weg wie "ik ken het spel al" koos, ook na weken spelen', () => {
