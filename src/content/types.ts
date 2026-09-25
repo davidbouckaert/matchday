@@ -57,7 +57,8 @@ export type Vlag =
   | 'basisonderhoud' // je onderhoudsniveau staat op 'basis'
   | 'investeerderActief'
   | 'gepromoveerd' // vorig seizoen ging omhoog
-  | 'gedegradeerd';
+  | 'gedegradeerd'
+  | 'onderaan'; // bij de laatste drie in de rangschikking, ongeacht de grootte van de reeks
 
 /** Meetbare grootheden uit de spelstand. */
 export type Meting =

@@ -9,6 +9,8 @@ import { createRng } from '../src/engine/rng';
 import { newTestGame, playWeeks } from './helpers';
 import { chooseAmbition } from '../src/engine/opening';
 import { advanceWeek } from '../src/engine/turn';
+import { OWN_TEAM_ID } from '../src/engine/league';
+import type { GameState } from '../src/engine/types';
 
 const ctxOf = worldContext;
 
@@ -96,6 +98,27 @@ describe('Contentdata: voorwaarden', () => {
     expect(metric(s, 'onderhoudsniveau')).to.equal(0);
     s.infrastructure.maintenance = 'premium';
     expect(metric(s, 'onderhoudsniveau')).to.equal(2);
+  });
+
+  /** Zet jouw club met de hand op een bepaalde plaats door de punten te herschikken. */
+  function putAt(s: GameState, position: number): GameState {
+    const others = s.league.table.filter((r) => r.teamId !== OWN_TEAM_ID);
+    const ours = s.league.table.find((r) => r.teamId === OWN_TEAM_ID)!;
+    ours.points = 100 - position;
+    others.forEach((r, i) => {
+      r.points = i < position - 1 ? 100 - i : 100 - position - 1 - i;
+    });
+    return s;
+  }
+
+  it('noemt alleen de laatste drie plaatsen "onderaan", niet de onderste helft', () => {
+    // regressie: een speler op plaats 11/16 kreeg een gebeurtenis die beweerde dat hij
+    // laatste stond ("Je staat onderaan") — 11e van 16 is de onderste helft, niet de bodem
+    const s = newTestGame();
+    const ctx = ctxOf(s);
+    expect(check(putAt(s, 11), ctx, { vlag: 'onderaan' }), 'plaats 11 van 16').to.equal(false);
+    expect(check(putAt(s, 13), ctx, { vlag: 'onderaan' }), 'plaats 13 van 16').to.equal(false);
+    for (const p of [14, 15, 16]) expect(check(putAt(s, p), ctx, { vlag: 'onderaan' }), `plaats ${p} van 16`).to.equal(true);
   });
 });
 

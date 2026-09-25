@@ -112,6 +112,8 @@ function flag(state: GameState, ctx: WorldCtx, name: Vlag): boolean {
       return lastResult(state) === 'promotie' || lastResult(state) === 'kampioen';
     case 'gedegradeerd':
       return lastResult(state) === 'degradatie';
+    case 'onderaan':
+      return ownPosition(state.league) > state.league.table.length - 3;
     default:
       return false;
   }
