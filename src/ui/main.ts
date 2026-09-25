@@ -379,7 +379,14 @@ function render(): void {
       ui.highlight = '';
     }
   }
-  if (ui.tourAim) root.querySelector(`[data-tour-doel="${ui.tourAim}"]`)?.classList.add('tour-doel');
+  if (ui.tourAim) {
+    const doel = root.querySelector(`[data-tour-doel="${ui.tourAim}"]`);
+    doel?.classList.add('tour-doel');
+    // pas scrollen als dit een nieuw doel is — anders vecht dit elke hertekening
+    // tegen het scrollen dat de speler zelf net deed
+    if (doel && ui.tourAim !== getekendTourAim) doel.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
+  }
+  getekendTourAim = ui.tourAim;
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
     if (btn) {
@@ -452,6 +459,10 @@ let revealedFor = '';
 // het scherm dat nu getekend staat: wissel je van scherm, dan begin je bovenaan —
 // anders landde je (bijvoorbeeld via de Bureau-knop) midden in de vorige scrollpositie
 let getekendScherm: Screen | null = null;
+
+// het rondleidingsdoel dat al in beeld gescrold is; zo scrolt elke hertekening niet
+// opnieuw naar hetzelfde element terwijl de speler intussen zelf verder scrolde
+let getekendTourAim: string | null = null;
 
 /**
  * Nieuws en "in afwachting" rollen regel per regel binnen (niet letter per letter),
