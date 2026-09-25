@@ -23,9 +23,9 @@ function row(s: GameState, p: Player, locked: boolean, maxBod: number): string {
   const suggestion = Math.round(ask / 5) * 5;
   const { chance, morale } = wageOfferEffect(s, p, suggestion);
   const weg = wantsAway(s, p);
-  return `<tr class="${seasonsLeft <= 0 ? 'expiring' : ''}">
+  return `<tr data-speler="${p.id}" class="${seasonsLeft <= 0 ? 'expiring' : ''}">
     <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-    <td><strong>${esc(p.name)}</strong>${isCorePlayer(s, p) ? ` <span class="core" ${tip('Kernspeler: bij je beste elf of een groot talent. Hem kwijtspelen doet pijn.')}>★</span>` : ''}${
+    <td><strong>${esc(p.name)}</strong><button class="tablet-inspect" data-action="workflow-open" data-id="contract:${p.id}" aria-label="Contract van ${esc(p.name)} bekijken">Contract bekijken</button>${isCorePlayer(s, p) ? ` <span class="core" ${tip('Kernspeler: bij je beste elf of een groot talent. Hem kwijtspelen doet pijn.')}>★</span>` : ''}${
       weg ? ` <span class="tag bad" ${tip('Hij is uitgegroeid tot een speler voor een hogere reeks en wil die stap zetten: hij verlengt niet, tegen geen enkel loon. Verkoop hem, of word zelf de club die bij hem past.')}>wil hogerop</span>` : ''
     }
       <br/><span class="muted small">${p.age} jaar · ${esc(p.trait)} · moraal ${Math.round(p.morale)}</span></td>

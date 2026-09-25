@@ -1,3 +1,4 @@
+import { licenceLinks } from './licence-context';
 import { licenceProblems } from '../engine/turn';
 import { DIVISIONS } from '../engine/data/divisions';
 import { OWN_TEAM_ID, ownPosition, zoneAt } from '../engine/league';
@@ -65,7 +66,7 @@ export function todos(s: GameState): Todo[] {
     const problems = audit ? currentLicence : promotionLicence;
     add('warn', audit ? 'Je licentie is nog niet in orde' : 'Je promotielicentie is nog niet in orde', 'competitie', 'Stand en tucht',
       `Ontbreekt: ${problems.join(', ')}. ${audit ? `Controle in week ${LICENCE_AUDIT_WEEK}: tekortkomingen leveren een boete op.` : `Beoordeling in week ${SEASON_END_WEEK}: zonder licentie gaat sportieve promotie niet door.`} Regel personeel bij Personeel/Opleiding en accommodatie bij Infrastructuur.`, 'deadline');
-    Object.assign(list.at(-1)!, { remaining, label: remaining <= 1 ? 'Deze week' : 'Let op', relatedScreens: [...(problems.some((p) => /hoofdtrainer|afgevaardigde/.test(p)) ? ['staff'] : []), ...(problems.some((p) => /hoofdtrainer/.test(p)) && s.staff.some((m) => m.role === 'hoofdtrainer') ? ['opleiding'] : []), ...(problems.some((p) => /verlichting|plaatsen/.test(p)) ? ['infrastructuur'] : [])] });
+    Object.assign(list.at(-1)!, { remaining, label: remaining <= 1 ? 'Deze week' : 'Let op', relatedScreens: licenceLinks(s, problems).map((link) => link.screen) });
   }
   for (const r of s.requests.filter((r) => r.kind !== 'subsidie')) add('info', r.label, 'doelen', 'Logboek', `Antwoord over ${weeks(r.weeksLeft)}.`, 'wachten');
   if (isTransferWindow(s.week)) add('info', 'De transferperiode is open', 'transfers', 'Transfers', 'Alleen nu kun je kopen, verkopen of uitlenen.', 'informatie');

@@ -16,6 +16,29 @@ npm run build      # productieversie in dist/
 
 Sneltoets in het spel: **spatie** = volgende week.
 
+## Tabletworkflows en taakcontinuïteit — Slice 3
+
+Vanaf baseline `cbe6929` (0.84.3) houden desktopgebruikers de directe opstellingsactie
+en rijke personeels-, contract- en transfertabellen. Tot 1100 px openen de vier
+kernhandelingen een taakpaneel: bron, kandidaat/voorstel, bestaande gevolgen,
+bevestiging en blijvend resultaat. In portret krijgt dit paneel bijna de volledige
+hoogte. Vergelijken werkt op een kopie; bevestigen gebruikt de bestaande engineactie.
+Er zijn geen nieuwe spelregels of velden in de opgeslagen speelstand.
+
+Een inhoudelijke omweg bewaart één tijdelijke oorsprong met scherm, speler waar
+relevant, focus en scrollpositie. De expliciete terugknop herstelt die taak; globale
+navigatie, een nieuwe week, verdwenen speler of herladen wist de oorsprong. De
+bestaande subsidie/rapport-terugkeer blijft apart vanwege de bewaarde rapportfase.
+De licentieroute toont alleen relevante herstelplekken en blijft een bouwvoorwaarde
+als ontbrekend tonen zolang het project niet voltooid is. Urgentie blijft afkomstig
+uit de gezamenlijke projectie in `signals.ts`.
+
+Gemeten: desktophandelingen op 1440×900; aanvullend 1280×800; de vier kernhandelingen
+op 1024×768 en 768×1024; smartphonesanity op 390×844. Tests vergelijken de volledige
+engine-uitkomst tussen beide actie-ingangen en controleren dat inspectie geen
+speltoestand/RNG verandert. Chrome-viewportcontroles bewijzen geen fysieke iPad-
+acceptatie: Safari, schermtoetsenbord, aanraking en VoiceOver blijven eigenaarstests.
+
 ## Subsidiedossier en Bureau — implementatie vanaf v0.84.0
 
 Slice 1 bewaart subsidieaanvragen en antwoorden als getypeerde dossiers. Saveversie 41

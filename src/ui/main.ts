@@ -1,3 +1,6 @@
+import { licenceTaskContext } from './licence-context';
+import { taskDetour, validOrigin, type TaskOrigin } from './task-context';
+import { workflowPanel, workflowValid, performWorkflow, replaceSquad, contractProposal, type Workflow } from './workflow-panel';
 import './style.css';
 import { attachBrowserLog } from '../log/browser';
 import type { Formation, GamePlan, GameState, Mentality, Position, SponsorDeal, StaffRole, TaskId, TrainingFocus } from '../engine/types';
@@ -191,6 +194,43 @@ let previousModal = false;
 let restoringReport = false;
 let returnScroll: number | null = null;
 
+let restoreLicence = false;
+let taskOrigin: TaskOrigin | null = null;
+let workflow: Workflow | null = null;
+const tabletWorkflow = () => window.matchMedia('(max-width: 1100px)').matches;
+
+function beginDetour(entity?: string): void {
+  if (!ui.game || subsidieReturn) return;
+  const label = ui.screen === 'competitie' ? 'Competitie' : GROUPS.flatMap((g) => g.screens).find(([screen]) => screen === ui.screen)?.[1] ?? 'overzicht';
+  taskOrigin = taskDetour(taskOrigin, { screen: ui.screen, label: entity ? 'speler' : label, entity,
+    licenceOpen: root.querySelector<HTMLDetailsElement>('.competition-licence')?.open,
+    focus: focusSelector(document.activeElement), scroll: window.scrollY, week: ui.game.week, season: ui.game.season });
+}
+
+function openWorkflow(kind: Workflow['kind'], id: string): void {
+  if (!ui.game) return;
+  const p = ui.game.players.find((p) => p.id === id);
+  workflow = { kind, id, scroll: window.scrollY, focus: focusSelector(document.activeElement),
+    week: ui.game.week, season: ui.game.season,
+    wage: kind === 'contract' && p ? String(actions.askingWage(ui.game, p)) : undefined };
+}
+
+function measureWorkflowViewport(): void {
+  const viewport = window.visualViewport;
+  document.documentElement.style.setProperty('--workflow-viewport', `${viewport?.height ?? window.innerHeight}px`);
+  document.documentElement.style.setProperty('--workflow-top', `${viewport?.offsetTop ?? 0}px`);
+}
+window.visualViewport?.addEventListener('resize', measureWorkflowViewport);
+window.visualViewport?.addEventListener('scroll', measureWorkflowViewport);
+
+function closeWorkflow(): void {
+  if (!workflow) return;
+  returnScroll = workflow.scroll;
+  focusAfterRender = workflow.focus;
+  workflow = null;
+  ui.pitchPick = null;
+}
+
 function focusSelector(el: Element | null): string | null {
   if (!(el instanceof HTMLElement)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
@@ -304,6 +344,10 @@ function renderScreen(g: GameState): string {
 
 function render(): void {
   dismissTooltips();
+  if (!validOrigin(taskOrigin, ui.game)) taskOrigin = null;
+  if (workflow && (!ui.game || !workflowValid(ui.game, workflow))) closeWorkflow();
+  const panelScroll = focusAfterRender === '.workflow-result' ? 0 : root.querySelector('.workflow-body')?.scrollTop ?? 0;
+  measureWorkflowViewport();
   if (subsidieReturn && ui.game && (subsidieReturn.week !== ui.game.week || subsidieReturn.season !== ui.game.season)) subsidieReturn = null;
   if (pendingSubsidie !== null && ui.moment === 'dicht') {
     openSubsidie(pendingSubsidie);
@@ -374,7 +418,7 @@ function render(): void {
       inWinterBreak(g.week)
         ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de clubwinkel te laten draaien.</p></section>`
         : ''
-    }${gameOver}${tourReturnCard(g)}${domainSignals(signals.acties, ui.screen)}${renderScreen(g)}</main>
+    }${gameOver}${taskOrigin ? `<section class="task-return"><button data-action="task-return">← Terug naar ${esc(taskOrigin.label)}</button><span>Je bekijkt dit vanuit ${esc(taskOrigin.label)}.</span></section>` : ''}${taskOrigin?.screen === 'competitie' && ['staff', 'opleiding', 'infrastructuur'].includes(ui.screen) ? licenceTaskContext(g) : ''}${tourReturnCard(g)}${domainSignals(signals.acties, ui.screen)}${renderScreen(g)}</main>
     ${playBar(g, {
       weekLabel,
       blocked,
@@ -409,7 +453,9 @@ function render(): void {
           </div>`
         : ''
     }
+    ${workflow ? workflowPanel(g, workflow) : ''}
     ${toast}`;
+  if (restoreLicence) { const detail = root.querySelector<HTMLDetailsElement>('.competition-licence'); if (detail) detail.open = true; restoreLicence = false; }
   restoreFocus(focused);
   // Staat er een venster open, dan zit de tooltip rechtsonder precies voor de knop van dat
   // venster. Hij wijkt dan uit naar links; de stylesheet regelt de rest.
@@ -442,7 +488,7 @@ function render(): void {
   getekendTourAim = ui.tourAim;
   // render vervangt alle nodes: bewaar identiteit, nooit een oude nodeverwijzing.
   const overlay = Array.from(root.querySelectorAll<HTMLElement>('.overlay, .moment-overlay')).at(-1) ?? null;
-  const modal = overlay?.querySelector<HTMLElement>('.confirm-card, .report-card, .moment-card, .opening-card');
+  const modal = overlay?.querySelector<HTMLElement>('.confirm-card, .report-card, .moment-card, .opening-card, .workflow-panel');
   for (const child of Array.from(root.children)) {
     if (child instanceof HTMLElement) child.inert = !!overlay && !child.contains(overlay) && !child.matches('.overlay, .moment-overlay');
   }
@@ -459,8 +505,8 @@ function render(): void {
     (same ?? area).focus({ preventScroll: true });
   } else {
     const selector = focusAfterRender ?? (previousModal ? modalReturnFocus : oldFocus);
-    const target = selector ? root.querySelector<HTMLElement>(selector) : null;
-    if (target && focusAfterRender && !target.matches('button, input, select, a, summary, [tabindex]')) target.tabIndex = -1;
+    const target = (selector ? root.querySelector<HTMLElement>(selector) : null) ?? (previousModal ? root.querySelector<HTMLElement>('main h2') : null);
+    if (target && (focusAfterRender || previousModal) && !target.matches('button, input, select, a, summary, [tabindex]')) target.tabIndex = -1;
     target?.focus({ preventScroll: true });
     if (focusAfterRender && target) target.scrollIntoView({ block: 'start', behavior: 'instant' });
     focusAfterRender = null;
@@ -472,6 +518,8 @@ function render(): void {
     returnScroll = null;
   }
   if (overlay) dismissTooltips();
+  const panelBody = root.querySelector('.workflow-body');
+  if (panelBody) panelBody.scrollTop = panelScroll;
   previousModal = !!overlay;
   restoringReport = false;
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
@@ -836,6 +884,28 @@ function gameAction(fn: (g: GameState, id: string) => ActionResult): Handler {
 }
 
 const handlers: Record<string, Handler> = {
+  'workflow-open': (id) => { const [kind, ...parts] = id.split(':'); openWorkflow(kind as Workflow['kind'], parts.join(':')); },
+  'workflow-close': closeWorkflow,
+  'workflow-confirm': () => {
+    if (!ui.game || !workflow || workflow.done) return;
+    const confirm = root.querySelector<HTMLButtonElement>('[data-action="workflow-confirm"]');
+    if (confirm) confirm.disabled = true; // Geen tweede bod terwijl de eerste uitkomst wordt opgeslagen.
+    if (workflow.kind === 'contract') workflow.wage = root.querySelector<HTMLInputElement>('#workflow-wage')?.value ?? workflow.wage;
+    const result = performWorkflow(ui.game, workflow);
+    workflow.result = result;
+    workflow.done = result.ok || !workflowValid(ui.game, workflow);
+    focusAfterRender = '.workflow-result';
+    return result;
+  },
+  'task-return': () => {
+    if (!validOrigin(taskOrigin, ui.game)) { taskOrigin = null; return; }
+    const origin = taskOrigin; taskOrigin = null;
+    ui.screen = origin.screen as Screen;
+    ui.lastScreen[groupOf(ui.screen).id] = ui.screen;
+    restoreLicence = !!origin.licenceOpen;
+    returnScroll = origin.scroll;
+    focusAfterRender = origin.focus;
+  },
   // setup
   'draft-skin': (id) => void (ui.draft.skin = Number(id)),
   'draft-hair': (id) => void (ui.draft.hair = Number(id)),
@@ -877,6 +947,7 @@ const handlers: Record<string, Handler> = {
     markTourSeen();
   },
   'nav-group': (id) => {
+    taskOrigin = null; workflow = null; ui.pitchPick = null;
     ui.menuOpen = false;
     const gr = GROUPS.find((x) => x.id === id)!;
     ui.screen = ui.lastScreen[gr.id] ?? gr.screens[0][0];
@@ -975,7 +1046,7 @@ const handlers: Record<string, Handler> = {
   'stats-view': (id) => void (ui.statsView = id as 'seizoen' | 'week'),
   'toggle-menu': () => void (ui.menuOpen = !ui.menuOpen),
   // het veld: eerst wie eruit moet aanklikken, dan wie erin komt
-  'pitch-pick': (id) => void (ui.pitchPick = ui.pitchPick === id ? null : id),
+  'pitch-pick': (id) => { if (tabletWorkflow()) openWorkflow('squad', id); else ui.pitchPick = ui.pitchPick === id ? null : id; },
   'pitch-cancel': () => void (ui.pitchPick = null),
 
   // spel
@@ -1028,12 +1099,15 @@ const handlers: Record<string, Handler> = {
     return { ok: true, message: `Bijgewerkt: alles tot en met ${VERSION} staat als gezien.` };
   },
   'goto-contracts': (id) => {
+    beginDetour(id);
     ui.screen = 'contracten';
     ui.lastScreen.ploeg = 'contracten';
     ui.highlight = id;
+    if (tabletWorkflow()) openWorkflow('contract', id);
   },
   // vanuit een bod (of waar ook) rechtstreeks naar de speler in je kernlijst springen
   'goto-speler': (id) => {
+    beginDetour();
     ui.screen = 'ploeg';
     ui.lastScreen.ploeg = 'ploeg';
     ui.highlight = id;
@@ -1106,8 +1180,7 @@ const handlers: Record<string, Handler> = {
     ui.pitchPick = null;
     if (!outId) return { ok: false, message: 'Klik eerst wie eruit moet.' };
     // een lege plaats: er gaat niemand uit, je vult ze gewoon op
-    if (outId.startsWith('leeg:')) return actions.toggleStarter(g, inId);
-    return actions.swapInLineup(g, outId, inId);
+    return replaceSquad(g, outId, inId);
   }),
   approach: gameAction(actions.approachProspect),
   network: gameAction((g) => actions.networkEvening(g)),
@@ -1154,7 +1227,7 @@ const handlers: Record<string, Handler> = {
   'new-game': () => void (ui.confirmNewGame = true),
   'new-game-confirmed': async () => {
     await indexedDbStore.remove(SLOT);
-    ui.game = null;
+    ui.game = null; taskOrigin = null; workflow = null;
     guidedStep = null;
     ui.tourLoop = false;
     selectedSubsidie = undefined;
@@ -1167,7 +1240,11 @@ const handlers: Record<string, Handler> = {
 
 root.addEventListener('click', async (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
-  if (!target) return;
+  if (!target || target.matches(':disabled, [aria-disabled="true"]')) return;
+  if (target.dataset.action === 'nav') {
+    if (target.closest('.bars') || target.dataset.id === 'overzicht') taskOrigin = null;
+    else if (target.dataset.id !== ui.screen && !ui.tourLoop) beginDetour();
+  }
   // Ingrijpende knoppen — stopzetten, ontslaan, wegsturen, verkopen — openen eerst een
   // kleine bevestigingspopup met de vraag en de gevolgen. Dat is het patroon dat iedereen
   // kent; een dubbelklik-op-dezelfde-knop bleek dat niet.
@@ -1192,7 +1269,7 @@ root.addEventListener('click', async (e) => {
   if (result) {
     // een feesttoast laten we met rust; een gewone toast krijgt de vooruitgang erbij
     showToast(melding && result.ok && !result.viering ? { ...result, message: `${result.message} ${melding}` } : result);
-    if (result.ok && ui.game) await persist();
+    if (ui.game && (result.ok || target.dataset.action === 'workflow-confirm')) await persist();
   } else if (melding) {
     showToast({ ok: true, message: melding });
   }
@@ -1207,8 +1284,20 @@ root.addEventListener('toggle', (e) => {
 
 root.addEventListener('input', (e) => {
   const el = e.target as HTMLInputElement;
+  if (workflow && ui.game && el.dataset.workflowField === 'wage') {
+    workflow.wage = el.value;
+    const explanation = root.querySelector('#workflow-proposal');
+    if (explanation) explanation.textContent = contractProposal(ui.game, workflow.id, el.value);
+  }
   if (el.id === 'draft-name') ui.draft.name = el.value; // geen render: anders verlies je de cursor
   if (el.id === 'draft-clubname') ui.draft.clubName = el.value;
+});
+
+root.addEventListener('change', (e) => {
+  const el = e.target as HTMLSelectElement;
+  if (workflow && el.dataset.workflowField === 'candidate') {
+    workflow.candidate = el.value; workflow.result = undefined; render();
+  }
 });
 
 // Keuzelijsten (select) met data-change
@@ -1262,6 +1351,7 @@ root.addEventListener('change', async (e) => {
       returnScroll = null;
       await persist();
       showToast({ ok: true, message: 'Back-up geladen.' });
+      taskOrigin = null; workflow = null;
       ui.screen = 'overzicht';
     } catch (err) {
       showToast({ ok: false, message: (err as Error).message });
@@ -1297,6 +1387,10 @@ document.addEventListener('keydown', (e) => {
     }
     return;
   }
+  if (workflow) {
+    if (e.key === 'Escape') { e.preventDefault(); closeWorkflow(); render(); }
+    return;
+  }
   if ((e.target as HTMLElement).closest('input, textarea, select')) return;
   if (e.key === 'Escape' && ui.confirmAction) {
     ui.confirmAction = null;
@@ -1310,6 +1404,7 @@ document.addEventListener('keydown', (e) => {
       ui.fastForward = null;
       if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
     }
+    taskOrigin = null;
     ui.screen = 'overzicht';
     render();
     return;
@@ -1414,7 +1509,7 @@ document.addEventListener('keydown', (e) => {
   try {
     ui.game = await indexedDbStore.load(SLOT);
   } catch {
-    ui.game = null;
+    ui.game = null; taskOrigin = null; workflow = null;
     guidedStep = null;
     ui.tourLoop = false;
     selectedSubsidie = undefined;

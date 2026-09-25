@@ -2334,3 +2334,50 @@ html { -webkit-tap-highlight-color: transparent; }
 .domain-signals .worklist .sub-line { color: var(--text); }
 .head-signal { font-size: .8rem; padding: 4px 8px; background: transparent; }
 .forecast-warning { padding: 8px 10px; border-left: 3px solid var(--mid); }
+
+/* Een taakpaneel is een tabletinteractie; desktop houdt de bestaande directe tabelacties. */
+.tablet-inspect { display: none; }
+.task-return { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 0 0 16px; }
+.task-return span { color: var(--muted); font-size: .85rem; }
+.workflow-overlay { display: flex; justify-content: flex-end; align-items: stretch; padding: 16px; z-index: 1000; }
+.workflow-panel { width: min(680px, 100%); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; background: var(--card); color: var(--text); border-radius: 14px; box-shadow: var(--shadow); min-height: 0; }
+.workflow-panel > header, .workflow-panel > footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; flex-shrink: 0; }
+.workflow-panel > header { border-bottom: 1px solid var(--line); }
+.workflow-panel h2 { margin: 0; font-size: 1.2rem; }
+.workflow-panel > footer { border-top: 1px solid var(--line); padding-bottom: max(16px, env(safe-area-inset-bottom)); flex-wrap: wrap; }
+.workflow-body { overflow-y: auto; overscroll-behavior: contain; padding: 20px; min-height: 0; }
+.workflow-panel button, .workflow-panel select, .workflow-panel input { min-height: 44px; }
+.workflow-panel label { display: grid; gap: 8px; margin: 16px 0; }
+.workflow-panel input, .workflow-panel select { width: 100%; min-width: 0; font-size: 1rem; }
+.workflow-source { border-left: 3px solid var(--accent); background: var(--sunken); padding: 12px; line-height: 1.5; }
+.workflow-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.workflow-facts dt { color: var(--muted); font-size: .85rem; }
+.workflow-facts dd { margin: 4px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+.workflow-result { padding: 12px; border-left: 3px solid var(--good); background: var(--sunken); }
+.workflow-error { border-left: 3px solid var(--bad); padding: 12px; }
+@media (max-width: 1100px) {
+  .tablet-inspect { display: block; min-height: 44px; margin-top: 6px; }
+  .staff-candidates th:nth-child(3), .staff-candidates td:nth-child(3),
+  .staff-candidates th:nth-child(5), .staff-candidates td:nth-child(5),
+  .contract-tabel:not(.huur-tabel) th:nth-child(3), .contract-tabel:not(.huur-tabel) td:nth-child(3),
+  .contract-tabel:not(.huur-tabel) th:nth-child(6), .contract-tabel:not(.huur-tabel) td:nth-child(6),
+  .contract-tabel:not(.huur-tabel) th:nth-child(7), .contract-tabel:not(.huur-tabel) td:nth-child(7),
+  [data-sort-id="transfers"] th:nth-child(3), [data-sort-id="transfers"] td:nth-child(3),
+  [data-sort-id="transfers"] th:nth-child(5), [data-sort-id="transfers"] td:nth-child(5),
+  [data-sort-id="transfers"] th:nth-child(n+8), [data-sort-id="transfers"] td:nth-child(n+8),
+  [data-sort-id="huur"] th:nth-child(3), [data-sort-id="huur"] td:nth-child(3),
+  [data-sort-id="huur"] th:nth-child(n+7), [data-sort-id="huur"] td:nth-child(n+7) { display: none; }
+  .staff-candidates { table-layout: auto; }
+  .staff-candidates th:first-child { width: auto; }
+  .task-return button { min-height: 44px; }
+}
+@media (max-width: 800px) {
+  .workflow-overlay { padding: max(8px, env(safe-area-inset-top)) 8px 0; }
+  .workflow-panel { width: 100%; max-height: calc(100dvh - max(8px, env(safe-area-inset-top))); border-radius: 14px 14px 0 0; }
+}
+@media (max-width: 480px) { .workflow-facts { grid-template-columns: 1fr; } }
+.workflow-panel h2 { color: var(--text); text-transform: none; letter-spacing: normal; }
+.workflow-body { flex: 1; }
+.workflow-overlay { top: var(--workflow-top, 0px); bottom: auto; height: var(--workflow-viewport, 100dvh); box-sizing: border-box; }
+.workflow-panel { max-height: calc(var(--workflow-viewport, 100dvh) - 32px); }
+@media (max-width: 800px) { .workflow-panel { max-height: calc(var(--workflow-viewport, 100dvh) - max(8px, env(safe-area-inset-top))); } }

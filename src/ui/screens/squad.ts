@@ -427,7 +427,7 @@ export function transfersScreen(s: GameState, filter: Position | null = null): s
       const wil = transferWillingness(s, p);
       return `<tr>
       <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-      <td><strong>${esc(p.name)}</strong>${promisingTag(p)}<br/><span class="muted small">${esc(p.trait)}</span></td>
+      <td><strong>${esc(p.name)}</strong><button class="tablet-inspect" data-action="workflow-open" data-id="buy:${p.id}" aria-label="Bekijk ${esc(p.name)}">Bekijken</button>${promisingTag(p)}<br/><span class="muted small">${esc(p.trait)}</span></td>
       <td>${p.age}</td>
       <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
       <td class="small" data-v="${p.technique}" ${tipAttr(`Techniek ${Math.round(p.technique)}, fysiek ${Math.round(p.physical)}.`, p.name)}>${Math.round(p.technique)} / ${Math.round(p.physical)}</td>
@@ -450,7 +450,7 @@ export function transfersScreen(s: GameState, filter: Position | null = null): s
       const wil = transferWillingness(s, p, true);
       return `<tr>
       <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
-      <td><strong>${esc(p.name)}</strong>${promisingTag(p)}<br/><span class="muted small">van ${esc(p.loan?.club ?? '')}</span></td>
+      <td><strong>${esc(p.name)}</strong><button class="tablet-inspect" data-action="workflow-open" data-id="loan:${p.id}" aria-label="Bekijk ${esc(p.name)}">Bekijken</button>${promisingTag(p)}<br/><span class="muted small">van ${esc(p.loan?.club ?? '')}</span></td>
       <td>${p.age}</td>
       <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
       <td data-v="${p.wage}">${euro(p.wage)}</td>
