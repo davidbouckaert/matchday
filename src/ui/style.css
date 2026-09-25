@@ -2012,6 +2012,20 @@ tr.filtering td { background: var(--accent-soft); }
 .lk-opt { background: var(--card); border-radius: var(--radius-sm); padding: var(--s2) var(--s3); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; flex: 1 1 320px; max-width: 520px; }
 .lk-opt .cap { font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
 .lk-opt p { margin: 0; }
+/* Alle contracttabellen delen vaste kolombreedtes: zonder dit rekent elke tabel zijn
+   kolommen op de eigen inhoud en lijnen "Loopt af", "Rest van de kern" en de huurtabel
+   nooit met elkaar. Met table-layout: fixed staan ze pixelgelijk onder elkaar. */
+.contract-tabel { table-layout: fixed; width: 100%; }
+.contract-tabel th:nth-child(1) { width: 5%; }
+.contract-tabel th:nth-child(2) { width: 24%; }
+.contract-tabel th:nth-child(3) { width: 9%; }
+.contract-tabel th:nth-child(4) { width: 15%; }
+.contract-tabel th:nth-child(5) { width: 9%; }
+.contract-tabel th:nth-child(6) { width: 9%; }
+/* de laatste kolom (jouw voorstel) pakt de rest */
+.huur-tabel th:nth-child(5), .huur-tabel th:nth-child(6) { width: 23.5%; } /* samen exact de rest: anders herschaalt fixed layout alle kolommen */
+.huur-tabel .lk-rij { margin-bottom: 2px; }
+
 .lk-kwal strong { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .lk-rij { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
 .lk-rij .lk-kans { white-space: nowrap; font-weight: 650; }

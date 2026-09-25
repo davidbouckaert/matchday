@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.79.2';
+export const VERSION = '0.79.3';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,15 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.79.3',
+    date: '2026-09-25',
+    title: 'Drie tabellen, één kolomlijn — en huurspelers als echte rij',
+    items: [
+      'Alle tabellen op Contracten delen nu vaste kolombreedtes: Pos, Speler, Kwal/Pot en Contract staan pixelgelijk onder elkaar',
+      'De huurspelers zijn een rij in dezelfde tabel-huisstijl geworden: positie, statistieken, kwaliteit, eigenaar met tevredenheid, en twee compacte biedkolommen',
+    ],
+  },
   {
     version: '0.79.2',
     date: '2026-09-25',

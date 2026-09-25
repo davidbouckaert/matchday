@@ -69,7 +69,7 @@ export function contractsScreen(s: GameState): string {
       maar je betaalt het elke week opnieuw. Loonmassa nu: <strong>${euro(wages)}</strong> per week.</p>
       ${agent ? `<p class="attention-inline small">${esc(agent.name)} regelt de verlengingen vanaf week 36. Neem de taak terug bij Personeel om zelf te onderhandelen.</p>` : ''}
       <h3>Loopt af (${expiring.length})</h3>
-      <div class="table-wrap"><table class="compact" data-sort-id="contracten-af">
+      <div class="table-wrap"><table class="compact contract-tabel" data-sort-id="contracten-af">
         <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Contract</th><th>Loon nu</th><th>Vraagt</th><th data-nosort>Jouw voorstel</th></tr></thead>
         <tbody>${expiring.map((p) => row(s, p, !!agent)).join('') || '<tr><td colspan="7" class="muted">Geen aflopende contracten.</td></tr>'}</tbody>
       </table></div>
@@ -89,7 +89,7 @@ export function contractsScreen(s: GameState): string {
     <section class="card span-all">
       <h2>Eigen spelers: rest van de kern</h2>
       <p class="muted small">Vroeg verlengen kan ook: dan ben je zeker van hem, maar je zit langer aan zijn loon vast (maximaal drie seizoenen vooruit).</p>
-      <div class="table-wrap"><table class="compact" data-sort-id="contracten-rest">
+      <div class="table-wrap"><table class="compact contract-tabel" data-sort-id="contracten-rest">
         <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Contract</th><th>Loon nu</th><th>Vraagt</th><th data-nosort>Jouw voorstel</th></tr></thead>
         <tbody>${rest.map((p) => row(s, p, !!agent)).join('')}</tbody>
       </table></div>

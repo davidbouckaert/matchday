@@ -335,54 +335,46 @@ export function loanKeepCard(s: GameState): string {
   if (!gehuurd.length) return '';
   const vroeg = s.week < actions.LOAN_TALK_WEEK;
 
-  const blokken = gehuurd
+  const optie = (p: Player, soort: 'verlengen' | 'kopen', ref: number) => {
+    const stand = actions.loanStanding(s, p);
+    const rem = actions.loanRequestBlock(s, p, soort);
+    const kans = actions.loanRequestChance(s, p, soort, ref);
+    return `<div class="lk-rij">${numField({
+      value: ref,
+      min: 0,
+      max: Math.max(1000, ref * 4),
+      step: soort === 'verlengen' ? 250 : 500,
+      prefix: '\u20ac',
+      inputId: `huur-${soort}-${p.id}`,
+      live: 'huur',
+      label: `Bod om ${p.name} te ${soort}`,
+    })}<button class="sm primary" data-action="loan-${soort === 'verlengen' ? 'extend' : 'buy'}" data-id="${p.id}"${
+      rem ? ` disabled data-tip="${esc(rem)}"` : ''
+    }>${soort === 'verlengen' ? 'Vragen' : 'Bieden'}</button></div>
+    <span class="small muted lk-kans" id="kans-${soort}-${p.id}" ${tipAttr(
+      `De kans dat ${p.loan!.club} ja zegt op dit bedrag. Meer bieden helpt altijd. Wat verder meetelt: hoeveel hij bij jou speelt (${Math.round(
+        stand.speeltijd * 100,
+      )}% van de wedstrijden) en hoeveel hij erop vooruitging (${stand.groei >= 0 ? '+' : ''}${stand.groei}). Speelt hij veel, dan verlengen ze graag maar verkopen ze hem niet graag; zit hij op de bank, dan is het net omgekeerd.`,
+      'Kans op ja',
+    )}>${Math.round(kans * 100)}% kans</span>`;
+  };
+
+  const rijen = gehuurd
     .map((p) => {
       const stand = actions.loanStanding(s, p);
-      const optie = (soort: 'verlengen' | 'kopen', ref: number, uitleg: string, knop: string) => {
-        const rem = actions.loanRequestBlock(s, p, soort);
-        const kans = actions.loanRequestChance(s, p, soort, ref);
-        return `<div class="lk-opt">
-          <span class="cap">${soort === 'verlengen' ? 'Nog een seizoen huren' : 'Definitief kopen'}</span>
-          <p class="muted tiny">${uitleg}</p>
-          <div class="lk-rij">${numField({
-            value: ref,
-            min: 0,
-            max: Math.max(1000, ref * 4),
-            step: soort === 'verlengen' ? 250 : 500,
-            prefix: '\u20ac',
-            inputId: `huur-${soort}-${p.id}`,
-            live: 'huur',
-            label: `Bod om ${p.name} te ${soort}`,
-          })}
-          <span class="lk-kans" id="kans-${soort}-${p.id}" ${tipAttr(
-            `De kans dat ${p.loan!.club} ja zegt op dit bedrag. Meer bieden helpt altijd. Wat verder meetelt: hoeveel hij bij jou speelt (${Math.round(
-              stand.speeltijd * 100,
-            )}% van de wedstrijden) en hoeveel hij erop vooruitging (${stand.groei >= 0 ? '+' : ''}${stand.groei}). Speelt hij veel, dan verlengen ze graag maar verkopen ze hem niet graag; zit hij op de bank, dan is het net omgekeerd.`,
-            'Kans op ja',
-          )}>${Math.round(kans * 100)}% kans</span>
-          <button class="sm primary" data-action="loan-${soort === 'verlengen' ? 'extend' : 'buy'}" data-id="${p.id}"${
-            rem ? ` disabled data-tip="${esc(rem)}"` : ''
-          }>${knop}</button></div>
-        </div>`;
-      };
-
-      return `<div class="loan-keep">
-        <div class="lk-head">
-          <strong>${esc(p.name)}</strong>
-          <span class="tag">${p.position}</span>
-          <span class="lk-kwal" ${tipAttr('Kwaliteit nu / zijn potentieel — dezelfde cijfers als in de contractentabellen hierboven.', 'Kwal/Pot')}><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></span>
-          <span class="muted small">${p.age} jaar \u00b7 gehuurd van ${esc(p.loan!.club)}</span>
-        </div>
-        <p class="lk-stand small">${count(p.starts, 'basisplaats', 'basisplaatsen')} \u00b7 ${count(p.goals, 'doelpunt', 'doelpunten')} \u00b7 ${
-          stand.groei >= 0 ? 'gegroeid' : 'gezakt'
-        } ${stand.groei >= 0 ? '+' : ''}${stand.groei} sinds hij kwam \u00b7 ${esc(p.loan!.club)} is ${
+      return `<tr>
+        <td>${p.position}</td>
+        <td><strong>${esc(p.name)}</strong>${starMark(s, p)}<br/>
+          <span class="muted small">${p.age} jaar \u00b7 ${count(p.starts, 'basisplaats', 'basisplaatsen')} \u00b7 ${count(p.goals, 'doelpunt', 'doelpunten')} \u00b7 ${
+            stand.groei >= 0 ? 'gegroeid +' : 'gezakt '
+          }${stand.groei}</span></td>
+        <td data-v="${overall(p)}"><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></td>
+        <td>${esc(p.loan!.club)}<br/><span class="muted small">${
           stand.tevreden >= 70 ? 'tevreden' : stand.tevreden >= 45 ? 'redelijk tevreden' : 'niet tevreden'
-        } (${stand.tevreden}/100)</p>
-        <div class="lk-cols">
-          ${optie('verlengen', actions.extensionRef(s, p), 'Hij blijft nog een seizoen. Ze willen vooral dat hij speelt en beter wordt.', 'Verlenging vragen')}
-          ${optie('kopen', actions.purchaseRef(s, p), 'Hij wordt van jou en tekent een contract. Een profclub verkoopt niet graag aan een amateurclub.', 'Bod uitbrengen')}
-        </div>
-      </div>`;
+        } (${stand.tevreden}/100)</span></td>
+        <td>${optie(p, 'verlengen', actions.extensionRef(s, p))}</td>
+        <td>${optie(p, 'kopen', actions.purchaseRef(s, p))}</td>
+      </tr>`;
     })
     .join('');
 
@@ -393,7 +385,12 @@ export function loanKeepCard(s: GameState): string {
         ? `Een huurspeler keert op het einde van het seizoen terug naar zijn club. Vanaf week ${actions.LOAN_TALK_WEEK} kun je vragen of hij mag blijven, of hem proberen te kopen.`
         : 'Zij beslissen, niet jij. Hoeveel hij speelt, hoeveel hij erop vooruitging en wat je biedt, bepalen samen of het ja of nee wordt. Zeggen ze nee, dan kun je het vier weken later opnieuw proberen.'
     }</p>
-    ${blokken}
+    <div class="table-wrap"><table class="compact contract-tabel huur-tabel">
+      <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Gehuurd van</th>
+        <th ${tipAttr('Hij blijft nog een seizoen op huurbasis. Zijn club wil vooral dat hij speelt en beter wordt.')}>Nog een seizoen huren</th>
+        <th ${tipAttr('Hij wordt van jou en tekent een contract. Een profclub verkoopt niet graag aan een amateurclub.')}>Definitief kopen</th></tr></thead>
+      <tbody>${rijen}</tbody>
+    </table></div>
   </section>`;
 }
 
