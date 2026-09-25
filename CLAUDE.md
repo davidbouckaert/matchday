@@ -45,12 +45,21 @@ verandert. Veel van wat willekeurig lijkt, is een keuze met een meting eronder.
   verandert. Te veel tijd aan verificatie is verspilling.
 - Commitboodschap zegt wat er **gemeten** is, niet alleen wat er veranderd is.
 - Botsen twee eisen met elkaar: zeg dat, los het niet stil op in mijn nadeel.
-- Werk landt rechtstreeks op `main`: één versie per afgewerkte taak. Vaste
-  gang: versienummer + changelog in `src/version.ts` (README-laagvermelding bij
-  een minor, alleen changelog bij een patch) → commit met wat er gemeten is →
-  tag `vX.Y.Z` → `git push origin main --tags` → op de achtergrond
-  `/api/version` pollen tot de versie live staat. UI-werk eerst met
-  Playwright-schermafdrukken (voor én na) uit de draaiende app verifiëren.
+- **Versie hoort bij de merge, niet bij de branch.** Een feature-branch/PR
+  raakt `src/version.ts` nooit aan — geen VERSION-bump, geen CHANGELOG-item in
+  de diff. Anders bumpen twee branches vanaf hetzelfde nummer, of wijst een tag
+  na een merge (zeker bij squash) niet meer naar de commit die echt op `main`
+  staat. Pas ná het mergen naar `main`, op de dan-actuele `main`: versienummer
+  + changelog in `src/version.ts` (README-laagvermelding bij een minor, alleen
+  changelog bij een patch) → commit met wat er gemeten is → tag `vX.Y.Z` →
+  `git push origin main --tags` → op de achtergrond `/api/version` pollen tot
+  de versie live staat. `npm run release -- --type=patch|minor --title="..."
+  --item="..."` doet de VERSION- en CHANGELOG-bewerking in `src/version.ts`
+  voor je (en weigert te draaien buiten `main`) — de rest van de vaste gang
+  (committen, taggen, pushen, pollen) blijft met de hand. Gebeuren er twee
+  merges vlak na elkaar, rond dan de release-stap van de eerste helemaal af
+  vóór je aan de tweede begint. UI-werk eerst met Playwright-schermafdrukken
+  (voor én na) uit de draaiende app verifiëren.
 
 ## Commando's
 
@@ -60,6 +69,7 @@ verandert. Veel van wat willekeurig lijkt, is een keuze met een meting eronder.
     npm run balance    niets doen: gaat elke partij failliet?
     npm run autopilot  is uitbesteden risicoloos? SEEDS=20 voor de echte lat
     npm run economie   inkomsten en kosten per seizoen, naast je reeks
+    npm run release    bumpt VERSION + CHANGELOG in src/version.ts (alleen op main, na een merge)
 
 Zet `VCG_LOG=debug` ervoor om het logboek van de rekenkern mee weg te schrijven
 naar `logs/`.
