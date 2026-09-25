@@ -15,7 +15,8 @@
     "balance": "tsx scripts/balance.ts",
     "investors": "tsx scripts/investor-value.ts",
     "autopilot": "tsx scripts/autopilot.ts",
-    "economie": "tsx scripts/economie.ts"
+    "economie": "tsx scripts/economie.ts",
+    "release": "tsx scripts/release.ts"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.58.0",
