@@ -1459,7 +1459,7 @@ export const MORE_MOMENTS: MomentDef[] = [
   {
     id: 'verloren-reeks',
     categorie: 'kleedkamer',
-    wanneer: { alle: [{ vlag: 'match' }, { meting: 'stand', min: 11 }, { meting: 'week', min: 14 }] },
+    wanneer: { alle: [{ vlag: 'match' }, { vlag: 'onderaan' }, { meting: 'week', min: 14 }] },
     titel: 'De kop hangt naar beneden',
     tekst: 'Je staat onderaan en dat is in alles te voelen. De trainer vraagt wat het bestuur van plan is.',
     keuzes: [
