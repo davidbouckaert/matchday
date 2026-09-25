@@ -399,12 +399,19 @@ function decidedCard(s: GameState): string {
 
 function newsCard(s: GameState): string {
   if (!s.news.length) return '';
+  // het vorige nieuws stond er even grijs bij als dat van weken terug; de laatste lichting
+  // (dezelfde week als het bovenste bericht) krijgt nu een tikje kleur, zonder de gouden
+  // vieringkaarten uit het weekverslag te evenaren — dat blijft voor echte successen.
+  const latest = s.news[0];
   return `<section class="card">
     <h2>Nieuws</h2>
     <ul class="news-feed">
       ${s.news
         .slice(0, 12)
-        .map((n) => `<li class="${n.tone}"><span class="when">${whenLabel(n.season, n.week, s.season)}</span><span class="what">${esc(n.text)}</span></li>`)
+        .map((n) => {
+          const vers = n.week === latest.week && n.season === latest.season;
+          return `<li class="${n.tone}${vers ? ' vers' : ''}"><span class="when">${whenLabel(n.season, n.week, s.season)}</span><span class="what">${esc(n.text)}</span></li>`;
+        })
         .join('')}
     </ul>
   </section>`;

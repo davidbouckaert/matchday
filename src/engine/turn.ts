@@ -441,6 +441,7 @@ function coachCarousel(state: GameState, rng: Rng): void {
     `${club} en zijn trainer gaan per direct uit elkaar. ${nieuwe} stond gisteravond al op het oefenveld.`,
   ]);
   addNews(state, 'neutraal', bericht);
+  remember(state, `${club} verving zijn trainer door ${nieuwe}.`);
 }
 
 // ---------- Uitgestelde opbrengsten ----------
