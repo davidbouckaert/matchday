@@ -118,7 +118,9 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         where: 'Personeel',
         screen: 'staff',
         wijs: 'kandidaten',
-        done: (s) => s.staff.length > 2,
+        // elke club start al met 3 (trainer, afgevaardigde, jeugdcoördinator) — pas tellen
+        // vanaf een échte aanwerving daarbovenop, anders staat de stap dag één al aangevinkt
+        done: (s) => s.staff.length > 3,
       },
       {
         text: 'Besteed een taak uit: wat je uit handen geeft, gebeurt elke week vanzelf',

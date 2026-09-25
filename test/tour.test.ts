@@ -40,6 +40,18 @@ describe('rondleiding (tour)', () => {
     expect(tourChapter(s)!.nr).to.equal(2); // en dan door
   });
 
+  // Elke nieuwe club start al met 3 personeelsleden (trainer, afgevaardigde,
+  // jeugdcoördinator) — een bewuste keuze, geen lege doos. De "werf iemand aan"-stap mag
+  // daardoor niet al op dag één afgevinkt staan, anders leert de rondleiding niets.
+  it('vinkt "werf een personeelslid aan" niet af op basis van de startbezetting', () => {
+    const s = readyGame();
+    const stap = TOUR_CHAPTERS[2].steps.find((st) => st.where === 'Personeel' && st.text.startsWith('Werf'))!;
+    expect(s.staff.length).to.equal(3); // trainer, afgevaardigde, jeugdcoördinator
+    expect(stap.done(s), 'vers spel: nog niemand extra aangeworven').to.equal(false);
+    s.staff.push({ ...s.staffMarket[0] });
+    expect(stap.done(s), 'na een echte aanwerving telt de stap wel mee').to.equal(true);
+  });
+
   it('slaat hoofdstukken over die al volledig gekend blijken', () => {
     let s = readyGame();
     werkHoofdstuk1Af(s);
