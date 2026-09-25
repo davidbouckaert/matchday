@@ -62,7 +62,7 @@ export function contractsScreen(s: GameState): string {
   const wages = s.players.reduce((sum, p) => sum + p.wage, 0);
 
   return `${taskPicker(s, ['contracten'])}<div class="grid">
-    <section class="card span2">
+    <section class="card span-all">
       <h2>Contracten</h2>
       <p class="muted small">Een contract loopt af op het einde van een seizoen. Verleng je niet op tijd, dan vertrekt de speler gratis.
       Bied je minder dan hij vraagt, dan is de kans op een akkoord kleiner en zakt zijn moraal; bied je meer, dan tekent hij graag,
@@ -86,7 +86,7 @@ export function contractsScreen(s: GameState): string {
           : ''
       }
     </section>
-    <section class="card span2">
+    <section class="card span-all">
       <h3>Rest van de kern</h3>
       <p class="muted small">Vroeg verlengen kan ook: dan ben je zeker van hem, maar je zit langer aan zijn loon vast (maximaal drie seizoenen vooruit).</p>
       <div class="table-wrap"><table class="compact" data-sort-id="contracten-rest">

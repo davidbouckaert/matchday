@@ -1252,6 +1252,10 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
    en scheef bij, naast twee smalle kaartjes. Nu: twee halve kaarten, dan volle rijen. */
 .span-all { grid-column: 1 / -1; }
 
+/* knoppen in tabellen breken hun tekst niet: "Dit bod doen" over drie regels leest als
+   een ongeluk. Bewust alleen in tabellen — grote keuzekaarten (ambities) wrappen juist. */
+.table-wrap button { white-space: nowrap; }
+
 /* De bouwcategorieën: elke categorie is een echte kaart (eerst waren het kopjes bínnen
    één lange kaart, en dat las als één brij). De projectkaarten vullen de rij
    gelijkmatig; de tribune met haar schuif telt dubbel maar krijgt niet langer een
