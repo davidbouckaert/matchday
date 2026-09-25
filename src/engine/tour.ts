@@ -74,11 +74,13 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         done: (s) => seen(s, 'ploeg') || s.tactics.manualXI.length > 0 || !!delegate(s, 'opstelling'),
       },
       {
-        text: 'Kies een spelplan: elk plan klopt tegen het ene en kraakt tegen het andere',
+        text: 'Bekijk je spelplan: elk plan is sterk tegen twee tactieken en zwak tegen twee andere — het scoutingrapport hiernaast laat zien wat de tegenstander speelt',
         where: 'Ploeg › Strategie',
         screen: 'strategie',
         wijs: 'spelplan',
-        done: (s) => !!delegate(s, 'tactiek') || s.tactics.plan !== 'balbezit' || s.week > 8,
+        // kijken is genoeg (net als bij de andere kijk-stappen) — anders vinkt wie tevreden
+        // is met het beginplan (balbezit) deze stap nooit af, terwijl bekijken zelf al de les is
+        done: (s) => seen(s, 'strategie') || !!delegate(s, 'tactiek') || s.tactics.plan !== 'balbezit',
       },
       {
         text: 'Duid een kapitein aan — leiders tillen de ploeg op',

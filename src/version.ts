@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.79.3';
+export const VERSION = '0.79.4';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,15 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.79.4',
+    date: '2026-09-25',
+    title: 'De spelplan-stap in de rondleiding vinkt af bij een bezoek',
+    items: [
+      'Rondkijken bij Ploeg › Strategie vinkte de stap "kies een spelplan" niet af, want het beginplan (balbezit) staat al gekozen — je moest eerst zelf wisselen om ze kwijt te raken',
+      'Een bezoek is nu genoeg, net als bij de andere kijk-stappen; de tekst wijst je erbij op het scoutingrapport en de sterk/zwak-matchup tegenover je volgende tegenstander',
+    ],
+  },
   {
     version: '0.79.3',
     date: '2026-09-25',
