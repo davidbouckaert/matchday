@@ -98,7 +98,7 @@ export function infraScreen(s: GameState): string {
       💡 ledverlichting met ${Math.round(LED_SAVING * 100)}% (${euro(Math.round(facilityCost(s) * LED_SAVING))}/week)${i.ledLighting ? ' — die hangt er al' : ''}.
       ${i.solarPanels && i.ledLighting ? '' : 'Je vindt ze bij de investeringen hieronder.'}</p>
     </section>
-    <section class="card span-all bouw-intro">
+    <section class="card span-all bouw-intro" data-tour-doel="bouwplannen">
       <h2>Bouwprojecten ${hint(`Er mogen ${projectLimit(s)} werven tegelijk lopen. Elk project wordt meteen betaald en is klaar na de vermelde bouwtijd.`)}</h2>
       <p class="muted small">Maximaal ${projectLimit(s)} projecten tegelijk — nu bezig: <strong>${i.constructions.length}</strong>.
         Te weinig geld? Neem een lening bij Financiën.${s.investor === 'aannemer' ? ' Je aannemer bouwt 15% goedkoper.' : ''}</p>

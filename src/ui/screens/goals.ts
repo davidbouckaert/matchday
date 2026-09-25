@@ -150,15 +150,15 @@ export function goalsScreen(s: GameState): string {
   const choosing = !careerGoalDef(s);
 
   if (choosing) {
-    return `${careerCard(s)}
+    return `<div data-tour-doel="doelen-overzicht">${careerCard(s)}
     <div class="cols-2">
       <div class="col">${seasonGoalsCard(s)}</div>
       <div class="col">${ownerBlock(s)}</div>
-    </div>
+    </div></div>
     ${logCard(s)}`;
   }
 
-  return `<div class="cols-3">
+  return `<div class="cols-3" data-tour-doel="doelen-overzicht">
     <div class="col">${careerCard(s)}</div>
     <div class="col">${seasonGoalsCard(s)}</div>
     <div class="col">${ownerBlock(s)}</div>
