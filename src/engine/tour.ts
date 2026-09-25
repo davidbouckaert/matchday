@@ -97,7 +97,14 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         where: 'Ploeg › Transfers',
         screen: 'transfers',
         wijs: 'transfers',
-        done: (s) => s.players.some((p) => p.purchasePrice > 0 || p.loan?.type === 'in') || !!delegate(s, 'transfers') || !isTransferWindow(s.week),
+        // "kijk rond" = kijken is genoeg. En sinds kopen een gesprek van een week is
+        // (0.77.0), telt ook een lopend gesprek — niet pas de handtekening.
+        done: (s) =>
+          seen(s, 'transfers') ||
+          s.requests.some((r) => r.kind === 'transfer-koop' || r.kind === 'transfer-huur') ||
+          s.players.some((p) => p.purchasePrice > 0 || p.loan?.type === 'in') ||
+          !!delegate(s, 'transfers') ||
+          !isTransferWindow(s.week),
       },
     ],
   },

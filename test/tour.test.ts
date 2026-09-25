@@ -75,6 +75,20 @@ describe('rondleiding (tour)', () => {
     expect(tourChapter(s)).to.equal(null);
   });
 
+  it('vinkt de transfermarkt-stap af bij een bezoek of een lopend koopgesprek', () => {
+    const s = readyGame();
+    const stap = TOUR_CHAPTERS[1].steps[0];
+    expect(stap.done(s), 'vers spel, venster open: nog niet af').to.equal(false);
+    tourMarkSeen(s, 'transfers'); // rondkijken is rondkijken
+    expect(stap.done(s)).to.equal(true);
+    // en zonder bezoek telt ook een gesprek (kopen is sinds 0.77.0 een weekbeslissing)
+    const vers = readyGame('zuidrand', 'aannemer', 2);
+    vers.cash = 500_000;
+    expect(TOUR_CHAPTERS[1].steps[0].done(vers)).to.equal(false);
+    vers.requests.push({ id: 'x', kind: 'transfer-koop', targetId: 'y', label: 'Gesprek', weeksLeft: 1 });
+    expect(TOUR_CHAPTERS[1].steps[0].done(vers)).to.equal(true);
+  });
+
   it('houdt een stap afgevinkt ook als de conditie terugvalt (sponsor weigert)', () => {
     // "benader een bedrijf" wist zijn vlag zodra het bedrijf antwoordt; weigert het, dan
     // sprong hoofdstuk 4 stap 2 weer open — alsof je niets gedaan had
