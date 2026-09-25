@@ -1,14 +1,71 @@
+name: Release na merge naar main
+
 on:
   push:
     branches: [main]
+
+permissions:
+  contents: write
+
 jobs:
   release:
+    # Voorkomt dat de release-commit die deze job zelf maakt de job opnieuw laat draaien
     if: "!contains(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
+
       - run: npm ci
-      - run: npm run release -- --type=patch --title="..." --item="..."
-      # commit, tag vX.Y.Z, push --tags
+
+      - name: Gemergde PR opzoeken (titel, item, patch/minor)
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          PR_NUMBER=$(echo "$COMMIT_MSG" | grep -oE '#[0-9]+' | head -1 | tr -d '#' || true)
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "Geen PR-nummer gevonden in '$COMMIT_MSG', val terug op de commit message."
+           
+            ITEM="$COMMIT_MSG"
+            TYPE="patch"
+          else
+            pr view "$PR_NUMBER" --json title -q .title)
+            ITEM="$TITLE"
+            LABELS=$(gh pr view "$PR_NUMBER" --json labels -q '.labels[].name' || true)
+            if echo "$LABELS" | grep -qx "release:minor"; then
+              TYPE="minor"
+            else
+              TYPE="patch"
+            fi
+          fi
+
+          {
+            echo "title=$TITLE"
+            echo "item=$ITEM"
+            echo "type=$TYPE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Versie bumpen en changelog-item toevoegen
+        env:
+          REL_TYPE: ${{ steps.pr.outputs.type }}
+          REL_TITLE: ${{ steps.pr.outputs.title }}
+          REL_ITEM: ${{ steps.pr.outputs.item }}
+        run: npm run release -- --type="$REL_TYPE" --title="$REL_TITLE" --item="$REL_ITEM"
+
+      - name: Committen, taggen en pushen
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -oE "VERSION = '[0-9.]+'" src/version.ts | grep -oE '[0-9.]+')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/version.ts
+          git commit -m "chore: release v${VERSION}"
+          git tag "v${VERSION}"
+          git push origin HEAD:main
+          git push origin "v${VERSION}"
