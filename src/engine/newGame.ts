@@ -238,12 +238,12 @@ export function createNewGame(opts: NewGameOptions): GameState {
   state.thisWeek = [];
   state.cashHistory = [state.cash];
 
-  addNews(state, 'neutraal', `Welkom, ${opts.avatar.name}! Je bent de nieuwe eigenaar van ${club.name}, net gepromoveerd naar ${DIVISIONS[START_DIVISION].name}.`);
+  addNews(state, 'neutraal', `Welkom, ${opts.avatar.name}! Je bent de nieuwe eigenaar van ${state.clubName}, net gepromoveerd naar ${DIVISIONS[START_DIVISION].name}.`);
   addNews(state, 'neutraal', 'De transferperiode is open tot eind augustus. De competitie start in week 7.');
 
   // je eerste persconferentie als eigenaar: de opening staat klaar zodra het dashboard opent
   state.opening = createOpening(state, rng, [], [
-    `Je nam ${club.name} over van het vorige bestuur`,
+    `Je nam ${state.clubName} over van het vorige bestuur`,
     `De club promoveerde vorig seizoen naar ${DIVISIONS[START_DIVISION].name}`,
     'Nieuwe truitjes liggen klaar in de kantine',
   ]);
