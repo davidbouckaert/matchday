@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.79.5';
+export const VERSION = '0.79.6';
 
 export interface ChangeEntry {
   version: string;
@@ -12,11 +12,14 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
-    version: '0.79.4',
+    version: '0.79.6',
     date: '2026-09-25',
     title: 'Het loonvoorstel springt niet meer heen en weer',
     items: [
       'Elke rij op Contracten gokte tot nu toe zelf hoe breed haar loonveld moest zijn (tien keer haar eigen voorstel); bij een lager bedrag dan de rij erboven kroop de knop ernaast dus naar binnen. Nu delen alle rijen in een tabel hetzelfde plafond: de hoogste vraag in je selectie',
+    ],
+  },
+  {
     version: '0.79.5',
     date: '2026-09-25',
     title: 'Cloudflare-previewbuild kreeg geen previews-blok',
