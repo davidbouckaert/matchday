@@ -369,7 +369,7 @@ export function saveScreen(s: GameState, lastSaved: string, animate: boolean): s
   return `<section class="card">
     <h2>Instellingen</h2>
     <label class="check"><input type="checkbox" data-action="toggle-anim" ${animate ? 'checked' : ''}/>
-      <span>Animatie tonen na elke week<br/><span class="muted small">Uit = je ziet meteen het weekrapport. Sneltoetsen: ${WEEK_COMBO} = volgende week, B = naar je Bureau, spatie of Esc = rapport sluiten.</span></span></label>
+      <span>Animatie tonen na elke week<br/><span class="muted small">Uit = je ziet meteen het weekrapport. Sneltoetsen: ${WEEK_COMBO} = volgende week, Enter = verder (rapport of venster sluiten), B = naar je Bureau, spatie of Esc = rapport sluiten.</span></span></label>
   </section>
   <section class="card">
     <h2>Versie ${VERSION}</h2>

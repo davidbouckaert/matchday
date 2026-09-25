@@ -7,6 +7,7 @@ import { STOP_TEXT } from '../../engine/fastforward';
 import { formatWeek } from '../../engine/calendar';
 import { esc, euro, signedEuro } from '../format';
 import { newsIcon } from '../newsIcon';
+import { kbd } from '../keys';
 
 export function fastForwardOverlay(g: GameState, result: FastForwardResult): string {
   const { digest, weeks, from, to, reason } = result;
@@ -51,7 +52,7 @@ export function fastForwardOverlay(g: GameState, result: FastForwardResult): str
 
       <footer class="ff-foot">
         <p class="small"><strong>Gestopt:</strong> ${esc(STOP_TEXT[reason])}</p>
-        <button class="primary" data-action="ff-close">Sluiten en verderspelen</button>
+        <button class="primary" data-action="ff-close">Sluiten en verderspelen ${kbd('↵')}</button>
       </footer>
     </div>
   </div>`;

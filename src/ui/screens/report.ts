@@ -11,6 +11,7 @@ import { weeks } from '../../engine/util';
 import { currentStreak } from '../../engine/records';
 import { esc, euro, resultIcon, venue } from '../format';
 import { newsIcon } from '../newsIcon';
+import { kbd } from '../keys';
 
 export interface WeekRef {
   week: number;
@@ -391,7 +392,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
     <div class="report-card" role="dialog" aria-label="Weekrapport">
       <div class="report-head">
         <div><h2>Weekrapport</h2><span class="muted small">Week ${prev.week} · ${formatDateLong(s.startYear, prev.season, prev.week)}</span></div>
-        <button class="sm ghost" data-action="close-report" data-tip="Sluit het rapport en ga terug naar het scherm waar je was.">Sluiten ✕</button>
+        <button class="sm ghost" data-action="close-report" data-tip="Sluit het rapport en ga terug naar het scherm waar je was. Sneltoets: Esc.">Sluiten ✕ ${kbd('Esc')}</button>
       </div>
       <div class="report-body">
         <div class="report-grid">
@@ -407,7 +408,7 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
         </div>
       </div>
       <div class="report-foot">
-        <button class="primary" data-action="report-overview">Naar je bureau ▸</button>
+        <button class="primary" data-action="report-overview" data-tip="Sneltoets: Enter (B werkt ook).">Naar je bureau ▸ ${kbd('↵')}</button>
       </div>
     </div>
   </div>`;

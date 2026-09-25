@@ -261,7 +261,7 @@ function faq(): QA[] {
     },
     {
       q: 'Kan ik de animatie na elke week uitzetten?',
-      a: `Ja. ${WEEK_COMBO} = volgende week, B = naar je Bureau, spatie of Esc = het weekrapport sluiten. Ze staan ook op de knoppen zelf.`,
+      a: `Ja. ${WEEK_COMBO} = volgende week, Enter = verder op elk open venster (weekrapport, doorspelen, weekmoment), B = naar je Bureau, spatie of Esc = het weekrapport sluiten. Ze staan als toetschip op de knoppen zelf.`,
     },
   ];
 }
