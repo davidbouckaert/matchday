@@ -10,6 +10,7 @@ import { KIND_LABEL } from '../../engine/sponsors';
 import { weeks } from '../../engine/util';
 import { currentStreak } from '../../engine/records';
 import { esc, euro, resultIcon, venue } from '../format';
+import { newsIcon } from '../newsIcon';
 
 export interface WeekRef {
   week: number;
@@ -325,22 +326,20 @@ export function reportOverlay(s: GameState, prev: WeekRef): string {
   // nieuws. Ze krijgen nu hun eigen gouden kaartjes, die na de cijfers één voor één
   // oppoppen. Maximaal drie: bij meer viert niemand nog iets, de rest blijft gewoon nieuws.
   const feest = weekNews.filter((n) => n.kind === 'viering').slice(0, 3);
-  const feestIcon = (t: string) =>
-    /diploma|opleiding/i.test(t) ? '🎓'
-    : /bouwproject|zonnepanelen|toeschouwers binnen/i.test(t) ? '🏗️'
-    : /doorstromers/i.test(t) ? '🌱'
-    : /definitief|tekent/i.test(t) ? '🖊️'
-    : /sponsor|bijdrage|akkoord/i.test(t) ? '🤝'
-    : '🎉';
   const feestHtml = feest.length
     ? `<section class="wide"><h3>🎉 Om te vieren</h3><div class="vieringen">${feest
-        .map((n, i) => `<div class="viering-kaart" style="--vd:${(1.5 + i * 0.4).toFixed(1)}s"><span class="v-icon">${feestIcon(n.text)}</span><p>${esc(n.text)}</p></div>`)
+        .map((n, i) => `<div class="viering-kaart" style="--vd:${(1.5 + i * 0.4).toFixed(1)}s"><span class="v-icon">${newsIcon(n.text, '🎉')}</span><p>${esc(n.text)}</p></div>`)
         .join('')}</div></section>`
     : '';
 
   const news = weekNews.filter((n) => !feest.includes(n));
   const newsHtml = news.length
-    ? `<ul class="news reveal-lines">${news.map((n) => `<li class="${n.tone}">${esc(n.text)}</li>`).join('')}</ul>`
+    ? `<ul class="news reveal-lines">${news
+        .map((n) => {
+          const icon = newsIcon(n.text);
+          return `<li class="${n.tone}">${icon ? `<span class="n-icon">${icon}</span>` : ''}${esc(n.text)}</li>`;
+        })
+        .join('')}</ul>`
     : '<p class="muted">Rustige week.</p>';
 
   // in afwachting
