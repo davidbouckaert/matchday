@@ -41,7 +41,7 @@ import { strategyTask } from '../engine/delegation';
 import { financeScreen } from './screens/finance';
 import { pricesScreen, subscriptionInfo } from './screens/prices';
 import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from './screens/club';
-import { initTooltips } from './tooltip';
+import { initTooltips, tipAttr } from './tooltip';
 import { initNumFields } from './numfield';
 import { header, playBar } from './header';
 import { applyTheme, schemeById } from './theme';
@@ -323,8 +323,15 @@ function render(): void {
         : ''
     }
     ${group.screens.length > 1 ? `<nav class="subtabs">${group.screens
-      .filter(([id]) => id !== 'herstel' || g.infrastructure.recoveryLevel > 0)
-      .map(([id, label]) => `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}</button>`).join('')}</nav>` : ''}
+      .map(([id, label]) => {
+        // De medische cel staat er vergrendeld bij zolang de recuperatieruimte er niet is:
+        // wie het slotje ziet, weet dat er iets vrij te spelen valt. Geen echt disabled-
+        // attribuut, want dan slikt de browser de pointer-events in en werkt de tooltip niet.
+        if (id === 'herstel' && g.infrastructure.recoveryLevel < 1) {
+          return `<button class="locked" aria-disabled="true" ${tipAttr('Bouw een recuperatieruimte bij Club › Infrastructuur, en hier opent je medische cel: voeding, preventie en sneller herstel.', 'Nog vergrendeld')}>🔒 ${label}</button>`;
+        }
+        return `<button class="${ui.screen === id ? 'on' : ''}" data-action="nav" data-id="${id}">${label}</button>`;
+      }).join('')}</nav>` : ''}
     </div>
     <main class="content">${
       inWinterBreak(g.week)
