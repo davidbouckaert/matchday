@@ -1,3 +1,4 @@
+import { todos, signalBadge } from './signals';
 // De kopbalk, en de seizoensbalk die op de kalender staat.
 //
 // De kopbalk draagt twee dingen: wie je bent, en de vijf cijfers waar je week om draait.
@@ -173,6 +174,7 @@ function standing(g: GameState): { plaats: number; teams: number; zone: Zone; ti
  * afrekent, dus wat hier rood staat, degradeert in week 46 ook echt.
  */
 export function header(g: GameState): string {
+  const cashSignal = todos(g).find((t) => t.screen === 'financien' && t.level !== 'info');
   const division = DIVISIONS[g.league.divisionLevel];
   const colors = schemeById(g.scheme).colors;
   const match = weeksToMatch(g);
@@ -221,7 +223,7 @@ export function header(g: GameState): string {
       : '',
     bit('Saldo', euro(g.cash), {
       to: 'financien',
-      tip: `Wat er nu op de rekening staat.${g.weeksNegative ? ` Je staat al ${g.weeksNegative} van de 8 toegestane weken rood.` : ' Naar je financiën: prognose, posten en de herkomst van elke post.'}`,
+      tip: `Wat er nu op de rekening staat.${g.cash < 0 && g.weeksNegative ? ` Je staat al ${g.weeksNegative} van de 8 toegestane weken rood.` : ' Naar je financiën: prognose, posten en de herkomst van elke post.'}`,
       tone: g.cash < 0 ? 'neg' : 'money',
     }),
   ].join('');
@@ -241,7 +243,7 @@ export function header(g: GameState): string {
     </button>
 
     <div class="head-bits">${bits}</div>
-    ${g.weeksNegative ? `<span class="head-warn small" ${tipAttr(`Sta je acht weken na elkaar in het rood, dan trekt de bank de stekker eruit en is het spel voorbij. Je staat er nu ${g.weeksNegative}.`, 'Je staat rood')}>⚠️ ${g.weeksNegative}/8 weken rood</span>` : ''}
+    ${cashSignal ? `<button class="head-signal" data-action="nav" data-id="financien" ${tipAttr(cashSignal.detail ?? '', 'Saldo onder nul')}>${signalBadge(cashSignal)} ${g.weeksNegative}/8 controles onder nul</button>` : ''}
   </header>`;
 }
 

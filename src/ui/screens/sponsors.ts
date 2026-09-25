@@ -1,3 +1,4 @@
+import { deadlineBadge } from '../signals';
 import type { GameState, SponsorDeal } from '../../engine/types';
 import { CAMPAIGN, KIND_INFO, KIND_LABEL, KIND_MAX, KIND_SHORT, NETWORK_EVENING, SPONSOR_TERMS, askPrice, askVerdict, bestAskRatio, fairPrice, kindLock, prospectChance, satisfactionParts, termTotal } from '../../engine/sponsors';
 import { sponsorWeekly } from '../../engine/loans';
@@ -90,12 +91,12 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
       const old = o.renewalOf ? s.sponsors.find((d) => d.id === o.renewalOf) : undefined;
       if (o.renewalOf) {
         return `<li><strong>${esc(o.name)}</strong> · verlenging · <strong>${euro(o.weekly)}/week</strong>${old ? ` (nu ${euro(old.weekly)})` : ''} · ${o.weeksLeft} weken
-          <span class="muted small">(vervalt over ${weeks(o.expiresInWeeks)})</span>
+          <span class="muted small">${deadlineBadge(o.expiresInWeeks)} (vervalt over ${weeks(o.expiresInWeeks)})</span>
           <span class="btns"><button class="sm primary" data-action="accept-sponsor" data-id="${o.id}">Tekenen</button><button class="sm" data-action="decline-sponsor" data-id="${o.id}">Weigeren</button></span></li>`;
       }
       // een nieuw contract leg je zelf vast: hoe langer, hoe meer per week — maar je zit eraan vast
       return `<li class="offer"><strong>${esc(o.name)}</strong> · ${KIND_LABEL[o.kind]} · basisbedrag <strong>${euro(o.weekly)}/week</strong>
-        <span class="muted small">(vervalt over ${weeks(o.expiresInWeeks)})</span>
+        <span class="muted small">${deadlineBadge(o.expiresInWeeks)} (vervalt over ${weeks(o.expiresInWeeks)})</span>
         <div class="terms">${SPONSOR_TERMS.map(
           (t) => `<button class="term ${t.seasons === 1 ? 'primary' : ''}" data-action="accept-sponsor" data-id="${o.id}:${t.seasons}" data-tip="${esc(t.detail)}">
             <strong>${esc(t.label)}</strong>
@@ -200,7 +201,7 @@ export function sponsorsScreen(s: GameState, filter: SponsorDeal['kind'] | null 
     // prijskaart — of er nu iets ligt of niet. Een kaart die van plek wisselt naargelang
     // haar inhoud, vind je nooit terug op automatisme.
     offers
-      ? `<section class="card attention"><h2>Op tafel <span class="tag bad">${s.sponsorOffers.length}</span></h2><ul class="offers">${offers}</ul></section>`
+      ? `<section class="card attention"><h2>Op tafel <span class="tag">${s.sponsorOffers.length}</span></h2><ul class="offers">${offers}</ul></section>`
       : '<section class="card"><h2>Op tafel</h2><p class="muted small">Geen voorstellen op dit moment. Benader een contact hieronder of hou een netwerkavond.</p></section>'
   }
 

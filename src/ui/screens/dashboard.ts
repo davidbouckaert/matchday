@@ -1,3 +1,5 @@
+import { bureauStatus, signalBadge, type Todo } from '../signals';
+export { bureauStatus, todos } from '../signals';
 import { subsidieRows } from '../subsidiezaak';
 // Het dashboard. Het enige scherm dat je élke week opent, dus het enige scherm dat
 // gebouwd is vanuit één vraag: wat moet ik deze week weten en doen?
@@ -15,7 +17,7 @@ import { subsidieRows } from '../subsidiezaak';
 
 import type { GameState, LedgerEntry } from '../../engine/types';
 import { DIVISIONS } from '../../engine/data/divisions';
-import { MATCH_WEEKS, WINTER_BREAK, inWinterBreak, isTransferWindow } from '../../engine/calendar';
+import { MATCH_WEEKS } from '../../engine/calendar';
 import { OPPONENT_STAFF_BONUS, OWN_TEAM_ID, nextDerby, ownPosition, rivalTeam, teamName } from '../../engine/league';
 import { clubRatings } from '../../engine/ratings';
 import { teamStrength } from '../../engine/players';
@@ -26,8 +28,6 @@ import { forecast } from '../../engine/forecast';
 import { esc, euro, resultIcon, signedEuro, sparkline, whenLabel } from '../format';
 import { hint, tipAttr } from '../tooltip';
 import { TOUR_CHAPTERS, tourChapter, tourStepDone } from '../../engine/tour';
-import { weeks } from '../../engine/util';
-import { available } from '../../engine/discipline';
 import { newsIcon } from '../newsIcon';
 
 export function weekSummary(entries: LedgerEntry[]): { income: number; costs: number } {
@@ -59,7 +59,7 @@ function moneyCard(s: GameState): string {
       <div class="money-fig">
         <span class="cap">In kas</span>
         <span class="big-num lg ${s.cash < 0 ? 'neg' : ''}">${euro(s.cash)}</span>
-        <span class="sub">${s.weeksNegative ? `<span class="neg">${s.weeksNegative}/8 weken onder nul</span>` : '&nbsp;'}</span>
+        <span class="sub">${s.cash < 0 && s.weeksNegative ? `<span class="neg">${s.weeksNegative}/8 weken onder nul</span>` : '&nbsp;'}</span>
       </div>
       <div class="money-fig">
         <span class="cap">${s.season === 1 && s.week === 1 ? 'Bij de start' : 'Kasverandering vorige week'}</span>
@@ -269,51 +269,6 @@ function starLine(s: GameState): string {
  * Het weekmoment zit erin als eerste regel in plaats van in een eigen kaart ernaast; het
  * is de belangrijkste taak van de week, niet een apart onderwerp.
  */
-export interface Todo {
-  soort: 'actie' | 'deadline' | 'wachten' | 'informatie';
-  text: string;
-  detail?: string;
-  screen: string;
-  where: string;
-  level: 'urgent' | 'warn' | 'info';
-}
-
-export function todos(s: GameState): Todo[] {
-  const list: Todo[] = [];
-  const add = (level: Todo['level'], text: string, screen: string, where: string, detail?: string, soort: Todo['soort'] = 'actie') =>
-    list.push({ text, detail, screen, where, level, soort });
-
-  const avail = available(s.players).length;
-  if (avail < 11) add('urgent', `Slechts ${avail} speelklare spelers`, 'ploeg', 'Selectie', 'De volgende wedstrijd wordt forfait (0-5).');
-  else if (avail < 13) add('warn', `Nog ${avail} speelklare spelers`, 'ploeg', 'Selectie', 'Onder de elf volgt forfait.');
-  if (s.weeksNegative > 0) add('urgent', `Saldo al ${weeks(s.weeksNegative)} onder nul`, 'financien', 'Financiën', 'Na acht weken is de club failliet.');
-  if (s.emergencyLoanOffered) add('warn', 'De bank biedt een noodlening aan', 'financien', 'Financiën', 'Duur geld, maar het houdt de deuren open.');
-  if (s.playerOffers.length) {
-    add('warn', s.playerOffers.length === 1 ? 'Er ligt een bod op een van je spelers' : `Er liggen ${s.playerOffers.length} biedingen op je spelers`, 'transfers', 'Transfers', `Beslis binnen ${weeks(Math.min(...s.playerOffers.map((o) => o.expiresInWeeks)))}. Zonder antwoord vervalt het bod.`, 'deadline');
-  }
-  if (s.sponsorOffers.length) {
-    add('info', s.sponsorOffers.length === 1 ? 'Er is een nieuw sponsoraanbod' : `Er zijn ${s.sponsorOffers.length} sponsoraanbiedingen`, 'sponsors', 'Sponsors', `Beslis binnen ${weeks(Math.min(...s.sponsorOffers.map((o) => o.expiresInWeeks)))}. Zonder akkoord vervalt het voorstel.`, 'deadline');
-  }
-  const expiring = s.players.filter((p) => p.contractUntil <= s.season && p.loan?.type !== 'in' && !p.nietVerlengen).length;
-  if (expiring && s.week > 30) add('warn', `${expiring} ${expiring === 1 ? 'contract loopt' : 'contracten lopen'} af`, 'contracten', 'Contracten', 'Wie je niet verlengt, vertrekt gratis op het einde van het seizoen.', 'deadline');
-  for (const r of s.requests.filter((r) => r.kind !== 'subsidie')) add('info', r.label, 'doelen', 'Logboek', `Antwoord over ${weeks(r.weeksLeft)}.`, 'wachten');
-  if (isTransferWindow(s.week)) add('info', 'De transferperiode is open', 'transfers', 'Transfers', 'Alleen nu kun je kopen, verkopen of uitlenen.', 'informatie');
-  if (inWinterBreak(s.week)) add('info', `Winterstop tot week ${WINTER_BREAK.to + 1}`, 'kalender', 'Kalender', 'Geen wedstrijdinkomsten, wel vaste kosten.', 'informatie');
-  return list;
-}
-
-/** Eén semantische bron voor Bureau en speelbalk; hulp en wachten zijn geen werk. */
-export function bureauStatus(s: GameState) {
-  const list = todos(s);
-  const acties = list.filter((t) => t.soort === 'actie' || t.soort === 'deadline');
-  const rang = { urgent: 0, warn: 1, info: 2 };
-  acties.sort((a, b) => rang[a.level] - rang[b.level]);
-  return { acties, wachten: list.filter((t) => t.soort === 'wachten'),
-    informatie: list.filter((t) => t.soort === 'informatie'),
-    count: acties.length + (s.weekChoice && !s.weekChoice.answer ? 1 : 0),
-    urgent: acties.some((t) => t.level === 'urgent') };
-}
-
 /**
  * De rondleiding, onderin de weekkaart: één hoofdstuk tegelijk, stappen van één thema
  * bij elkaar. Bewust kalm — geen amber, geen rood, telt niet mee in "wat op je wacht":
@@ -376,9 +331,9 @@ function attentionBar(s: GameState): string {
   const status = bureauStatus(s);
   const w = s.weekChoice;
   const rows = (list: Todo[]) => list.map((t) => `<li class="${t.level}">
-    <span class="what"><strong>${esc(t.text)}</strong>${t.detail ? `<span class="sub-line">${esc(t.detail)}</span>` : ''}</span>
+    <span class="what">${signalBadge(t)} <strong>${esc(t.text)}</strong>${t.detail ? `<span class="sub-line">${esc(t.detail)}</span>` : ''}</span>
     <button class="sm" data-action="nav" data-id="${t.screen}">${esc(t.where)} →</button></li>`).join('');
-  const visibleActions = status.acties.filter((t, i) => t.level === 'urgent' || i < 3);
+  const visibleActions = status.acties.filter((t, i) => t.level !== 'info' || i < 3);
   const moreActions = status.acties.filter((t) => !visibleActions.includes(t));
   return `${guidedTourCard(s)}<section class="card bureau-work slice">
     <div class="slice-heading"><h2>Te regelen</h2><span class="tag">${status.count} ${status.count === 1 ? 'zaak' : 'zaken'}</span></div>

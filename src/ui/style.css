@@ -2316,3 +2316,21 @@ html { -webkit-tap-highlight-color: transparent; }
 .staff-role-list li { padding: 4px 0; }
 .staff-role { padding: 5px 6px; line-height: 1.35; }
 .staff-person { margin: 2px 6px; }
+
+/* Urgentie is overal dezelfde taal, los van de clubkleur. Tekst blijft de betekenis dragen. */
+.signal-badge { display: inline-flex; align-items: center; gap: .25em; padding: .15em .5em; border: 1px solid currentColor; border-radius: 5px; font-size: .75rem; font-weight: 700; line-height: 1.5; vertical-align: middle; }
+.signal-urgent { color: #a32222; background: #fff0f0; }
+.signal-warn { color: #765000; background: #fff5d9; }
+.signal-info { color: var(--muted); background: var(--sunken); }
+.tabs .signal-badge, .subtabs .signal-badge { margin-left: .4em; }
+.domain-signals { padding: 12px 18px; }
+.domain-signals .worklist { margin: 0; }
+@media (prefers-color-scheme: dark) {
+  .signal-urgent { color: #ffbaba; background: #431d20; }
+  .signal-warn { color: #ffda8a; background: #3c3014; }
+}
+.worklist .signal-badge { align-self: flex-start; width: fit-content; }
+.domain-signals .worklist li { grid-template-columns: minmax(0, 1fr) auto; }
+.domain-signals .worklist .sub-line { color: var(--text); }
+.head-signal { font-size: .8rem; padding: 4px 8px; background: transparent; }
+.forecast-warning { padding: 8px 10px; border-left: 3px solid var(--mid); }

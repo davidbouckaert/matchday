@@ -1448,3 +1448,26 @@ mkdir -p .github/workflows && mv ci/github-actions.yml .github/workflows/ci.yml 
 ```
 
 Zet in je repository onder *Settings → Pages* de bron op **GitHub Actions**.
+
+
+### Gedeelde urgentietaal (25 september 2026)
+
+Bureau, hoofd- en subnavigatie en de betrokken domeinschermen lezen dezelfde zuivere
+projectie in `src/ui/signals.ts`. Een rode badge betekent een blokkade of een kritiek
+geldtekort; amber betekent een waarschuwing of een naderende deadline. Tekst benoemt
+steeds het probleem, het relevante spelmoment en de herstelplek. Clubkleur blijft
+voor identiteit en acties. Badge-aantallen tellen aandachtspunten; de speelbalk telt
+ook gewone keuzes en latere deadlines. Eén licentieprobleem blijft één werkpakket,
+ook wanneer meerdere herstelplekken betrokken zijn.
+
+Biedingen worden amber bij hoogstens twee resterende speelweken. Contracten gebruiken
+de jaarwissel na week 52, niet de sportieve eindstand. Bewust niet verlengen telt niet
+mee. Geldtekort wordt kritiek bij de laatste twee faillissementscontroles; een saldo
+dat tussentijds herstelt wist het signaal direct. De bestaande blokkade voor de
+speelknop wordt ook op Bureau uitgelegd, zonder een tegenstrijdige forfaitbelofte.
+Licentiewaarschuwingen gebruiken `licenceProblems` en de bestaande audit-/eindweek;
+een promotiesignaal vereist een actuele sportieve promotieplaats na tien wedstrijden.
+Lopende aanvragen, bouw, opleiding, nieuws en beschikbare financiering krijgen geen
+urgente navigatiebadge alleen omdat ze bestaan. Prognoses blijven als raming benoemd.
+
+Dit verandert presentatie en prioriteit, geen spelregels, saveversie of RNG.

@@ -109,7 +109,7 @@ function forecastCard(s: GameState): string {
       Laagste punt: ${euro(worst.balance)} in week ${worst.week}.</p>
     ${
       f.trouble
-        ? `<p class="warn"><strong>Let op:</strong> met wat er nu vastligt duik je in week ${f.trouble.week} onder nul. Zoek inkomsten of schuif een uitgave op.</p>`
+        ? `<p class="forecast-warning"><span class="signal-badge signal-warn">Raming</span> Bij huidig beleid verwacht de prognose een negatief saldo in week ${f.trouble.week}. Zoek inkomsten of schuif een uitgave op.</p>`
         : ''
     }
     ${f.weeks.some((w) => w.lines.some((l) => l.category === 'subsidies')) ? '<p class="small forecast-caveat"><strong>Let op:</strong> deze bestaande vooruitblik rekent nog een subsidie in week 24 mee. Die ontvangst is niet gegarandeerd: je moet aanvragen en de gemeente kan weigeren.</p>' : ''}
