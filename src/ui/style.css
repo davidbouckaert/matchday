@@ -1111,11 +1111,19 @@ td input.numinput { font-size: .95rem; padding: 7px 2px; }
 td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 
 /* ==========================================================================
-   Dashboard: links de operationele kolom, rechts de zijkolom.
+   Dashboard: links de operationele kolom, rechts de zijkolom. Het nieuws
+   stond in die zijkolom onder de cijfers gepropt — op een breed scherm bleef
+   het merendeel van de breedte dan onbenut. Vanaf 1400px krijgt het nieuws
+   daarom een eigen, bredere kolom ernaast in plaats van eronder; smaller dan
+   dat blijft het (net als de zijkolom) een volle-breedte blok, want twee
+   smalle kolommen naast de zijkolom persen op een laptop alles dicht.
    ========================================================================== */
 .dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); gap: var(--s4); align-items: start; }
-.dash-main, .dash-side { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
+.dash-main, .dash-side, .dash-news { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
 @media (max-width: 980px) { .dash { grid-template-columns: 1fr; } }
+@media (min-width: 1400px) {
+  .dash { grid-template-columns: minmax(0, 1fr) minmax(300px, 360px) minmax(340px, 420px); }
+}
 
 /* de geldkaart bovenaan */
 .money-head { display: flex; flex-wrap: wrap; gap: var(--s5) var(--s7); align-items: flex-start; }
@@ -1922,7 +1930,7 @@ tr.filtering td { background: var(--accent-soft); }
 
 /* Een tabel krimpt niet mee: zonder dit duwt één brede tabel in een smalle rasterkolom
    de hele pagina opzij. `min-width: 0` laat het vak wél krimpen, `.table-wrap` vangt de rest. */
-.grid > .card, .cols-2 > .col, .cols-3 > .col, .dash-main, .dash-side { min-width: 0; }
+.grid > .card, .cols-2 > .col, .cols-3 > .col, .dash-main, .dash-side, .dash-news { min-width: 0; }
 
 .pc-line + .pc-line { margin-top: var(--s5); }
 .pc-line-head { margin: 0 0 var(--s3); font-size: .78rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }

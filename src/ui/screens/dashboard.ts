@@ -2,11 +2,12 @@
 // gebouwd is vanuit één vraag: wat moet ik deze week weten en doen?
 //
 // Links de operationele kolom — geld, waar het vandaan kwam, wat eraan komt, wie je
-// tegenstander is. Rechts de zijkolom: hoe je ervoor staat bij de drie groepen die je
-// club dragen (publiek, sponsors, bank), wat er nu jouw handtekening vraagt, en onderaan
-// het nieuws — het vertelt wat er gebeurd is, niet wat je moet doen, dus het staat na de
-// cijfers. Het stond ooit los, over de volle breedte onder de hele pagina: dat was zoveel
-// witruimte voor één smalle lijst dat je moest scrollen om het nog te zien.
+// tegenstander is. Ernaast de zijkolom: hoe je ervoor staat bij de drie groepen die je
+// club dragen (publiek, sponsors, bank) en wat er nu jouw handtekening vraagt. Het nieuws
+// vertelt wat er gebeurd is, niet wat je moet doen, dus staat het niet tussen die twee in
+// — het stond eerst los onder de hele pagina (te veel scrollen), toen in de zijkolom
+// gepropt (te smal op een breed scherm). Vanaf 1400px krijgt het daarom een eigen kolom
+// ernaast; op smallere breedtes blijft het, net als de zijkolom, een volle-breedte blok.
 //
 // Wat je niet elke week nodig hebt — je langetermijndoel, je eigenaarsniveau, de
 // seizoensdoelen van het bestuur — staat bij Club › Doelen. Het hoort bij je carrière,
@@ -426,6 +427,8 @@ export function dashboardScreen(s: GameState): string {
     <div class="dash-side">
       ${meterCard(s)}
       ${decidedCard(s)}
+    </div>
+    <div class="dash-news">
       ${newsCard(s)}
     </div>
   </div>`;
