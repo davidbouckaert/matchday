@@ -61,6 +61,20 @@ describe('gedeelde urgentietaal', () => {
     s.week = 39;
     expect(bureauStatus(s).acties.some((t) => t.text === 'Je licentie is nog niet in orde')).to.equal(false);
   });
+  // Een afgevaardigde kun je alleen aanwerven; opleiding helpt alleen een aanwezige trainer.
+  it('stuurt een ontbrekende afgevaardigde niet naar Opleiding', () => {
+    const s = readyGame(); s.week = 38;
+    s.staff = s.staff.filter((m) => m.role !== 'afgevaardigde');
+    let licence = bureauStatus(s).acties.find((t) => t.text === 'Je licentie is nog niet in orde')!;
+    expect(licence.relatedScreens).to.include('staff').and.not.include('opleiding');
+    expect(domainSignals([licence], 'opleiding')).to.equal('');
+    s.staff.find((m) => m.role === 'hoofdtrainer')!.diploma = 'geen';
+    licence = bureauStatus(s).acties.find((t) => t.text === 'Je licentie is nog niet in orde')!;
+    expect(licence.relatedScreens).to.include('opleiding');
+    s.staff = s.staff.filter((m) => m.role !== 'hoofdtrainer');
+    licence = bureauStatus(s).acties.find((t) => t.text === 'Je licentie is nog niet in orde')!;
+    expect(licence.relatedScreens).to.include('staff').and.not.include('opleiding');
+  });
   // Een projectie mag geen speldata, RNG of opgeslagen gelezen-status veranderen.
   it('blijft zuiver en telt wachten niet als urgente actie', () => {
     const s = readyGame(); const before = structuredClone(s);

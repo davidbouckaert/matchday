@@ -17,7 +17,7 @@ import { weeks } from '../../engine/util';
 import { RED_FINE, YELLOW_FINE, YELLOW_LIMIT } from '../../engine/discipline';
 import { OWN_TEAM_ID, sortedTable, teamName, zoneAt } from '../../engine/league';
 import { clubRatings } from '../../engine/ratings';
-import { seasonLabel } from '../../engine/calendar';
+import { SEASON_END_WEEK, seasonLabel } from '../../engine/calendar';
 import { CHANGELOG, VERSION } from '../../version';
 import { avatarSvg } from '../avatar';
 import { bar, count, esc, euro, signedEuro, stars } from '../format';
@@ -242,19 +242,20 @@ export function leagueScreen(s: GameState): string {
   const ownIndex = table.findIndex((r) => r.teamId === OWN_TEAM_ID);
   const own = table[ownIndex];
   const remaining = ours.filter((f) => f.homeGoals === undefined).length;
-  const boundary = promoted.length && ownIndex >= promoted.length ? promoted.at(-1)
-    : relegated.length ? (zone(ownIndex) === 'degradatie' ? table[table.length - relegated.length - 1] : relegated[0]) : undefined;
-  const boundaryText = boundary && own?.played ? ` · ${Math.abs(own.points - boundary.points)} punten ${own.points >= boundary.points ? 'voor' : 'achter'} ${teamName(s, boundary.teamId)} (${promoted.includes(boundary) ? 'laatste promotieplaats' : relegated.includes(boundary) ? 'eerste degradatieplaats' : 'laatste veilige plaats'})` : '';
-  const problems = level < DIVISIONS.length - 1 ? licenceProblems(s, level + 1) : [];
+  const boundary = zone(ownIndex) === 'degradatie' ? table[table.length - relegated.length - 1]
+    : promoted.length && ownIndex >= promoted.length ? promoted.at(-1)
+    : relegated[0];
+  const boundaryText = boundary && own?.played ? ` · ${own.points === boundary.points ? 'Evenveel punten als' : `${Math.abs(own.points - boundary.points)} punten ${own.points > boundary.points ? 'voor' : 'achter'}`} ${teamName(s, boundary.teamId)} (${promoted.includes(boundary) ? 'laatste promotieplaats' : relegated.includes(boundary) ? 'eerste degradatieplaats' : 'laatste veilige plaats'})` : '';
+  const problems = s.week <= SEASON_END_WEEK && level < DIVISIONS.length - 1 ? licenceProblems(s, level + 1) : [];
   return `<div class="competition-screen">
     <section class="card competition-stand">
       <h2>${division.name} · ${seasonLabel(s.startYear, s.season)}</h2>
       <p class="competition-context"><strong>${esc(s.clubName)} · ${ownIndex + 1}e · ${own?.points ?? 0} punten</strong> · ${own?.played ?? 0} gespeeld · ${remaining} wedstrijden over${esc(boundaryText)}${!own?.played ? '<span class="staff-meta">Nog niet gespeeld: de volgorde zegt nog niets over je seizoen.</span>' : ''}</p>
       <p class="muted small competition-rules">${promoted.length ? `↑ Plaats 1–${promoted.length}: sportieve promotieplaatsen, mits licentie.` : 'Hoogste reeks: geen promotie.'} ${relegated.length ? `↓ Plaats ${table.length - relegated.length + 1}–${table.length}: degradatie.` : 'Laagste reeks: geen degradatie.'} Bij gelijke punten telt eerst het doelpuntensaldo.</p>
 
-      ${level < DIVISIONS.length - 1 ? `<details class="competition-licence"><summary>${own?.played && ['kampioen', 'promotie'].includes(zone(ownIndex)) ? 'Sportief op promotieplaats · ' : ''}Licentie voor ${DIVISIONS[level + 1].name}: ${problems.length ? 'nog voorwaarden te vervullen' : 'voorwaarden nu in orde'}</summary>
+      ${s.week > SEASON_END_WEEK ? `<p class="competition-settled">De seizoensbeoordeling in week ${SEASON_END_WEEK} is afgerond.${s.nextDivisionLevel !== undefined ? ` Volgend seizoen: ${esc(DIVISIONS[s.nextDivisionLevel].name)}.` : ''} Latere verbeteringen veranderen deze beslissing niet.</p>` : level < DIVISIONS.length - 1 ? `<details class="competition-licence"><summary>${own?.played && ['kampioen', 'promotie'].includes(zone(ownIndex)) ? 'Sportief op promotieplaats · ' : ''}Licentie voor ${DIVISIONS[level + 1].name}: ${problems.length ? 'nog voorwaarden te vervullen' : 'voorwaarden nu in orde'}</summary>
         <p>${problems.length ? `Nog nodig: ${esc(problems.join('; '))}.` : 'Je voldoet nu aan de voorwaarden. Die worden bij het seizoenseinde opnieuw getoetst.'}</p>
-        <div class="btn-row"><button class="sm ghost" data-action="nav" data-id="opleiding">Personeel en diploma’s</button><button class="sm ghost" data-action="nav" data-id="infrastructuur">Infrastructuur</button></div></details>` : ''}
+        <div class="btn-row"><button class="sm ghost" data-action="nav" data-id="staff">Personeel aanwerven</button><button class="sm ghost" data-action="nav" data-id="opleiding">Diploma’s en opleiding</button><button class="sm ghost" data-action="nav" data-id="infrastructuur">Infrastructuur</button></div></details>` : ''}
       <div class="table-wrap"><table class="compact league"><caption class="sr-only">Stand ${division.name}</caption>
         <thead><tr>
           <th scope="col">#</th><th scope="col" class="league-club">Club</th>

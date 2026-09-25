@@ -91,3 +91,45 @@ describe('competitiestand als primair voetbalobject', () => {
     expect(sortedTable(s.league)[0].teamId).to.equal(OWN_TEAM_ID);
   });
 });
+
+describe('competitiecontext na review', () => {
+  // Bij degradatie is handhaving de relevante grens, ook in een reeks met promotie.
+  for (const tied of [false, true]) {
+    it(`toont de veilige plaats vanuit de degradatiezone${tied ? ' bij gelijke punten' : ''}`, () => {
+      const s = readyGame();
+      s.league.table.forEach((r, i) => { r.played = 10; r.points = 100 - i * 3; r.goalsFor = 10; r.goalsAgainst = 0; });
+      const own = s.league.table.find((r) => r.teamId === OWN_TEAM_ID)!;
+      own.points = -10;
+      const safe = sortedTable(s.league)[s.league.table.length - 4];
+      if (tied) { own.points = safe.points; own.goalsFor = 0; own.goalsAgainst = 10; }
+      const context = leagueScreen(s).match(/<p class="competition-context">(.*?)<\/p>/s)![1];
+      expect(context).to.contain('laatste veilige plaats').and.not.contain('laatste promotieplaats');
+      if (tied) expect(context).to.contain('Evenveel punten als').and.not.contain('0 punten voor');
+    });
+  }
+  // Een slechter doelsaldo kan je met evenveel punten buiten de promotieplaatsen houden.
+  it('noemt gelijke punten aan de promotiegrens geen voorsprong', () => {
+    const s = readyGame();
+    s.league.table.forEach((r, i) => { r.played = 10; r.points = 100 - i * 3; r.goalsFor = 10; r.goalsAgainst = 0; });
+    const own = s.league.table.find((r) => r.teamId === OWN_TEAM_ID)!;
+    own.points = -10;
+    const boundary = sortedTable(s.league)[1];
+    own.points = boundary.points; own.goalsFor = 0; own.goalsAgainst = 10;
+    const html = leagueScreen(s);
+    expect(html).to.contain('Evenveel punten als').and.contain('laatste promotieplaats').and.not.contain('0 punten voor');
+  });
+  // De vastgelegde reeks mag na week 44 niet door actuele licentievoorwaarden worden overschreven.
+  it('vervangt toekomstige licentieacties na de beoordeling door het vastgelegde resultaat', () => {
+    const s = readyGame(); s.week = 44;
+    expect(leagueScreen(s)).to.contain('competition-licence');
+    for (const week of [45, 52]) {
+      s.week = week; s.nextDivisionLevel = s.league.divisionLevel;
+      let html = leagueScreen(s);
+      expect(html).not.to.contain('competition-licence');
+      expect(html).to.contain('De seizoensbeoordeling in week 44 is afgerond').and.contain(`Volgend seizoen: ${DIVISIONS[s.nextDivisionLevel].name}`);
+      s.nextDivisionLevel++;
+      html = leagueScreen(s);
+      expect(html).to.contain(`Volgend seizoen: ${DIVISIONS[s.nextDivisionLevel].name}`).and.not.contain('nog voorwaarden te vervullen');
+    }
+  });
+});
