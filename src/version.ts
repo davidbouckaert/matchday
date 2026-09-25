@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.78.0';
+export const VERSION = '0.79.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.79.0',
+    date: '2026-09-25',
+    title: 'Wat is er nieuw — de changelog in het spel',
+    items: [
+      'Onder Menu staat nu "Wat is er nieuw": elke versie in gewone taal, nieuwste bovenaan',
+      'Alles wat jij nog niet bekeek draagt een badge "nieuw voor jou", en er staat een stip op het menu zolang er iets ongezien is',
+      'Eén knop markeert alles als gezien (per toestel onthouden) — handig om bij te houden wat je al testte',
+    ],
+  },
   {
     version: '0.78.0',
     date: '2026-09-25',

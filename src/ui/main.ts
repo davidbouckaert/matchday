@@ -11,6 +11,7 @@ import type { ActionResult } from '../engine/actions';
 import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, inWinterBreak } from '../engine/calendar';
 import { indexedDbStore, exportToFile, importFromFile } from '../storage/save';
 import { defaultDraft, setupScreen, type SetupDraft } from './screens/setup';
+import { changesScreen, hasUnseenChanges } from './screens/changes';
 import { dashboardScreen, todos } from './screens/dashboard';
 import { goalsScreen } from './screens/goals';
 import { squadScreen, transfersScreen } from './screens/squad';
@@ -52,7 +53,7 @@ const SLOT = 'slot1';
 
 type Screen =
   | 'overzicht' | 'ploeg' | 'strategie' | 'transfers' | 'contracten' | 'staff' | 'opleiding'
-  | 'kalender' | 'financien' | 'prijzen' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club' | 'doelen'
+  | 'nieuw' | 'kalender' | 'financien' | 'prijzen' | 'sponsors' | 'clubwinkel' | 'horeca' | 'cijfers' | 'evenementen' | 'infrastructuur' | 'club' | 'doelen'
   | 'competitie' | 'invloeden' | 'opslaan' | 'handleiding' | 'museum';
 
 /**
@@ -77,7 +78,7 @@ const GROUPS: { id: string; label: string; screens: [Screen, string][] }[] = [
     ],
   },
   { id: 'competitie', label: 'Competitie', screens: [['competitie', 'Stand en tucht']] },
-  { id: 'menu', label: 'Menu', screens: [['handleiding', 'Handleiding'], ['invloeden', 'Wat beïnvloedt wat'], ['opslaan', 'Opslaan en instellingen']] },
+  { id: 'menu', label: 'Menu', screens: [['handleiding', 'Handleiding'], ['invloeden', 'Wat beïnvloedt wat'], ['nieuw', 'Wat is er nieuw'], ['opslaan', 'Opslaan en instellingen']] },
 ];
 
 const groupOf = (screen: Screen) => GROUPS.find((g) => g.screens.some(([id]) => id === screen))!;
@@ -249,6 +250,7 @@ function renderScreen(g: GameState): string {
     case 'competitie': return leagueScreen(g);
     case 'club': return clubScreen(g);
     case 'opslaan': return saveScreen(g, ui.lastSaved, ui.animate);
+    case 'nieuw': return changesScreen();
     case 'kalender': return calendarScreen(g);
     case 'handleiding': return guideScreen(g);
     case 'clubwinkel': return merchScreen(g);
@@ -302,13 +304,14 @@ function render(): void {
         return `<button class="${gr.id === group.id ? 'on' : ''}" data-action="nav-group" data-id="${gr.id}">${gr.label}${warn}</button>`;
       })
       .join('')}
-      <button class="hamburger ${group.id === 'menu' ? 'on' : ''}" data-action="toggle-menu" data-tip="Menu: handleiding en opslaan" aria-label="Menu">☰</button>
+      <button class="hamburger ${group.id === 'menu' ? 'on' : ''}" data-action="toggle-menu" data-tip="Menu: handleiding, wat is er nieuw, en opslaan" aria-label="Menu">☰${hasUnseenChanges() ? '<span class="menu-stip" aria-label="nieuwe wijzigingen"></span>' : ''}</button>
     </nav>
     ${
       ui.menuOpen
         ? `<div class="menu-pop">
             <button data-action="nav" data-id="handleiding">📖 Handleiding en veelgestelde vragen</button>
             <button data-action="nav" data-id="invloeden">🔗 Wat beïnvloedt wat</button>
+            <button data-action="nav" data-id="nieuw">🆕 Wat is er nieuw${hasUnseenChanges() ? ' <span class="menu-stip"></span>' : ''}</button>
             <button data-action="nav" data-id="opslaan">💾 Opslaan en instellingen</button>
           </div>`
         : ''
@@ -871,6 +874,15 @@ const handlers: Record<string, Handler> = {
     return actions.extendContract(g, id, input ? Number(input.value) : undefined);
   }),
   'no-extend': gameAction(actions.toggleNoExtend),
+  // "alles gezien": de badges uit en de stip op het menu doven, per toestel onthouden
+  'changes-seen': () => {
+    try {
+      localStorage.setItem('vcg-gezien-versie', VERSION);
+    } catch {
+      /* geen opslag: dan blijft de stip gewoon staan */
+    }
+    return { ok: true, message: `Bijgewerkt: alles tot en met ${VERSION} staat als gezien.` };
+  },
   'goto-contracts': (id) => {
     ui.screen = 'contracten';
     ui.lastScreen.ploeg = 'contracten';

@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.79.0 — Wat is er nieuw: de changelog in het spel
+
+**De changelog werd altijd al in mensentaal geschreven — hij was alleen nergens te lezen behalve op GitHub.** Onder Menu staat nu **"Wat is er nieuw"**: elke versie met datum, titel en de wijzigingen in gewone taal, nieuwste bovenaan. En er zit een testlaag in, op maat van hoe dit spel gebouwd wordt (veel versies per dag): alles wat je op dít toestel nog niet bekeek draagt een badge **"nieuw voor jou"**, op het menu staat een stip zolang er iets ongezien is, en één knop — "Alles gezien tot en met X ✓" — zet de teller op nul. Zo hoef je nooit meer te scrollen en te raden welke wijziging je nog moest proberen. In de app geverifieerd: stip op het menu, badges op de ongeziene versies, en na de knop allebei weg.
+
 ### 0.78.0 — Alles over wie blijft, op één scherm
 
 **"Wie blijft er volgend seizoen?" is één vraag, dus hoort het antwoord op één scherm.** Eigen contracten stonden op Contracten en huurspelers op Transfers — na de ontwarring van 0.74.3 stond de huurkaart al op beide, maar David koos terecht voor verder doortrekken: **Contracten is nu dé thuisbasis**. Drie heldere kaarten: *Eigen spelers: aflopende contracten* (met bod, "Niet verlengen" en het lijstje "Laat je vertrekken"), *Eigen spelers: rest van de kern* (vroeg verlengen), en *Huurspelers: houden of kopen* (nog een seizoen huren of definitief kopen, met de eigenaar als beslisser). Op Transfers is de huurkaart weg; zolang je huurlingen hebt staat daar een wegwijzer naar Contracten, en de handleiding wijst mee. In de app geverifieerd: drie kaartkoppen op Contracten, wegwijzer op Transfers, huurkaart daar verdwenen.
