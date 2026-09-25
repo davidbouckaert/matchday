@@ -27,6 +27,7 @@ import { hint, tipAttr } from '../tooltip';
 import { TOUR_CHAPTERS, tourChapter, tourStepDone } from '../../engine/tour';
 import { weeks } from '../../engine/util';
 import { available } from '../../engine/discipline';
+import { newsIcon } from '../newsIcon';
 
 export function weekSummary(entries: LedgerEntry[]): { income: number; costs: number } {
   let income = 0;
@@ -406,7 +407,10 @@ function newsCard(s: GameState): string {
     <ul class="news-feed">
       ${s.news
         .slice(0, 12)
-        .map((n) => `<li class="${n.tone}"><span class="when">${whenLabel(n.season, n.week, s.season)}</span><span class="what">${esc(n.text)}</span></li>`)
+        .map((n) => {
+          const icon = newsIcon(n.text);
+          return `<li class="${n.tone}"><span class="when">${whenLabel(n.season, n.week, s.season)}</span><span class="what">${icon ? `<span class="n-icon">${icon}</span>` : ''}${esc(n.text)}</span></li>`;
+        })
         .join('')}
     </ul>
   </section>`;

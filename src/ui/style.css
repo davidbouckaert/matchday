@@ -268,6 +268,7 @@ tr.empty td { opacity: 0.75; }
 .news li { padding: 5px 0 5px 10px; border-left: 3px solid var(--line); margin-bottom: 4px; }
 .news li.goed { border-color: var(--good); }
 .news li.slecht { border-color: var(--bad); }
+.n-icon { margin-right: 6px; }
 .offers { list-style: none; padding: 0; }
 .offers li { padding: 8px 0; border-bottom: 1px solid var(--line); }
 /* Feitenlijstjes. Met 'auto 1fr' nam de labelkolom alle ruimte en brak de waarde in
