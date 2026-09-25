@@ -2,6 +2,7 @@
 
 import type { GameState } from '../../engine/types';
 import { esc } from '../format';
+import { kbd } from '../keys';
 
 export function momentOverlay(s: GameState, phase: 'vraag' | 'gevolg'): string {
   const w = s.weekChoice;
@@ -22,7 +23,7 @@ export function momentOverlay(s: GameState, phase: 'vraag' | 'gevolg'): string {
               <p class="small muted">Je koos: <strong>${esc(chosen?.label ?? '')}</strong></p>
               <p class="outcome-text">${esc(w.outcome ?? '')}</p>
             </div>
-            <div class="actions"><button class="primary" data-action="moment-close">Sluiten</button></div>`
+            <div class="actions"><button class="primary" data-action="moment-close">Sluiten ${kbd('↵')}</button></div>`
           : `<div class="moment-options">
               ${w.options
                 .map(

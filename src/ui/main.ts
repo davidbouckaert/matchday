@@ -1140,7 +1140,20 @@ root.addEventListener('change', async (e) => {
 // Spatie sluit nu alleen nog het weekverslag (of slaat de animatie over), en B brengt
 // je altijd naar je Bureau. De chips op de knoppen zelf (header.ts) verklappen ze.
 document.addEventListener('keydown', (e) => {
-  if (!ui.game || (e.target as HTMLElement).closest('input, textarea, select')) return;
+  // De wizard (er is nog geen spel): Enter = de primaire knop (Volgende / Start het
+  // avontuur), ook vanuit het naamveld — zoals in elk formulier. Staat de focus al op een
+  // knop, dan doet de browser het zelf; een select houdt Enter voor zichzelf.
+  if (!ui.game) {
+    if (e.key === 'Enter' && !(e.target as HTMLElement).closest('select, button')) {
+      const knop = document.querySelector<HTMLButtonElement>('button[data-action="draft-next"], button[data-action="draft-start"]');
+      if (knop) {
+        e.preventDefault();
+        knop.click();
+      }
+    }
+    return;
+  }
+  if ((e.target as HTMLElement).closest('input, textarea, select')) return;
   if (e.key === 'Escape' && ui.confirmAction) {
     ui.confirmAction = null;
     render();
@@ -1182,6 +1195,27 @@ document.addEventListener('keydown', (e) => {
         return;
       }
     }
+    render();
+    return;
+  }
+
+  // Enter zonder combo = "ga verder" op het venster dat openstaat: het weekrapport
+  // (eerst de animatie overslaan), het doorspeel-venster of het gevolg van een weekmoment.
+  // Staat er niets open, dan doet een losse Enter bewust niets: een week spelen vraagt de combo.
+  if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.altKey && !(e.target as HTMLElement).closest('button')) {
+    if (ui.fastForward) {
+      ui.fastForward = null;
+      if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+      ui.screen = 'overzicht';
+    } else if (ui.report?.phase === 'anim') ui.report.phase = 'report';
+    else if (ui.report) {
+      ui.report = null;
+      ui.held = null;
+      ui.screen = 'overzicht';
+      if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+    } else if (ui.moment === 'gevolg' && ui.game.weekChoice) ui.moment = 'dicht';
+    else return;
+    e.preventDefault();
     render();
     return;
   }

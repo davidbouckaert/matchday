@@ -4,6 +4,7 @@ import { avatarSvg, HAIRS, SHIRTS, SKINS } from '../avatar';
 import { CREST_LABEL, CREST_SHAPES, type CrestShape, clubInitials, crestSvg } from '../crest';
 import { esc, euro, stars } from '../format';
 import { SCHEMES, schemeById } from '../theme';
+import { kbd } from '../keys';
 
 export interface SetupDraft {
   step: 1 | 2 | 3;
@@ -68,7 +69,7 @@ export function setupScreen(d: SetupDraft): string {
             <strong>${esc(b.name)}</strong><span>${esc(b.perk)}</span></button>`,
         ).join('')}
       </div>
-      <div class="actions"><button class="primary" data-action="draft-next">Volgende</button></div>
+      <div class="actions"><button class="primary" data-action="draft-next">Volgende ${kbd('↵')}</button></div>
     </section>`;
   }
 
@@ -120,7 +121,7 @@ export function setupScreen(d: SetupDraft): string {
           </button>`,
         ).join('')}
       </div>
-      <div class="actions"><button data-action="draft-back">Terug</button><button class="primary" data-action="draft-next">Volgende</button></div>
+      <div class="actions"><button data-action="draft-back">Terug</button><button class="primary" data-action="draft-next">Volgende ${kbd('↵')}</button></div>
     </section>`;
   }
 
@@ -138,6 +139,6 @@ export function setupScreen(d: SetupDraft): string {
         </button>`,
       ).join('')}
     </div>
-    <div class="actions"><button data-action="draft-back">Terug</button><button class="primary" data-action="draft-start">Start het avontuur</button></div>
+    <div class="actions"><button data-action="draft-back">Terug</button><button class="primary" data-action="draft-start">Start het avontuur ${kbd('↵')}</button></div>
   </section>`;
 }
