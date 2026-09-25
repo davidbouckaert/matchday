@@ -13,7 +13,7 @@
 // aan het doen bent, en dat verschilt van week tot week.
 
 import type { GameState, Player } from '../../engine/types';
-import { POSITIONS, currentBid, isCorePlayer, marketValue, overall } from '../../engine/players';
+import { POSITIONS, currentBid, isCorePlayer, isPromising, marketValue, overall } from '../../engine/players';
 import { delegate } from '../../engine/delegation';
 import { isTransferWindow } from '../../engine/calendar';
 import { esc, euro } from '../format';
@@ -112,6 +112,9 @@ function tags(s: GameState, p: Player): string {
       ? tag('⭐', 'kernspeler', 'Eén van je beste spelers. Verkoop je hem, dan voelt je publiek dat — en je ploeg ook.', 'core')
       : '',
     p.isYouth ? tag('🌱', 'eigen jeugd', 'Hij kwam uit je eigen jeugdwerking. Dat telt mee voor je clubscore.', 'youth') : '',
+    isPromising(p)
+      ? tag('💎', 'beloftevol', `Jong en met veel ruimte om te groeien: ${p.age} jaar, kwaliteit ${overall(p)} van een mogelijke ${Math.round(p.potential)}.`, 'promising')
+      : '',
   ].join('');
 }
 

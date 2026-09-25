@@ -1,6 +1,6 @@
 import './style.css';
 import { attachBrowserLog } from '../log/browser';
-import type { Formation, GamePlan, GameState, Mentality, SponsorDeal, StaffRole, TaskId, TrainingFocus } from '../engine/types';
+import type { Formation, GamePlan, GameState, Mentality, Position, SponsorDeal, StaffRole, TaskId, TrainingFocus } from '../engine/types';
 
 type SponsorKind = SponsorDeal['kind'];
 import { createNewGame } from '../engine/newGame';
@@ -99,6 +99,9 @@ interface UiState {
    *  functie of tegel om te filteren, nog eens (of op het kruisje) om hem weg te halen. */
   staffFilter: StaffRole | null;
   sponsorFilter: SponsorKind | null;
+  /** Positiefilter op de transfermarkt: klik op een positie om kopen, huren en je eigen
+   *  kern tot die positie te beperken, nog eens (of op het kruisje) om hem weg te halen. */
+  transferFilter: Position | null;
   sorts: Record<string, { col: number; dir: 1 | -1 }>;
   report: { phase: 'anim' | 'report'; prev: WeekRef } | null;
   /**
@@ -142,6 +145,7 @@ const ui: UiState = {
   selectedStaff: null,
   staffFilter: null,
   sponsorFilter: null,
+  transferFilter: null,
   sorts: {},
   report: null,
   held: null,
@@ -240,7 +244,7 @@ function renderScreen(g: GameState): string {
     case 'strategie': return strategyScreen(g);
     case 'opleiding': return trainingScreen(g);
     case 'invloeden': return influencesScreen(g);
-    case 'transfers': return transfersScreen(g);
+    case 'transfers': return transfersScreen(g, ui.transferFilter);
     case 'staff': return staffScreen(g, ui.selectedStaff, ui.staffFilter);
     case 'prijzen': return pricesScreen(g);
     case 'sponsors': return sponsorsScreen(g, ui.sponsorFilter);
@@ -933,6 +937,9 @@ const handlers: Record<string, Handler> = {
   },
   'sponsor-filter': (id) => {
     ui.sponsorFilter = ui.sponsorFilter === id ? null : (id as SponsorKind);
+  },
+  'transfer-filter': (id) => {
+    ui.transferFilter = ui.transferFilter === id ? null : (id as Position);
   },
   hire: gameAction(actions.hireStaff),
   'hire-replace': gameAction(actions.replaceStaff),
