@@ -7,7 +7,7 @@ import { overall, teamStrength } from '../src/engine/players';
 import { clubRatings } from '../src/engine/ratings';
 import { INVESTORS } from '../src/engine/data/setup';
 import { migrate } from '../src/storage/save';
-import { SAVE_VERSION } from '../src/engine/newGame';
+import { createNewGame, SAVE_VERSION } from '../src/engine/newGame';
 import { newTestGame, playWeeks } from './helpers';
 
 describe('Toevalsgenerator', () => {
@@ -37,6 +37,22 @@ describe('Nieuw spel', () => {
     expect(s.league.teams).to.have.lengthOf(15);
     expect(s.league.table).to.have.lengthOf(16);
     expect(s.transferList.length).to.be.above(0);
+  });
+
+  // Bug: het welkomstbericht en de seizoensopening noemden altijd de vooraf gedefinieerde
+  // clubnaam, ook als de speler bij het opzetten zelf een andere naam had gekozen.
+  it('gebruikt de zelfgekozen clubnaam in het welkomstbericht', () => {
+    const s = createNewGame({
+      avatar: { name: 'Test', skin: 0, hair: 0, shirt: 0, background: 'ondernemer' },
+      clubId: 'zuidrand',
+      investor: 'aannemer',
+      clubName: 'FC Testdorp',
+      seed: 42,
+    });
+    expect(s.clubName).to.equal('FC Testdorp');
+    expect(s.news.some((n) => n.text.includes('FC Testdorp'))).to.equal(true);
+    expect(s.news.some((n) => n.text.includes('Zuidrand'))).to.equal(false);
+    expect(s.opening?.summer.some((x) => x.includes('FC Testdorp'))).to.equal(true);
   });
 
   it('voegt het kapitaal van de investeerder toe', () => {
