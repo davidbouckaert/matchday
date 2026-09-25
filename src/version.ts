@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.79.4';
+export const VERSION = '0.79.5';
 
 export interface ChangeEntry {
   version: string;
@@ -17,6 +17,20 @@ export const CHANGELOG: ChangeEntry[] = [
     title: 'Het loonvoorstel springt niet meer heen en weer',
     items: [
       'Elke rij op Contracten gokte tot nu toe zelf hoe breed haar loonveld moest zijn (tien keer haar eigen voorstel); bij een lager bedrag dan de rij erboven kroop de knop ernaast dus naar binnen. Nu delen alle rijen in een tabel hetzelfde plafond: de hoogste vraag in je selectie',
+    version: '0.79.5',
+    date: '2026-09-25',
+    title: 'Cloudflare-previewbuild kreeg geen previews-blok',
+    items: [
+      'De Cloudflare-buildstap draait `npx wrangler preview` voor PR-previews; zonder een (leeg mag) previews-blok in wrangler.jsonc weigerde die stap meteen, dus faalde elke preview-deploy nog voor de app zelf gebouwd werd',
+    ],
+  },
+  {
+    version: '0.79.4',
+    date: '2026-09-25',
+    title: 'De spelplan-stap in de rondleiding vinkt af bij een bezoek',
+    items: [
+      'Rondkijken bij Ploeg › Strategie vinkte de stap "kies een spelplan" niet af, want het beginplan (balbezit) staat al gekozen — je moest eerst zelf wisselen om ze kwijt te raken',
+      'Een bezoek is nu genoeg, net als bij de andere kijk-stappen; de tekst wijst je erbij op het scoutingrapport en de sterk/zwak-matchup tegenover je volgende tegenstander',
     ],
   },
   {
