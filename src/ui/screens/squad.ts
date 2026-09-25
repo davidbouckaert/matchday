@@ -508,25 +508,27 @@ export function transfersScreen(s: GameState, filter: Position | null = null): s
     })
     .join('');
 
-  return `${taskPicker(s, ['transfers'])}
-  <section class="card window-banner ${window ? 'open' : 'shut'}">
-    <h2>${window ? '🟢 Transferperiode open' : '🔴 Transferperiode gesloten'}</h2>
-    <p class="muted small">${
-      window
-        ? `Kopen, verkopen, uitlenen en huren kan tot en met week ${nextWindowEnd(s)}. Daarna kun je alleen nog spelers te koop zetten en rondkijken.`
-        : `De volgende transferperiode start in week ${nextWindowStart(s)} (${formatWeek(s.startYear, s.season, nextWindowStart(s))}). Tot dan kun je wel al te koop zetten en de markt volgen.`
-    }</p>
-  </section>
+  return `<div class="grid">
+    ${taskPicker(s, ['transfers'])}
+    <section class="card window-banner ${window ? 'open' : 'shut'}">
+      <h2>${window ? '🟢 Transferperiode open' : '🔴 Transferperiode gesloten'}</h2>
+      <p class="muted small">${
+        window
+          ? `Kopen, verkopen, uitlenen en huren kan tot en met week ${nextWindowEnd(s)}. Daarna kun je alleen nog spelers te koop zetten en rondkijken.`
+          : `De volgende transferperiode start in week ${nextWindowStart(s)} (${formatWeek(s.startYear, s.season, nextWindowStart(s))}). Tot dan kun je wel al te koop zetten en de markt volgen.`
+      }</p>
+    </section>
+    <section class="card">
+      <h2>Filter op positie ${hint('Klik op een positie om de drie tabellen hieronder (kopen, huren en je eigen kern) tot die positie te beperken. Nog eens klikken op dezelfde knop, of op het kruisje, haalt de filter weer weg.')}</h2>
+      ${filterBar}
+    </section>
+  </div>
   ${offers ? `<section class="card attention"><h2>Biedingen op je spelers (${s.playerOffers.length})</h2><ul class="offers">${offers}</ul></section>` : ''}
   ${
     s.players.some((p) => p.loan?.type === 'in')
       ? `<p class="muted small">🤝 Je huurspelers verlengen of definitief kopen doe je bij <button class="link-btn" data-action="nav" data-id="contracten">Ploeg › Contracten</button> — daar staat alles over wie blijft.</p>`
       : ''
   }
-  <section class="card">
-    <h2>Filter op positie ${hint('Klik op een positie om de drie tabellen hieronder (kopen, huren en je eigen kern) tot die positie te beperken. Nog eens klikken op dezelfde knop, of op het kruisje, haalt de filter weer weg.')}</h2>
-    ${filterBar}
-  </section>
   <section class="card" data-tour-doel="transfers">
     <h2>Transfermarkt: kopen</h2>
     <p class="muted small">${window ? 'De transferperiode is open. Elke week verdwijnen er spelers en komen er nieuwe bij.' : 'De transferperiode is gesloten. Je kunt al rondkijken; kopen, verkopen en huren kan van mei tot eind augustus en in januari.'}
