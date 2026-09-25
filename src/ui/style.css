@@ -212,6 +212,9 @@ button.primary .knop-kbd { background: rgba(255, 255, 255, .18); border-color: r
    het vrijspeelt. cursor: help zegt "hier valt iets te lezen", niet "hier valt te klikken". */
 .subtabs button.locked { opacity: .5; cursor: help; }
 .subtabs button.locked:hover { background: transparent; color: var(--muted); }
+/* Zelfde patroon voor een vergrendelde keuzekaart (bv. het volledige voedingsplan
+   zonder voedingsdeskundige): zichtbaar wat er te halen valt, gedimd tot het kan. */
+.choice.locked { opacity: .55; cursor: help; }
 /* Breedte. De inhoud mag tot 1700px, zodat een breed scherm niet half leegstaat en je
    minder moet scrollen. Lopende tekst wordt apart begrensd (zie .card p hieronder): een
    zin van tweehonderd tekens leest je oog moeilijk terug naar het begin. */

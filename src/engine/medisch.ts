@@ -39,22 +39,33 @@ export function voedingSterkte(state: GameState): number {
   return 1 + staffSkill(state, 'voeding') / 150;
 }
 
+/**
+ * De stand die écht geldt. Het volledige plan ("een voedingsplan per speler") bestaat
+ * alleen zolang er een voedingsdeskundige op de payroll staat — hij schrijft die plannen.
+ * Valt hij weg, dan val je terug op basis, óók in de weekkost: je betaalt nooit voor een
+ * plan dat niemand meer opstelt. Eén functie voor motor en scherm samen.
+ */
+export function effectieveVoeding(state: GameState): Voeding {
+  if (state.medical.voeding === 'volledig' && staffSkill(state, 'voeding') <= 0) return 'basis';
+  return state.medical.voeding;
+}
+
 /** Vermenigvuldiger op de vermoeidheidsopbouw van trainingen (1 = geen effect). */
 export function moeFactor(state: GameState): number {
-  const v = VOEDING[state.medical.voeding];
+  const v = VOEDING[effectieveVoeding(state)];
   return Math.max(0.75, 1 - v.moe * voedingSterkte(state));
 }
 
 /** Vermenigvuldiger op de blessurekans uit voeding en preventie samen. */
 export function blessureFactor(state: GameState): number {
-  const v = VOEDING[state.medical.voeding];
+  const v = VOEDING[effectieveVoeding(state)];
   const voeding = Math.max(0.7, 1 - v.blessure * voedingSterkte(state));
   return voeding * (state.medical.preventie ? PREVENTIE.blessureFactor : 1);
 }
 
 /** Wat de medische cel deze week kost (voor de weekboeking). */
 export function medischeKost(state: GameState): number {
-  const v = VOEDING[state.medical.voeding];
+  const v = VOEDING[effectieveVoeding(state)];
   return Math.round((v.kost + (state.medical.preventie ? PREVENTIE.kost : 0)) * state.inflation);
 }
 

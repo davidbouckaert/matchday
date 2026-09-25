@@ -7,7 +7,7 @@ import { clamp } from './rng';
 import { DIVISIONS } from './data/divisions';
 import { popularity } from './popularity';
 import { staffSkill } from './staff';
-import { PREVENTIE, VOEDING, voedingSterkte } from './medisch';
+import { PREVENTIE, VOEDING, effectieveVoeding, voedingSterkte } from './medisch';
 import { starPlayers, starSponsorFactor } from './stars';
 import { volunteerCap } from './investors';
 
@@ -192,7 +192,7 @@ export function injuryFactors(state: GameState): Factor[] {
   // een hobbelig, verwaarloosd veld is een blessureveld; premium onderhoud ligt er vlak bij
   if (state.infrastructure.maintenance === 'basis') list.push(x('Basisonderhoud', 1.08, 'een verwaarloosd veld is een blessureveld'));
   if (state.infrastructure.maintenance === 'premium') list.push(x('Premium onderhoud', 0.95, 'een vlak, verzorgd veld'));
-  const voeding = state.medical.voeding;
+  const voeding = effectieveVoeding(state); // volledig zonder deskundige telt als basis
   if (voeding !== 'geen') list.push(x('Voeding', Math.max(0.7, 1 - VOEDING[voeding].blessure * voedingSterkte(state)), `medische cel: ${VOEDING[voeding].label.toLowerCase()}`));
   if (state.medical.preventie) list.push(x('Preventieprogramma', PREVENTIE.blessureFactor, 'medische cel — kost wedstrijdscherpte'));
   return list;

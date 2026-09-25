@@ -145,6 +145,10 @@ export function setVoeding(state: GameState, stand: Voeding): ActionResult {
   if (locked) return locked;
   if (state.infrastructure.recoveryLevel < 1) return fail('Bouw eerst een recuperatieruimte: zonder ruimte geen medische cel.');
   if (!VOEDING[stand]) return fail('Onbekende voedingsstand.');
+  // het volledige plan is maatwerk per speler — dat schrijft alleen een voedingsdeskundige
+  if (stand === 'volledig' && staffSkill(state, 'voeding') <= 0) {
+    return fail('Een voedingsplan per speler is maatwerk: werf eerst een voedingsdeskundige aan (Personeel).');
+  }
   state.medical.voeding = stand;
   const kost = Math.round(VOEDING[stand].kost * state.inflation);
   return ok(stand === 'geen' ? 'Voeding stopgezet: iedereen zorgt weer voor zichzelf.' : `Voeding op ${VOEDING[stand].label.toLowerCase()}: ${euro(kost)} per week, vanaf nu in je boekhouding.`);
@@ -360,7 +364,12 @@ export function staffLock(state: GameState, role: StaffRole): string | null {
   }
   if (role === 'analist' && i.wifiLevel < 1) return 'Een data-analist heeft wifi en degelijk bereik nodig om beelden en data binnen te halen (Infrastructuur).';
   if (role === 'kantine' && i.kantineLevel < 2) return 'Je kantine is te basic voor een vaste verantwoordelijke: renoveer eerst naar niveau 2.';
-  if (role === 'voeding' && i.kantineLevel < 3) return 'Een voedingsdeskundige heeft een degelijke keuken nodig: kantine niveau 3.';
+  // Vroeger achter kantine niveau 3 ("degelijke keuken"), maar dat spande voeding over twee
+  // takken: het beleid in de medische cel, de mens erachter in de horeca. Hij hoort bij de
+  // medische keten, achter dezelfde poort als de kinesist en de verzorger.
+  if (role === 'voeding' && i.recoveryLevel < 1) {
+    return 'Een voedingsdeskundige werkt vanuit je medische cel: bouw eerst een recuperatieruimte (Infrastructuur).';
+  }
   if (role === 'keepertrainer' && state.players.filter((p) => p.position === 'DOEL').length < 2) return 'Je hebt minstens twee doelmannen nodig voor een keeperstraining.';
   if (role === 'conditietrainer' && i.lightingLevel < 2 && i.pitch !== 'kunstgras') return 'Zonder degelijke verlichting of kunstgras kan hij in de winter niet werken (Infrastructuur).';
   return null;
