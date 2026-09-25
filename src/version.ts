@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.79.7';
+export const VERSION = '0.80.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,14 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.80.0',
+    date: '2026-09-25',
+    title: 'Add test.txt to workflows directory',
+    items: [
+      'Add test.txt to workflows directory',
+    ],
+  },
   {
     version: '0.79.7',
     date: '2026-09-25',
