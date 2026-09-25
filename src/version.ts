@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.80.12';
+export const VERSION = '0.81.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,14 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.81.0',
+    date: '2026-09-25',
+    title: 'Medische cel achter je recuperatieruimte, blessures genezen sneller door personeel en infra, en de gemeentesubsidie vraag je voortaan zelf aan',
+    items: [
+      'Medische cel achter je recuperatieruimte, blessures genezen sneller door personeel en infra, en de gemeentesubsidie vraag je voortaan zelf aan',
+    ],
+  },
   {
     version: '0.80.12',
     date: '2026-09-25',
