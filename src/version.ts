@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.79.4';
+export const VERSION = '0.79.5';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,14 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.79.5',
+    date: '2026-09-25',
+    title: 'Cloudflare-previewbuild kreeg geen previews-blok',
+    items: [
+      'De Cloudflare-buildstap draait `npx wrangler preview` voor PR-previews; zonder een (leeg mag) previews-blok in wrangler.jsonc weigerde die stap meteen, dus faalde elke preview-deploy nog voor de app zelf gebouwd werd',
+    ],
+  },
   {
     version: '0.79.4',
     date: '2026-09-25',
