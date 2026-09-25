@@ -39,6 +39,13 @@ export interface NumFieldOpts {
   extra?: string;
   /** Laat iets anders op het scherm meerekenen terwijl je typt (zie data-live in main.ts). */
   live?: string;
+  /**
+   * Overschrijft de breedteschatting hieronder, zonder de grenzen van het veld aan te
+   * raken. Voor een kolom velden die onder elkaar staan (één per rij van een tabel): geef
+   * ze allemaal dezelfde `widthHint` (de grootste waarde uit die kolom), anders wordt elk
+   * veld breed naar zijn eigen waarde en schuift alles ernaast per rij een beetje op.
+   */
+  widthHint?: number;
 }
 
 /**
@@ -70,7 +77,7 @@ export function numField(o: NumFieldOpts): string {
   // Daarom nu `size`, het attribuut dat precies hiervoor bestaat: de browser meet zelf hoe
   // breed dat aantal tekens is in het lettertype dat er echt staat. Wij tellen alleen hoe
   // veel tekens het grootst mogelijke getal telt, inclusief duizendpunten en decimalen.
-  const grootste = Math.max(Math.abs(o.max ?? o.value * 10), Math.abs(o.value), 1);
+  const grootste = Math.max(Math.abs(o.widthHint ?? o.max ?? o.value * 10), Math.abs(o.value), 1);
   const chars = Math.max(Math.floor(grootste).toLocaleString('nl-BE').length + (dec ? dec + 1 : 0), 2);
 
   return `<div class="numfield${o.slider ? ' with-slider' : ''}${o.extra ? ` ${o.extra}` : ''}">

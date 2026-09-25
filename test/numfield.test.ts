@@ -40,4 +40,14 @@ describe('Het getalveld maakt zich breed genoeg', () => {
   it('blijft ook bij een piepklein veld leesbaar', () => {
     expect(chars(numField({ value: 0, min: 0, max: 3, label: 'Aantal' }))).to.be.at.least(2);
   });
+
+  it('widthHint geeft velden met een sterk verschillende waarde dezelfde breedte', () => {
+    // dit was de bug: een kolom vraagprijsvelden (één per speler, elk zonder max) werd
+    // ieder breed naar de waarde van díe speler, waardoor de knop erna elke rij een
+    // beetje opschoof — vraag beide velden dezelfde widthHint en ze komen overeen
+    const grootsteWaarde = 8000;
+    const breed = numField({ value: grootsteWaarde, min: 0, step: 500, prefix: '€', label: 'Vraagprijs A', widthHint: grootsteWaarde * 10 });
+    const smal = numField({ value: 500, min: 0, step: 500, prefix: '€', label: 'Vraagprijs B', widthHint: grootsteWaarde * 10 });
+    expect(chars(smal)).to.equal(chars(breed));
+  });
 });
