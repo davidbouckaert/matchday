@@ -1,8 +1,31 @@
 // Clubrecords: de mooiste cijfers uit je geschiedenis. Een gebroken record is een klein feestje.
 
-import type { GameState } from './types';
+import type { GameState, LedgerCategory } from './types';
 import { OWN_TEAM_ID } from './league';
 import { addNews, euro } from './util';
+
+/**
+ * Financiering, geen prestatie: een lening, subsidie, kapitaalinjectie of de jaarlijkse
+ * lidgeldstorting zegt niets over hoe goed de week liep. Meegeteld voor het inkomstenrecord
+ * geeft dat een vals record (één lening verslaat elke goede weekwerking) of een record dat
+ * hooguit één keer per seizoen sneuvelt (de lidgeldstorting). Die categorieën tellen daarom
+ * niet mee — enkel opbrengsten uit de werking van de club (tickets, kantine, shop, horeca,
+ * sponsors, transfers, premies, ...) doen dat wel.
+ */
+const FINANCIERING: ReadonlySet<LedgerCategory> = new Set(['leningen', 'subsidies', 'lidgelden', 'investeerder']);
+
+function werkingsinkomstenWeek(entries: readonly { category: LedgerCategory; amount: number }[]): number {
+  return entries.reduce((sum, e) => (FINANCIERING.has(e.category) ? sum : sum + Math.max(0, e.amount)), 0);
+}
+
+function werkingsinkomstenSeizoen(totals: Partial<Record<LedgerCategory, number>>): number {
+  let sum = 0;
+  for (const category of Object.keys(totals) as LedgerCategory[]) {
+    if (FINANCIERING.has(category)) continue;
+    sum += Math.max(0, totals[category] ?? 0);
+  }
+  return sum;
+}
 
 /** Hoeveel wedstrijden je op rij ongeslagen bent (of gewonnen hebt). */
 export function currentStreak(state: GameState): { unbeaten: number; wins: number } {
@@ -36,8 +59,8 @@ export function currentStreak(state: GameState): { unbeaten: number; wins: numbe
 export function checkRecords(state: GameState): string[] {
   const r = state.records;
   const broken: string[] = [];
-  const income = state.thisWeek.reduce((sum, e) => sum + Math.max(0, e.amount), 0);
-  const seasonIncome = Object.values(state.seasonTotals).reduce((sum: number, v) => sum + Math.max(0, v ?? 0), 0);
+  const income = werkingsinkomstenWeek(state.thisWeek);
+  const seasonIncome = werkingsinkomstenSeizoen(state.seasonTotals);
   const { unbeaten, wins } = currentStreak(state);
   const match = state.lastMatch;
 

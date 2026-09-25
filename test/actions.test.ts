@@ -26,6 +26,7 @@ import { MOMENT_COOLDOWN, answerWeekChoice } from '../src/engine/weekmoment';
 import { loanOffers, loanScale } from '../src/engine/loans';
 import { SAVE_VERSION } from '../src/engine/newGame';
 import { migrate } from '../src/storage/save';
+import { book } from '../src/engine/util';
 
 describe('Acties', () => {
   it('koopt een speler: interesse deze week, handtekening de volgende', () => {
@@ -1033,6 +1034,31 @@ describe('Records en reeksen', () => {
     const broken = checkRecords(s);
     expect(broken.some((b) => b.includes('Recordopkomst'))).to.equal(true);
     expect(checkRecords(s).some((b) => b.includes('Recordopkomst'))).to.equal(false);
+  });
+
+  it('een lening, subsidie of lidgeld breekt het inkomstenrecord niet', () => {
+    let s = newTestGame();
+    s = playWeeks(s, 9);
+    const before = s.records.weekIncome;
+    expect(before).to.be.above(0);
+    s.thisWeek = [];
+    book(s, 'leningen', before + 500_000, 'Investeringskrediet');
+    book(s, 'subsidies', before + 500_000, 'Subsidie gemeente');
+    book(s, 'lidgelden', before + 500_000, 'Lidgelden');
+    const broken = checkRecords(s);
+    expect(broken.some((b) => b.includes('Beste week ooit'))).to.equal(false);
+    expect(s.records.weekIncome).to.equal(before);
+  });
+
+  it('een sterke weekwerking (tickets, kantine, shop) telt wel mee voor het inkomstenrecord', () => {
+    let s = newTestGame();
+    s = playWeeks(s, 9);
+    const before = s.records.weekIncome;
+    s.thisWeek = [];
+    book(s, 'tickets', before + 1, 'Extra ticketverkoop');
+    const broken = checkRecords(s);
+    expect(broken.some((b) => b.includes('Beste week ooit'))).to.equal(true);
+    expect(s.records.weekIncome).to.equal(before + 1);
   });
 });
 
