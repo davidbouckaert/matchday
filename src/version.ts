@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.79.1';
+export const VERSION = '0.79.2';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,14 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.79.2',
+    date: '2026-09-25',
+    title: 'Kwaliteit op de huurspelerkaart in de huisstijl',
+    items: [
+      'Het kwaliteitscijfer staat er nu zoals overal in de tabellen: vet, met het potentieel gedempt erachter (51 / 66)',
+    ],
+  },
   {
     version: '0.79.1',
     date: '2026-09-25',

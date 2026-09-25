@@ -370,7 +370,8 @@ export function loanKeepCard(s: GameState): string {
         <div class="lk-head">
           <strong>${esc(p.name)}</strong>
           <span class="tag">${p.position}</span>
-          <span class="muted small">kwaliteit <strong>${overall(p)}</strong>/${Math.round(p.potential)} \u00b7 ${p.age} jaar \u00b7 gehuurd van ${esc(p.loan!.club)}</span>
+          <span class="lk-kwal" ${tipAttr('Kwaliteit nu / zijn potentieel — dezelfde cijfers als in de contractentabellen hierboven.', 'Kwal/Pot')}><strong>${overall(p)}</strong><span class="muted small"> / ${Math.round(p.potential)}</span></span>
+          <span class="muted small">${p.age} jaar \u00b7 gehuurd van ${esc(p.loan!.club)}</span>
         </div>
         <p class="lk-stand small">${count(p.starts, 'basisplaats', 'basisplaatsen')} \u00b7 ${count(p.goals, 'doelpunt', 'doelpunten')} \u00b7 ${
           stand.groei >= 0 ? 'gegroeid' : 'gezakt'

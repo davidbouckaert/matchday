@@ -2012,6 +2012,7 @@ tr.filtering td { background: var(--accent-soft); }
 .lk-opt { background: var(--card); border-radius: var(--radius-sm); padding: var(--s2) var(--s3); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; flex: 1 1 320px; max-width: 520px; }
 .lk-opt .cap { font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
 .lk-opt p { margin: 0; }
+.lk-kwal strong { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .lk-rij { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
 .lk-rij .lk-kans { white-space: nowrap; font-weight: 650; }
 .lk-kans { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); cursor: help; }
