@@ -337,7 +337,12 @@ export function hireStaff(state: GameState, staffId: string): ActionResult {
   state.staffMarket = state.staffMarket.filter((x) => x.id !== staffId);
   state.staff.push(s);
   addLog(state, 'beslissing', `${s.name} aangeworven als ${roleDef(s.role).label.toLowerCase()} (€${s.wage}/week).`);
-  addNews(state, 'neutraal', `${s.name} is de nieuwe ${roleDef(s.role).label.toLowerCase()}.`);
+  if (s.role === 'hoofdtrainer') {
+    // een nieuwe hoofdtrainer is net zo goed dorpsnieuws als een ontslag (zie fireStaff) — nu ook een feestje waard
+    addNews(state, 'goed', `${s.name} is de nieuwe hoofdtrainer van ${state.clubName}. In de kantine leeft meteen weer hoop op een plan.`, 'viering');
+  } else {
+    addNews(state, 'neutraal', `${s.name} is de nieuwe ${roleDef(s.role).label.toLowerCase()}.`);
+  }
   return {
     ok: true,
     message: `${s.name} aangeworven.`,

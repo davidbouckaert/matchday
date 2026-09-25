@@ -1189,6 +1189,9 @@ td .numbox .affix { padding: 0 4px; font-size: .82rem; }
 .news-feed .when { font-size: .72rem; color: var(--faint); font-variant-numeric: tabular-nums; }
 .news-feed li.goed .what::before { content: '▲'; color: var(--good); font-size: .7em; margin-right: 6px; }
 .news-feed li.slecht .what::before { content: '▼'; color: var(--bad); font-size: .7em; margin-right: 6px; }
+/* het nieuwste blokje mag opvallen — een kleurtje, geen feest: dat blijft voor .viering-kaart */
+.news-feed li.vers { background: var(--accent-soft); margin: 0 calc(var(--s5) * -1); padding: 7px var(--s5); border-radius: var(--radius-sm); }
+.news-feed li.vers .when { color: var(--accent); font-weight: 700; }
 
 /* de startlijst: een strook, niet een scherm */
 /* De rondleiding onderin de weekkaart. De eerste versie was bewust de kalmste hoek van
