@@ -1,5 +1,6 @@
 import type { Formation, GamePlan, GameState, Player, PlayerTrait, Position } from './types';
 import { MATCHUP_ATT, MATCHUP_DEF, MENTALITY_INFO, developmentFactor, matchup, matchupWeight, sharpness } from './strategy';
+import { PREVENTIE } from './medisch';
 import { staffSkill } from './staff';
 import { avgFatigue, fatigueFactor } from './factors';
 import type { Rng } from './rng';
@@ -478,7 +479,7 @@ export function teamStrength(state: GameState, opponent?: OpponentContext): Stre
   const trainer = (head ? (head.skill - 50) / 8 : -6) + (assistant ? Math.max(0, (assistant - 30) / 25) : 0) + (analyst ? Math.max(0, (analyst - 30) / 30) : 0);
   const morale = lineup.length ? (lineup.reduce((sum, p) => sum + p.morale, 0) / lineup.length - 60) / 10 : 0;
   const form = lineup.length ? lineup.reduce((sum, p) => sum + p.form, 0) / lineup.length / 3 : 0;
-  const sharp = sharpness(t.trainings);
+  const sharp = sharpness(t.trainings) - (state.medical.preventie ? PREVENTIE.scherpte : 0);
   const roles = roleBonus(state, lineup);
   const penalty = missing * 6;
 

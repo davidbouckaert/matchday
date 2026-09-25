@@ -1,4 +1,5 @@
 import type { GameState, LedgerCategory, LedgerEntry, WeekRecord } from '../../engine/types';
+import { subsidieBedrag, subsidieKans } from '../../engine/finance';
 import { creditLimit, emergencyOffer, interestRate, loanOffers, totalDebt } from '../../engine/loans';
 import { weeks } from '../../engine/util';
 import { esc, euro, signedEuro } from '../format';
@@ -237,6 +238,7 @@ export function financeScreen(s: GameState): string {
   // brede tabel is over de volle breedte.
   return `${taskPicker(s, ['ticketing'])}
   ${investorCard(s)}
+  ${subsidieCard(s)}
   ${forecastCard(s)}
   ${originsCard(s)}
   <section class="card">
@@ -308,4 +310,27 @@ export function financeScreen(s: GameState): string {
           .join('') || '<p class="muted">De bank leent je op dit moment niets meer.</p>'}
       </div>
     </section>`;
+}
+
+/**
+ * De gemeentesubsidie: vroeger kwam ze in week 24 vanzelf binnen, nu is het een dossier.
+ * Eén aanvraag per seizoen, antwoord na twee weken, en de kans hangt vooral aan je
+ * jeugdwerking — de kaart zegt eerlijk waar je dossier zwak staat.
+ */
+function subsidieCard(s: GameState): string {
+  const { kans, zwakstePlek } = subsidieKans(s);
+  const bedrag = subsidieBedrag(s);
+  const loopt = s.requests.some((r) => r.kind === 'subsidie');
+  const gedaan = s.subsidieSeizoen === s.season;
+  return `<section class="card" data-tour-doel="subsidie">
+    <h2>Gemeentesubsidie ${hint('De jaarlijkse werkingssubsidie van de gemeente. Eén aanvraag per seizoen; de kans hangt vooral aan je jeugdwerking, daarnaast aan je reputatie en je licentiedossier.')}</h2>
+    <p class="muted small">Bij toekenning: <strong>${euro(bedrag)}</strong> · kans nu ongeveer <strong>${Math.round(kans * 100)}%</strong> · zwakste plek in je dossier: ${zwakstePlek}.</p>
+    ${
+      loopt
+        ? '<p class="attention-inline small">📨 Je dossier ligt bij de gemeente — antwoord binnen twee weken.</p>'
+        : gedaan
+          ? '<p class="muted small">Dit seizoen al aangevraagd. Volgend seizoen mag je opnieuw indienen.</p>'
+          : `<button class="primary sm" data-action="subsidie-aanvragen">Dossier indienen</button>`
+    }
+  </section>`;
 }

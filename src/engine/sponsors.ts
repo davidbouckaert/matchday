@@ -5,6 +5,7 @@ import { SECTORS, SPONSOR_COMPANIES, sectorKind } from './data/names';
 import { staffSkill } from './staff';
 import { wageDemand } from './players';
 import { transferWillingness } from './appeal';
+import { subsidieBedrag, subsidieKans } from './finance';
 import { product, sponsorFactors } from './factors';
 import { ownPosition } from './league';
 import { popularity } from './popularity';
@@ -570,6 +571,19 @@ export function resolveRequests(state: GameState, rng: Rng): void {
       } else {
         addNews(state, 'slecht', 'De bank wijst je kredietaanvraag af. Probeer het later opnieuw, met een beter dossier.');
         addLog(state, 'antwoord', 'Krediet geweigerd door de bank.');
+      }
+      continue;
+    }
+    if (r.kind === 'subsidie') {
+      const { kans, zwakstePlek } = subsidieKans(state);
+      if (rng.chance(kans)) {
+        const bedrag = subsidieBedrag(state);
+        book(state, 'subsidies', bedrag, 'Subsidie gemeente (jeugdwerking en sportieve uitstraling)');
+        addNews(state, 'goed', `De gemeente kent je werkingssubsidie toe: €${bedrag.toLocaleString('nl-BE')}. Je jeugdwerking gaf de doorslag.`, 'viering');
+        addLog(state, 'antwoord', `Subsidie toegekend: €${bedrag.toLocaleString('nl-BE')}.`);
+      } else {
+        addNews(state, 'slecht', `De gemeente wijst je subsidieaanvraag af. In de brief staat vooral: ${zwakstePlek}. Volgend seizoen mag je opnieuw indienen.`);
+        addLog(state, 'antwoord', `Subsidie geweigerd: ${zwakstePlek}.`);
       }
       continue;
     }

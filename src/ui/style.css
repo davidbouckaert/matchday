@@ -198,6 +198,10 @@ label { display: block; font-size: .8rem; color: var(--muted); }
   padding: 5px var(--s3); border-radius: 99px; font-size: .88rem;
 }
 .subtabs button.on { background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+/* Een vergrendeld subtabblad: zichtbaar maar gedimd, met een tooltip die vertelt hoe je
+   het vrijspeelt. cursor: help zegt "hier valt iets te lezen", niet "hier valt te klikken". */
+.subtabs button.locked { opacity: .5; cursor: help; }
+.subtabs button.locked:hover { background: transparent; color: var(--muted); }
 /* Breedte. De inhoud mag tot 1700px, zodat een breed scherm niet half leegstaat en je
    minder moet scrollen. Lopende tekst wordt apart begrensd (zie .card p hieronder): een
    zin van tweehonderd tekens leest je oog moeilijk terug naar het begin. */

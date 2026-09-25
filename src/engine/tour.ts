@@ -155,6 +155,19 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         wijs: 'contacten',
         done: (s) => s.prospects.some((p) => p.approached) || s.sponsorCampaignWeeks > 0 || s.sponsorOffers.length > 0 || !!delegate(s, 'sponsoring'),
       },
+      {
+        text: 'Dien je subsidiedossier in bij de gemeente — de jaarlijkse werkingssubsidie krijg je alleen als je erom vraagt, en je jeugdwerking bepaalt de kans',
+        where: 'Geld › Financiën',
+        screen: 'financien',
+        wijs: 'subsidie',
+        done: (s) => s.subsidieSeizoen !== undefined || s.requests.some((r) => r.kind === 'subsidie'),
+      },
+      {
+        text: 'Bekijk wat de bank je kan lenen: soms is bouwen mét lening slimmer dan sparen zonder tribune',
+        where: 'Geld › Financiën',
+        screen: 'financien',
+        done: (s) => seen(s, 'financien') || s.loans.length > 0 || s.requests.some((r) => r.kind === 'lening'),
+      },
     ],
   },
   {

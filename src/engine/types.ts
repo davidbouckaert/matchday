@@ -388,7 +388,7 @@ export interface WeekStats {
 /** Een vraag die je stelde en waarop je volgende week antwoord krijgt. */
 export interface PendingRequest {
   id: string;
-  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract' | 'lening' | 'huur-verlengen' | 'huur-kopen' | 'transfer-koop' | 'transfer-huur';
+  kind: 'sponsor-extra' | 'sponsor-gesprek' | 'contract' | 'lening' | 'huur-verlengen' | 'huur-kopen' | 'transfer-koop' | 'transfer-huur' | 'subsidie';
   targetId: string;
   label: string;
   weeksLeft: number;
@@ -468,7 +468,8 @@ export type LedgerCategory =
   | 'tegenslagen'
   | 'boetes'
   | 'tuchtboetes'
-  | 'horeca concessies';
+  | 'horeca concessies'
+  | 'medische cel';
 
 export interface LedgerEntry {
   category: LedgerCategory;
@@ -640,6 +641,11 @@ export interface GameState {
   /** De rondleiding voor een nieuwe eigenaar (zie engine/tour.ts). Oudere
    *  opslagbestanden missen dit veld; repairTour geeft het er bij het laden bij. */
   tour?: import('./tour').TourState;
+
+  /** Het beleid van je medische cel (zie engine/medisch.ts). */
+  medical: { voeding: import('./medisch').Voeding; preventie: boolean };
+  /** Laatste seizoen waarin je de gemeentesubsidie aanvroeg (één keer per seizoen). */
+  subsidieSeizoen?: number;
 
   ticketPrice: number;
   players: Player[];

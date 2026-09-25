@@ -115,6 +115,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 36) migrateV36toV37(state);
   if (state.version === 37) migrateV37toV38(state);
   if (state.version === 38) migrateV38toV39(state);
+  if (state.version === 39) migrateV39toV40(state);
   repair(state);
   return state;
 }
@@ -493,6 +494,13 @@ function migrateV34toV35(state: GameState): void {
 
 /** Versie 36: sanitair gesplitst in toiletten en kleedkamers, de groene combi in
  *  zonnepanelen en ledverlichting. Wie de combi had, krijgt beide helften. */
+/** Versie 40: de medische cel (voeding en preventie, allebei uit) en de gemeente-
+ *  subsidie die je voortaan zelf aanvraagt. */
+function migrateV39toV40(state: GameState): void {
+  state.medical ??= { voeding: 'geen', preventie: false };
+  state.version = 40;
+}
+
 /** Versie 39: rondleidingsstappen blijven afgevinkt (plakkend), ook als de
  *  onderliggende conditie terugvalt — zoals een sponsor die na benaderen weigert. */
 function migrateV38toV39(state: GameState): void {

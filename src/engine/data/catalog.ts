@@ -120,7 +120,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: 'recuperatie',
     label: 'Recuperatieruimte (+1 niveau)',
-    description: 'IJsbad, sauna en massagetafels: spelers herstellen sneller van vermoeidheid. Maximaal niveau 2.',
+    description: 'IJsbad, sauna en massagetafels: spelers herstellen sneller van vermoeidheid én geblesseerden genezen sneller. Opent de Medische cel onder Ploeg. Maximaal niveau 2.',
     cost: 35_000,
     weeks: 5,
     group: 'afdeling',

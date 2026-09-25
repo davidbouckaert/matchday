@@ -26,6 +26,7 @@ import { bankruptcyCheck, rollInjuries, weeklyEvents } from './events';
 import { refreshLoanMarket, refreshStaffMarket, refreshTransferList, weeklyMarket } from './market';
 import { addNews, book } from './util';
 import { advanceTour } from './tour';
+import { blessureFactor, genezingKans, medischeKost, moeFactor } from './medisch';
 import { LAST_NAMES, STAFF_FIRST } from './data/names';
 import { STAR_THRESHOLDS, TRAINING_CAP, skillStars } from './training-staff';
 import { recordWeek, rolloverStats, snapshot } from './stats';
@@ -37,7 +38,7 @@ import { createOpening, settleSeason } from './opening';
 import { makeWeekChoice, resolveWeekChoice } from './weekmoment';
 import { ageStorylines, news, openStoryline, remember } from './content';
 import { applyUpgrade } from './infrastructure';
-import { checkCareerGoal, creditMilestones, settleCareerSeason, subsidyFactor } from './career';
+import { checkCareerGoal, creditMilestones, settleCareerSeason } from './career';
 import { settleSeasonTickets } from './seasontickets';
 import { checkFundPatience, notePromotion, takePrizeShare, updateStadiumSponsor } from './investors';
 import { NIEUWS } from '../content/news';
@@ -82,6 +83,7 @@ export function advanceWeek(previous: GameState): GameState {
   if (state.week === SEASON_END_WEEK) seasonEnd(state);
   weeklyMarket(state, rng);
   coachCarousel(state, rng);
+  if (medischeKost(state) > 0) book(state, 'medische cel', -medischeKost(state), 'Medische cel: voeding en preventie');
   bankruptcyCheck(state);
 
   state.lastMilestones = checkMilestones(state).map((m) => m.label);
@@ -491,9 +493,10 @@ function scheduledPayments(state: GameState, rng: Rng): void {
       addNews(state, 'neutraal', `Je jeugdwerking zit aan haar plafond (${c.youthTeams} ploegen). Kunstgras, betere verlichting of een opleidingscentrum maken plaats voor meer.`);
     }
   }
-  if (state.week === SUBSIDY_WEEK) {
-    const subsidy = (8000 + c.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12) * subsidyFactor(state) * state.inflation;
-    book(state, 'subsidies', subsidy, 'Subsidie gemeente (jeugdwerking en sportieve uitstraling)');
+  // De subsidie kwam hier jarenlang vanzelf binnen. Nu vraag je hem aan (Financiën) en
+  // kan de gemeente nee zeggen — de subsidieronde herinnert je eraan als je nog niets deed.
+  if (state.week === SUBSIDY_WEEK && state.subsidieSeizoen !== state.season && !state.requests.some((r) => r.kind === 'subsidie')) {
+    addNews(state, 'neutraal', 'De subsidieronde van de gemeente loopt. Je hebt nog geen aanvraag ingediend — dat kan bij Financiën.');
   }
 }
 
@@ -663,17 +666,18 @@ function weeklyPlayers(state: GameState, rng: Rng): void {
   const mental = staffSkill(state, 'mentaal');
   for (const p of state.players) {
     // vermoeidheid: natuurlijk herstel + opbouw door trainingen − extra herstel (staff, recuperatieruimte, focus)
-    const training = (p.injuryWeeks > 0 ? 0 : build) * fatigueAgeFactor(p.age);
+    const training = (p.injuryWeeks > 0 ? 0 : build) * fatigueAgeFactor(p.age) * moeFactor(state);
     p.fatigue = Math.round(clamp(p.fatigue * (1 - NATURAL_RECOVERY) + training - extra, 0, 100) * 10) / 10;
     // oververmoeide spelers kunnen op training geblesseerd raken
-    if (p.injuryWeeks === 0 && p.fatigue > 50 && rng.chance(((p.fatigue - 50) / 1000) * (1 - kine / 200))) {
+    if (p.injuryWeeks === 0 && p.fatigue > 50 && rng.chance(((p.fatigue - 50) / 1000) * (1 - kine / 200) * blessureFactor(state))) {
       p.injuryWeeks = rng.int(2, 4); // telt deze week meteen af
       addNews(state, 'slecht', `${p.name} raakt oververmoeid geblesseerd op training.`);
     }
     if (p.injuryWeeks > 0) p.injuryWeeks--;
     // herstellend: focus herstel en de kinesist verkorten blessures
     if (p.injuryWeeks > 0 && state.tactics.focus === 'herstel' && rng.chance(0.3)) p.injuryWeeks--;
-    if (p.injuryWeeks > 0 && kine && rng.chance(kine / 150)) p.injuryWeeks--;
+    // kinesist én recuperatieruimte genezen samen: het ijsbad deed hier vroeger niets
+    if (p.injuryWeeks > 0 && genezingKans(state) > 0 && rng.chance(genezingKans(state))) p.injuryWeeks--;
     // moraal zakt terug naar een basisniveau; leiders en een mentale coach houden de groep
     // samen; wie ver onder de loonlat betaald wordt (wagePressure) of hogerop wil maar
     // vastzit (wantsAway) zit lager

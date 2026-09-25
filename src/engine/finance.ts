@@ -1,5 +1,7 @@
 import type { GameState, Infrastructure } from './types';
 import { clamp } from './rng';
+import { subsidyFactor } from './career';
+import { licenceProblems } from './turn';
 import { DIVISIONS } from './data/divisions';
 import { inWinterBreak, isWinter } from './calendar';
 import type { Factor } from './factors';
@@ -230,4 +232,31 @@ export function bookWeeklyFlows(state: GameState): void {
     if (loan.remaining <= 0) addNews(state, 'goed', `${loan.label} is volledig afbetaald.`);
   }
   state.loans = state.loans.filter((l) => l.remaining > 0);
+}
+
+// ---------- Gemeentesubsidie ----------
+//
+// Vroeger kwam dit bedrag elk seizoen vanzelf binnen (week 24, zonder één klik). Nu is
+// het een aanvraag: het bedrag bleef dezelfde formule (dus wie hem binnenhaalt, merkt
+// geen balansverschil), maar de gemeente kijkt naar je dossier — vooral je jeugdwerking,
+// daarnaast je reputatie en of je licentie op orde is — en kan nee zeggen.
+
+/** Wat de gemeente toekent als ze ja zegt. */
+export function subsidieBedrag(state: GameState): number {
+  return Math.round((8000 + state.community.youthMembers * 25) * (1 + state.league.divisionLevel * 0.12) * subsidyFactor(state) * state.inflation);
+}
+
+/** De kans op een ja, en de zwakste plek in je dossier (voor de afwijzingsbrief). */
+export function subsidieKans(state: GameState): { kans: number; zwakstePlek: string } {
+  const jeugd = Math.min(0.4, state.community.youthTeams * 0.08);
+  const reputatie = clamp((state.community.reputation - 40) / 150, -0.15, 0.25);
+  const licentie = licenceProblems(state, state.league.divisionLevel).length === 0 ? 0.1 : -0.15;
+  const kans = clamp(0.3 + jeugd + reputatie + licentie, 0.05, 0.95);
+  const zwakstePlek =
+    jeugd <= reputatie && jeugd <= licentie
+      ? `te weinig jeugdploegen (${state.community.youthTeams})`
+      : reputatie <= licentie
+        ? 'een bescheiden reputatie in de streek'
+        : 'een licentiedossier dat niet op orde is';
+  return { kans, zwakstePlek };
 }
