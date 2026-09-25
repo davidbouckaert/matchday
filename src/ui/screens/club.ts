@@ -9,13 +9,13 @@ import {
   canOrganise, canUpgrade, eventForecast, projectLimit, eventsThisSeason, tribuneCost, tribunePerSeat, tribuneWeeks, upgradeCost, upgradeWeeks, youthForecast,
 } from '../../engine/actions';
 import { MAINTENANCE_FACTOR, facilityCost } from '../../engine/finance';
-import { volunteerSatisfaction } from '../../engine/turn';
+import { licenceProblems, volunteerSatisfaction } from '../../engine/turn';
 import { MEMBERS_PER_TEAM, VOLUNTEERS_PER_TEAM, boundVolunteers, coordinatorTeams, freeVolunteers, maxYouthTeams, teamNames, teamsFor, youthCapacityFactor, youthShortage } from '../../engine/youth';
 import { delegate } from '../../engine/delegation';
 import { LEVEL_WORDS, findClub } from '../../engine/world';
 import { weeks } from '../../engine/util';
 import { RED_FINE, YELLOW_FINE, YELLOW_LIMIT } from '../../engine/discipline';
-import { OWN_TEAM_ID, sortedTable, teamName } from '../../engine/league';
+import { OWN_TEAM_ID, sortedTable, teamName, zoneAt } from '../../engine/league';
 import { clubRatings } from '../../engine/ratings';
 import { seasonLabel } from '../../engine/calendar';
 import { CHANGELOG, VERSION } from '../../version';
@@ -235,27 +235,36 @@ export function leagueScreen(s: GameState): string {
   const table = sortedTable(s.league);
   const division = DIVISIONS[s.league.divisionLevel];
   const ours = s.league.fixtures.filter((f) => f.homeId === OWN_TEAM_ID || f.awayId === OWN_TEAM_ID).sort((a, b) => a.week - b.week);
-  return `<div class="grid">
-    <section class="card span2">
+  const level = s.league.divisionLevel;
+  const zone = (index: number) => zoneAt(s.league, index + 1, level, DIVISIONS.length);
+  const promoted = table.filter((_, i) => ['kampioen', 'promotie'].includes(zone(i)));
+  const relegated = table.filter((_, i) => zone(i) === 'degradatie');
+  const ownIndex = table.findIndex((r) => r.teamId === OWN_TEAM_ID);
+  const own = table[ownIndex];
+  const remaining = ours.filter((f) => f.homeGoals === undefined).length;
+  const boundary = promoted.length && ownIndex >= promoted.length ? promoted.at(-1)
+    : relegated.length ? (zone(ownIndex) === 'degradatie' ? table[table.length - relegated.length - 1] : relegated[0]) : undefined;
+  const boundaryText = boundary && own?.played ? ` · ${Math.abs(own.points - boundary.points)} punten ${own.points >= boundary.points ? 'voor' : 'achter'} ${teamName(s, boundary.teamId)} (${promoted.includes(boundary) ? 'laatste promotieplaats' : relegated.includes(boundary) ? 'eerste degradatieplaats' : 'laatste veilige plaats'})` : '';
+  const problems = level < DIVISIONS.length - 1 ? licenceProblems(s, level + 1) : [];
+  return `<div class="competition-screen">
+    <section class="card competition-stand">
       <h2>${division.name} · ${seasonLabel(s.startYear, s.season)}</h2>
-      <p class="muted small">1e = kampioen, 2e promoveert ook. De laatste 3 degraderen. Bij evenveel punten telt eerst het doelpuntensaldo.</p>
-      <div class="table-wrap"><table class="compact league">
+      <p class="competition-context"><strong>${esc(s.clubName)} · ${ownIndex + 1}e · ${own?.points ?? 0} punten</strong> · ${own?.played ?? 0} gespeeld · ${remaining} wedstrijden over${esc(boundaryText)}${!own?.played ? '<span class="staff-meta">Nog niet gespeeld: de volgorde zegt nog niets over je seizoen.</span>' : ''}</p>
+      <p class="muted small competition-rules">${promoted.length ? `↑ Plaats 1–${promoted.length}: sportieve promotieplaatsen, mits licentie.` : 'Hoogste reeks: geen promotie.'} ${relegated.length ? `↓ Plaats ${table.length - relegated.length + 1}–${table.length}: degradatie.` : 'Laagste reeks: geen degradatie.'} Bij gelijke punten telt eerst het doelpuntensaldo.</p>
+
+      ${level < DIVISIONS.length - 1 ? `<details class="competition-licence"><summary>${own?.played && ['kampioen', 'promotie'].includes(zone(ownIndex)) ? 'Sportief op promotieplaats · ' : ''}Licentie voor ${DIVISIONS[level + 1].name}: ${problems.length ? 'nog voorwaarden te vervullen' : 'voorwaarden nu in orde'}</summary>
+        <p>${problems.length ? `Nog nodig: ${esc(problems.join('; '))}.` : 'Je voldoet nu aan de voorwaarden. Die worden bij het seizoenseinde opnieuw getoetst.'}</p>
+        <div class="btn-row"><button class="sm ghost" data-action="nav" data-id="opleiding">Personeel en diploma’s</button><button class="sm ghost" data-action="nav" data-id="infrastructuur">Infrastructuur</button></div></details>` : ''}
+      <div class="table-wrap"><table class="compact league"><caption class="sr-only">Stand ${division.name}</caption>
         <thead><tr>
-          <th data-tip="De plaats in het klassement">Plaats</th><th>Club</th>
-          <th class="num" ${tip('Gespeelde wedstrijden')}>Gespeeld</th>
-          <th class="num" ${tip('Gewonnen wedstrijden (3 punten)')}>Winst</th>
-          <th class="num" ${tip('Gelijkspelen (1 punt)')}>Gelijk</th>
-          <th class="num" ${tip('Verloren wedstrijden')}>Verlies</th>
-          <th class="num" ${tip('Doelpunten gemaakt')}>Voor</th>
-          <th class="num" ${tip('Doelpunten tegengekregen')}>Tegen</th>
-          <th class="num" ${tip('Doelpuntensaldo: gemaakt min tegengekregen')}>Saldo</th>
-          <th class="num">Punten</th>
+          <th scope="col">#</th><th scope="col" class="league-club">Club</th>
+          ${[['Gsp', 'Gespeelde wedstrijden'], ['W', 'Winst'], ['G', 'Gelijk'], ['V', 'Verlies'], ['DV', 'Doelpunten voor'], ['DT', 'Doelpunten tegen'], ['+/−', 'Doelpuntensaldo'], ['Ptn', 'Punten']].map(([short, full]) => `<th scope="col" class="num"><abbr title="${full}">${short}</abbr></th>`).join('')}
         </tr></thead>
         <tbody>${table
           .map((r, i) => {
             const diff = r.goalsFor - r.goalsAgainst;
-            return `<tr class="${r.teamId === OWN_TEAM_ID ? 'own' : ''} ${i < 2 ? 'up' : i >= table.length - 3 ? 'down' : ''}">
-            <td>${i + 1}</td><td>${esc(teamName(s, r.teamId))}${s.league.teams.find((t) => t.id === r.teamId)?.isRival ? ' <span class="tag">derby</span>' : ''}</td>
+            return `<tr class="${r.teamId === OWN_TEAM_ID ? 'own' : ''} ${['kampioen', 'promotie'].includes(zone(i)) ? 'up' : zone(i) === 'degradatie' ? 'down' : ''}">
+            <td>${i + 1}<span class="zone-symbol" aria-label="${['kampioen', 'promotie'].includes(zone(i)) ? 'sportieve promotieplaats' : zone(i) === 'degradatie' ? 'degradatieplaats' : ''}">${['kampioen', 'promotie'].includes(zone(i)) ? ' ↑' : zone(i) === 'degradatie' ? ' ↓' : ''}</span></td><th scope="row" class="league-club">${esc(teamName(s, r.teamId))}${r.teamId === OWN_TEAM_ID ? ' <span class="own-label">Jouw club</span>' : ''}${s.league.teams.find((t) => t.id === r.teamId)?.isRival ? ' <span class="tag">derby</span>' : ''}</th>
             <td class="num">${r.played}</td><td class="num">${r.won}</td><td class="num">${r.drawn}</td><td class="num">${r.lost}</td>
             <td class="num">${r.goalsFor}</td><td class="num">${r.goalsAgainst}</td>
             <td class="num ${diff > 0 ? 'pos' : diff < 0 ? 'neg' : ''}">${diff > 0 ? '+' : ''}${diff}</td>
@@ -283,8 +292,7 @@ export function leagueScreen(s: GameState): string {
           .join('')}</tbody>
       </table></div>
     </section>
-  </div>
-  ${disciplineCard(s)}`;
+  ${disciplineCard(s)}</div>`;
 }
 
 /** Tuchtoverzicht: kaarten en schorsingen van alle ploegen. */
@@ -306,7 +314,7 @@ function disciplineCard(s: GameState): string {
     <h2>Tuchtzaken</h2>
     <p class="muted small">Elke ${YELLOW_LIMIT}de gele kaart = 1 wedstrijd schorsing. Twee keer geel in één wedstrijd = rood (1 wedstrijd), direct rood = 1 tot 3 wedstrijden.
     Gele kaarten tellen per seizoen. Jouw club betaalt €${YELLOW_FINE} per gele en €${RED_FINE} per rode kaart. Een "!" betekent: nog één gele kaart tot een schorsing.</p>
-    <div class="table-wrap tall"><table class="compact" data-sort-id="tucht">
+    <div class="table-wrap tall"><table class="compact" data-sort-id="tucht" data-accessible-sort>
       <thead><tr><th>Speler</th><th>Club</th><th class="num">Geel</th><th class="num">Rood</th><th class="num">Geschorst</th></tr></thead>
       <tbody>${body || '<tr><td colspan="5" class="muted">Nog geen kaarten dit seizoen.</td></tr>'}</tbody>
     </table></div>

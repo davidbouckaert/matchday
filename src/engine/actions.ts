@@ -20,7 +20,7 @@ import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } f
 import { emergencyOffer, loanOffers } from './loans';
 import { acceptSponsorOffer } from './sponsors';
 export { SPONSOR_TERMS, sponsorTerm, termTotal } from './sponsors';
-import { hasDiploma, staffSkill } from './staff';
+import { hasDiploma, staffSkill, staffSigningFee, staffPayoff, staffChangeCost } from './staff';
 import { taskCapacity, taskSkill, tasksOf } from './delegation';
 import { boundVolunteers, freeVolunteers, youthCapacityFactor } from './youth';
 import { bestPrice, margin } from './merch';
@@ -387,7 +387,7 @@ export function hireStaff(state: GameState, staffId: string): ActionResult {
   if (current >= roleDef(s.role).max) return fail(`Je hebt al een ${roleDef(s.role).label.toLowerCase()}. Ontsla eerst de huidige.`);
   const lock = staffLock(state, s.role);
   if (lock) return fail(lock);
-  const signingFee = s.wage * 2;
+  const signingFee = staffSigningFee(s);
   book(state, 'lonen personeel', -signingFee, `Tekengeld ${s.name}`);
   state.staffMarket = state.staffMarket.filter((x) => x.id !== staffId);
   state.staff.push(s);
@@ -410,7 +410,7 @@ export function fireStaff(state: GameState, staffId: string): ActionResult {
   if (g) return g;
   const s = state.staff.find((x) => x.id === staffId);
   if (!s) return fail('Staflid niet gevonden.');
-  const payoff = s.wage * 8;
+  const payoff = staffPayoff(s);
   book(state, 'lonen personeel', -payoff, `Opzegvergoeding ${s.name}`);
   state.staff = state.staff.filter((x) => x.id !== staffId);
   const dropped: string[] = [];
@@ -446,7 +446,7 @@ export function replaceStaff(state: GameState, staffId: string): ActionResult {
   if (!zittend) return hireStaff(state, staffId);
   const lock = staffLock(state, c.role);
   if (lock) return fail(lock);
-  const cost = zittend.wage * 8 + c.wage * 2;
+  const cost = staffChangeCost(c, zittend);
   if (state.cash < cost) return fail(tooExpensive(state, cost, `${zittend.name} vervangen door ${c.name}`));
   // zijn taken verhuizen stil mee: anders meldt het ontslag "doe je zelf weer" over taken
   // die vijf regels later gewoon bij zijn opvolger liggen

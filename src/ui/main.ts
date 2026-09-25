@@ -657,8 +657,18 @@ function applySorts(): void {
     headers.forEach((th, i) => {
       if (th.dataset.nosort !== undefined) return;
       th.classList.add('sortable');
-      th.dataset.action = 'sort';
-      th.dataset.id = `${id}:${i}`;
+      if (table.hasAttribute('data-accessible-sort')) {
+        const button = document.createElement('button');
+        button.className = 'table-sort-button';
+        button.textContent = th.textContent;
+        button.dataset.action = 'sort';
+        button.dataset.id = `${id}:${i}`;
+        th.replaceChildren(button);
+        th.setAttribute('aria-sort', ui.sorts[id]?.col === i ? (ui.sorts[id].dir === 1 ? 'ascending' : 'descending') : 'none');
+      } else {
+        th.dataset.action = 'sort';
+        th.dataset.id = `${id}:${i}`;
+      }
     });
     const sort = ui.sorts[id];
     if (!sort) return;
@@ -1074,8 +1084,18 @@ const handlers: Record<string, Handler> = {
   'transfer-filter': (id) => {
     ui.transferFilter = ui.transferFilter === id ? null : (id as Position);
   },
-  hire: gameAction(actions.hireStaff),
-  'hire-replace': gameAction(actions.replaceStaff),
+  hire: gameAction((g, id) => {
+    const role = g.staffMarket.find((m) => m.id === id)?.role;
+    const result = actions.hireStaff(g, id);
+    if (result.ok && role) { ui.staffFilter = role; focusAfterRender = '#staff-context'; }
+    return result;
+  }),
+  'hire-replace': gameAction((g, id) => {
+    const role = g.staffMarket.find((m) => m.id === id)?.role;
+    const result = actions.replaceStaff(g, id);
+    if (result.ok && role) { ui.staffFilter = role; focusAfterRender = '#staff-context'; }
+    return result;
+  }),
   fire: gameAction(actions.fireStaff),
   course: gameAction((g, id) => actions.startCourse(g, id, 'diploma')),
   bijscholing: gameAction((g, id) => actions.startCourse(g, id, 'bijscholing')),
@@ -1229,6 +1249,11 @@ const changeHandlers: Record<string, (g: GameState, value: string, id: string) =
 root.addEventListener('change', async (e) => {
   const el = e.target as HTMLInputElement;
   const key = el.dataset?.change;
+  if (key === 'staff-role') {
+    ui.staffFilter = el.value ? el.value as StaffRole : null;
+    render();
+    return;
+  }
   if (key && changeHandlers[key] && ui.game) {
     const tourVoor = tourFlags(ui.game);
     const result = changeHandlers[key](ui.game, el.value, el.dataset.id ?? '');

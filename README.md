@@ -47,6 +47,33 @@ De nieuwe financiële kern benoemt die onzekerheid als die post in de vooruitbli
 Deze implementatie wijzigt de prognosemotor niet. Fysieke iPad/Safari en VoiceOver zijn nog
 handmatig te toetsen; viewportemulatie geldt daarvoor niet als vervanging.
 
+## Personeel en Competitie — Slice 2 vanaf v0.84.2
+
+Personeel gebruikt een smalle rollenlijst en een brede kandidatenvergelijking. De huidige
+bezetting blijft bij de kandidaat staan; loonverschil, tekengeld, opzeg en totaal staan
+naast de beslissing. Onder 1200px komt de vergelijking eerst, met een functiekeuzelijst
+bovenaan en dezelfde huidige-persooncontext. Taken en opleiding blijven via de bestaande
+personeelskaart bereikbaar; taakverdeling blijft een afzonderlijke tabel.
+
+Een vervanging vraagt nu bevestiging met de taken die meegaan en terugvallen naar jou.
+De presentatie voert de bestaande actie uit op een kopie om blokkades en taakoverdracht
+te bepalen. De bestaande factoren voor tekengeld en opzeg zijn uitsluitend verplaatst
+naar gedeelde functies die ook de echte boekingen gebruiken. Aanwerven op een vacature
+blijft volgens de bestaande motor mogelijk bij onvoldoende kas; vervangen niet.
+
+Competitie geeft de stand de volle breedte. Eigen club, sportieve zones en licentie zijn
+apart benoemd; zones komen uit `zoneAt`, licentieproblemen uit `licenceProblems`.
+Clubinformatie, wedstrijden en tucht staan eronder. Er zijn geen nieuwe voetbalstatistieken.
+Sorteerknoppen en `aria-sort` zijn beperkt tot kandidaten en tuchtzaken.
+
+Gemeten tegenover `d7841d8`: 45 combinaties van aanwerven, vervangen en ontslaan, vijf
+seeds en drie kasstanden, leveren dezelfde volledige speltoestand en actie-uitkomst op.
+843 tests groen. Chrome vóór/na gecontroleerd op 1440×900, 1280×800, 1024×768 en
+768×1024, plus echte 200% zoom. Acties en punten blijven binnen de tabellen; lange namen,
+lege lichting, vergrendelde rollen, hoge kosten en terugvallende taken zijn gecontroleerd.
+De bestaande impacthulp blijft een vaardigheidsvergelijking, geen volledige voorspelling
+van alle kandidaatkenmerken. Fysieke iPad/Safari en VoiceOver blijven apart te toetsen.
+
 ## Hoe de code in elkaar zit
 
 ```
