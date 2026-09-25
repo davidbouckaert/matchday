@@ -185,9 +185,10 @@ let guidedStep: { chapter: number; step: number } | null = null;
 let selectedSubsidie: string | undefined;
 let pendingSubsidie: string | null = null;
 let focusAfterRender: string | null = null;
-let subsidieReturn: { screen: Screen; report: UiState['report']; held: GameState | null; week: number; season: number; scroll: number; focus: string | null } | null = null;
+let subsidieReturn: { screen: Screen; report: UiState['report']; held: GameState | null; week: number; season: number; scroll: number; focus: string | null; modalFocus: string | null } | null = null;
 let modalReturnFocus: string | null = null;
 let previousModal = false;
+let restoringReport = false;
 let returnScroll: number | null = null;
 
 function focusSelector(el: Element | null): string | null {
@@ -323,6 +324,11 @@ function render(): void {
     openSubsidie(pendingSubsidie);
     pendingSubsidie = null;
   }
+  // Gewone navigatie verlaat de dossierroute; een uitgestelde weekkeuze houdt haar wel vast.
+  if (subsidieReturn && ui.screen !== 'financien' && pendingSubsidie === null) {
+    subsidieReturn = null;
+    selectedSubsidie = undefined;
+  }
   const oldFocus = focusSelector(document.activeElement);
   const toast = toastHtml();
   const g = ui.game;
@@ -455,7 +461,7 @@ function render(): void {
     if (child instanceof HTMLElement) child.inert = !!overlay && !child.contains(overlay) && !child.matches('.overlay, .moment-overlay');
   }
   if (overlay) {
-    if (!previousModal) modalReturnFocus = oldFocus;
+    if (!previousModal && !restoringReport) modalReturnFocus = oldFocus;
     const area = modal ?? overlay;
     if (!area.hasAttribute('role')) area.setAttribute('role', 'dialog');
     if (!area.hasAttribute('aria-label') && !area.hasAttribute('aria-labelledby')) area.setAttribute('aria-label', area.querySelector('h2')?.textContent ?? 'Weekverloop');
@@ -481,6 +487,7 @@ function render(): void {
   }
   if (overlay) dismissTooltips();
   previousModal = !!overlay;
+  restoringReport = false;
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
     if (btn) {
@@ -993,7 +1000,7 @@ const handlers: Record<string, Handler> = {
     const fromReport = !!ui.report;
     if (ui.screen !== 'financien' || ui.report) subsidieReturn = { screen: ui.screen, report: ui.report ? { ...ui.report, phase: 'report' } : null,
       held: ui.held, week: ui.game.week, season: ui.game.season, scroll: fromReport ? (root.querySelector('.report-body')?.scrollTop ?? 0) : window.scrollY,
-      focus: `[data-action="subsidie-open"][data-id="${CSS.escape(id)}"]` };
+      focus: `[data-action="subsidie-open"][data-id="${CSS.escape(id)}"]`, modalFocus: modalReturnFocus };
     ui.report = null;
     ui.held = null;
     if (fromReport && ui.game.weekChoice && !ui.game.weekChoice.answer) { ui.moment = 'vraag'; pendingSubsidie = id; }
@@ -1008,6 +1015,9 @@ const handlers: Record<string, Handler> = {
       ui.held = back.held;
       focusAfterRender = back.focus;
       returnScroll = back.scroll;
+      // De rapportopener blijft de weekknop, niet de tijdelijke dossier-terugknop.
+      restoringReport = !!back.report;
+      if (restoringReport) modalReturnFocus = back.modalFocus;
     } else { ui.screen = 'overzicht'; focusAfterRender = '[data-action="subsidie-open"]'; }
   },
   voeding: gameAction((g, id) => actions.setVoeding(g, id as Parameters<typeof actions.setVoeding>[1])),
