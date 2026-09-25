@@ -17,7 +17,7 @@ function moodWord(n: number): string {
   return n >= 8 ? 'erg blij' : n > 0 ? 'tevreden' : n === 0 ? 'neutraal' : n > -10 ? 'ontgoocheld' : 'boos';
 }
 
-function row(s: GameState, p: Player, locked: boolean): string {
+function row(s: GameState, p: Player, locked: boolean, maxBod: number): string {
   const ask = askingWage(s, p);
   const seasonsLeft = p.contractUntil - s.season;
   const suggestion = Math.round(ask / 5) * 5;
@@ -38,7 +38,7 @@ function row(s: GameState, p: Player, locked: boolean): string {
         ? '<span class="muted small">je personeel regelt dit</span>'
         : weg
           ? '<span class="muted small">hij wil hogerop: verlengen kan niet</span>'
-          : `<span class="ask">${numField({ value: suggestion, min: 40, step: 5, prefix: '€', inputId: `wage-${p.id}`, label: `Loonvoorstel voor ${p.name}` })}
+          : `<span class="ask">${numField({ value: suggestion, min: 40, max: maxBod, step: 5, prefix: '€', inputId: `wage-${p.id}`, label: `Loonvoorstel voor ${p.name}` })}
            <button class="sm primary" data-action="extend" data-id="${p.id}">Dit bod doen</button>${
              p.contractUntil <= s.season
                ? `<button class="sm ghost" data-action="no-extend" data-id="${p.id}" ${tipAttr('Bewust niet verlengen: hij vertrekt gratis op het einde van het seizoen en verdwijnt uit je waarschuwingen. Je kunt je bedenken zolang het seizoen loopt.')}>Niet verlengen</button>`
@@ -60,6 +60,10 @@ export function contractsScreen(s: GameState): string {
   const vertrekt = squad.filter((p) => p.contractUntil <= s.season && p.nietVerlengen);
   const rest = squad.filter((p) => p.contractUntil > s.season);
   const wages = s.players.reduce((sum, p) => sum + p.wage, 0);
+  // numField reserveert de breedte van zijn veld op het grootst mogelijke getal; zonder een
+  // gedeeld plafond gokt elke rij dat op tien keer háár eigen loonvoorstel, en dan springt de
+  // knop ernaast in- en uit bij elke speler met een korter of langer bedrag.
+  const maxBod = Math.max(40, ...squad.map((p) => Math.round(askingWage(s, p) / 5) * 5));
 
   return `${taskPicker(s, ['contracten'])}<div class="grid">
     <section class="card span-all">
@@ -71,7 +75,7 @@ export function contractsScreen(s: GameState): string {
       <h3>Loopt af (${expiring.length})</h3>
       <div class="table-wrap"><table class="compact contract-tabel" data-sort-id="contracten-af">
         <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Contract</th><th>Loon nu</th><th>Vraagt</th><th data-nosort>Jouw voorstel</th></tr></thead>
-        <tbody>${expiring.map((p) => row(s, p, !!agent)).join('') || '<tr><td colspan="7" class="muted">Geen aflopende contracten.</td></tr>'}</tbody>
+        <tbody>${expiring.map((p) => row(s, p, !!agent, maxBod)).join('') || '<tr><td colspan="7" class="muted">Geen aflopende contracten.</td></tr>'}</tbody>
       </table></div>
       ${
         vertrekt.length
@@ -91,7 +95,7 @@ export function contractsScreen(s: GameState): string {
       <p class="muted small">Vroeg verlengen kan ook: dan ben je zeker van hem, maar je zit langer aan zijn loon vast (maximaal drie seizoenen vooruit).</p>
       <div class="table-wrap"><table class="compact contract-tabel" data-sort-id="contracten-rest">
         <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Contract</th><th>Loon nu</th><th>Vraagt</th><th data-nosort>Jouw voorstel</th></tr></thead>
-        <tbody>${rest.map((p) => row(s, p, !!agent)).join('')}</tbody>
+        <tbody>${rest.map((p) => row(s, p, !!agent, maxBod)).join('')}</tbody>
       </table></div>
     </section>
     ${loanKeepCard(s)}
