@@ -13,6 +13,7 @@ import { MATCH_WEEKS, SEASON_END_WEEK, WEEKS_PER_YEAR, WINTER_BREAK, formatDateL
 import { DIVISIONS } from '../engine/data/divisions';
 import { OWN_TEAM_ID, type Zone, ownPosition, teamName, zoneAt } from '../engine/league';
 import { esc, euro } from './format';
+import { WEEK_COMBO, WEEK_KBD, kbd } from './keys';
 import { schemeById } from './theme';
 import { tipAttr } from './tooltip';
 import { type CrestShape, clubInitials, crestSvg } from './crest';
@@ -279,8 +280,8 @@ export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: bo
         o.thuis
           ? ''
           : `<span class="bureau-wrap">${o.tourLoop ? '<i class="bureau-vinger" aria-hidden="true">👇</i>' : ''}<button class="ghost bureau-knop" data-action="nav" data-id="overzicht" ${tipAttr(
-              o.tourLoop ? 'Terug naar je Bureau: daar staat de volgende stap van de rondleiding klaar.' : 'Naar je Bureau: je werklijst, je cijfers en het weekoverzicht.',
-            )}>🏠 Bureau</button></span>`
+              (o.tourLoop ? 'Terug naar je Bureau: daar staat de volgende stap van de rondleiding klaar.' : 'Naar je Bureau: je werklijst, je cijfers en het weekoverzicht.') + ' Sneltoets: B.',
+            )}>🏠 Bureau ${kbd('B')}</button></span>`
       }
       <button class="ghost fast" data-action="fast-forward" ${o.fastWeeks < 2 || o.busy ? 'disabled' : ''} ${tipAttr(nextTip)}>
         ▶▶ Tot de match${o.fastWeeks >= 2 ? ` <span class="small">(${o.fastWeeks})</span>` : ''}
@@ -288,7 +289,7 @@ export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: bo
       <span class="next-wrap">
         ${o.tourReady && !o.blocked && !g.gameOver ? '<span class="tour-bubbel">Hoofdstuk klaar — speel gerust een weekje!<i>👇</i></span>' : ''}
         <button class="primary next ${o.weekLabel.highlight ? 'season-end' : ''}" data-action="next-week"
-          ${o.blocked || g.gameOver || o.busy ? 'disabled' : ''} ${tipAttr(o.blocked || o.weekLabel.tip)}>${o.weekLabel.text}</button>
+          ${o.blocked || g.gameOver || o.busy ? 'disabled' : ''} ${tipAttr(o.blocked || `${o.weekLabel.tip} Sneltoets: ${WEEK_COMBO}.`)}>${o.weekLabel.text} ${kbd(WEEK_KBD)}</button>
       </span>
     </div>
   </div>`;

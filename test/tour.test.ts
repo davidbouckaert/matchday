@@ -10,6 +10,7 @@ function werkHoofdstuk1Af(s: GameState): void {
   s.tactics.manualXI = [s.players[0].id];
   s.tactics.plan = 'counter';
   s.tactics.roles.kapitein = s.players[0].id;
+  s.tactics.benched = [s.players[1].id]; // een ándere speler: basis en bank gaan niet samen
 }
 
 describe('rondleiding (tour)', () => {
@@ -63,6 +64,21 @@ describe('rondleiding (tour)', () => {
     // hoofdstuk 1 klaar → 2 open of verder; nooit een hoofdstuk vol vinkjes als les
     const t = tourChapter(s);
     if (t) expect(t.chapter.steps.some((st) => !st.done(s))).to.equal(true);
+  });
+
+  // De wisselbank is een heel systeem (invallers pakken minuten en groeien mee) dat je
+  // nooit tegenkomt als niemand je erop wijst. Hoofdstuk 1 leert hem daarom expliciet.
+  // Wie de opstelling uitbesteedt, laat de trainer óók de bank vullen — dan is de les
+  // overbodig en mag de stap niet blijven hangen.
+  it('vinkt de wisselbank-stap af bij een bankkeuze of bij uitbesteden', () => {
+    const s = readyGame();
+    const stap = TOUR_CHAPTERS[0].steps.find((st) => st.wijs === 'wisselbank')!;
+    expect(stap.done(s), 'vers spel: bank leeg, opstelling in eigen beheer').to.equal(false);
+    s.tactics.benched = [s.players[1].id];
+    expect(stap.done(s)).to.equal(true);
+    s.tactics.benched = [];
+    s.delegation.opstelling = s.staff.find((m) => m.role === 'hoofdtrainer')!.id;
+    expect(stap.done(s), 'uitbesteed: de trainer vult de bank, les niet meer nodig').to.equal(true);
   });
 
   it('registreert schermbezoeken alleen voor kijk-stappen en vinkt ze af', () => {

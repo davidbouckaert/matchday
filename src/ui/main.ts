@@ -267,6 +267,24 @@ function renderScreen(g: GameState): string {
   }
 }
 
+/** Waarom er nu geen week gespeeld kan worden (lege string = het kan wél). Eén bron voor
+ *  de knop, de waarschuwingsbalk én de sneltoets — het scherm rekent nooit apart. */
+function speelBlokkade(g: GameState): string {
+  const gap = lineupGap(g);
+  const ZONES: Record<string, string> = { DOEL: 'doel', VERD: 'verdediging', MIDD: 'middenveld', AANV: 'aanval' };
+  const openLines = Object.entries(g.tactics.gaps ?? {})
+    .filter(([, n]) => (n ?? 0) > 0)
+    .map(([pos, n]) => `${n}× ${ZONES[pos] ?? pos}`);
+  return (
+    squadBlock(g) ??
+    (gap.available < 11
+      ? `Je kunt geen elf opstellen: nog maar ${gap.available} speelklare spelers. Ga naar Ploeg › Selectie en haal spelers bij Transfers.`
+      : openLines.length
+        ? `Je liet plaatsen open in je basiself (${openLines.join(', ')}). Duid bij Ploeg › Selectie zelf iemand aan met de ster, of klik op "Alles loslaten" om je trainer te laten aanvullen.`
+        : '')
+  );
+}
+
 function render(): void {
   const toast = toastHtml();
   const g = ui.game;
@@ -281,18 +299,7 @@ function render(): void {
     : '';
   const group = groupOf(ui.screen);
   const weekLabel = nextWeekLabel(g);
-  const gap = lineupGap(g);
-  const ZONES: Record<string, string> = { DOEL: 'doel', VERD: 'verdediging', MIDD: 'middenveld', AANV: 'aanval' };
-  const openLines = Object.entries(g.tactics.gaps ?? {})
-    .filter(([, n]) => (n ?? 0) > 0)
-    .map(([pos, n]) => `${n}× ${ZONES[pos] ?? pos}`);
-  const blocked =
-    squadBlock(g) ??
-    (gap.available < 11
-      ? `Je kunt geen elf opstellen: nog maar ${gap.available} speelklare spelers. Ga naar Ploeg › Selectie en haal spelers bij Transfers.`
-      : openLines.length
-        ? `Je liet plaatsen open in je basiself (${openLines.join(', ')}). Duid bij Ploeg › Selectie zelf iemand aan met de ster, of klik op "Alles loslaten" om je trainer te laten aanvullen.`
-        : '');
+  const blocked = speelBlokkade(g);
   const fastWeeks = blocked ? 0 : canFastForward(g);
   // onthouden waar de cursor stond: elke wijziging tekent het scherm opnieuw, en wie net
   // een prijs aan het intikken is mag daar niet uit geduwd worden
@@ -512,7 +519,7 @@ function nextWeekLabel(g: GameState): { text: string; tip: string; highlight: bo
   const last = MATCH_WEEKS[MATCH_WEEKS.length - 1];
   const open = g.weekChoice && !g.weekChoice.answer ? ` Let op: "${g.weekChoice.title}" staat nog open op je overzicht — beslis je niet, dan gaat de laatste optie door.` : '';
   if (open && g.week !== last && g.week !== SEASON_END_WEEK && g.week !== WEEKS_PER_YEAR) {
-    return { text: 'Volgende week ▶', tip: `Speel de volgende week (spatie).${open}`, highlight: false };
+    return { text: 'Volgende week ▶', tip: `Speel de volgende week.${open}`, highlight: false };
   }
   if (g.week === last) {
     return { text: 'Laatste speeldag ▶', tip: 'De laatste wedstrijd van het seizoen. Daarna vallen de beslissingen over promotie en degradatie.', highlight: true };
@@ -522,7 +529,7 @@ function nextWeekLabel(g: GameState): { text: string; tip: string; highlight: bo
   }
   if (g.week > last && g.week < SEASON_END_WEEK) return { text: 'Volgende week ▶', tip: 'De competitie is gespeeld; de eindafrekening volgt in week ' + SEASON_END_WEEK + '.', highlight: false };
   if (g.week === WEEKS_PER_YEAR) return { text: 'Nieuw seizoen starten ▶', tip: 'Contracten lopen af, de jeugd stroomt door en er komt een nieuwe kalender.', highlight: true };
-  return { text: 'Volgende week ▶', tip: 'Speel de volgende week (spatie)', highlight: false };
+  return { text: 'Volgende week ▶', tip: 'Speel de volgende week.', highlight: false };
 }
 
 /**
@@ -1128,7 +1135,10 @@ root.addEventListener('change', async (e) => {
   }
 });
 
-// Sneltoets: spatie = volgende week (behalve in invoervelden)
+// Sneltoetsen. Ctrl/Cmd+Enter = volgende week: bewust een combo, want de oude losse
+// spatiebalk speelde vanaf het overzicht te makkelijk per ongeluk nóg een week door.
+// Spatie sluit nu alleen nog het weekverslag (of slaat de animatie over), en B brengt
+// je altijd naar je Bureau. De chips op de knoppen zelf (header.ts) verklappen ze.
 document.addEventListener('keydown', (e) => {
   if (!ui.game || (e.target as HTMLElement).closest('input, textarea, select')) return;
   if (e.key === 'Escape' && ui.confirmAction) {
@@ -1138,7 +1148,7 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === 'Escape' && (ui.report || ui.fastForward)) {
     ui.report = null;
-  ui.held = null;
+    ui.held = null;
     if (ui.fastForward) {
       ui.fastForward = null;
       if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
@@ -1147,21 +1157,66 @@ document.addEventListener('keydown', (e) => {
     render();
     return;
   }
+
+  // een beslissingsvenster of bevestigingsvraag staat open: die wil een klik, geen toets
+  const overlay = ui.confirmAction || (ui.moment !== 'dicht' && !!ui.game.weekChoice && !ui.report && !ui.fastForward);
+
+  // Ctrl/Cmd+Enter: het weekverslag nog open? Eerst dat dicht (zoals de knop "Naar je
+  // bureau") — de volgende druk speelt dan echt. Zo speelt één enterdruk nooit blind twee weken.
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.altKey) {
+    e.preventDefault();
+    if (ui.fastForward) {
+      ui.fastForward = null;
+      if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+      ui.screen = 'overzicht';
+    } else if (ui.report) {
+      ui.report = null;
+      ui.held = null;
+      ui.screen = 'overzicht';
+      if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+    } else if (!overlay) {
+      const blokkade = speelBlokkade(ui.game);
+      if (blokkade) showToast({ ok: false, message: blokkade });
+      else {
+        void playWeek().then(render);
+        return;
+      }
+    }
+    render();
+    return;
+  }
+
+  // B: naar je Bureau — gewone navigatie, dus zonder combo
+  if ((e.key === 'b' || e.key === 'B') && !e.metaKey && !e.ctrlKey && !e.altKey && !overlay) {
+    e.preventDefault();
+    if (ui.fastForward) {
+      ui.fastForward = null;
+      if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+    }
+    if (ui.report) {
+      ui.report = null;
+      ui.held = null;
+      if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
+    }
+    ui.screen = 'overzicht';
+    ui.menuOpen = false;
+    render();
+    return;
+  }
+
+  // spatie: alleen nog het verslag — animatie overslaan of het rapport sluiten.
+  // Een nieuwe week spelen doet spatie niet meer; daar is Ctrl/Cmd+Enter voor.
   if (e.key !== ' ' || (e.target as HTMLElement).closest('button')) return;
+  if (!ui.report && !ui.fastForward) return;
   e.preventDefault();
   if (ui.fastForward) {
     ui.fastForward = null;
     if (ui.game.weekChoice && !ui.game.weekChoice.answer) ui.moment = 'vraag';
-  }
-  else if (ui.report?.phase === 'anim') ui.report.phase = 'report';
-  else if (ui.report) {
-    ui.report = null;
-  ui.held = null;
-    ui.screen = 'overzicht';
-  }
+  } else if (ui.report?.phase === 'anim') ui.report.phase = 'report';
   else {
-    void playWeek().then(render);
-    return;
+    ui.report = null;
+    ui.held = null;
+    ui.screen = 'overzicht';
   }
   render();
 });

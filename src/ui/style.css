@@ -198,6 +198,16 @@ label { display: block; font-size: .8rem; color: var(--muted); }
   padding: 5px var(--s3); border-radius: 99px; font-size: .88rem;
 }
 .subtabs button.on { background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+/* De sneltoets-chip in een knoplabel: leesbaar op de groene primary én op een ghost-knop.
+   Op aanraakschermen (geen toetsenbord) verdwijnt hij — zie de media query onderaan. */
+.knop-kbd {
+  font-family: inherit; font-size: .72em; font-weight: 600; line-height: 1;
+  padding: 2px 5px 3px; border-radius: 4px; margin-left: 2px;
+  background: rgba(127, 127, 127, .16); border: 1px solid rgba(127, 127, 127, .25);
+  color: inherit; opacity: .85; vertical-align: 1px;
+}
+button.primary .knop-kbd { background: rgba(255, 255, 255, .18); border-color: rgba(255, 255, 255, .35); }
+@media (pointer: coarse) and (hover: none) { .knop-kbd { display: none; } }
 /* Een vergrendeld subtabblad: zichtbaar maar gedimd, met een tooltip die vertelt hoe je
    het vrijspeelt. cursor: help zegt "hier valt iets te lezen", niet "hier valt te klikken". */
 .subtabs button.locked { opacity: .5; cursor: help; }

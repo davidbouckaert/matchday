@@ -91,6 +91,15 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         wijs: 'kapitein',
         done: (s) => !!s.tactics.roles.kapitein,
       },
+      // Achteraan toegevoegd, niet tussenin: de plakkende voltooid-sleutels ("0:1") wijzen
+      // per index, dus een stap tussenvoegen zou in lopende saves de vinkjes verschuiven.
+      {
+        text: 'Zet een speler op de wisselbank met 🔁 — invallers pakken speelminuten en groeien mee, zo spelen je beloften zich in de kijker',
+        where: 'Ploeg › Selectie',
+        screen: 'ploeg',
+        wijs: 'wisselbank',
+        done: (s) => s.tactics.benched.length > 0 || !!delegate(s, 'opstelling'),
+      },
     ],
   },
   {
