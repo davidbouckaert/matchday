@@ -344,7 +344,7 @@ export function loanKeepCard(s: GameState): string {
         return `<div class="lk-opt">
           <span class="cap">${soort === 'verlengen' ? 'Nog een seizoen huren' : 'Definitief kopen'}</span>
           <p class="muted tiny">${uitleg}</p>
-          ${numField({
+          <div class="lk-rij">${numField({
             value: ref,
             min: 0,
             max: Math.max(1000, ref * 4),
@@ -362,14 +362,15 @@ export function loanKeepCard(s: GameState): string {
           )}>${Math.round(kans * 100)}% kans</span>
           <button class="sm primary" data-action="loan-${soort === 'verlengen' ? 'extend' : 'buy'}" data-id="${p.id}"${
             rem ? ` disabled data-tip="${esc(rem)}"` : ''
-          }>${knop}</button>
+          }>${knop}</button></div>
         </div>`;
       };
 
       return `<div class="loan-keep">
         <div class="lk-head">
           <strong>${esc(p.name)}</strong>
-          <span class="muted small">${overall(p)} \u00b7 ${p.age} jaar \u00b7 gehuurd van ${esc(p.loan!.club)}</span>
+          <span class="tag">${p.position}</span>
+          <span class="muted small">kwaliteit <strong>${overall(p)}</strong>/${Math.round(p.potential)} \u00b7 ${p.age} jaar \u00b7 gehuurd van ${esc(p.loan!.club)}</span>
         </div>
         <p class="lk-stand small">${count(p.starts, 'basisplaats', 'basisplaatsen')} \u00b7 ${count(p.goals, 'doelpunt', 'doelpunten')} \u00b7 ${
           stand.groei >= 0 ? 'gegroeid' : 'gezakt'

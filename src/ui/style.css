@@ -2005,12 +2005,15 @@ tr.filtering td { background: var(--accent-soft); }
 .loan-keep { background: var(--sunken); border-radius: var(--radius-sm); padding: var(--s3); margin-top: var(--s3); }
 .loan-keep .lk-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s3); }
 .loan-keep .lk-stand { margin: 4px 0 var(--s2); color: var(--muted); }
-.loan-keep .lk-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--s3); }
-.lk-opt { background: var(--card); border-radius: var(--radius-sm); padding: var(--s2) var(--s3); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+/* Sinds de kaart de volle breedte kreeg (0.78.0) bliezen de invoervelden en knoppen op
+   tot bannerformaat. Nu: bedrag, kans en knop compact op één rij, en de optieblokken
+   groeien niet voorbij een leesbare breedte. */
+.loan-keep .lk-cols { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.lk-opt { background: var(--card); border-radius: var(--radius-sm); padding: var(--s2) var(--s3); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; flex: 1 1 320px; max-width: 520px; }
 .lk-opt .cap { font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
 .lk-opt p { margin: 0; }
-.lk-opt .numfield { width: 100%; }
-.lk-opt button { align-self: stretch; }
+.lk-rij { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.lk-rij .lk-kans { white-space: nowrap; font-weight: 650; }
 .lk-kans { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); cursor: help; }
 .lk-kans.good { color: var(--good); }
 .lk-kans.bad { color: var(--bad); }
