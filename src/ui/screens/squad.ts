@@ -465,15 +465,22 @@ export function transfersScreen(s: GameState, filter: Position | null = null): s
     })
     .join('');
 
+  // Eén gedeelde breedte voor alle vraagprijsvelden in de kolom: anders wordt elk veld
+  // breed naar de waarde van zíjn eigen speler, en schuiven "Te koop zetten" en de kolom
+  // "Uitlenen" ernaast per rij een beetje op — precies het uitlijningsprobleem dat opviel.
+  const askWidthHint = Math.max(1, ...ownPlayers.map((p) => marketValue(p, s.marketIndex))) * 10;
+
   const ownRows = [...ownPlayers]
     .sort((a, b) => POSITIONS.indexOf(a.position) - POSITIONS.indexOf(b.position) || overall(b) - overall(a))
     .map((p) => {
       const value = marketValue(p, s.marketIndex);
       let status = '';
-      let actionsHtml = '';
+      let sellHtml = '';
+      let listHtml = '';
+      let loanHtml = '';
       if (p.loan?.type === 'in') {
         status = `gehuurd van ${esc(p.loan.club)}`;
-        actionsHtml = `<button class="sm ghost danger" data-action="release" data-id="${p.id}" data-confirm="Huur van ${esc(p.name)} beëindigen?" data-tip="Ingrijpend: hij gaat meteen terug naar zijn club en komt dit seizoen niet meer voor je spelen.">Huur beëindigen</button>`;
+        sellHtml = `<button class="sm ghost danger" data-action="release" data-id="${p.id}" data-confirm="Huur van ${esc(p.name)} beëindigen?" data-tip="Ingrijpend: hij gaat meteen terug naar zijn club en komt dit seizoen niet meer voor je spelen.">Huur beëindigen</button>`;
       } else if (p.loan?.type === 'uit') {
         // wat zijn uitleenbeurt tot nu toe opleverde: anders is hij een naam die verdwijnt
         const gespeeld = p.loan.matches ?? 0;
@@ -487,14 +494,15 @@ export function transfersScreen(s: GameState, filter: Position | null = null): s
         status = p.listed ? `<span class="tag">te koop: ${euro(p.askingPrice)}</span>` : '';
         if (block) status += `<br/><span class="muted small" data-tip="${esc(block)}">🔒 onmisbaar deze week</span>`;
         const share = Math.round(actions.loanWageShare(s, p) * 100);
-        actionsHtml = `
-          ${window ? `<button class="sm" data-action="sell" data-id="${p.id}" data-confirm="${esc(p.name)} verkopen voor ${euro(currentBid(p, s.marketIndex))}?" ${block ? `disabled data-tip="${esc(block)}"` : 'data-tip="Ingrijpend: hij is meteen en definitief verkocht tegen het bod van deze week."'}>Nu verkopen ${euro(currentBid(p, s.marketIndex))}</button>` : ''}
-          ${
-            p.listed
-              ? `<button class="sm" data-action="unlist" data-id="${p.id}">Van de lijst</button>`
-              : `<span class="ask">${numField({ value: Math.round(value / 500) * 500, min: 0, step: 500, prefix: '€', inputId: `ask-${p.id}`, label: `Vraagprijs voor ${p.name}` })}<button class="sm" data-action="list" data-id="${p.id}">Te koop zetten</button></span>`
-          }
-          ${window ? `<button class="sm" data-action="loan-out" data-id="${p.id}" ${block ? `disabled data-tip="${esc(block)}"` : `data-tip="De andere club betaalt ${share}% van zijn loon; hij speelt daar en ontwikkelt zich"`}>Uitlenen (${share}% loon betaald)</button>` : ''}`;
+        sellHtml = window
+          ? `<button class="sm" data-action="sell" data-id="${p.id}" data-confirm="${esc(p.name)} verkopen voor ${euro(currentBid(p, s.marketIndex))}?" ${block ? `disabled data-tip="${esc(block)}"` : 'data-tip="Ingrijpend: hij is meteen en definitief verkocht tegen het bod van deze week."'}>Nu verkopen ${euro(currentBid(p, s.marketIndex))}</button>`
+          : '';
+        listHtml = p.listed
+          ? `<button class="sm" data-action="unlist" data-id="${p.id}">Van de lijst</button>`
+          : `<span class="ask">${numField({ value: Math.round(value / 500) * 500, min: 0, step: 500, prefix: '€', inputId: `ask-${p.id}`, label: `Vraagprijs voor ${p.name}`, widthHint: askWidthHint })}<button class="sm" data-action="list" data-id="${p.id}">Te koop zetten</button></span>`;
+        loanHtml = window
+          ? `<button class="sm" data-action="loan-out" data-id="${p.id}" ${block ? `disabled data-tip="${esc(block)}"` : `data-tip="De andere club betaalt ${share}% van zijn loon; hij speelt daar en ontwikkelt zich"`}>Uitlenen (${share}% loon betaald)</button>`
+          : '';
       }
       return `<tr>
         <td data-v="${POSITIONS.indexOf(p.position)}">${p.position}</td>
@@ -503,7 +511,9 @@ export function transfersScreen(s: GameState, filter: Position | null = null): s
         <td data-v="${value}">${euro(value)}</td>
         <td data-v="${p.wage}">${euro(p.wage)}</td>
         <td class="small">${status}</td>
-        <td class="btns">${actionsHtml}</td>
+        <td class="btns">${sellHtml}</td>
+        <td class="btns">${listHtml}</td>
+        <td class="btns">${loanHtml}</td>
       </tr>`;
     })
     .join('');
@@ -559,8 +569,8 @@ export function transfersScreen(s: GameState, filter: Position | null = null): s
     <p class="muted small"><strong>Nu verkopen</strong>: meteen weg tegen het bod van deze week (schommelt). <strong>Te koop zetten</strong>: clubs kunnen tijdens de transferperiode een bod doen; hoe realistischer je vraagprijs, hoe groter de kans. De speler vindt het niet leuk (−4 moraal).
     <strong>Uitlenen</strong>: tot het einde van het seizoen; de andere club betaalt een deel van zijn loon en hij krijgt speelminuten, dus hij blijft groeien.</p>
     <div class="table-wrap"><table data-sort-id="eigen">
-      <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Waarde</th><th>Loon/w</th><th>Status</th><th data-nosort></th></tr></thead>
-      <tbody>${ownRows || `<tr><td colspan="7" class="muted">Geen ${filter ? POSITION_LABEL[filter].toLowerCase() + 's' : 'spelers'} in je kern.</td></tr>`}</tbody>
+      <thead><tr><th>Pos</th><th>Speler</th><th>Kwal/Pot</th><th>Waarde</th><th>Loon/w</th><th>Status</th><th data-nosort></th><th data-nosort></th><th data-nosort></th></tr></thead>
+      <tbody>${ownRows || `<tr><td colspan="9" class="muted">Geen ${filter ? POSITION_LABEL[filter].toLowerCase() + 's' : 'spelers'} in je kern.</td></tr>`}</tbody>
     </table></div>
   </section>`;
 }
