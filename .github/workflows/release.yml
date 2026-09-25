@@ -1,0 +1,14 @@
+on:
+  push:
+    branches: [main]
+jobs:
+  release:
+    if: "!contains(github.event.head_commit.message, 'chore: release')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npm run release -- --type=patch --title="..." --item="..."
+      # commit, tag vX.Y.Z, push --tags
