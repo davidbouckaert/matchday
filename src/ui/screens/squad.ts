@@ -384,8 +384,8 @@ export function loanKeepCard(s: GameState): string {
     })
     .join('');
 
-  return `<section class="card">
-    <h2>Je huurspelers <span class="tag">${gehuurd.length}</span></h2>
+  return `<section class="card span-all">
+    <h2>Huurspelers: houden of kopen <span class="tag">${gehuurd.length}</span></h2>
     <p class="muted small">${
       vroeg
         ? `Een huurspeler keert op het einde van het seizoen terug naar zijn club. Vanaf week ${actions.LOAN_TALK_WEEK} kun je vragen of hij mag blijven, of hem proberen te kopen.`
@@ -497,7 +497,11 @@ export function transfersScreen(s: GameState): string {
     }</p>
   </section>
   ${offers ? `<section class="card attention"><h2>Biedingen op je spelers (${s.playerOffers.length})</h2><ul class="offers">${offers}</ul></section>` : ''}
-  ${loanKeepCard(s)}
+  ${
+    s.players.some((p) => p.loan?.type === 'in')
+      ? `<p class="muted small">🤝 Je huurspelers verlengen of definitief kopen doe je bij <button class="link-btn" data-action="nav" data-id="contracten">Ploeg › Contracten</button> — daar staat alles over wie blijft.</p>`
+      : ''
+  }
   <section class="card" data-tour-doel="transfers">
     <h2>Transfermarkt: kopen</h2>
     <p class="muted small">${window ? 'De transferperiode is open. Elke week verdwijnen er spelers en komen er nieuwe bij.' : 'De transferperiode is gesloten. Je kunt al rondkijken; kopen, verkopen en huren kan van mei tot eind augustus en in januari.'}

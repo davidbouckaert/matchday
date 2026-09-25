@@ -171,6 +171,10 @@ scripts/world-probe.ts ← meet hoe de reeksen over de seizoenen evolueren
 
 ## Laag 18 (deze versie)
 
+### 0.78.0 — Alles over wie blijft, op één scherm
+
+**"Wie blijft er volgend seizoen?" is één vraag, dus hoort het antwoord op één scherm.** Eigen contracten stonden op Contracten en huurspelers op Transfers — na de ontwarring van 0.74.3 stond de huurkaart al op beide, maar David koos terecht voor verder doortrekken: **Contracten is nu dé thuisbasis**. Drie heldere kaarten: *Eigen spelers: aflopende contracten* (met bod, "Niet verlengen" en het lijstje "Laat je vertrekken"), *Eigen spelers: rest van de kern* (vroeg verlengen), en *Huurspelers: houden of kopen* (nog een seizoen huren of definitief kopen, met de eigenaar als beslisser). Op Transfers is de huurkaart weg; zolang je huurlingen hebt staat daar een wegwijzer naar Contracten, en de handleiding wijst mee. In de app geverifieerd: drie kaartkoppen op Contracten, wegwijzer op Transfers, huurkaart daar verdwenen.
+
 ### 0.77.0 — Kopen en huren is een gesprek, en "niet verlengen" bestaat
 
 **Een transfer was een hamerslag: klikken, tekenen, klaar.** Maar sinds de spelerswil beslist de spéler mee — en zo'n beslissing hoort niet in dezelfde seconde te vallen. Kopen en huren werkt nu zoals een club het meemaakt: jij maakt je interesse over, hij is gereserveerd (van de markt — geen andere club kaapt hem weg terwijl hij nadenkt), en een week later valt het antwoord. Tekent hij, dan is dat een **vieringskaart in je weekverslag** en goed nieuws op je Bureau; weigert hij, dan lees je dat daar ook. Intussen staat het gesprek bij "wacht op antwoord" op je Bureau en onder "Loopt nog" in het verslag. Ook je scout werkt zo: die "legt contact", het ja-woord volgt. Eén bewuste uitzondering: **zit je kern onder de elf speelklare spelers, dan tekent hij meteen** — hij weet dat hij direct mag spelen, en een wachtweek naast een dreigende forfait zou een onspeelbare klem zijn (de weekknop blokkeert dan immers).

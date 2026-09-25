@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.77.2';
+export const VERSION = '0.78.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,16 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.78.0',
+    date: '2026-09-25',
+    title: 'Alles over wie blijft, op één scherm',
+    items: [
+      'Contracten is nu dé thuisbasis: "Eigen spelers: aflopende contracten", "Eigen spelers: rest van de kern" en "Huurspelers: houden of kopen" als drie heldere kaarten',
+      'De huurkaart is weg van Transfers; daar staat een wegwijzer zolang je huurlingen hebt',
+      'De handleiding wijst mee naar de nieuwe plek',
+    ],
+  },
   {
     version: '0.77.2',
     date: '2026-09-25',

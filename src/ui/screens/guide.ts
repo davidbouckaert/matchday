@@ -67,7 +67,7 @@ function faq(): QA[] {
     },
     {
       q: 'Kan ik een huurspeler houden?',
-      a: `Ja, maar zij beslissen. Vanaf week 26 staat bij Ploeg › Transfers een blok "Je huurspelers" met twee mogelijkheden: nog een seizoen huren, of hem definitief kopen.
+      a: `Ja, maar zij beslissen. Vanaf week 26 staat bij Ploeg › Contracten de kaart "Huurspelers: houden of kopen" met twee mogelijkheden: nog een seizoen huren, of hem definitief kopen.
         Jij vult in wat je biedt en ziet meteen hoe groot de kans is dat ze ja zeggen; die kans beweegt mee terwijl je aan het bedrag draait. Waar ze naar kijken: hoeveel hij bij jou
         speelde, hoeveel hij erop vooruitging, en je bod. Dat werkt twee kanten op. Liet je hem elke week spelen en werd hij beter, dan verlengen ze graag — maar verkopen doen ze dan
         juist niet graag, en duur. Zat hij op de bank, dan willen ze hem terug voor een andere uitleenbeurt, maar kopen lukt dan veel makkelijker. Je hoort het antwoord een week later.
