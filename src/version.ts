@@ -1,7 +1,7 @@
 // Versie van het spel. Semantisch: MAJOR.MINOR.PATCH.
 // Elke laag verhoogt MINOR, kleine correcties verhogen PATCH.
 
-export const VERSION = '0.82.0';
+export const VERSION = '0.83.0';
 
 export interface ChangeEntry {
   version: string;
@@ -11,6 +11,14 @@ export interface ChangeEntry {
 }
 
 export const CHANGELOG: ChangeEntry[] = [
+  {
+    version: '0.83.0',
+    date: '2026-09-25',
+    title: 'De voedingsdeskundige hoort bij je medische cel, en het volledige voedingsplan bestaat alleen mét hem op de payroll',
+    items: [
+      'De voedingsdeskundige hoort bij je medische cel, en het volledige voedingsplan bestaat alleen mét hem op de payroll',
+    ],
+  },
   {
     version: '0.82.0',
     date: '2026-09-25',
