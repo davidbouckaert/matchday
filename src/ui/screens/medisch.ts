@@ -6,7 +6,7 @@
 // ruimte doet, en wie er in de lappenmand ligt.
 
 import type { GameState } from '../../engine/types';
-import { PREVENTIE, VOEDING, type Voeding, blessureFactor, genezingKans, medischeKost, moeFactor, voedingSterkte } from '../../engine/medisch';
+import { PREVENTIE, VOEDING, type Voeding, blessureFactor, effectieveVoeding, genezingKans, medischeKost, moeFactor, voedingSterkte } from '../../engine/medisch';
 import { staffSkill } from '../../engine/staff';
 import { delegate } from '../../engine/delegation';
 import { taskPicker } from '../taskpicker';
@@ -29,12 +29,19 @@ export function medischScreen(s: GameState): string {
   const kine = staffSkill(s, 'kinesist');
   const verzorger = staffSkill(s, 'verzorger');
   const voedingskundige = staffSkill(s, 'voeding');
+  const effectief = effectieveVoeding(s);
 
   const voedingKeuze = (stand: Voeding) => {
     const def = VOEDING[stand];
     const kost = Math.round(def.kost * s.inflation);
-    return `<div class="choice ${m.voeding === stand ? 'sel' : 'static'}" ${locked ? '' : `data-action="voeding" data-id="${stand}"`}>
-      <strong>${def.label}</strong>
+    // het volledige plan is maatwerk van de voedingsdeskundige: zonder hem staat de kaart
+    // er vergrendeld bij — zichtbaar wat er te halen valt, met de weg ernaartoe erbij
+    const slot = stand === 'volledig' && !voedingskundige;
+    const kies = locked || slot ? '' : `data-action="voeding" data-id="${stand}"`;
+    return `<div class="choice ${effectief === stand ? 'sel' : 'static'} ${slot ? 'locked' : ''}" ${kies} ${
+      slot ? tipAttr('Een voedingsplan per speler is maatwerk: werf eerst een voedingsdeskundige aan (Personeel).', 'Nog vergrendeld') : ''
+    }>
+      <strong>${slot ? '🔒 ' : ''}${def.label}</strong>
       <span class="muted small">${def.uitleg}</span>
       ${
         stand === 'geen'
@@ -52,7 +59,11 @@ export function medischScreen(s: GameState): string {
       <div class="choice-grid three">
         ${voedingKeuze('geen')}${voedingKeuze('basis')}${voedingKeuze('volledig')}
       </div>
-      ${voedingskundige ? `<p class="muted small">Je voedingsdeskundige (vaardigheid ${Math.round(voedingskundige)}) versterkt de effecten met ×${voedingSterkte(s).toFixed(2)}.</p>` : '<p class="muted small">Nog geen voedingsdeskundige in dienst: die versterkt deze effecten (Personeel).</p>'}
+      ${
+        m.voeding === 'volledig' && effectief !== 'volledig'
+          ? '<p class="attention-inline small">Je voedingsdeskundige is weg: het volledige plan valt terug op basis (en je betaalt ook basis) tot je een nieuwe aanwerft.</p>'
+          : ''
+      }${voedingskundige ? `<p class="muted small">Je voedingsdeskundige (vaardigheid ${Math.round(voedingskundige)}) versterkt de effecten met ×${voedingSterkte(s).toFixed(2)} en schrijft het volledige plan.</p>` : '<p class="muted small">Nog geen voedingsdeskundige in dienst: die versterkt deze effecten en ontgrendelt het volledige plan (Personeel).</p>'}
     </section>
 
     <section class="card span2">
