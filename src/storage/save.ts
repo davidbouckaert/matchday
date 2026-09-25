@@ -116,6 +116,7 @@ export function migrate(raw: unknown): GameState {
   if (state.version === 37) migrateV37toV38(state);
   if (state.version === 38) migrateV38toV39(state);
   if (state.version === 39) migrateV39toV40(state);
+  if (state.version === 40) migrateV40toV41(state);
   repair(state);
   return state;
 }
@@ -717,4 +718,15 @@ export function exportToFile(state: GameState): void {
 export async function importFromFile(file: File): Promise<GameState> {
   const text = await file.text();
   return migrate(JSON.parse(text));
+}
+
+/** Alleen bekende aanvraagfeiten migreren: tekst en kas vertellen geen historische uitkomst. */
+function migrateV40toV41(state: GameState): void {
+  state.subsidieZaken = (state.requests ?? []).filter((r) => r.kind === 'subsidie').map((r) => ({
+    id: r.id, seizoen: state.subsidieSeizoen ?? state.season, raming: r.amount, status: 'loopt',
+  }));
+  if (state.subsidieSeizoen !== undefined && !state.subsidieZaken.some((z) => z.seizoen === state.subsidieSeizoen)) {
+    state.subsidieZaken.push({ id: `sub-oud-${state.subsidieSeizoen}`, seizoen: state.subsidieSeizoen, status: 'onbekend' });
+  }
+  state.version = 41;
 }

@@ -253,7 +253,7 @@ export function header(g: GameState): string {
  * kas zat. Hier staan ze vast: links je saldo en wat er nog op je wacht, rechts de twee
  * knoppen. Op een telefoon scheelt dat nog het meest, want daar is de kopbalk het duurst.
  */
-export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: boolean; tourLoop: boolean; tourReady: boolean; thuis: boolean }): string {
+export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: boolean; tourLoop: boolean; tourReady: boolean; tourStepComplete?: boolean; thuis: boolean }): string {
   const nextTip = o.blocked
     ? o.blocked
     : o.fastWeeks >= 2
@@ -269,9 +269,9 @@ export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: bo
       ${
         o.open
           ? `<button class="pb-open ${o.urgent ? 'urgent' : ''}" data-action="nav" data-id="overzicht" ${tipAttr(o.urgent ? 'Er zit iets dringends tussen. Naar je werklijst op je bureau.' : 'Naar je werklijst op je bureau.')}>
-              <span class="pb-count">${o.open}</span>${o.open === 1 ? 'ding wacht' : 'dingen wachten'} op jou <span class="pb-arrow">▸</span>
+              <span class="pb-count">${o.open}</span>${o.open === 1 ? 'zaak' : 'zaken'} te regelen <span class="pb-arrow">▸</span>
             </button>`
-          : '<span class="pb-clear small">niets dat op jou wacht</span>'
+          : '<span class="pb-clear small">niets te regelen</span>'
       }
       ${o.blocked ? `<span class="pb-block small" ${tipAttr(o.blocked)}>⚠️ je ploeg is niet compleet</span>` : ''}
     </div>
@@ -279,9 +279,9 @@ export function playBar(g: GameState, o: HeaderOpts & { open: number; urgent: bo
       ${
         o.thuis
           ? ''
-          : `<span class="bureau-wrap">${o.tourLoop ? '<i class="bureau-vinger" aria-hidden="true">👇</i>' : ''}<button class="ghost bureau-knop" data-action="nav" data-id="overzicht" ${tipAttr(
+          : `<span class="bureau-wrap">${o.tourLoop ? '<i class="bureau-vinger" aria-hidden="true">👇</i>' : ''}<button class="${o.tourLoop && o.tourStepComplete ? 'primary' : 'ghost'} bureau-knop" data-action="nav" data-id="overzicht" ${tipAttr(
               (o.tourLoop ? 'Terug naar je Bureau: daar staat de volgende stap van de rondleiding klaar.' : 'Naar je Bureau: je werklijst, je cijfers en het weekoverzicht.') + ' Sneltoets: B.',
-            )}>🏠 Bureau ${kbd('B')}</button></span>`
+            )}>${o.tourLoop ? (o.tourStepComplete ? '✓ Stap klaar · Verder leren' : 'Leeropdracht op Bureau') : '🏠 Bureau'} ${kbd('B')}</button></span>`
       }
       <button class="ghost fast" data-action="fast-forward" ${o.fastWeeks < 2 || o.busy ? 'disabled' : ''} ${tipAttr(nextTip)}>
         ▶▶ Tot de match${o.fastWeeks >= 2 ? ` <span class="small">(${o.fastWeeks})</span>` : ''}

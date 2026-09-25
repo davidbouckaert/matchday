@@ -1,3 +1,4 @@
+import { subsidieRows } from '../subsidiezaak';
 // Het dashboard. Het enige scherm dat je élke week opent, dus het enige scherm dat
 // gebouwd is vanuit één vraag: wat moet ik deze week weten en doen?
 //
@@ -33,7 +34,6 @@ export function weekSummary(entries: LedgerEntry[]): { income: number; costs: nu
   let income = 0;
   let costs = 0;
   for (const e of entries) {
-    if (e.category === 'leningen' || e.category === 'investeerder') continue;
     if (e.amount > 0) income += e.amount;
     else costs += e.amount;
   }
@@ -44,7 +44,7 @@ export function weekSummary(entries: LedgerEntry[]): { income: number; costs: nu
 
 /**
  * De geldkaart. Drie cijfers naast elkaar — wat er in kas staat, wat deze week deed, en
- * waar je over acht weken staat — met daaronder de lijn van de voorbije weken. Dit is de
+ * wat de laagste raming in de beschikbare vooruitblik is — met daaronder de lijn van de voorbije weken. Dit is de
  * eerste kaart omdat het de eerste vraag van een eigenaar is.
  */
 function moneyCard(s: GameState): string {
@@ -62,14 +62,14 @@ function moneyCard(s: GameState): string {
         <span class="sub">${s.weeksNegative ? `<span class="neg">${s.weeksNegative}/8 weken onder nul</span>` : '&nbsp;'}</span>
       </div>
       <div class="money-fig">
-        <span class="cap">Vorige week</span>
+        <span class="cap">${s.season === 1 && s.week === 1 ? 'Bij de start' : 'Kasverandering vorige week'}</span>
         <span class="big-num ${net < 0 ? 'neg' : 'pos'}">${signedEuro(net)}</span>
         <span class="sub">in ${euro(income)} · uit ${euro(-costs)}</span>
       </div>
       <div class="money-fig">
-        <span class="cap">Over 8 weken</span>
-        <span class="big-num ${f.lowest.balance < 0 ? 'neg' : ''}">${euro(f.weeks.at(-1)?.balance ?? s.cash)}</span>
-        <span class="sub">laagste punt ${euro(f.lowest.balance)} in week ${f.lowest.week}</span>
+        <span class="cap">Laagste raming</span>
+        <span class="big-num ${f.lowest.balance < 0 ? 'neg' : ''}">${f.weeks.length ? euro(f.lowest.balance) : '—'}</span>
+        <span class="sub">${f.weeks.length ? `in week ${f.lowest.week} · vooruitblik ${f.weeks.length} ${f.weeks.length === 1 ? 'week' : 'weken'}` : 'Geen vooruitblik beschikbaar voor deze periode.'}</span>
       </div>
     </div>
     ${
@@ -78,8 +78,10 @@ function moneyCard(s: GameState): string {
            <button class="link-btn small" data-action="nav" data-id="financien">Naar Financiën →</button></p>`
         : ''
     }
-    <div class="money-chart">${sparkline(s.cashHistory)}</div>
-    <p class="tiny muted">Saldo van de laatste ${s.cashHistory.length} weken.</p>
+    ${f.weeks.some((w) => w.lines.some((l) => l.category === 'subsidies')) ? '<p class="small muted">De raming bevat een onzekere subsidie in week 24. Bekijk de toelichting bij Financiën.</p>' : ''}
+    <button class="link-btn small" data-action="nav" data-id="financien">Bekijk financiën →</button>
+    <details><summary class="small">Verloop van je saldo</summary><div class="money-chart">${sparkline(s.cashHistory)}</div>
+    <p class="tiny muted">Saldo van de laatste ${s.cashHistory.length} weken.</p></details>
   </section>`;
 }
 
@@ -268,6 +270,7 @@ function starLine(s: GameState): string {
  * is de belangrijkste taak van de week, niet een apart onderwerp.
  */
 export interface Todo {
+  soort: 'actie' | 'deadline' | 'wachten' | 'informatie';
   text: string;
   detail?: string;
   screen: string;
@@ -277,8 +280,8 @@ export interface Todo {
 
 export function todos(s: GameState): Todo[] {
   const list: Todo[] = [];
-  const add = (level: Todo['level'], text: string, screen: string, where: string, detail?: string) =>
-    list.push({ text, detail, screen, where, level });
+  const add = (level: Todo['level'], text: string, screen: string, where: string, detail?: string, soort: Todo['soort'] = 'actie') =>
+    list.push({ text, detail, screen, where, level, soort });
 
   const avail = available(s.players).length;
   if (avail < 11) add('urgent', `Slechts ${avail} speelklare spelers`, 'ploeg', 'Selectie', 'De volgende wedstrijd wordt forfait (0-5).');
@@ -286,17 +289,29 @@ export function todos(s: GameState): Todo[] {
   if (s.weeksNegative > 0) add('urgent', `Saldo al ${weeks(s.weeksNegative)} onder nul`, 'financien', 'Financiën', 'Na acht weken is de club failliet.');
   if (s.emergencyLoanOffered) add('warn', 'De bank biedt een noodlening aan', 'financien', 'Financiën', 'Duur geld, maar het houdt de deuren open.');
   if (s.playerOffers.length) {
-    add('warn', s.playerOffers.length === 1 ? 'Er ligt een bod op een van je spelers' : `Er liggen ${s.playerOffers.length} biedingen op je spelers`, 'transfers', 'Transfers', 'Biedingen verlopen na twee weken.');
+    add('warn', s.playerOffers.length === 1 ? 'Er ligt een bod op een van je spelers' : `Er liggen ${s.playerOffers.length} biedingen op je spelers`, 'transfers', 'Transfers', `Beslis binnen ${weeks(Math.min(...s.playerOffers.map((o) => o.expiresInWeeks)))}. Zonder antwoord vervalt het bod.`, 'deadline');
   }
   if (s.sponsorOffers.length) {
-    add('info', s.sponsorOffers.length === 1 ? 'Er is een nieuw sponsoraanbod' : `Er zijn ${s.sponsorOffers.length} sponsoraanbiedingen`, 'sponsors', 'Sponsors');
+    add('info', s.sponsorOffers.length === 1 ? 'Er is een nieuw sponsoraanbod' : `Er zijn ${s.sponsorOffers.length} sponsoraanbiedingen`, 'sponsors', 'Sponsors', `Beslis binnen ${weeks(Math.min(...s.sponsorOffers.map((o) => o.expiresInWeeks)))}. Zonder akkoord vervalt het voorstel.`, 'deadline');
   }
   const expiring = s.players.filter((p) => p.contractUntil <= s.season && p.loan?.type !== 'in' && !p.nietVerlengen).length;
-  if (expiring && s.week > 30) add('warn', `${expiring} ${expiring === 1 ? 'contract loopt' : 'contracten lopen'} af`, 'contracten', 'Contracten', 'Wie je niet verlengt, vertrekt gratis op het einde van het seizoen.');
-  if (s.requests.length) add('info', `Je wacht op antwoord: ${s.requests.map((r) => r.label).join(', ')}`, 'doelen', 'Logboek');
-  if (isTransferWindow(s.week)) add('info', 'De transferperiode is open', 'transfers', 'Transfers', 'Alleen nu kun je kopen, verkopen of uitlenen.');
-  if (inWinterBreak(s.week)) add('info', `Winterstop tot week ${WINTER_BREAK.to + 1}`, 'kalender', 'Kalender', 'Geen wedstrijdinkomsten, wel vaste kosten.');
+  if (expiring && s.week > 30) add('warn', `${expiring} ${expiring === 1 ? 'contract loopt' : 'contracten lopen'} af`, 'contracten', 'Contracten', 'Wie je niet verlengt, vertrekt gratis op het einde van het seizoen.', 'deadline');
+  for (const r of s.requests.filter((r) => r.kind !== 'subsidie')) add('info', r.label, 'doelen', 'Logboek', `Antwoord over ${weeks(r.weeksLeft)}.`, 'wachten');
+  if (isTransferWindow(s.week)) add('info', 'De transferperiode is open', 'transfers', 'Transfers', 'Alleen nu kun je kopen, verkopen of uitlenen.', 'informatie');
+  if (inWinterBreak(s.week)) add('info', `Winterstop tot week ${WINTER_BREAK.to + 1}`, 'kalender', 'Kalender', 'Geen wedstrijdinkomsten, wel vaste kosten.', 'informatie');
   return list;
+}
+
+/** Eén semantische bron voor Bureau en speelbalk; hulp en wachten zijn geen werk. */
+export function bureauStatus(s: GameState) {
+  const list = todos(s);
+  const acties = list.filter((t) => t.soort === 'actie' || t.soort === 'deadline');
+  const rang = { urgent: 0, warn: 1, info: 2 };
+  acties.sort((a, b) => rang[a.level] - rang[b.level]);
+  return { acties, wachten: list.filter((t) => t.soort === 'wachten'),
+    informatie: list.filter((t) => t.soort === 'informatie'),
+    count: acties.length + (s.weekChoice && !s.weekChoice.answer ? 1 : 0),
+    urgent: acties.some((t) => t.level === 'urgent') };
 }
 
 /**
@@ -335,56 +350,52 @@ function tourBlock(s: GameState): string {
   </div>`;
 }
 
+/** De bestaande hoofdstukken zijn de begeleide start; geen tijd- of ervaringsscore erbij verzinnen. */
+export function guidedTourCard(s: GameState): string {
+  const t = tourChapter(s);
+  if (!t) return '';
+  const flags = t.chapter.steps.map((_, i) => tourStepDone(s, t.nr - 1, i));
+  const next = flags.findIndex((done) => !done);
+  const completed = flags.filter(Boolean).length;
+  const step = t.chapter.steps[next];
+  const parts = step?.text.split(/: | — /) ?? [];
+  return `<section class="card slice guided-tour" aria-labelledby="guided-tour-heading">
+    <div class="guided-context">Leer je club kennen · hoofdstuk ${t.nr} van ${t.total} · ${esc(t.chapter.title)}</div>
+    <div class="guided-progress"><span>${completed} van ${flags.length} ${flags.length === 1 ? 'stap' : 'stappen'} afgerond</span><progress value="${completed}" max="${flags.length}" aria-label="Voortgang in dit hoofdstuk"></progress></div>
+    <h2 id="guided-tour-heading" tabindex="-1">${step ? esc(parts[0]) : 'Dit hoofdstuk is klaar'}</h2>
+    <p>${step ? esc(parts.slice(1).join(' — ').replace(/^./, (c) => c.toUpperCase()) || 'Zo leer je deze kant van je club kennen. Je hoeft nog niet alles zelf te regelen.') : 'Goed gedaan. Speel verder met Volgende week onderaan; daarna gaat de rondleiding verder.'}</p>
+    ${completed && step ? '<p class="guided-done">✓ Je eerdere stappen zijn afgevinkt. Dit is je volgende stap.</p>' : ''}
+    <div class="guided-actions">${step ? `<button class="primary" data-action="tour-go" data-id="${step.screen}:${step.wijs ?? ''}">Ga naar ${esc(step.where)}</button>` : ''}
+      <details><summary>Meer uitleg en stappen</summary>${tourBlock(s)}</details>
+    </div>
+  </section>`;
+}
+
 /** De grote werklijst bovenaan het dashboard. */
 function attentionBar(s: GameState): string {
-  const list = todos(s);
-  const order = { urgent: 0, warn: 1, info: 2 };
-  list.sort((a, b) => order[a.level] - order[b.level]);
+  const status = bureauStatus(s);
   const w = s.weekChoice;
-  const openChoice = w && !w.answer;
-  const count = list.length + (openChoice ? 1 : 0);
-  // rood is voor echte problemen. De beslissing van de week is de hoofdtaak, geen alarm,
-  // dus die krijgt de clubkleur — anders staat er elke week een rode streep en went ze weg.
-  const urgent = list.filter((t) => t.level === 'urgent').length;
-
-  if (!count) {
-    return `<section class="card attention-bar empty">
-      <h2>Deze week</h2>
-      <p class="muted">Er ligt niets te wachten op jouw handtekening. Een goede week om vooruit te kijken: je prognose, je prijzen, of een bouwproject.</p>
-      ${tourBlock(s)}
-    </section>`;
-  }
-
-  const choiceRow = openChoice
-    ? `<li class="urgent choice">
-        <span class="dot"></span>
-        <span class="what">
-          <strong>${esc(w!.title)}</strong>
-          <span class="sub-line">${esc(w!.text)}</span>
-        </span>
-        <span class="go"><button class="primary sm" data-action="moment-open">Beslissen (${w!.options.length} keuzes)</button></span>
-      </li>`
-    : '';
-
-  return `<section class="card attention-bar ${urgent ? 'has-urgent' : openChoice ? 'has-choice' : ''}">
-    <h2>Deze week
-      <span class="tag ${urgent ? 'bad' : ''}">${count}</span>
-      ${hint('Alles wat nu op jou wacht, van dringend naar minder dringend. Dit is het eerste wat je bekijkt als je gaat zitten: de cijfers eronder vertellen hoe het gaat, deze lijst vertelt wat je moet doen.')}
-    </h2>
-    <ul class="worklist">
-      ${choiceRow}
-      ${list
-        .map(
-          (t) => `<li class="${t.level}">
-            <span class="dot"></span>
-            <span class="what"><strong>${esc(t.text)}</strong>${t.detail ? `<span class="sub-line">${esc(t.detail)}</span>` : ''}</span>
-            <span class="go"><button class="link-btn" data-action="nav" data-id="${t.screen}">${esc(t.where)} →</button></span>
-          </li>`,
-        )
-        .join('')}
-    </ul>
-    ${tourBlock(s)}
-  </section>`;
+  const rows = (list: Todo[]) => list.map((t) => `<li class="${t.level}">
+    <span class="what"><strong>${esc(t.text)}</strong>${t.detail ? `<span class="sub-line">${esc(t.detail)}</span>` : ''}</span>
+    <button class="sm" data-action="nav" data-id="${t.screen}">${esc(t.where)} →</button></li>`).join('');
+  const visibleActions = status.acties.filter((t, i) => t.level === 'urgent' || i < 3);
+  const moreActions = status.acties.filter((t) => !visibleActions.includes(t));
+  return `${guidedTourCard(s)}<section class="card bureau-work slice">
+    <div class="slice-heading"><h2>Te regelen</h2><span class="tag">${status.count} ${status.count === 1 ? 'zaak' : 'zaken'}</span></div>
+    ${status.count ? `<ul class="worklist">${w && !w.answer ? `<li class="choice"><span class="what"><strong>${esc(w.title)}</strong><span class="sub-line">${esc(w.text)}</span></span><button class="primary sm" data-action="moment-open">Beslissen</button></li>` : ''}${rows(visibleActions)}</ul>${moreActions.length ? `<details><summary>Alle ${status.count} zaken</summary><ul class="worklist">${rows(moreActions)}</ul></details>` : ''}` : `<p class="quiet-state">${tourChapter(s) ? 'Geen clubzaken te regelen. Je volgende leerstap staat hierboven.' : 'Niets te regelen. Bekijk wat er loopt of speel verder.'}</p>`}
+  </section>
+  <div class="bureau-context">
+    <section class="card slice"><h2>Lopende zaken</h2>
+      ${subsidieRows(s, true)}
+      ${status.wachten.length ? `<ul class="worklist">${rows(status.wachten.slice(0, 3))}</ul>${status.wachten.length > 3 ? `<details><summary>Alle lopende zaken</summary><ul class="worklist">${rows(status.wachten.slice(3))}</ul></details>` : ''}` : ''}
+      ${!status.wachten.length && !s.requests.some((r) => r.kind === 'subsidie') ? '<p class="muted">Er ligt niets op antwoord te wachten.</p>' : ''}
+    </section>
+    <section class="card slice"><h2>Goed om te weten</h2>
+      ${status.informatie.length ? `<ul class="worklist">${rows(status.informatie)}</ul>` : '<p class="muted">Geen bijzonderheden deze week.</p>'}
+      ${!tourChapter(s) && s.tour && !s.tour.hidden ? '<details class="compact-tour"><summary>Leer je club kennen · naslag</summary><p>De begeleide rondleiding is afgelopen. De uitleg blijft beschikbaar als je iets wilt opzoeken.</p><button class="sm" data-action="nav" data-id="handleiding">Naar de handleiding</button></details>' : ''}
+    </section>
+  </div>
+  ${subsidieRows(s, false) ? `<section class="card slice"><h2>Antwoord van de gemeente</h2>${subsidieRows(s, false)}</section>` : ''}`;
 }
 
 /** Wat je deze week al besliste; klein, onder de werklijst. */

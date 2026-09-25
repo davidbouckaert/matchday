@@ -13,7 +13,7 @@ import { indexedDbStore, exportToFile, importFromFile } from '../storage/save';
 import { defaultDraft, setupScreen, type SetupDraft } from './screens/setup';
 import { changesScreen, hasUnseenChanges } from './screens/changes';
 import { medischScreen } from './screens/medisch';
-import { dashboardScreen, todos } from './screens/dashboard';
+import { dashboardScreen, bureauStatus } from './screens/dashboard';
 import { goalsScreen } from './screens/goals';
 import { squadScreen, transfersScreen } from './screens/squad';
 import { staffScreen } from './screens/staff';
@@ -41,7 +41,7 @@ import { strategyTask } from '../engine/delegation';
 import { financeScreen } from './screens/finance';
 import { pricesScreen, subscriptionInfo } from './screens/prices';
 import { clubScreen, eventsScreen, infraScreen, leagueScreen, saveScreen } from './screens/club';
-import { initTooltips, tipAttr } from './tooltip';
+import { initTooltips, dismissTooltips, tipAttr } from './tooltip';
 import { initNumFields } from './numfield';
 import { header, playBar } from './header';
 import { applyTheme, schemeById } from './theme';
@@ -181,6 +181,28 @@ function writePref(key: string, value: boolean): void {
 }
 
 const root = document.getElementById('app')!;
+let guidedStep: { chapter: number; step: number } | null = null;
+let selectedSubsidie: string | undefined;
+let pendingSubsidie: string | null = null;
+let focusAfterRender: string | null = null;
+let subsidieReturn: { screen: Screen; report: UiState['report']; held: GameState | null; week: number; season: number; scroll: number; focus: string | null } | null = null;
+let modalReturnFocus: string | null = null;
+let previousModal = false;
+let returnScroll: number | null = null;
+
+function focusSelector(el: Element | null): string | null {
+  if (!(el instanceof HTMLElement)) return null;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (el.dataset.action) return `[data-action="${CSS.escape(el.dataset.action)}"]${el.dataset.id !== undefined ? `[data-id="${CSS.escape(el.dataset.id)}"]` : ''}`;
+  return null;
+}
+
+function openSubsidie(id: string): void {
+  selectedSubsidie = id || undefined;
+  ui.screen = 'financien';
+  focusAfterRender = '#subsidie-heading';
+}
+
 
 // ---------- Opslaan ----------
 
@@ -237,6 +259,15 @@ function tourMelding(voor: ReturnType<typeof tourFlags>): string | null {
     : `📚 Hoofdstuk "${TOUR_CHAPTERS[nu.nr - 1].title}" is helemaal klaar. Volgende week ligt het volgende voor je klaar.`;
 }
 
+function tourReturnCard(g: GameState): string {
+  if (!ui.tourLoop || ui.screen === 'overzicht' || !guidedStep || !tourChapter(g)) return '';
+  const step = TOUR_CHAPTERS[guidedStep.chapter]?.steps[guidedStep.step];
+  if (!step || guidedStep.chapter !== g.tour?.chapter) return '';
+  const done = tourStepDone(g, guidedStep.chapter, guidedStep.step);
+  return `<section class="card slice guided-return"><div><strong>${done ? '✓ Leerstap afgerond' : 'Je huidige leerstap'}</strong><p>${esc(step.text)}</p></div>
+    <button class="${done ? 'primary' : ''} sm" data-action="nav" data-id="overzicht">${done ? 'Verder leren op Bureau' : 'Terug naar je leeropdracht'}</button></section>`;
+}
+
 function renderScreen(g: GameState): string {
   switch (ui.screen) {
     case 'overzicht': return dashboardScreen(g);
@@ -249,7 +280,7 @@ function renderScreen(g: GameState): string {
     case 'staff': return staffScreen(g, ui.selectedStaff, ui.staffFilter);
     case 'prijzen': return pricesScreen(g);
     case 'sponsors': return sponsorsScreen(g, ui.sponsorFilter);
-    case 'financien': return financeScreen(g);
+    case 'financien': return financeScreen(g, selectedSubsidie, subsidieReturn ? (subsidieReturn.report ? 'weekrapport' : 'Bureau') : undefined);
     case 'infrastructuur': return infraScreen(g);
     case 'evenementen': return eventsScreen(g);
     case 'competitie': return leagueScreen(g);
@@ -286,6 +317,13 @@ function speelBlokkade(g: GameState): string {
 }
 
 function render(): void {
+  dismissTooltips();
+  if (subsidieReturn && ui.game && (subsidieReturn.week !== ui.game.week || subsidieReturn.season !== ui.game.season)) subsidieReturn = null;
+  if (pendingSubsidie !== null && ui.moment === 'dicht') {
+    openSubsidie(pendingSubsidie);
+    pendingSubsidie = null;
+  }
+  const oldFocus = focusSelector(document.activeElement);
   const toast = toastHtml();
   const g = ui.game;
   // de clubkleuren staan in het opslagbestand, dus ze moeten bij elke tekening goed staan
@@ -344,15 +382,16 @@ function render(): void {
       inWinterBreak(g.week)
         ? `<section class="card winter"><h2>❄️ Winterstop</h2><p>De competitie ligt stil tot week ${WINTER_BREAK.to + 1}. Geen wedstrijden betekent geen tickets, geen wedstrijdkantine en geen kraampjes; sponsors, lidgelden, lonen en vaste kosten lopen gewoon door. Goede weken om te bouwen, op te leiden of de clubwinkel te laten draaien.</p></section>`
         : ''
-    }${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${renderScreen(g)}</main>
+    }${blocked ? `<section class="card attention"><h2>Je ploeg is niet compleet</h2><p>${esc(blocked)}</p></section>` : ''}${gameOver}${tourReturnCard(g)}${renderScreen(g)}</main>
     ${playBar(g, {
       weekLabel,
       blocked,
       fastWeeks,
       busy: ui.busy,
-      open: todos(g).length + (g.weekChoice && !g.weekChoice.answer ? 1 : 0),
-      urgent: todos(g).some((t) => t.level === 'urgent'),
+      open: bureauStatus(g).count,
+      urgent: bureauStatus(g).urgent,
       tourLoop: ui.tourLoop && ui.screen !== 'overzicht' && !!tourChapter(g),
+      tourStepComplete: !!guidedStep && guidedStep.chapter === g.tour?.chapter && tourStepDone(g, guidedStep.chapter, guidedStep.step),
       thuis: ui.screen === 'overzicht',
       tourReady: (() => {
         const t = tourChapter(g);
@@ -385,7 +424,7 @@ function render(): void {
   document.documentElement.classList.toggle('overlay-open', !!root.querySelector('.overlay, .moment-overlay'));
   applySorts();
   measureBars();
-  rollNumbers();
+  rollNumbers(returnScroll !== null && !!ui.report);
   driveMatchClock();
   if (ui.report?.phase === 'report') revealLines(`${ui.report.prev.season}-${ui.report.prev.week}`);
   if (getekendScherm !== ui.screen) {
@@ -409,6 +448,39 @@ function render(): void {
     if (doel && ui.tourAim !== getekendTourAim) doel.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
   }
   getekendTourAim = ui.tourAim;
+  // render vervangt alle nodes: bewaar identiteit, nooit een oude nodeverwijzing.
+  const overlay = Array.from(root.querySelectorAll<HTMLElement>('.overlay, .moment-overlay')).at(-1) ?? null;
+  const modal = overlay?.querySelector<HTMLElement>('.confirm-card, .report-card, .moment-card, .opening-card');
+  for (const child of Array.from(root.children)) {
+    if (child instanceof HTMLElement) child.inert = !!overlay && !child.contains(overlay) && !child.matches('.overlay, .moment-overlay');
+  }
+  if (overlay) {
+    if (!previousModal) modalReturnFocus = oldFocus;
+    const area = modal ?? overlay;
+    if (!area.hasAttribute('role')) area.setAttribute('role', 'dialog');
+    if (!area.hasAttribute('aria-label') && !area.hasAttribute('aria-labelledby')) area.setAttribute('aria-label', area.querySelector('h2')?.textContent ?? 'Weekverloop');
+    area.setAttribute('aria-modal', 'true');
+    area.tabIndex = -1;
+    const selector = focusAfterRender ?? oldFocus;
+    const same = selector ? area.querySelector<HTMLElement>(selector) : null;
+    focusAfterRender = null;
+    (same ?? area).focus({ preventScroll: true });
+  } else {
+    const selector = focusAfterRender ?? (previousModal ? modalReturnFocus : oldFocus);
+    const target = selector ? root.querySelector<HTMLElement>(selector) : null;
+    if (target && focusAfterRender && !target.matches('button, input, select, a, summary, [tabindex]')) target.tabIndex = -1;
+    target?.focus({ preventScroll: true });
+    if (focusAfterRender && target) target.scrollIntoView({ block: 'start', behavior: 'instant' });
+    focusAfterRender = null;
+  }
+  if (returnScroll !== null) {
+    const body = root.querySelector('.report-body');
+    if (overlay && body) body.scrollTop = returnScroll;
+    else window.scrollTo(0, returnScroll);
+    returnScroll = null;
+  }
+  if (overlay) dismissTooltips();
+  previousModal = !!overlay;
   if (ui.screen === 'opslaan' && ui.confirmNewGame) {
     const btn = root.querySelector<HTMLButtonElement>('[data-action="new-game"]');
     if (btn) {
@@ -445,7 +517,7 @@ function restoreFocus(saved: { id: string; start: number | null; end: number | n
  * Laat de bedragen in het weekrapport oplopen, zoals een teller in een casino.
  * Zet je de animatie uit bij Opslaan, dan staan de cijfers er meteen.
  */
-function rollNumbers(): void {
+function rollNumbers(immediate = false): void {
   const targets = [...root.querySelectorAll<HTMLElement>('.roll[data-to]')];
   if (!targets.length) return;
   // let op: signedEuro levert HTML met kleur; hier zetten we platte tekst, de kleur staat al op de cel
@@ -453,7 +525,7 @@ function rollNumbers(): void {
     const rounded = Math.round(value);
     return el.dataset.signed === '1' && rounded > 0 ? `+${euro(rounded)}` : euro(rounded);
   };
-  if (!ui.animate) {
+  if (!ui.animate || immediate) {
     for (const el of targets) el.textContent = format(el, Number(el.dataset.to));
     return;
   }
@@ -798,7 +870,7 @@ const handlers: Record<string, Handler> = {
     ui.menuOpen = false;
     ui.lastScreen[groupOf(ui.screen).id] = ui.screen;
     ui.confirmNewGame = false;
-    if (ui.screen === 'overzicht') ui.tourLoop = false;
+    if (ui.screen === 'overzicht') { if (ui.tourLoop) focusAfterRender = '#guided-tour-heading'; ui.tourLoop = false; }
     markTourSeen();
   },
   'nav-group': (id) => {
@@ -806,17 +878,21 @@ const handlers: Record<string, Handler> = {
     const gr = GROUPS.find((x) => x.id === id)!;
     ui.screen = ui.lastScreen[gr.id] ?? gr.screens[0][0];
     ui.confirmNewGame = false;
-    if (ui.screen === 'overzicht') ui.tourLoop = false;
+    if (ui.screen === 'overzicht') { if (ui.tourLoop) focusAfterRender = '#guided-tour-heading'; ui.tourLoop = false; }
     markTourSeen();
   },
   // een rondleidingsstap: navigeren én de wijzer zetten op de plek waar je moet zijn
   'tour-go': (id) => {
     const [scherm, aim] = id.split(':');
+    const chapter = ui.game?.tour?.chapter;
+    const step = chapter === undefined ? -1 : TOUR_CHAPTERS[chapter]?.steps.findIndex((s) => s.screen === scherm && (s.wijs ?? '') === aim) ?? -1;
+    guidedStep = chapter !== undefined && step >= 0 ? { chapter, step } : null;
     ui.screen = scherm as Screen;
     ui.menuOpen = false;
     ui.lastScreen[groupOf(ui.screen).id] = ui.screen;
     ui.tourAim = aim || null;
     ui.tourLoop = true;
+    focusAfterRender = aim ? `[data-tour-doel="${CSS.escape(aim)}"]` : '.guided-return';
     markTourSeen();
   },
   // "Ik ken het spel al": komt hier via de bevestigingspopup, dus dit is al de ja-klik
@@ -907,7 +983,33 @@ const handlers: Record<string, Handler> = {
     return actions.extendContract(g, id, input ? Number(input.value) : undefined);
   }),
   'no-extend': gameAction(actions.toggleNoExtend),
-  'subsidie-aanvragen': gameAction((g) => actions.vraagSubsidieAan(g)),
+  'subsidie-aanvragen': gameAction((g) => {
+    const result = actions.vraagSubsidieAan(g);
+    if (result.ok) { selectedSubsidie = g.requests.find((r) => r.kind === 'subsidie')?.id; focusAfterRender = '#subsidie-heading'; }
+    return result;
+  }),
+  'subsidie-open': (id) => {
+    if (!ui.game) return;
+    const fromReport = !!ui.report;
+    if (ui.screen !== 'financien' || ui.report) subsidieReturn = { screen: ui.screen, report: ui.report ? { ...ui.report, phase: 'report' } : null,
+      held: ui.held, week: ui.game.week, season: ui.game.season, scroll: fromReport ? (root.querySelector('.report-body')?.scrollTop ?? 0) : window.scrollY,
+      focus: `[data-action="subsidie-open"][data-id="${CSS.escape(id)}"]` };
+    ui.report = null;
+    ui.held = null;
+    if (fromReport && ui.game.weekChoice && !ui.game.weekChoice.answer) { ui.moment = 'vraag'; pendingSubsidie = id; }
+    else openSubsidie(id);
+  },
+  'subsidie-back': () => {
+    const back = subsidieReturn;
+    subsidieReturn = null;
+    if (back && ui.game && back.week === ui.game.week && back.season === ui.game.season) {
+      ui.screen = back.screen;
+      ui.report = back.report;
+      ui.held = back.held;
+      focusAfterRender = back.focus;
+      returnScroll = back.scroll;
+    } else { ui.screen = 'overzicht'; focusAfterRender = '[data-action="subsidie-open"]'; }
+  },
   voeding: gameAction((g, id) => actions.setVoeding(g, id as Parameters<typeof actions.setVoeding>[1])),
   preventie: gameAction((g, id) => actions.setPreventie(g, id === 'aan')),
   // "alles gezien": de badges uit en de stip op het menu doven, per toestel onthouden
@@ -1037,6 +1139,11 @@ const handlers: Record<string, Handler> = {
   'new-game-confirmed': async () => {
     await indexedDbStore.remove(SLOT);
     ui.game = null;
+    guidedStep = null;
+    ui.tourLoop = false;
+    selectedSubsidie = undefined;
+    subsidieReturn = null;
+    pendingSubsidie = null;
     ui.draft = defaultDraft();
     ui.confirmNewGame = false;
   },
@@ -1125,6 +1232,13 @@ root.addEventListener('change', async (e) => {
   if (el.id === 'import-file' && el.files?.[0]) {
     try {
       ui.game = await importFromFile(el.files[0]);
+      guidedStep = null;
+      ui.tourLoop = false;
+      selectedSubsidie = undefined;
+      subsidieReturn = null;
+      pendingSubsidie = null;
+      focusAfterRender = null;
+      returnScroll = null;
       await persist();
       showToast({ ok: true, message: 'Back-up geladen.' });
       ui.screen = 'overzicht';
@@ -1140,6 +1254,15 @@ root.addEventListener('change', async (e) => {
 // Spatie sluit nu alleen nog het weekverslag (of slaat de animatie over), en B brengt
 // je altijd naar je Bureau. De chips op de knoppen zelf (header.ts) verklappen ze.
 document.addEventListener('keydown', (e) => {
+  const dialog = Array.from(root.querySelectorAll<HTMLElement>('.overlay, .moment-overlay')).at(-1);
+  if (e.key === 'Tab' && dialog) {
+    const controls = Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input, select, summary, [tabindex="0"]')).filter((el) => el.getClientRects().length > 0);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (!first) { e.preventDefault(); dialog.focus(); }
+    else if (e.shiftKey && (document.activeElement === first || !controls.includes(document.activeElement as HTMLElement))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !controls.includes(document.activeElement as HTMLElement))) { e.preventDefault(); first.focus(); }
+    return;
+  }
   // De wizard (er is nog geen spel): Enter = de primaire knop (Volgende / Start het
   // avontuur), ook vanuit het naamveld — zoals in elk formulier. Staat de focus al op een
   // knop, dan doet de browser het zelf; een select houdt Enter voor zichzelf.
@@ -1271,6 +1394,11 @@ document.addEventListener('keydown', (e) => {
     ui.game = await indexedDbStore.load(SLOT);
   } catch {
     ui.game = null;
+    guidedStep = null;
+    ui.tourLoop = false;
+    selectedSubsidie = undefined;
+    subsidieReturn = null;
+    pendingSubsidie = null;
   }
   render();
 })();

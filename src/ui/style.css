@@ -1080,6 +1080,7 @@ tr.benched td:first-child { box-shadow: inset 3px 0 0 var(--bad); }
   opacity: 0; transform: translateY(6px); pointer-events: none;
   transition: opacity .13s ease, transform .13s ease;
 }
+.tip-panel[hidden] { display: none; }
 .tip-panel.on { opacity: 1; transform: none; }
 .tip-panel .tip-title { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; opacity: .65; }
 @media (prefers-reduced-motion: reduce) { .tip-panel { transition: none; } }
@@ -2144,3 +2145,75 @@ html { -webkit-tap-highlight-color: transparent; }
 
 /* de thuisbalk van een iPad overlapt anders de speelbalk */
 .playbar { padding-bottom: max(var(--s2), env(safe-area-inset-bottom)); }
+
+/* Slice 1: het clubbureau scheidt verantwoordelijkheid van wachten. */
+.slice { --slice-muted: #52635a; }
+.slice h2 { font-size: 1.15rem; letter-spacing: -.01em; text-transform: none; color: var(--text); }
+.slice .muted, .slice .small { color: var(--slice-muted); }
+.slice-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.slice-heading h2 { margin: 0; }
+.slice p { max-width: 76ch; }
+.bureau-context { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; }
+.bureau-work .worklist li { padding: 12px 0; }
+.slice .worklist li { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.slice .worklist .what { min-width: 0; }
+.slice .worklist button { flex-shrink: 0; }
+.quiet-state { margin: 0; color: var(--muted); }
+.case-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+.case-row:first-of-type { border-top: 0; }
+.case-row p { margin: 4px 0; }
+.case-row button { flex-shrink: 0; }
+.case-outcome { padding: 16px; background: var(--sunken); border-radius: var(--radius-sm); margin-bottom: 16px; }
+.case-outcome strong { font-size: 1.1rem; }
+.case-outcome p { margin: 8px 0 0; }
+.case-outcome.granted { border-left: 3px solid var(--good); }
+.case-facts { display: flex; flex-wrap: wrap; gap: 20px 40px; margin: 16px 0; }
+.case-facts > div { display: flex; flex-direction: column; gap: 4px; }
+.case-facts span { font-size: .85rem; color: var(--slice-muted); }
+.case-facts strong { font-size: 1.5rem; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.case-action { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
+.case-action .small { max-width: 40ch; }
+.case-evidence, .case-history, .forecast-evidence { margin-top: 16px; }
+.slice summary, .finance-delegation > summary, .compact-tour > summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
+.finance-slice { display: flex; flex-direction: column; gap: 20px; }
+.finance-slice h1 { margin: 0; }
+.finance-delegation { padding-top: 8px; padding-bottom: 8px; }
+.compact-tour { margin-top: 12px; border-top: 1px solid var(--line); }
+.compact-tour .tour-block { margin-top: 12px; }
+.case-back { align-self: flex-start; margin-bottom: 12px; }
+#subsidie-heading { scroll-margin-top: calc(var(--bars-h, 200px) + 90px); }
+.slice button:not(.hint) { min-height: 36px; }
+.slice button:focus-visible, .slice summary:focus-visible, #subsidie-heading:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+@media (prefers-color-scheme: dark) { .slice { --slice-muted: #b2c0b7; } }
+@media (max-width: 1100px) { .bureau-context { grid-template-columns: 1fr; gap: 16px; } }
+@media (pointer: coarse) { .slice button, .slice summary { min-height: 44px; } .slice .hint { min-width: 44px; } }
+@media (max-width: 600px) {
+  .case-row, .slice .worklist li { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .case-facts { gap: 16px 24px; }
+  .slice-heading { align-items: flex-start; }
+  .case-facts strong { font-size: 1.3rem; }
+}
+.bureau-work .worklist li.choice { text-align: left; background: var(--accent-soft); padding: 16px; border: 0; border-radius: var(--radius-sm); flex-direction: row; }
+.bureau-work .worklist li.choice .what { flex: 1; }
+.slice h2 .hint { flex-shrink: 0; }
+@media (max-width: 600px) { .bureau-work .worklist li.choice { flex-direction: column; } }
+
+/* Actieve begeleiding is een zichtbare leeropdracht; naslag mag ingeklapt blijven. */
+.guided-tour { border-left: 4px solid var(--accent); padding: 20px 24px; }
+.guided-context, .guided-progress { color: var(--slice-muted); font-size: .85rem; }
+.guided-progress { display: flex; align-items: center; gap: 12px; margin: 8px 0 12px; }
+.guided-progress progress { width: 100px; height: 7px; accent-color: var(--accent); }
+.guided-tour h2 { margin: 0 0 8px; font-size: 1.25rem; }
+.guided-tour p { margin: 8px 0; }
+.guided-done { font-size: .85rem; }
+.guided-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 24px; margin-top: 14px; }
+.guided-actions details { flex: 1 1 240px; }
+.guided-actions details[open] { flex-basis: 100%; }
+.guided-return { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 24px; }
+.guided-return p { margin: 4px 0 0; font-size: .9rem; }
+.guided-return button { flex-shrink: 0; }
+#guided-tour-heading { scroll-margin-top: calc(var(--bars-h, 200px) + 100px); }
+#guided-tour-heading:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+@media (max-width: 700px) { .guided-return { flex-direction: column; align-items: flex-start; } }
+
+.tour-doel, .guided-return { scroll-margin-top: calc(var(--bars-h, 200px) + 20px); }

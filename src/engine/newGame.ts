@@ -18,7 +18,7 @@ import { emptyCareer, emptyOwner } from './career';
 import { emptyInvestorState, stadiumSponsorWeekly } from './investors';
 import { makeWeekChoice } from './weekmoment';
 
-export const SAVE_VERSION = 40;
+export const SAVE_VERSION = 41;
 
 export interface NewGameOptions {
   avatar: Avatar;
@@ -96,6 +96,7 @@ export function createNewGame(opts: NewGameOptions): GameState {
     statsHistory: [],
     statsWeeks: [],
     requests: [],
+    subsidieZaken: [],
     log: [],
     records: { attendance: 0, weekIncome: 0, seasonIncome: 0, unbeaten: 0, winStreak: 0, fanBase: 0 },
     lastRecords: [],
