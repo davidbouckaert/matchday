@@ -1,23 +1,19 @@
 import { expect } from 'chai';
 import { dashboardScreen } from '../src/ui/screens/dashboard';
 import { readyGame } from './helpers';
-import { addNews } from '../src/engine/util';
 
-// Het nieuws op het dashboard stond er even grijs bij als weken oud nieuws: onder de radar.
-// De lichting van deze week krijgt nu een kleurtje (klasse "vers"), ouder nieuws niet — zo
-// valt op wat net gebeurd is, zonder dat het de gouden vieringkaarten uit de weekmelding evenaart.
-describe('dashboard: nieuws van deze week valt op', () => {
-  it('geeft de laatste nieuwslichting de klasse "vers", ouder nieuws niet', () => {
+// Het nieuws stond los onder de hele pagina, over de volle breedte, met veel witruimte
+// eronder — pas zichtbaar na scrollen. Het hoort nu in de zijkolom, naast de cijfers,
+// zodat het meteen in beeld staat.
+describe('dashboard: nieuws staat in de zijkolom', () => {
+  it('plaatst de nieuwslijst binnen de zijkolom, niet los onder de pagina', () => {
     const s = readyGame();
-    s.news = [];
-    addNews(s, 'neutraal', 'Ouder bericht.');
-    s.week += 1;
-    addNews(s, 'neutraal', 'Vers bericht.');
     const html = dashboardScreen(s);
-    const items = [...html.matchAll(/<li class="([^"]+)"><span class="when">[^<]*<\/span><span class="what">([^<]*)<\/span><\/li>/g)];
-    const vers = items.find((m) => m[2].startsWith('Vers bericht'));
-    const ouder = items.find((m) => m[2].startsWith('Ouder bericht'));
-    expect(vers?.[1]).to.equal('neutraal vers');
-    expect(ouder?.[1]).to.equal('neutraal');
+    const zijkolom = html.indexOf('class="dash-side"');
+    const nieuws = html.indexOf('news-feed');
+    const einde = html.lastIndexOf('</div>');
+    expect(zijkolom).to.be.greaterThan(-1);
+    expect(nieuws).to.be.greaterThan(zijkolom);
+    expect(nieuws).to.be.lessThan(einde);
   });
 });

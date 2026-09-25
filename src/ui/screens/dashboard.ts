@@ -3,8 +3,10 @@
 //
 // Links de operationele kolom — geld, waar het vandaan kwam, wat eraan komt, wie je
 // tegenstander is. Rechts de zijkolom: hoe je ervoor staat bij de drie groepen die je
-// club dragen (publiek, sponsors, bank), en wat er nu jouw handtekening vraagt.
-// Nieuws staat onderaan: het vertelt wat er gebeurd is, niet wat je moet doen.
+// club dragen (publiek, sponsors, bank), wat er nu jouw handtekening vraagt, en onderaan
+// het nieuws — het vertelt wat er gebeurd is, niet wat je moet doen, dus het staat na de
+// cijfers. Het stond ooit los, over de volle breedte onder de hele pagina: dat was zoveel
+// witruimte voor één smalle lijst dat je moest scrollen om het nog te zien.
 //
 // Wat je niet elke week nodig hebt — je langetermijndoel, je eigenaarsniveau, de
 // seizoensdoelen van het bestuur — staat bij Club › Doelen. Het hoort bij je carrière,
@@ -399,19 +401,12 @@ function decidedCard(s: GameState): string {
 
 function newsCard(s: GameState): string {
   if (!s.news.length) return '';
-  // het vorige nieuws stond er even grijs bij als dat van weken terug; de laatste lichting
-  // (dezelfde week als het bovenste bericht) krijgt nu een tikje kleur, zonder de gouden
-  // vieringkaarten uit het weekverslag te evenaren — dat blijft voor echte successen.
-  const latest = s.news[0];
   return `<section class="card">
     <h2>Nieuws</h2>
     <ul class="news-feed">
       ${s.news
         .slice(0, 12)
-        .map((n) => {
-          const vers = n.week === latest.week && n.season === latest.season;
-          return `<li class="${n.tone}${vers ? ' vers' : ''}"><span class="when">${whenLabel(n.season, n.week, s.season)}</span><span class="what">${esc(n.text)}</span></li>`;
-        })
+        .map((n) => `<li class="${n.tone}"><span class="when">${whenLabel(n.season, n.week, s.season)}</span><span class="what">${esc(n.text)}</span></li>`)
         .join('')}
     </ul>
   </section>`;
@@ -431,7 +426,7 @@ export function dashboardScreen(s: GameState): string {
     <div class="dash-side">
       ${meterCard(s)}
       ${decidedCard(s)}
+      ${newsCard(s)}
     </div>
-  </div>
-  ${newsCard(s)}`;
+  </div>`;
 }

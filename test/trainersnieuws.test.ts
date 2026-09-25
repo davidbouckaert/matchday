@@ -8,7 +8,11 @@ describe('trainersnieuws', () => {
     s.cash = 200_000;
     const trainer = s.staff.find((m) => m.role === 'hoofdtrainer')!;
     expect(actions.fireStaff(s, trainer.id).ok).to.equal(true);
-    expect(s.news.some((n) => n.text.includes('op straat') && n.text.includes(trainer.name))).to.equal(true);
+    const bericht = s.news.find((n) => n.text.includes('op straat') && n.text.includes(trainer.name));
+    expect(bericht, 'het ontslag hoort in het nieuws te staan').to.not.equal(undefined);
+    // Tone 'slecht' geeft het bericht dezelfde ▼-markering op het dashboard die een
+    // aanwerving als ▲ krijgt — anders bleef het ontslag een grijze regel tussen de rest.
+    expect(bericht!.tone).to.equal('slecht');
   });
 
   // Voor het ontslag was er al een apart, feestelijk bericht; de aanwerving kreeg nog de
