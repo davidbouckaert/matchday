@@ -45,6 +45,12 @@ verandert. Veel van wat willekeurig lijkt, is een keuze met een meting eronder.
   verandert. Te veel tijd aan verificatie is verspilling.
 - Commitboodschap zegt wat er **gemeten** is, niet alleen wat er veranderd is.
 - Botsen twee eisen met elkaar: zeg dat, los het niet stil op in mijn nadeel.
+- **Al het werk landt via een branch en een pull request** — ook werk uit een
+  lokale Claude Code-sessie. Branchnaam `claude/<korte-omschrijving>`, de
+  PR-titel wordt het changelog-item voor de speler (schrijf hem dus in
+  mensentaal), en het label `release:minor` maakt er een minor van; zonder
+  label is het een patch. Na de merge doet `release.yml` de rest: versie,
+  changelog, tag en deploy.
 - **Versie hoort bij de merge, niet bij de branch.** Een feature-branch/PR
   raakt `src/version.ts` nooit aan — geen VERSION-bump, geen CHANGELOG-item in
   de diff. Anders bumpen twee branches vanaf hetzelfde nummer, of wijst een tag
