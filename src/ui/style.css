@@ -1636,6 +1636,11 @@ tr.filtering td { background: var(--accent-soft); }
 @media (max-width: 1240px) { .cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 820px) { .cols-3, .cols-2 { grid-template-columns: 1fr; } }
 
+/* Drie kaarten die zelf smal zijn (geen kaart-stapel per kolom): even breed en even hoog
+   over de volle paginabreedte, zodat ze niet als losse, ongelijke blokjes ogen. */
+.cols-3.even { align-items: stretch; }
+.cols-3.even > .card { display: flex; flex-direction: column; min-width: 0; }
+
 /* ==========================================================================
    Opstelling: het veld links, je kern rechts.
    ========================================================================== */

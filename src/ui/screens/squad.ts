@@ -508,7 +508,7 @@ export function transfersScreen(s: GameState, filter: Position | null = null): s
     })
     .join('');
 
-  return `<div class="grid">
+  return `<div class="cols-3 even">
     ${taskPicker(s, ['transfers'])}
     <section class="card window-banner ${window ? 'open' : 'shut'}">
       <h2>${window ? '🟢 Transferperiode open' : '🔴 Transferperiode gesloten'}</h2>
