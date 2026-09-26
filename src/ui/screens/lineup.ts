@@ -14,7 +14,7 @@ import { FORMATIONS, POSITIONS, isCorePlayer, marketValue, overall, selectLineup
 import { DIVISIONS } from '../../engine/data/divisions';
 import { OPPONENT_STAFF_BONUS } from '../../engine/league';
 import { delegate } from '../../engine/delegation';
-import { count, esc, euro, starMark } from '../format';
+import { bar, count, esc, euro, starMark } from '../format';
 import { isStar } from '../../engine/stars';
 import { hint, tipAttr } from '../tooltip';
 
@@ -229,7 +229,7 @@ function squadRow(s: GameState, p: Player, inXI: boolean, selected: string | nul
       <span class="sr-line"><strong>${esc(p.name)}</strong>${starMark(s, p)}${isCorePlayer(s, p) ? ' <span class="core" ' + tipAttr('Kernspeler: hij hoort bij je beste elf of is een groot talent.') + '>★</span>' : ''}${roleMark(s, p.id)}</span>
       <span class="sr-sub">${p.age}j · ${esc(p.trait)}${p.isYouth ? ' · eigen jeugd' : ''}${p.loan?.type === 'in' ? ` · gehuurd van ${esc(p.loan.club)}` : ''}${p.listed ? ' · te koop' : ''}</span>
     </span>
-    <span class="sr-rating"><strong>${overall(p)}</strong><span class="muted">/${Math.round(p.potential)}</span></span>
+    <span class="sr-rating"><strong>${overall(p)}</strong><span class="muted">/${Math.round(p.potential)}</span>${bar(overall(p))}</span>
     <span class="sr-trend">${trend(p)}</span>
     <span class="sr-fit">${blocked ? `<span class="tag bad">${blocked}</span>` : fitness(p)}</span>
     ${

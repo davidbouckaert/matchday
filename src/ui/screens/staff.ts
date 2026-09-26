@@ -5,7 +5,7 @@ import { DIVISIONS } from '../../engine/data/divisions';
 import { hasDiploma, staffPayoff, staffSigningFee } from '../../engine/staff';
 import { staffComparison } from '../staff-comparison';
 import { delegate, taskCapacity, taskEfficiency, taskSkill, taskStars, tasksOf } from '../../engine/delegation';
-import { esc, euro, stars } from '../format';
+import { bar, esc, euro, stars } from '../format';
 import { impactChips } from '../impact';
 import { staffImpact } from '../../engine/impact';
 import { hint, tip, tipAttr } from '../tooltip';
@@ -16,7 +16,7 @@ function detailCard(s: GameState, m: Staff): string {
   const tasks = TASKS.filter((t) => t.roles.includes(m.role));
   return `<section class="card detail">
     <div class="detail-head">
-      <div><h2>${esc(m.name)}</h2><span class="muted">${def.label} · ${m.trait} · vaardigheid ${m.skill} · ${euro(m.wage)}/week${hasDiploma(m.role) ? ` · ${m.diploma}` : ''}</span></div>
+      <div><h2>${esc(m.name)}</h2><span class="muted">${def.label} · ${m.trait} · vaardigheid ${m.skill} ${bar(m.skill)} · ${euro(m.wage)}/week${hasDiploma(m.role) ? ` · ${m.diploma}` : ''}</span></div>
       <button class="sm ghost" data-action="staff-open" data-id="${m.id}">Sluiten ✕</button>
     </div>
     <p class="small">${esc(def.effect)}</p>
@@ -69,11 +69,11 @@ export function staffScreen(s: GameState, selected: string | null, filter: Staff
   const current = STAFF_ROLES.map((def) => {
     const m = s.staff.find((x) => x.role === def.role);
     return `<li>${roleBtn(def.role, def.label, m
-      ? `${esc(m.name)}<small>Vaardigheid ${m.skill}${hasDiploma(m.role) ? ` · ${m.diploma}` : ''} · ${euro(m.wage)}/week<br/>${tasksOf(s, m.id).length}/${taskCapacity(m)} taken${m.courseWeeksLeft ? ' · in opleiding' : ''}</small>`
+      ? `${esc(m.name)}<small>Vaardigheid ${m.skill} ${bar(m.skill)}${hasDiploma(m.role) ? ` · ${m.diploma}` : ''} · ${euro(m.wage)}/week<br/>${tasksOf(s, m.id).length}/${taskCapacity(m)} taken${m.courseWeeksLeft ? ' · in opleiding' : ''}</small>`
       : 'Vacature')}${m ? `<button class="link-btn staff-person" data-action="staff-open" data-id="${m.id}" aria-expanded="${member?.id === m.id}" aria-label="Taken en opleiding van ${esc(m.name)}">Taken en opleiding</button>` : ''}</li>`;
   }).join('');
   const context = currentMember
-    ? `<strong>Nu: ${esc(currentMember.name)}</strong> · vaardigheid ${currentMember.skill}${hasDiploma(currentMember.role) ? ` · ${currentMember.diploma}` : ''} · ${euro(currentMember.wage)}/week · ${tasksOf(s, currentMember.id).length}/${taskCapacity(currentMember)} taken
+    ? `<strong>Nu: ${esc(currentMember.name)}</strong> · vaardigheid ${currentMember.skill} ${bar(currentMember.skill)}${hasDiploma(currentMember.role) ? ` · ${currentMember.diploma}` : ''} · ${euro(currentMember.wage)}/week · ${tasksOf(s, currentMember.id).length}/${taskCapacity(currentMember)} taken
       <button class="link-btn" data-action="staff-open" data-id="${currentMember.id}">Taken en opleiding</button>`
     : filter ? '<strong>Vacature</strong> · Deze functie is nog niet ingevuld.' : 'Per kandidaat zie je wie hij vervangt, of dat de functie nog vrij is.';
 
@@ -126,7 +126,7 @@ export function staffScreen(s: GameState, selected: string | null, filter: Staff
       <td><strong>${esc(c.name)}</strong><button class="tablet-inspect" data-action="workflow-open" data-id="staff:${c.id}" aria-label="Vergelijk ${esc(c.name)}">Vergelijken</button><span class="staff-meta">${esc(c.trait)}${hasDiploma(c.role) ? ` · ${c.diploma}` : ''}</span>
         ${!filter ? `<button class="link-btn" data-action="staff-filter" data-id="${c.role}">${roleDef(c.role).label}</button>` : ''}
         <span class="staff-meta">${incumbent ? `Nu: ${esc(incumbent.name)} · ${incumbent.skill} · ${euro(incumbent.wage)}/week` : 'Vacature'}</span></td>
-      <td data-v="${c.skill}"><strong>${c.skill}</strong><span class="staff-meta">${incumbent ? `${c.skill - incumbent.skill > 0 ? '+' : ''}${c.skill - incumbent.skill} verschil` : 'op 100'}<br/>${taskCapacity(c)} ${taskCapacity(c) === 1 ? 'taak' : 'taken'}</span></td>
+      <td data-v="${c.skill}"><strong>${c.skill}</strong> ${bar(c.skill)}<span class="staff-meta">${incumbent ? `${c.skill - incumbent.skill > 0 ? '+' : ''}${c.skill - incumbent.skill} verschil` : 'op 100'}<br/>${taskCapacity(c)} ${taskCapacity(c) === 1 ? 'taak' : 'taken'}</span></td>
       <td>${impactChips(impacts)}<details class="staff-explanation"><summary>Effect en taken</summary><p>${esc(roleDef(c.role).effect)}</p><p>${esc(handover)}</p>${impacts.map((i) => `<p>${esc(i.label)}: ${esc(i.tip)}</p>`).join('')}</details></td>
       <td data-v="${c.wage}" class="staff-cost"><strong>${euro(c.wage)}/week</strong><span class="staff-meta">${weeklyDelta > 0 ? '+' : ''}${euro(weeklyDelta)} verschil</span><strong>${euro(cost)} nu</strong><span class="staff-meta">${euro(staffSigningFee(c))} tekengeld${incumbent ? `<br/>${euro(staffPayoff(incumbent))} opzeg` : ''}</span></td>
       <td class="staff-decision"><button class="sm ${incumbent ? '' : 'primary'}" data-action="${incumbent ? 'hire-replace' : 'hire'}" data-id="${c.id}" aria-label="${incumbent ? `Vervang ${esc(incumbent.name)} door ${esc(c.name)}` : `${esc(c.name)} aanwerven`}" ${incumbent ? `data-confirm="${esc(incumbent.name)} vervangen door ${esc(c.name)}?" ${tipAttr(confirmation)}` : ''} ${reason ? `disabled aria-describedby="staff-reason-${c.id}"` : ''}>${incumbent ? `Vervang ${esc(incumbent.name.split(' ')[0])}` : 'Aanwerven'}</button>${reason ? `<details class="staff-explanation"><summary>Niet beschikbaar: uitleg</summary><p id="staff-reason-${c.id}">${esc(reason)}</p></details>` : ''}</td>

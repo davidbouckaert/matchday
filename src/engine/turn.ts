@@ -19,7 +19,7 @@ import { OWN_TEAM_ID, applyResult, createLeague, nextDerby, opponentStrength, ow
 import { starLabel, weeklyStars } from './stars';
 import { LOAN_PLAY_SHARE, OUT_OF_POSITION_PENALTY, SUB_BASELINE, SUB_RHYTHM_CREDIT, departureBlock, developPlayers, fatigueAgeFactor, generatePlayer, linkFriends, overall, pickScorers, planSubstitutions, selectBank, selectLineup, teamStrength, wageDemand, wagePressure } from './players';
 import { hasStaff, staffSkill, staffWage } from './staff';
-import { WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
+import { annualInsuranceCost, WIN_BONUS_SHARE, bookAwayMatch, bookHomeMatch, bookWeeklyFlows, type Weather } from './finance';
 import { resolveRequests, sponsorsAfterSeason, weeklySponsors } from './sponsors';
 import { weeklyMerch } from './merch';
 import { bankruptcyCheck, rollInjuries, weeklyEvents } from './events';
@@ -468,7 +468,7 @@ function payPending(state: GameState): void {
 function scheduledPayments(state: GameState, rng: Rng): void {
   const c = state.community;
   if (state.week === BOND_FEE_WEEK) {
-    const fee = (5000 + state.players.length * 150 + c.youthMembers * 22 + c.youthTeams * 400) * (1 + state.league.divisionLevel * 0.35) * state.inflation;
+    const fee = annualInsuranceCost(state);
     book(state, 'bond & verzekering', -fee, `Aansluiting Voetbal Vlaanderland en verzekeringen (A-kern + ${c.youthTeams} jeugdploegen)`);
   }
   if (state.week === YOUTH_FEE_WEEK) {

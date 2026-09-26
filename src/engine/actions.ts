@@ -18,6 +18,7 @@ import { BANK_MAX, FORMATIONS, currentBid, departureBlock, isCorePlayer, marketV
 import { stepPremium, transferWillingness, wantsAway } from './appeal';
 import { FOCUS_INFO, MENTALITY_INFO, PLAN_INFO, TRAININGS_MAX, TRAININGS_MIN } from './strategy';
 import { emergencyOffer, loanOffers } from './loans';
+import { assessLoan } from './bank';
 import { acceptSponsorOffer } from './sponsors';
 export { SPONSOR_TERMS, sponsorTerm, termTotal } from './sponsors';
 import { hasDiploma, staffSkill, staffSigningFee, staffPayoff, staffChangeCost } from './staff';
@@ -515,6 +516,8 @@ export function takeLoan(state: GameState, key: string): ActionResult {
     return ok(`Noodlening van €${offer.principal.toLocaleString('nl-BE')} ontvangen.`);
   }
   if (state.requests.some((r) => r.kind === 'lening')) return fail('Je hebt al een kredietaanvraag lopen. Wacht het antwoord van de bank af.');
+  const assessment = assessLoan(state, offer);
+  if (!assessment.allowed) return fail(assessment.reason);
   state.requests.push({
     id: nextId(state, 'rq'),
     kind: 'lening',

@@ -52,6 +52,18 @@ export function loanScale(state: GameState): number {
 
 const clampScale = (v: number) => Math.min(2.2, Math.max(0.7, v));
 
+/**
+ * Grote infrastructuurkredieten moeten voelbaar blijven in de weekbegroting.
+ * Bij €250.000 totale schuld (in starteuro's) halveert tien jaar naar vijf jaar;
+ * daarna daalt de termijn geleidelijk, tot minimaal drie jaar. Alle bestaande
+ * schuld telt mee, zodat opnieuw een klein dossier openen de druk niet terugzet.
+ * Lopende contracten worden nooit aangepast. Kortere kredietsoorten blijven kort.
+ */
+export function loanTermWeeks(state: GameState, principal: number, baseWeeks: number): number {
+  const exposure = (totalDebt(state) + principal) / Math.max(1, state.inflation);
+  return Math.max(Math.min(baseWeeks, 156), Math.round(baseWeeks / (1 + exposure / 250_000)));
+}
+
 export function loanOffers(state: GameState): LoanOffer[] {
   const limit = creditLimit(state);
   const rate = Math.max(0.005, interestRate(state) - loanDiscount(state));
@@ -59,19 +71,20 @@ export function loanOffers(state: GameState): LoanOffer[] {
   const options = [
     { key: 'kort', label: 'Kaskrediet (1 jaar)', principal: 25_000 * scale, weeks: 52, extra: 0.01 },
     { key: 'middel', label: 'Investeringskrediet (3 jaar)', principal: 100_000 * scale, weeks: 156, extra: 0 },
-    { key: 'lang', label: 'Infrastructuurlening (10 jaar)', principal: 400_000 * scale, weeks: 520, extra: 0.005 },
+    { key: 'lang', label: 'Infrastructuurlening', principal: 400_000 * scale, weeks: 520, extra: 0.005 },
   ];
   return options
     .map((o) => {
       const principal = round(Math.min(o.principal, limit), 1000);
       const annualRate = rate + o.extra;
+      const weeks = loanTermWeeks(state, principal, o.weeks);
       return {
         key: o.key,
         label: o.label,
         principal,
-        weeks: o.weeks,
+        weeks,
         annualRate,
-        weeklyPayment: round(annuity(principal, annualRate, o.weeks), 1),
+        weeklyPayment: round(annuity(principal, annualRate, weeks), 1),
       };
     })
     .filter((o) => o.principal >= 10_000);

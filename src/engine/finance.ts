@@ -234,6 +234,12 @@ export function bookWeeklyFlows(state: GameState): void {
   state.loans = state.loans.filter((l) => l.remaining > 0);
 }
 
+/** Jaarlijkse aansluiting en verzekering, ook gebruikt in de kredietraming. */
+export function annualInsuranceCost(state: GameState): number {
+  const c = state.community;
+  return (5000 + state.players.length * 150 + c.youthMembers * 22 + c.youthTeams * 400) * (1 + state.league.divisionLevel * 0.35) * state.inflation;
+}
+
 // ---------- Gemeentesubsidie ----------
 //
 // Vroeger kwam dit bedrag elk seizoen vanzelf binnen (week 24, zonder één klik). Nu is

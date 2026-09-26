@@ -11,7 +11,7 @@ import { ownPosition } from './league';
 import { popularity } from './popularity';
 import { addLog, addNews, book, nextId } from './util';
 import { remember } from './content';
-import { creditLimit } from './loans';
+import { assessLoan } from './bank';
 import { completeLoanIn, completeSigning, grantLoan, loanRequestChance, loanStanding, tooExpensive } from './actions';
 import { sponsorBonus } from './career';
 
@@ -561,15 +561,13 @@ export function resolveRequests(state: GameState, rng: Rng): void {
   state.requests = state.requests.filter((r) => r.weeksLeft > 0);
   for (const r of due) {
     if (r.kind === 'lening' && r.payload) {
-      // de bank kijkt naar je schuldgraad, je kaspositie en je reputatie
-      const room = creditLimit(state);
-      const chance = clamp(0.35 + room / Math.max(1, r.payload.principal) / 6 + state.community.reputation / 300 - (state.cash < 0 ? 0.25 : 0), 0.05, 0.95);
-      if (r.payload.principal <= room && rng.chance(chance)) {
+      const assessment = assessLoan(state, r.payload);
+      if (assessment.allowed && rng.chance(assessment.chance)) {
         grantLoan(state, { ...r.payload, label: r.label.replace(/^Kredietaanvraag /, '').replace(/ \(.*\)$/, '') });
         addNews(state, 'goed', `De bank keurt je kredietaanvraag goed: €${r.payload.principal.toLocaleString('nl-BE')} staat op de rekening.`);
         addLog(state, 'antwoord', `Krediet goedgekeurd: €${r.payload.principal.toLocaleString('nl-BE')}.`);
       } else {
-        addNews(state, 'slecht', 'De bank wijst je kredietaanvraag af. Probeer het later opnieuw, met een beter dossier.');
+        addNews(state, 'slecht', `De bank wijst je kredietaanvraag af. ${assessment.reason || 'Je afbetalingen passen in de raming, maar de bank vindt je dossier nog te onzeker. Verbeter je kaspositie of reputatie.'}`);
         addLog(state, 'antwoord', 'Krediet geweigerd door de bank.');
       }
       continue;

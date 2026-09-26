@@ -2288,7 +2288,6 @@ html { -webkit-tap-highlight-color: transparent; }
   .staff-candidates th:nth-child(4) { width: 24%; }
   .staff-candidates th:nth-child(5) { width: 19%; }
   .staff-candidates td, .staff-candidates th { padding: 12px 6px; }
-  .staff-candidates .bar { display: none; }
   .staff-role-list ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .competition-screen .league th, .competition-screen .league td { padding: 9px 5px; }
   .competition-screen .league thead th { width: 6%; }
@@ -2381,3 +2380,12 @@ html { -webkit-tap-highlight-color: transparent; }
 .workflow-overlay { top: var(--workflow-top, 0px); bottom: auto; height: var(--workflow-viewport, 100dvh); box-sizing: border-box; }
 .workflow-panel { max-height: calc(var(--workflow-viewport, 100dvh) - 32px); }
 @media (max-width: 800px) { .workflow-panel { max-height: calc(var(--workflow-viewport, 100dvh) - max(8px, env(safe-area-inset-top))); } }
+
+/* Het cijfer blijft exact; lengte en kleur maken kwaliteit snel vergelijkbaar. */
+.sr-rating .bar { display: block; width: 42px; margin-top: 4px; }
+.staff-candidates .bar { max-width: 100%; }
+
+.pc-rating .bar { display: block; width: 48px; margin-top: 4px; }
+.loan-application-status { padding: 10px 12px; background: var(--sunken); border-left: 3px solid var(--muted); font-size: .85rem; }
+
+.bank-loan-offers { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 12px; }
