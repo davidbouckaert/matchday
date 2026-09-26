@@ -68,37 +68,15 @@ of een niet oplosbare kernblokkade in plaats van illegaal door te spelen. Daardo
 voltooien niet alle runs zes seizoenen (na wijziging: één failliet in seizoen zes, vijf kernblokkades in seizoenen twee tot zes). Deze kleine stresstest
 onderbouwt het sluiten van de herhaalde-kredietroute, niet de balans van iedere speelstijl.
 
-### Grote infrastructuurkredieten: korter afbetalen
+### Looptijden behouden na nieuwe spelgegevens
 
-De betaalbaarheidstoets lost niet alles op: een miljoen over tien jaar kan een
-gezonde club plots vrijwel alle infrastructuur laten kopen tegen een bescheiden
-weeklast. Nieuwe infrastructuurleningen krijgen daarom een geleidelijk kortere
-termijn: `max(156, round(520 / (1 + totaleSchuld / (250000 × inflatie))))` weken.
-Totale schuld is alle resterende bankschuld plus de nieuwe hoofdsom. Geen abrupte
-grens bij €250.000 en geen reset door een andere kredietnaam. Eén- en driejaarskredieten
-houden hun bestaande korte looptijd. Bestaande leningen en reeds ingediende offertes
-behouden hun afgesproken voorwaarden; de betaalbaarheid wordt bij antwoord wel opnieuw
-getoetst. Opnieuw lenen blijft mogelijk zodra de gezamenlijke lasten draagbaar zijn.
-
-Gemeten zonder eerdere schuld, inflatie 1, dezelfde 6,5% rente:
-
-| Hoofdsom | Nieuwe termijn | Weeklast oud → nieuw | Totale rente oud → nieuw |
-| --- | --- | --- | --- |
-| €100.000 | 371 weken | €262 → €337 | €36.057 → €25.035 |
-| €250.000 | 260 weken | €654 → €1.127 | €90.142 → €42.977 |
-| €500.000 | 173 weken | €1.308 → €3.216 | €180.283 → €56.321 |
-| €1.000.000 | 156 weken | €2.616 → €7.060 | €360.566 → €101.290 |
-
-Dezelfde zes startspellen met `KREDIET=lang` leverden vóór wijziging 53 goedkeuringen
-op, tegenover nul na wijziging. Deze beperkte bot verbetert zijn inkomsten niet
-actief genoeg om de nieuwe lasten te dragen; dit is geen bewijs dat grote leningen
-voor elke actieve speler te streng zijn. De gerichte gezonde fixtures testen wel
-dat voldoende terugkerende inkomsten krediet kunnen dragen.
-
-Dit maakt de wekelijkse keuze zwaarder, maar verhoogt de totale rentekosten niet.
-Eerder afgesloten goedkope contracten worden niet achteraf herprijsd; verschillende
-opnamemomenten kunnen dus verschillende gewogen looptijden houden. Alle afbetalingen
-blijven wel samen onder de betaalbaarheidstoets vallen.
+Een voorgestelde verkorting van grote kredieten is niet opgenomen. Het concrete
+weekverslag van de speler liet €19.315 inkomsten en €19.650 uitgaven zien, waarvan
+€4.443 afbetalingen: €4.108 over uit de werking, maar €335 minder in kas. De hoge
+sponsorinkomsten waren dus geen vrije afbetalingsruimte. Dit was een uitwedstrijd;
+het jaarbeeld hangt ook af van thuisinkomsten en vaste jaarposten. Dat onderbouwt
+een jaarbrede betaalbaarheidstoets, niet zonder meer een verkorting van tien naar
+drie jaar. De bestaande één-, drie- en tienjaarstermijnen blijven behouden.
 
 ## Tabletworkflows en taakcontinuïteit — Slice 3
 
