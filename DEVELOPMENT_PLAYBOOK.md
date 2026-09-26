@@ -43,8 +43,12 @@ Reviews toetsen eraan; afwijken vraagt een expliciete productbeslissing.
 2. **Werk ≠ wachten ≠ informatie.** Wachten op een andere partij/proces telt niet
    automatisch als spelerswerk of urgentie.
 3. **Engine-derived UI.** Voorwaarden, bedragen, effecten, previews en urgentie komen uit
-   gedeelde domeinlogica; previews wijzigen geen state en geen RNG. "Het scherm rekent
-   nooit apart" blijft leidend.
+   gedeelde domeinlogica. Twee gelijkwaardige patronen (zie §7 voor de precisering):
+   een **transactionele preview** draait waar passend de échte actie op een gekloonde
+   staat; een **impactvergelijking** mag rechtstreeks gedeelde deterministische
+   motorfuncties gebruiken. In beide gevallen: geen gedupliceerde domeinformules in de UI,
+   geen mutatie van de echte GameState, geen RNG-verbruik door presentatie. "Het scherm
+   rekent nooit apart" blijft leidend.
 4. **Urgentieconsistentie.** Hetzelfde onderliggende probleem heeft dezelfde semantiek op
    Bureau, navigatie en domeinscherm, en legt uit: wat is er mis, wanneer telt het, waar
    onderzoek/los je het op.
@@ -153,9 +157,20 @@ Niet onderhandelbaar zonder expliciete productbeslissing:
 - De motor blijft **DOM-vrij, deterministisch en environment-agnostisch**; `advanceWeek(state)`
   geeft een nieuwe toestand; geen nieuwe toevalligheid voor presentatie; geen gewijzigde
   RNG-trekkingsvolgorde zonder benoemde reden.
-- **Het scherm rekent nooit apart** (zie ook §2.3).
-- Previews/vergelijkingen draaien op een kopie via de échte acties, wijzigen de speltoestand
-  niet en voorspellen geen RNG-uitkomsten.
+- **Het scherm rekent nooit apart** (zie ook §2.3). Voor previews/vergelijkingen gelden
+  twee gelijkwaardige patronen:
+  - **Transactionele preview** — hangt het resultaat af van de volledige transactionele
+    actie (guards, kosten, neveneffecten, taakoverdracht, …), dan is het veilig uitvoeren
+    van de échte actie op een gekloonde/niet-productiestaat het voorkeurspatroon waar dat
+    passend is.
+  - **Impactvergelijking** — biedt de motor al gedeelde deterministische rekenfuncties
+    voor hypothetische configuraties/bezettingen, dan mag de UI die motorfuncties
+    rechtstreeks gebruiken.
+
+  In beide gevallen: de UI dupliceert geen domeinformules, de echte GameState wordt niet
+  gemuteerd door inspectie/preview, presentatie verbruikt of wijzigt geen RNG-state, en
+  het getoonde resultaat komt uit gedeelde engine-/domeinlogica. Bestaande implementaties
+  worden niet herschreven louter om één previewmechanisme af te dwingen.
 - Logging voor ontwikkelaars via `src/log`, nooit in schermen, productieconsole of saves.
 - Spelerstaal 10+; technische details horen niet in de spelers-changelog.
 - Verborgen of code-gesplitste frontendcode is nooit een securitygrens; autorisatie en

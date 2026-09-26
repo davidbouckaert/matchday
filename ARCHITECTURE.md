@@ -164,6 +164,20 @@ vereist dat een apart beschermd leveringspad (bv. achter authenticatie geserveer
 wat er gedeeld wordt** en verstuurt alleen na bewuste actie van de gebruiker. Geen centrale
 permanente dump van iedere volledige save bij iedere actie.
 
+**Leveringscontract diagnosepakket [toekomstige implementatie-eis]:** "verzoek verstuurd"
+is níét hetzelfde als "diagnose veilig ontvangen". Een diagnose-inzending geldt pas als
+geslaagd nadat de backend **duurzame acceptatie/opslag bevestigd** heeft. Het toekomstige
+contract levert minimaal:
+
+- duurzame opslag passend bij het diagnoseontwerp;
+- serverbevestiging van ontvangst;
+- een diagnose-/support-ID dat aan de gebruiker wordt teruggegeven;
+- een begrijpelijke geslaagd-staat én een begrijpelijke mislukt-staat;
+- retrygedrag dat geen dubbelzinnige duplicaten veroorzaakt;
+- privacy-uitleg vóór verzending (zie hierboven);
+- **geen aanname dat het huidige `/api/log`-endpoint deze garanties biedt** — dat doet het
+  niet; het is een fire-and-forget-logkanaal.
+
 ## 7. Staging, productie, back-up, quota [VOORGESTELD, fase 0/kritiek pad]
 
 - Staging: eigen Worker-omgeving met **eigen** D1/R2; test-/adminacties kunnen productie
@@ -195,6 +209,20 @@ featurebranch → PR → verplichte checks (npm test · typecheck · production 
 preview waar passend → onafhankelijke review → merge → staging → migraties → smoke test →
 productiepromotie/release → versiecontrole (/api/version) → rollbackmogelijkheid
 ```
+
+**Doelcontract productie-uitrol — staging is een echte promotiepoort:**
+
+- de revisie die naar productie gaat, heeft eerst de verplichte validatie doorlopen
+  (checks + staging-smoke);
+- **dezelfde geteste revisie/hetzelfde artefact wordt gepromoveerd** naar productie —
+  productie bouwt of deployt niet zelfstandig een andere, ongeverifieerde revisie;
+- staging is een verplichte tussenstap in de promotieketen, geen optionele parallelle
+  omgeving;
+- **de huidige directe main → productie-publicatie wordt vervangen/uitgeschakeld zodra de
+  nieuwe staging-/promotiepijplijn actief is.** Tot dat moment blijft de bestaande gang
+  gewoon werken; de omschakeling gebeurt als bewuste migratiestap in de geautoriseerde
+  CI/CD-implementatiefase, zodat lopende releases niet per ongeluk breken. [VOORGESTELD —
+  nog niet doorgevoerd]
 
 Nightly/periodiek: economie-/autopilot-/langlopende simulaties buiten de PR-latency. De
 bestaande release-automation blijft de release-eigenaar; de handmatige gang is uitsluitend
