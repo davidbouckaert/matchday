@@ -91,7 +91,10 @@ identiteitsgegevens** (verwerkersrelatie). "Matchday bewaart alleen een ID" bete
 niet dat nergens in de keten persoonsgegevens verwerkt worden. Die verwerkersrelatie
 (doel, welke gegevens, verwerkersovereenkomst) hoort bij het privacywerk dat **vóór
 publieke accountcollectie** af moet (launch gate D; minderjarigen-/GDPR-review vóór brede
-collectie — het spel richt zich op 10+).
+collectie — het spel richt zich op 10+). Omdat accounts P0 zijn, is dit privacyminimum
+(datainventaris bevestigen, doeleinden en bewaartermijnen vastleggen, Clerk-DPA aanvaarden,
+privacy-informatie voor de gebruiker) zelf een P0-taak op het kritieke pad, met gatebewijs
+onder gate D — zie ROADMAP dagen 3–7.
 
 Ook: in-game tekstvelden (eigenaars-/clubnaam) zijn speldata en geen accountidentiteit,
 maar een gebruiker kán er persoonsidentificerende tekst in zetten — claim dus nooit dat
@@ -227,6 +230,12 @@ productiepromotie/release → versiecontrole (/api/version) → rollbackmogelijk
 Nightly/periodiek: economie-/autopilot-/langlopende simulaties buiten de PR-latency. De
 bestaande release-automation blijft de release-eigenaar; de handmatige gang is uitsluitend
 een gemarkeerd noodpad (zie CLAUDE.md).
+
+**Bekende beperking [HUIDIG]:** `release.yml` heeft geen concurrency-groep en doet geen
+rebase/retry vóór `git push origin HEAD:main`. Twee snel opeenvolgende merges laten de push
+van de eerste release falen (non-fast-forward), waardoor changelog-item en tag ontbreken.
+Tot de fix (kritiek pad dag 1–3, fase 0) worden merges handmatig geserialiseerd (CLAUDE.md,
+Playbook §5).
 
 ## 10. Open beslissingen
 

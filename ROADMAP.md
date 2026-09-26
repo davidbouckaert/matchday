@@ -3,7 +3,8 @@
 *Levend document: wat, wanneer, prioriteit, status. Eigenaarschap en werkwijze staan in
 [DEVELOPMENT_PLAYBOOK.md](DEVELOPMENT_PLAYBOOK.md); techniek en beslissingen in
 [ARCHITECTURE.md](ARCHITECTURE.md). Laatst bijgewerkt: 26 september 2026 (v0.84.5 live),
-na Astra's review van PR #56 en de PO-beslissingen accounts + Clerk.*
+na Astra's review en de laatste Codex-ronde op PR #56 (commit 90d61e3) en de
+PO-beslissingen accounts + Clerk.*
 
 **Launchdoel: ACCOUNT-GEBASEERDE GO-LIVE met eerste echte externe gebruikers rond
 10 oktober 2026 (±14 dagen).** OPEN-1 is gesloten: accounts zijn een must-have voor de
@@ -29,7 +30,7 @@ Accounts zijn P0, maar **niet elke online-ambitie is daarmee P0**.
 | Veilige koppeling lokale save → account (nooit stil verlies) | Payments / premium entitlements |
 | Minimale sync + begrijpelijke sync-/fout-/herstel-UX | Server-authoritative motor |
 | Logging voldoende voor support/troubleshooting | Volledige deterministische replay-UI |
-| Privacy-informatie vóór accountdatacollectie | |
+| Privacyminimum vóór accountdatacollectie: datainventaris bevestigd, doeleinden en bewaartermijnen vastgelegd, Clerk-verwerkersovereenkomst (DPA) afgehandeld, privacy-informatie zichtbaar voor de gebruiker | |
 | Staging/prod-scheiding · CI-gates · back-up-/herstelrepetitie | |
 | Launch-onboarding · end-to-end accountlaunch-generale | |
 
@@ -51,12 +52,14 @@ vóór het bevriezen van account-/save-API's** — zie §Checkpoint.
 | Onboarding/first-player-experience doorlichten en waar nodig fixen | Astra | P0 | READY | ⇄ |
 | Fysieke iPad-acceptatie (draaiboek Slice 3) of daaruit volgende fixes | Astra + David (apparaat) | P1 | READY | ⇄ |
 | `release:skip`/padenregel tegen changelog-ruis van docs-PR's | Fable | P1 | READY | ⇄ |
+| `release.yml` race-vrij maken: concurrency-groep + rebase/retry vóór de push van de releasecommit, zodat twee snel opeenvolgende merges geen release verliezen. Tot dan: merges handmatig serialiseren (CLAUDE.md) | Fable | P1 | READY | ⇄ |
 | **CHECKPOINT (gezamenlijk): account-lifecycle-contract** — zie §Checkpoint | David + Fable + Astra + ChatGPT | P0 | READY | boundary-ontwerp |
 
 ### Dagen 3–7 — accountfundament
 
 | Taak | Owner | Prio | Status | Afh. |
 |---|---|---|---|---|
+| **Privacyminimum vóór accountcollectie** (ARCHITECTURE §3): datainventaris bevestigen, doeleinden + bewaartermijnen vastleggen, Clerk-verwerkersovereenkomst (DPA) aanvaarden en archiveren, privacy-informatie voor de gebruiker. Moet DONE zijn vóór Clerk op een publiek bereikbare omgeving echte gebruikersdata verwerkt; bewijs onder gate D | Fable (inventaris, termijnen, tekst) + David (DPA) | P0 | READY | Clerk-verificatie dag 1–3 |
 | Clerk-integratie + Matchday-identity-adapter (Workers) | Fable | P0 | BACKLOG | checkpoint |
 | D1-fundament: users, authkoppeling, rollen; migratieflow | Fable | P0 | BACKLOG | checkpoint |
 | Workers-autorisatie + ownership-checks (RBAC) | Fable | P0 | BACKLOG | ↑ |
@@ -80,7 +83,8 @@ vóór het bevriezen van account-/save-API's** — zie §Checkpoint.
 
 Valideren op staging: accountcreatie/login · bestaande lokale save koppelen ·
 save-persistentie · herladen · tweede browser/apparaat waar ondersteund · syncfout ·
-conflict · logout/login · herstel · migratie · privacy-informatie · logging-/supportpad.
+conflict · logout/login · herstel · migratie · privacyminimum afgerond (inventaris, doeleinden/
+bewaartermijnen, DPA) en privacy-informatie zichtbaar · logging-/supportpad.
 
 ### Dagen 11–14 — launchstabilisatie (feature freeze behalve blockers)
 
@@ -107,7 +111,7 @@ Vereiste outputs — daarna pas zijn account-/save-API-contracten stabiel:
 10. technisch API-/statecontract dat het bovenstaande draagt.
 
 De inhoudelijke minimumgaranties staan in
-[ARCHITECTURE.md §Account-/save-garanties](ARCHITECTURE.md#5-account--save-garanties-launchcontract).
+[ARCHITECTURE.md §4 Account-/save-garanties](ARCHITECTURE.md#4-account-save-garanties-launchcontract).
 
 ## Launch gates
 
@@ -119,7 +123,7 @@ controles.
 | **A — Engine/game** | Regressiesuite groen; deterministische invarianten intact; save-migraties geverifieerd; geen bekende P0-gameplayblocker |
 | **B — Account/auth** | Clerk werkt op productie-achtige staging; interne identity-mapping werkt; server-side autorisatie werkt; PLAYER/TESTER/ADMIN-scheiding waar geïmplementeerd; geen client-only securitygrens |
 | **C — Save-veiligheid** | Geen stil verlies van lokale voortgang; lokaal→account-koppeling gedefinieerd/getest; cloud-save-ownership correct; herladen/herinloggen veilig; syncfout vernietigt niets; conflictpad getest; back-up/herstel geoefend |
-| **D — Privacy/security** | Privacy-info beschikbaar vóór relevante collectie; geen publieke secrets; geen publieke productie-sourcemaps; headers/CSP passend; auth-/sessie-endpoints beschermd; logs lekken geen secrets/gevoelige payloads; retentie-/verwijderbasics gedefinieerd |
+| **D — Privacy/security** | Privacyminimum afgerond vóór relevante collectie, met bewijs: datainventaris bevestigd tegen ARCHITECTURE §3, doeleinden en bewaartermijnen vastgelegd, Clerk-verwerkersovereenkomst (DPA) aanvaard en gearchiveerd, privacy-informatie voor de gebruiker beschikbaar; geen publieke secrets; geen publieke productie-sourcemaps; headers/CSP passend; auth-/sessie-endpoints beschermd; logs lekken geen secrets/gevoelige payloads; retentie-/verwijderbasics gedefinieerd |
 | **E — User experience** | Verse-speler-onboarding getest (eerste indruk → zichtbaar doel → waarom → hoofdactie → voltooiingsfeedback → volgende stap → eerste week → begrijpelijk resultaat → herladen/hervatten → save-vertrouwen); sign-in begrijpelijk; sync-/foutstatus begrijpelijk; desktop primair intact; fysieke iPad-acceptatie afgerond; smartphone-eerste-indruk + accountingang acceptabel. Voor gekozen launchflows: toetsenbordtoegang, zichtbare focus, begrijpelijke foutstates, status nooit alleen via kleur |
 | **F — Operations** | CI-gates actief; staging/prod gescheiden; productiedeployment geoefend; rollback begrepen; logs/supportpad beschikbaar; minimum-user/save-support bestaat |
 
@@ -127,10 +131,10 @@ controles.
 
 | Wie | Primair |
 |---|---|
-| **Fable** | Clerk-technische integratie; Workers-authverificatie; Matchday-identity-adapter; D1-account-/rolmodel; R2-/save-backend; syncprotocol-implementatie; save-ownership/security; migraties; staging; CI; logging/backend-diagnostiek; minimum-adminbackend |
+| **Fable** | Clerk-technische integratie; Workers-authverificatie; Matchday-identity-adapter; D1-account-/rolmodel; R2-/save-backend; syncprotocol-implementatie; save-ownership/security; migraties; staging; CI; logging/backend-diagnostiek; minimum-adminbackend; privacyminimum (datainventaris, doeleinden/bewaartermijnen, privacytekst-inhoud, DPA-voorbereiding) |
 | **Astra** | Sign-in-/account-UX; koppelings-UX; save-/sync-status-UX; conflict-UX; herstel-/fout-UX; onboarding-integratie; toegankelijkheid; responsive account-UX; user-facing admin-/testerpanelen waar nodig |
 | **Gezamenlijk vóór implementatie** | Account-lifecycle-contract; lokaal→account-gedrag; sync-/conflictgaranties; logout-/wisselgedrag; herstelcontract; fout-/statusvocabulaire |
-| **David** | Finale productbeslissingen, launchscope, acceptatie |
+| **David** | Finale productbeslissingen, launchscope, acceptatie; aanvaarden van de Clerk-verwerkersovereenkomst (DPA) als verwerkingsverantwoordelijke |
 
 ## Minimum-admin (launch) vs. later adminplatform
 
@@ -158,7 +162,7 @@ admindashboard blijft LATER tenzij een afhankelijkheid dat aantoont.
 | 0 + 1 | = kritiek pad hierboven | zie kritiek pad |
 | 2 — operatie | Volwaardige admin-essentials, tester-scenario's/inspector, back-up-automatisering | BACKLOG |
 | 3 — observability | Telemetrie, diagnosepakket "Stuur diagnose", deterministische replay-tooling | BACKLOG |
-| 4 — commercieel | Entitlements, payments indien nodig, uitgebreide privacy/legal (incl. minderjarigen-review vóór brede collectie), abuse-controls, dashboards | BACKLOG |
+| 4 — commercieel | Entitlements, payments indien nodig, uitgebreide privacy/legal bovenop het launch-privacyminimum uit het kritieke pad (incl. minderjarigen-review vóór brede collectie), abuse-controls, dashboards | BACKLOG |
 | doorlopend | Motor-/economie-ownership: metingen bij economiewijzigingen, save-migraties, RNG-discipline | doorlopend |
 
 ## Bewijsindex (duurzaam, geen /tmp-afhankelijkheid)
@@ -186,8 +190,9 @@ Details per werkstuk: PR-beschrijvingen en README-laagvermeldingen (bestaande co
 |---|---|---|
 | Checkpoint dag 3 schuift | Heel het kritieke pad schuift | Strak plannen; PO beslist over datum vs. scope, geen stille krimp op save-veiligheid |
 | Clerk-verificatie levert verrassing (limieten, prijs, EU/minderjarigen) | Authfundament vertraagt | Dag 1–3-verificatietaak vóór integratie |
-| Sync-conflictontwerp onderschat | Save-verlies = vertrouwensverlies | Garanties eerst (ARCHITECTURE §5), algoritme pas na contract (OPEN-3) |
+| Sync-conflictontwerp onderschat | Save-verlies = vertrouwensverlies | Garanties eerst (ARCHITECTURE §4), algoritme pas na contract (OPEN-3) |
 | Release-workflow test niet | Regressie kan live | P0 dag 1–3 |
+| Twee merges vlak na elkaar | Eerste releasecommit kan niet meer naar `main` (non-fast-forward): changelog-item en tag ontbreken | Handmatig serialiseren (CLAUDE.md) tot `release.yml` concurrency/rebase heeft (dag 1–3, P1) |
 | Fysieke iPad nooit getest | Onbekende Safari-/touchproblemen | A2 in dag 1–3, niet in de stabilisatieweek |
 | Parallelle botsing op gedeelde kern | Merge-pijn, regressie | Aparte worktrees, integratie-eigenaar, STOP-regel |
 | workers.dev vs. definitief domein | IndexedDB is origin-gebonden: saves verhuizen niet mee | OPEN-7 beslissen vóór dag 7 (vóór er externe blijvende saves bestaan) |

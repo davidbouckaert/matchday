@@ -117,6 +117,9 @@ Basisregels (aanvullend op CLAUDE.md):
 - Ongerelateerd/untracked werk van anderen blijft onaangeroerd.
 - `src/version.ts` wordt op featurebranches nooit handmatig gewijzigd; de release-automation
   beheert versie en changelog (zie CLAUDE.md).
+- **Merges naar `main` zijn geserialiseerd:** de volgende PR pas mergen als de automatische
+  release van de vorige voltooid is (releasecommit + tag op `main`). `release.yml` heeft nog
+  geen concurrency-/rebasebescherming; die fix staat op het kritieke pad (ROADMAP dag 1–3).
 
 **Conflictzones** — verhoogde alertheid bij parallel werk:
 

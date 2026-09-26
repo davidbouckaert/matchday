@@ -61,6 +61,14 @@ verandert. Veel van wat willekeurig lijkt, is een keuze met een meting eronder.
   PR-titel (label `release:minor` maakt er een minor van), commit
   "chore: release", tag, push — waarna Cloudflare deployt. Jij doet dus níéts
   handmatigs aan versie of tag; hooguit `/api/version` controleren.
+- **Twee merges vlak na elkaar: wacht met de tweede tot de release van de
+  eerste helemaal klaar is** (de commit "chore: release" en de tag staan op
+  `main`, `/api/version` toont het nieuwe nummer). `release.yml` heeft nog geen
+  concurrency-/rebasebescherming: verplaatst een tweede merge `main` terwijl de
+  eerste run nog loopt, dan faalt de push van die eerste release
+  (non-fast-forward) en ontbreekt dat changelog-item. Deze handmatige
+  serialisatie vervalt pas als de workflow dit zelf veilig afhandelt (ROADMAP,
+  kritiek pad dag 1–3).
 - **Noodpad, alleen als de automation stuk is:** op de actuele `main` draait
   `npm run release -- --type=patch|minor --title="..." --item="..."` de
   VERSION- en CHANGELOG-bewerking (weigert buiten `main`); daarna zelf
