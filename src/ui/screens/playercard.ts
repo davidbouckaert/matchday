@@ -16,7 +16,7 @@ import type { GameState, Player } from '../../engine/types';
 import { POSITIONS, currentBid, isCorePlayer, isPromising, marketValue, overall } from '../../engine/players';
 import { delegate } from '../../engine/delegation';
 import { isTransferWindow } from '../../engine/calendar';
-import { esc, euro } from '../format';
+import { bar, esc, euro } from '../format';
 import { tipAttr } from '../tooltip';
 import { isStar, starLabel } from '../../engine/stars';
 
@@ -135,7 +135,7 @@ function card(s: GameState, p: Player, inLineup: boolean, pinned: boolean, windo
         <span class="pc-state-label">${esc(st.label)}</span>
       </span>
       <span class="pc-rating" ${tipAttr(`Kwaliteit ${overall(p)} van een mogelijke ${Math.round(p.potential)}. ${groeit > 8 ? 'Daar zit nog veel in.' : groeit > 3 ? 'Er zit nog wat groei in.' : 'Hij zit dicht bij zijn plafond.'}`)}>
-        <strong>${overall(p)}</strong><span class="of">/${Math.round(p.potential)}</span>
+        <strong>${overall(p)}</strong><span class="of">/${Math.round(p.potential)}</span>${bar(overall(p))}
       </span>
     </header>
 

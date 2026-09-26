@@ -2,6 +2,7 @@ import type { GameState, LedgerCategory, LedgerEntry, WeekRecord } from '../../e
 import { subsidieCard } from '../subsidiezaak';
 import { cashGroup, cashSummary } from '../financial';
 import { creditLimit, emergencyOffer, interestRate, loanOffers, totalDebt } from '../../engine/loans';
+import { assessLoan, bankCapacity } from '../../engine/bank';
 import { weeks } from '../../engine/util';
 import { esc, euro, signedEuro } from '../format';
 import { forecast, topLines } from '../../engine/forecast';
@@ -231,6 +232,8 @@ export function financeScreen(s: GameState, selectedCase?: string, backLabel?: s
   const lastWeek = groupByCategory(s.lastWeek);
   const thisWeek = s.thisWeek;
   const offers = loanOffers(s);
+  const capacity = bankCapacity(s);
+  const pendingLoan = s.requests.find((r) => r.kind === 'lening');
   if (s.emergencyLoanOffered) offers.unshift(emergencyOffer(s));
 
   // Vaste kolommen in plaats van een raster dat zichzelf vult.
@@ -294,7 +297,7 @@ export function financeScreen(s: GameState, selectedCase?: string, backLabel?: s
   </div>
     <section class="card">
       <h2>Leningen</h2>
-      <p class="muted small">Je moet nog <strong>${euro(totalDebt(s))}</strong> terugbetalen. De bank wil je nu nog <strong>${euro(creditLimit(s))}</strong> lenen, aan ${(interestRate(s) * 100).toFixed(1)}% rente per jaar.</p>
+      <p class="muted small">Je moet nog <strong>${euro(totalDebt(s))}</strong> terugbetalen. Je resterende kredietruimte is <strong>${euro(creditLimit(s))}</strong>, vóór de betaalbaarheidstoets. Basisrente: ${(interestRate(s) * 100).toFixed(1)}% per jaar.</p>
       ${
         s.loans.length
           ? `<div class="table-wrap"><table class="compact"><thead><tr><th>Lening</th><th class="num">Open</th><th class="num">Rente</th><th class="num">Per week</th><th class="num">Weken</th><th></th></tr></thead><tbody>
@@ -307,12 +310,23 @@ export function financeScreen(s: GameState, selectedCase?: string, backLabel?: s
           : '<p class="muted">Geen lopende leningen.</p>'
       }
       <h3>Aanbod van de bank</h3>
-      <div class="choice-grid three">
+      ${pendingLoan ? `<p class="loan-application-status" role="status"><strong>Aanvraag in behandeling</strong> · ${esc(pendingLoan.label)}. Antwoord na nog ${pendingLoan.weeksLeft} gespeelde ${pendingLoan.weeksLeft === 1 ? 'week' : 'weken'}. Daarna kun je opnieuw aanvragen; de bank beoordeelt je financiële situatie opnieuw.</p>` : '<p class="muted small">Je kunt ook met een lopende lening opnieuw aanvragen. De bank beoordeelt iedere aanvraag op gezamenlijke schuld, betaalbaarheid, kaspositie en reputatie.</p>'}
+      <p class="muted small">${s.loans.length} lopende ${s.loans.length === 1 ? 'lening' : 'leningen'} · afbetalingen komende 52 weken: <strong>${euro(capacity.existingPayments)}</strong>.
+        Geschat over uit een werkingsjaar: <strong>${signedEuro(capacity.annualOperating)}</strong>.</p>
+      <details><summary>Hoe beoordeelt de bank dit?</summary><p class="small">De bank rekent met huidig beleid en publiek, inclusief winterstop en aflopende sponsorcontracten, en vraagt 10% buffer bovenop alle afbetalingen. Geleend geld, transfers en subsidies tellen niet als draagkracht. Een passende raming garandeert nog geen goedkeuring. Meer ruimte nodig? Bekijk je personeelskosten, ticketprijzen en sponsorinkomsten.</p>
+        <button class="sm ghost" data-action="nav" data-id="staff">Personeelskosten bekijken</button>
+        <button class="sm ghost" data-action="nav" data-id="sponsors">Sponsors bekijken</button>
+      </details>
+      <div class="choice-grid three bank-loan-offers">
         ${offers
           .map(
-            (o) => `<div class="choice static ${o.key === 'nood' ? 'warn' : ''}"><strong>${esc(o.label)}</strong><span class="big">${euro(o.principal)}</span>
+            (o) => {
+              const assessment = o.key === 'nood' ? null : assessLoan(s, o, capacity);
+              return `<div class="choice static ${o.key === 'nood' ? 'warn' : ''}"><strong>${esc(o.label)}</strong><span class="big">${euro(o.principal)}</span>
             <span>${(o.annualRate * 100).toFixed(1)}% · ${euro(o.weeklyPayment)}/week · ${o.weeks} weken</span>
-            <button class="sm primary" data-action="loan" data-id="${o.key}">Lenen</button></div>`,
+            ${assessment && !assessment.allowed ? `<p class="small">${esc(assessment.reason)}</p>` : ''}
+            <button class="sm primary" data-action="loan" data-id="${o.key}" ${o.key !== 'nood' && (pendingLoan || !assessment?.allowed) ? 'disabled' : ''}>${o.key === 'nood' ? 'Noodlening opnemen' : pendingLoan ? 'Aanvraag loopt' : !assessment?.allowed ? 'Nu niet betaalbaar' : 'Lening aanvragen'}</button></div>`;
+            },
           )
           .join('') || '<p class="muted">De bank leent je op dit moment niets meer.</p>'}
       </div>

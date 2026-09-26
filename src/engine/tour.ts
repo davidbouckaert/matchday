@@ -172,7 +172,7 @@ export const TOUR_CHAPTERS: TourChapter[] = [
         done: (s) => s.subsidieSeizoen !== undefined || s.requests.some((r) => r.kind === 'subsidie'),
       },
       {
-        text: 'Bekijk wat de bank je kan lenen: soms is bouwen mét lening slimmer dan sparen zonder tribune',
+        text: 'Leer hoe de bank je club beoordeelt: wie zijn werking op orde heeft, kan later lenen voor de grote werken',
         where: 'Geld › Financiën',
         screen: 'financien',
         done: (s) => seen(s, 'financien') || s.loans.length > 0 || s.requests.some((r) => r.kind === 'lening'),

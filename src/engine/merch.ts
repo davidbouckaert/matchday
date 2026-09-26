@@ -181,6 +181,19 @@ export function bestPrice(state: GameState, itemId: MerchItem['id']): number {
   return best;
 }
 
+/** Dezelfde vaste winkelkosten voor de boeking en de kredietraming. */
+function fixedMerchCost(state: GameState): number {
+  return MERCH_WEEK_COST * (1 - staffSkill(state, 'merchandising') / 400) + state.merch.items.length * MERCH_ITEM_WEEK_COST;
+}
+
+/** Verwachte nettowinst, zonder toeval of wijzigingen aan de winkel. */
+export function expectedMerchNet(state: GameState): number {
+  if (!state.merch.active) return 0;
+  const prints = state.players.some((p) => p.loan?.type !== 'uit');
+  return state.merch.items.reduce((sum, item) => sum + expectedUnits(state, item) *
+    (margin(state, item) + (prints && item.id === 'shirt' ? PRINT_SHARE * (PRINT_PRICE - PRINT_COST) : 0)), 0) - fixedMerchCost(state);
+}
+
 /** Wekelijkse verkoop. Wordt in advanceWeek opgeroepen nadat de wedstrijd gespeeld is. */
 export function weeklyMerch(state: GameState, rng: Rng): MerchWeek | null {
   const m = state.merch;
@@ -196,8 +209,7 @@ export function weeklyMerch(state: GameState, rng: Rng): MerchWeek | null {
     result.revenue += revenue;
     result.cost += cost;
   }
-  const skill = staffSkill(state, 'merchandising');
-  result.fixed = MERCH_WEEK_COST * (1 - skill / 400) + m.items.length * MERCH_ITEM_WEEK_COST;
+  result.fixed = fixedMerchCost(state);
   m.lastUnits = result.units;
   m.seasonUnits += result.units.reduce((s, u) => s + u.units, 0);
   weeklyPrints(state, rng, result.units.find((u) => u.id === 'shirt')?.units ?? 0);

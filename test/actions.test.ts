@@ -84,6 +84,7 @@ describe('Acties', () => {
   it('een kredietaanvraag krijgt pas na een week antwoord en wordt daarna afbetaald', () => {
     let s = newTestGame('heidebeke');
     s.community.reputation = 90; // een goed dossier
+    s.sponsors[0].weekly += 1500; // voldoende terugkerende inkomsten voor alle afbetalingen
     const result = actions.takeLoan(s, 'middel');
     expect(result.ok).to.equal(true);
     expect(s.loans).to.have.lengthOf(0); // nog niets ontvangen

@@ -16,6 +16,68 @@ npm run build      # productieversie in dist/
 
 Sneltoets in het spel: **spatie** = volgende week.
 
+## Aanvraagstatus en herkenbare ratings
+
+Het bankaanbod toont tijdens een lopend dossier de aangevraagde lening en de
+resterende antwoordtermijn. De gewone aanvraagknoppen volgen de bestaande regel
+van één dossier tegelijk; na een antwoord kun je opnieuw aanvragen. Geen nieuwe
+wachttijd of limiet op het aantal leningen. De noodlening blijft afzonderlijk.
+Subsidies blijven één aanvraag per seizoen, ook na afwijzing, met dossierstatus.
+Personeel en spelers tonen naast hun cijfer weer dezelfde 0–100-balk als Opleiding
+(rood onder 33, middenkleur vanaf 33, groen vanaf 66).
+
+De eerste controle wees alleen uit dat de bank alle schulden van de kredietruimte
+aftrekt. Dat was onvoldoende: drie kleine kredieten konden de jaarlijkse last
+verder opvoeren terwijl de werking die niet kon dragen. Daarom delen aanvraag,
+bankantwoord en UI nu `assessLoan`: bestaande én nieuwe afbetalingen over de komende
+52 weken moeten uit een geraamd werkingsjaar komen, met 10% buffer. De bank gebruikt
+de echte boekingsfuncties op een kopie: lonen, onderhoud, reeks- en verzekeringskosten,
+training, medische cel, sponsors, wedstrijden, kantine/concessies, winkel en lidgeld.
+Bestaande abonnementen tellen mee; reeds gespeelde wedstrijden blijven deel van het
+normale jaar. Aflopende sponsorcontracten tellen slechts hun resterende weken mee;
+verlengingen zijn niet gegarandeerd. Geen kasgeld, nieuwe kredieten, transfers of subsidies als draagkracht.
+De laatste kleine termijn van een bestaande lening telt slechts werkelijk resterend
+mee. Een voldoende dossier blijft onderhevig aan de bestaande bankkans.
+
+Dit is een raming bij huidig beleid en publiek, met gekende contracteindes, geen gegarandeerde
+kasprognose: geen voorspelde promotie, contractvernieuwing, toekomstige investering
+of volledige weersimulatie. De buffer is een expliciete balanskeuze. Een club met
+verlieslatende werking krijgt geen gewoon nieuw krediet uitsluitend omdat er veel
+onderpand of geld op de rekening staat. De eenmalige noodlening blijft afzonderlijk.
+Er komen geen savevelden of aantallimieten bij.
+
+Gericht getest: drie kleine contracten hebben dezelfde totale last en beoordeling
+als één even groot contract; gunstige kansproeven omzeilen onbetaalbaarheid niet;
+een gezond dossier kan ook meer dan drie leningen krijgen. Bij de gemeten gezonde
+fixture stoppen kleine leningen na twee extra kredieten, met nog €536.000 onderpandruimte:
+€139.161 geraamde jaarwerking tegenover €95.770 bestaande jaarbetalingen; de volgende
+lening overschrijdt de grens. Een gewijzigde situatie wordt bij het antwoord opnieuw
+getoetst. De UI toont de lopende aanvraag, bestaande lasten en de concrete afwijzingsreden.
+
+`node --import tsx scripts/doorlichting-krediet.ts`: seeds 1–3, twee clubs, aannemer,
+bestaande staf gedelegeerd, iedere week klein krediet aanvragen, horizon zes seizoenen.
+Vergelijking met baseline `a4319f0`:
+
+| Club | Goedkeuringen vóór → na | Gemiddelde eindschuld vóór → na |
+| --- | --- | --- |
+| Zuidrand | 688 → 0 | €418.050 → €62.454 |
+| Heidebeke | 522 → 1 | €263.435 → €0 |
+
+Zonder leenaanvragen blijven de metingen exact gelijk. De bot stopt bij faillissement
+of een niet oplosbare kernblokkade in plaats van illegaal door te spelen. Daardoor
+voltooien niet alle runs zes seizoenen (na wijziging: één failliet in seizoen zes, vijf kernblokkades in seizoenen twee tot zes). Deze kleine stresstest
+onderbouwt het sluiten van de herhaalde-kredietroute, niet de balans van iedere speelstijl.
+
+### Looptijden behouden na nieuwe spelgegevens
+
+Een voorgestelde verkorting van grote kredieten is niet opgenomen. Het concrete
+weekverslag van de speler liet €19.315 inkomsten en €19.650 uitgaven zien, waarvan
+€4.443 afbetalingen: €4.108 over uit de werking, maar €335 minder in kas. De hoge
+sponsorinkomsten waren dus geen vrije afbetalingsruimte. Dit was een uitwedstrijd;
+het jaarbeeld hangt ook af van thuisinkomsten en vaste jaarposten. Dat onderbouwt
+een jaarbrede betaalbaarheidstoets, niet zonder meer een verkorting van tien naar
+drie jaar. De bestaande één-, drie- en tienjaarstermijnen blijven behouden.
+
 ## Tabletworkflows en taakcontinuïteit — Slice 3
 
 Vanaf baseline `cbe6929` (0.84.3) houden desktopgebruikers de directe opstellingsactie

@@ -6,7 +6,7 @@ import { TASKS, roleDef } from '../engine/data/catalog';
 import { playerImpact, staffImpact } from '../engine/impact';
 import { transferWillingness, wantsAway } from '../engine/appeal';
 import { round } from '../engine/rng';
-import { esc, euro } from './format';
+import { bar, esc, euro } from './format';
 import { impactChips } from './impact';
 import { staffComparison } from './staff-comparison';
 import { contractLabel } from './screens/playercard';
@@ -96,7 +96,7 @@ export function workflowPanel(s: GameState, w: Workflow): string {
     body = `<div class="workflow-source"><strong>${selected ? esc(selected.name) : 'Open plaats'}</strong> · ${esc(zone ?? '')}${selected ? ` · kwaliteit ${overall(selected)}` : ''}<br/>Ploegsterkte nu: ${teamStrength(s).total.toFixed(1)}</div>
       <label>Vervanger<select id="workflow-candidate" data-workflow-field="candidate"><option value="">Kies een speler</option>${choices.map((p) => `<option value="${p.id}" ${p.id === w.candidate ? 'selected' : ''}>${esc(p.name)} · ${p.position} · ${overall(p)}${p.injuryWeeks ? ' · geblesseerd' : p.suspended ? ' · geschorst' : p.loan?.type === 'uit' ? ' · uitgeleend' : ''}</option>`).join('')}</select></label>
       ${!choices.length ? '<p>Er zijn geen vervangers beschikbaar.</p>' : ''}
-      ${incoming && preview ? `<dl class="workflow-facts">${fact('Kandidaat', esc(incoming.name))}${fact('Positie', `${incoming.position}${incoming.position === zone ? ' · past op deze plaats' : ' · buiten eigen positie'}`)}${fact('Kwaliteit', String(overall(incoming)))}${fact('Beschikbaarheid', incoming.injuryWeeks ? `${incoming.injuryWeeks} weken geblesseerd` : incoming.suspended ? `${incoming.suspended} wedstrijden geschorst` : incoming.loan?.type === 'uit' ? 'Uitgeleend' : 'Speelklaar')}${fact('Vermoeidheid', `${Math.round(incoming.fatigue)}/100`)}${fact('Ploegsterkte na wissel', `${preview.after.toFixed(1)} (${preview.after - preview.before >= 0 ? '+' : ''}${(preview.after - preview.before).toFixed(1)})`)}</dl>${!preview.result.ok ? `<p class="workflow-error">${esc(preview.result.message)}</p>` : ''}` : '<p>Kies een speler om de gevolgen te vergelijken. Je opstelling verandert pas bij bevestigen.</p>'}`;
+      ${incoming && preview ? `<dl class="workflow-facts">${fact('Kandidaat', esc(incoming.name))}${fact('Positie', `${incoming.position}${incoming.position === zone ? ' · past op deze plaats' : ' · buiten eigen positie'}`)}${fact('Kwaliteit', `${overall(incoming)} ${bar(overall(incoming))}`)}${fact('Beschikbaarheid', incoming.injuryWeeks ? `${incoming.injuryWeeks} weken geblesseerd` : incoming.suspended ? `${incoming.suspended} wedstrijden geschorst` : incoming.loan?.type === 'uit' ? 'Uitgeleend' : 'Speelklaar')}${fact('Vermoeidheid', `${Math.round(incoming.fatigue)}/100`)}${fact('Ploegsterkte na wissel', `${preview.after.toFixed(1)} (${preview.after - preview.before >= 0 ? '+' : ''}${(preview.after - preview.before).toFixed(1)})`)}</dl>${!preview.result.ok ? `<p class="workflow-error">${esc(preview.result.message)}</p>` : ''}` : '<p>Kies een speler om de gevolgen te vergelijken. Je opstelling verandert pas bij bevestigen.</p>'}`;
     verb = 'Wissel bevestigen';
   } else if (w.kind === 'staff') {
     const c = s.staffMarket.find((p) => p.id === w.id)!;
@@ -104,8 +104,8 @@ export function workflowPanel(s: GameState, w: Workflow): string {
     const current = comparison.current;
     title = `${roleDef(c.role).label} vergelijken`;
     blocked = !!comparison.reason;
-    body = `<div class="workflow-source">Nu: ${current ? `${esc(current.name)} · ${current.skill}/100 · ${euro(current.wage)}/week · ${current.diploma} · ${taskCapacity(current)} taakplaatsen` : 'Vacature'}</div>
-      <h3>${esc(c.name)}</h3><p>${c.skill}/100 · ${esc(c.trait)} · ${c.diploma} · ${taskCapacity(c)} taakplaatsen</p>
+    body = `<div class="workflow-source">Nu: ${current ? `${esc(current.name)} · ${current.skill}/100 ${bar(current.skill)} · ${euro(current.wage)}/week · ${current.diploma} · ${taskCapacity(current)} taakplaatsen` : 'Vacature'}</div>
+      <h3>${esc(c.name)}</h3><p>${c.skill}/100 ${bar(c.skill)} · ${esc(c.trait)} · ${c.diploma} · ${taskCapacity(c)} taakplaatsen</p>
       ${impactChips(staffImpact(s, c.role, c.skill))}
       <dl class="workflow-facts">${fact('Eenmalig totaal', euro(comparison.cost))}${fact('Nieuw weekloon', euro(c.wage))}${fact('Weekverschil', euro(comparison.weeklyDelta))}${fact('Taken gaan mee', esc(names(comparison.taken)))}${fact('Taken terug naar jou', esc(names(comparison.returned)))}</dl>
       ${current?.role === 'hoofdtrainer' ? '<p>Het ontslag van de hoofdtrainer verlaagt de moraal van je spelers.</p>' : ''}
