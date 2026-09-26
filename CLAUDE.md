@@ -55,17 +55,19 @@ verandert. Veel van wat willekeurig lijkt, is een keuze met een meting eronder.
   raakt `src/version.ts` nooit aan — geen VERSION-bump, geen CHANGELOG-item in
   de diff. Anders bumpen twee branches vanaf hetzelfde nummer, of wijst een tag
   na een merge (zeker bij squash) niet meer naar de commit die echt op `main`
-  staat. Pas ná het mergen naar `main`, op de dan-actuele `main`: versienummer
-  + changelog in `src/version.ts` (README-laagvermelding bij een minor, alleen
-  changelog bij een patch) → commit met wat er gemeten is → tag `vX.Y.Z` →
-  `git push origin main --tags` → op de achtergrond `/api/version` pollen tot
-  de versie live staat. `npm run release -- --type=patch|minor --title="..."
-  --item="..."` doet de VERSION- en CHANGELOG-bewerking in `src/version.ts`
-  voor je (en weigert te draaien buiten `main`) — de rest van de vaste gang
-  (committen, taggen, pushen, pollen) blijft met de hand. Gebeuren er twee
-  merges vlak na elkaar, rond dan de release-stap van de eerste helemaal af
-  vóór je aan de tweede begint. UI-werk eerst met Playwright-schermafdrukken
-  (voor én na) uit de draaiende app verifiëren.
+  staat.
+- **De normale releasegang is automatisch.** Na een merge naar `main` doet
+  `.github/workflows/release.yml` de rest: versienummer + changelog-item uit de
+  PR-titel (label `release:minor` maakt er een minor van), commit
+  "chore: release", tag, push — waarna Cloudflare deployt. Jij doet dus níéts
+  handmatigs aan versie of tag; hooguit `/api/version` controleren.
+- **Noodpad, alleen als de automation stuk is:** op de actuele `main` draait
+  `npm run release -- --type=patch|minor --title="..." --item="..."` de
+  VERSION- en CHANGELOG-bewerking (weigert buiten `main`); daarna zelf
+  committen, taggen (`vX.Y.Z`), `git push origin main --tags` en `/api/version`
+  pollen. Gebruik dit uitsluitend als uitzondering en meld het.
+- UI-werk eerst met Playwright-schermafdrukken (voor én na) uit de draaiende
+  app verifiëren.
 
 ## Commando's
 
